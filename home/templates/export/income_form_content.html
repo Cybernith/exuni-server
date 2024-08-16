@@ -1,0 +1,37 @@
+{% load report_filters %}
+
+<div class="row">
+    <table class="table table-bordered table-striped" style="margin-top: -1px">
+        <tr>
+            <th class="text-center" width="20">
+                <span style="font-size: xx-small;">ردیف</span>
+            </th>
+            <th class="text-center">
+                <span style="font-size: x-small">شرح</span>
+            </th>
+            <th class="text-center">
+                <span style="font-size: x-small">مبلغ</span>
+            </th>
+        </tr>
+        {% for form in forms %}
+            <tr>
+                <td class="text-center" width="20">
+                    <span style="font-size: xx-small">{{ forloop.counter }}</span>
+                </td>
+                <td class="text-center">
+                        <span style="font-size: x-small">
+                            {{ form.type.prefix }}
+                            {{ form.type.name | default:'-' }}
+                        </span>
+                </td>
+                <td class="text-center">
+                        <span style="font-size: x-small">
+                            {{ form.remain | money }}
+                        </span>
+                </td>
+            </tr>
+        {% endfor %}
+    </table>
+
+
+</div>

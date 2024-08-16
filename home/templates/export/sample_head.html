@@ -1,0 +1,13 @@
+{% load report_filters %}
+
+<div class="row">
+    <div class="col-xs-12 ">
+        <span style=" font-size: x-small" class="font-weight-bold">تاریخ  : </span>
+        <span dir="ltr" style=" font-size: x-small">{% today %}</span>
+    </div>
+    <div class="col-xs-12 ">
+        <span style=" font-size: x-small" class="font-weight-bold">سال مالی : </span>
+        <span style=" font-size: x-small"> {{ financial_year.name | default:'-' }} </span>
+    </div>
+
+</div>

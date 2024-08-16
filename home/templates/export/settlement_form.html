@@ -1,0 +1,257 @@
+{% load report_filters %}
+
+<div class="row">
+    <table class="table table-bordered table-striped">
+        <tr>
+            <th class="text-center" colspan="2">اطلاعات هویتی</th>
+            <th class="text-center" colspan="2">اطلاعات آخرین حکم کارگزینی</th>
+        </tr>
+        <tr>
+            <th class="text-center">تاریخ محاسبه</th>
+            <td class="text-center">{{ now | jDate}}</td>
+            <th class="text-center">عنوان</th>
+            <th class="text-center">مبلغ به ريال</th>
+        </tr>
+        <tr>
+            <th class="text-center">نام</th>
+            <td class="text-center">{{ form.personnel.name | default:'-' }} </td>
+            <th class="text-center">حداقل مزد روزانه </th>
+            <td class="text-center">{{ settlement.hr.hoghooghe_roozane_amount | money }}</td>
+        </tr>
+
+        <tr>
+            <th class="text-center"> نام خانوادگی</th>
+            <td class="text-center">{{ form.personnel.last_name | default:'-' }} </td>
+            <th class="text-center">بن کارگری (ماهانه)</th>
+            <td class="text-center">{{ settlement.hr.bon_kharo_bar_amount | money  }}</td>
+        </tr>
+        <tr>
+            <th class="text-center"> کد ملی</th>
+            <td class="text-center">{{ form.personnel.national_code | default:'-' }} </td>
+            <th class="text-center">حق مسکن (ماهانه)</th>
+            <td class="text-center">{{ settlement.hr.haghe_maskan_amount | money  }}</td>
+        </tr>
+
+        <tr>
+            <th class="text-center"> تاریخ شروع خدمت</th>
+            <td class="text-center"> {{ form.employment_date | jDate }}</td>
+            <th class="text-center">ایاب و ذهاب (ماهانه)</th>
+            <td class="text-center">{{ settlement.hr.ayabo_zahab_amount | money  }}</td>
+
+        </tr>
+
+        <tr>
+            <th class="text-center"> تاریخ پایان خدمت</th>
+            <td class="text-center"> {{ form.quit_job | jDate }}</td>
+            <th class="text-center">حق اولاد (ماهانه)</th>
+            <td class="text-center">{{ form.last_haghe_owlad | money  }}</td>
+
+        </tr>
+
+        <tr>
+            <th class="text-center"> غیبت (روز)</th>
+            <td class="text-center"> {{ form.absence_total | default:'-' }}</td>
+                <th class="text-center">حق مدیریت (ماهانه)</th>
+                <td class="text-center"> {{ settlement.hr.haghe_modiriyat_amount | money  }}</td>
+
+        </tr>
+        <tr>
+            <th class="text-center"> جمع ایام خدمت</th>
+            <td class="text-center"> {{ form.real_work | roundToTowDigits }}</td>
+            <th class="text-center">حق سرپرستی (ماهانه)</th>
+            <td class="text-center"> {{ settlement.hr.haghe_sarparasti_amount | money  }}</td>
+        </tr>
+        {% if settlement.hr.fogholade_shoghl_amount != 0 %}
+            <tr>
+                <th class="text-center" colspan="2"></th>
+                <th class="text-center">فوق العاده شفل (ماهانه)</th>
+                <td class="text-center"> {{ settlement.hr.fogholade_shoghl_amount | money  }}</td>
+            </tr>
+        {% endif %}
+        {% if settlement.hr.haghe_tahsilat_amount != 0 %}
+            <tr>
+                <th class="text-center" colspan="2"></th>
+                <th class="text-center">حق تحصیلات (ماهانه)</th>
+                <td class="text-center"> {{ settlement.hr.haghe_tahsilat_amount | money  }}</td>
+            </tr>
+        {% endif %}
+        {% if settlement.hr.fogholade_sakhti_kar_amount != 0 %}
+            <tr>
+                <th class="text-center" colspan="2"></th>
+                <th class="text-center">فوق العاده سختی کار (ماهانه)</th>
+                <td class="text-center"> {{ settlement.hr.fogholade_sakhti_kar_amount | money  }}</td>
+            </tr>
+        {% endif %}
+        {% if settlement.hr.haghe_ankal_amount != 0 %}
+            <tr>
+                <th class="text-center" colspan="2"></th>
+                <th class="text-center">حق آنکال (ماهانه)</th>
+                <td class="text-center"> {{ settlement.hr.haghe_ankal_amount | money  }}</td>
+            </tr>
+        {% endif %}
+        {% if settlement.hr.fogholade_badi_abohava_amount != 0 %}
+            <tr>
+                <th class="text-center" colspan="2"></th>
+                <th class="text-center">فوق العاده بدی آب و هوا (ماهانه)</th>
+                <td class="text-center"> {{ settlement.hr.fogholade_badi_abohava_amount | money  }}</td>
+            </tr>
+        {% endif %}
+        {% if settlement.hr.mahroomiat_tashilat_zendegi_amount != 0 %}
+            <tr>
+                <th class="text-center" colspan="2"></th>
+                <th class="text-center">فوق العاده محرومیت از تسهیلات زندگی (ماهانه)</th>
+                <td class="text-center"> {{ settlement.hr.mahroomiat_tashilat_zendegi_amount | money  }}</td>
+            </tr>
+        {% endif %}
+        {% if settlement.hr.fogholade_mahal_khedmat_amount != 0 %}
+            <tr>
+                <th class="text-center" colspan="2"></th>
+                <th class="text-center">فوق العاده محل خدمت (ماهانه)</th>
+                <td class="text-center"> {{ settlement.hr.fogholade_mahal_khedmat_amount | money  }}</td>
+            </tr>
+        {% endif %}
+        {% if settlement.hr.fogholade_sharayet_mohit_kar_amount != 0 %}
+            <tr>
+                <th class="text-center" colspan="2"></th>
+                <th class="text-center">فوق العاده محیط کار (ماهانه)</th>
+                <td class="text-center"> {{ settlement.hr.fogholade_sharayet_mohit_kar_amount | money  }}</td>
+            </tr>
+        {% endif %}
+        {% if settlement.hr.yarane_ghaza_amount != 0 %}
+            <tr>
+                <th class="text-center" colspan="2"></th>
+                <th class="text-center">یارانه غذا (ماهانه)</th>
+                <td class="text-center"> {{ settlement.hr.yarane_ghaza_amount | money  }}</td>
+            </tr>
+        {% endif %}
+        {% if settlement.hr.haghe_shir_amount != 0 %}
+            <tr>
+                <th class="text-center" colspan="2"></th>
+                <th class="text-center">حق شیر (ماهانه)</th>
+                <td class="text-center"> {{ settlement.hr.haghe_shir_amount | money  }}</td>
+            </tr>
+        {% endif %}
+        {% if settlement.hr.haghe_taahol_amount != 0 %}
+            <tr>
+                <th class="text-center" colspan="2"></th>
+                <th class="text-center">حق تاهل (ماهانه)</th>
+                <td class="text-center"> {{ settlement.hr.haghe_taahol_amount | money  }}</td>
+            </tr>
+        {% endif %}
+
+        {% if settlement.hr.komakhazine_mahdekoodak_amount != 0 %}
+            <tr>
+                <th class="text-center" colspan="2"></th>
+                <th class="text-center">کمک هزینه مهدکودک (ماهانه)</th>
+                <td class="text-center"> {{ settlement.hr.komakhazine_mahdekoodak_amount | money  }}</td>
+            </tr>
+        {% endif %}
+        {% if settlement.hr.komakhazine_varzesh_amount != 0 %}
+            <tr>
+                <th class="text-center" colspan="2"></th>
+                <th class="text-center">کمک ورزش (ماهانه)</th>
+                <td class="text-center"> {{ settlement.hr.komakhazine_varzesh_amount | money  }}</td>
+            </tr>
+        {% endif %}
+        {% if settlement.hr.komakhazine_mobile_amount != 0 %}
+            <tr>
+                <th class="text-center" colspan="2"></th>
+                <th class="text-center">کمک موبایل (ماهانه)</th>
+                <td class="text-center"> {{ settlement.hr.komakhazine_mobile_amount | money  }}</td>
+            </tr>
+        {% endif %}
+        {% if settlement.hr.mazaya_mostamar_gheyre_naghdi_amount != 0 %}
+            <tr>
+                <th class="text-center" colspan="2"></th>
+                <th class="text-center">مزایای مستمر غیر نقدی (ماهانه)</th>
+                <td class="text-center"> {{ settlement.hr.mazaya_mostamar_gheyre_naghdi_amount | money  }}</td>
+            </tr>
+        {% endif %}
+        <tr>
+            <th class="text-center" colspan="2"> شرح مطالبات کارمند</th>
+            <th class="text-center" colspan="2"> مبلغ به ريال</th>
+        </tr>
+
+        <tr>
+            <td class="text-center" colspan="2"> حقوق پرداخت نشده</td>
+            <td class="text-center" colspan="2"> {{ settlement.bes.hoghoogh | money  }}</td>
+        </tr>
+
+        <tr>
+            <td class="text-center" colspan="2"> ذخیره ایام مرخصی پرداخت نشده</td>
+            <td class="text-center" colspan="2"> {{ settlement.bes.total_save_leave | money  }}</td>
+        </tr>
+        {% if settlement.eydi_identification %}
+            <tr>
+                <td class="text-center" colspan="2"> عیدی و پاداش پرداخت نشده (سالانه)</td>
+                <td class="text-center" colspan="2"> {{ settlement.bes.eydi | money  }}</td>
+            </tr>
+        {% endif %}
+        {% if settlement.sanavat_identification %}
+            <tr>
+                <td class="text-center" colspan="2"> حق سنوات پرداخت نشده (سالانه)</td>
+                <td class="text-center" colspan="2"> {{ settlement.bes.haghe_sanavat | money  }}</td>
+            </tr>
+        {% endif %}
+        <tr>
+            <th class="text-center" colspan="2"> جمع ناخالص دریافتی</th>
+            <td class="text-center" colspan="2">  {{ settlement.bes.total | money  }}</td>
+        </tr>
+        <tr>
+            <th class="text-center" colspan="2"> شرح بدهی های کارمند</th>
+            <th class="text-center" colspan="2"> مبالغ به ريال</th>
+        </tr>
+        <tr>
+            <td class="text-center" colspan="2"> وام</td>
+            <td class="text-center" colspan="2"> {{ settlement.bed.loan  | money }}</td>
+        </tr>
+        <tr>
+            <td class="text-center" colspan="2"> مساعده</td>
+            <td class="text-center" colspan="2"> {{ settlement.bed.dept | money  }}</td>
+        </tr>
+        <tr>
+            <td class="text-center" colspan="2"> کسورات اختیاری</td>
+            <td class="text-center" colspan="2"> {{ settlement.bed.deduction | money  }}</td>
+        </tr>
+        <tr>
+            <th class="text-center" colspan="2"> جمع ناخالص بدهی کارمند</th>
+            <td class="text-center" colspan="2"> {{ settlement.bed.total | money  }}</td>
+        </tr>
+        <tr>
+            <th class="text-center" colspan="2"> خالص قابل پرداخت</th>
+            <th class="text-center" colspan="2"> {{ settlement.total | money  }}</th>
+        </tr>
+        <tr>
+            <td colspan="4" class="pr-4 pt-5 pb-5">
+                اینجانب {{ form.personnel.full_name | default:'-' }} فرزند {{ form.personnel.father_name | default:'-' }} بدین وسیله تایید می نمایم
+                که در تاریخ  ...................  کلیه مطالبات خود را اعم از حقوق ، عیدی ، سنوات ، بازخرید ، مرخصی و ...  را از
+
+                {% if form.workshop.company.is_real %}
+                {{ form.workshop.company.name | default:'-' }}
+                به نمایندگی
+                {{ form.workshop.company.ceo_name | default:'-' }}
+                به کد ملی
+                {{ form.workshop.company.ceo_national_code | default:'-' }}
+                {% endif %}
+                {% if not form.workshop.company.is_real %}
+                {{ form.workshop.company.name | default:'-' }}
+                به شناسه ملی
+                {{ form.workshop.company.shenase | default:'-' }}
+                {% endif %}
+                دریافت نموده ام و از این تاریخ به بعد حق هیچ گونه
+                اعتراض و ادعایی نسبت به آن شرکت نداشته و نخواهم داشت.
+            </td>
+        </tr>
+        <tr>
+            <th class="text-left pl-5 pb-5 pt-5" colspan="2">
+                امضا و اثر انگشت کارمند
+            </th>
+            <th class="text-left pl-5 pb-5 pt-5" colspan="2">
+                امضا کارفرما
+            </th>
+        </tr>
+
+
+    </table>
+
+</div>

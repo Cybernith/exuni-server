@@ -1,0 +1,42 @@
+[
+  {
+    "model": "home.defaulttext",
+    "pk": 1,
+    "fields": {
+      "financial_year": 1,
+      "usage": "factor",
+      "name": "توضیحات زیر ردیف های فاکتور فروش",
+      "key": "under_sale_factor_rows"
+    }
+  },
+  {
+    "model": "home.defaulttext",
+    "pk": 2,
+    "fields": {
+      "financial_year": 1,
+      "usage": "factor",
+      "name": "توضیحات زیر فاکتور فروش",
+      "key": "under_sale_factor"
+    }
+  },
+  {
+    "model": "home.defaulttext",
+    "pk": 3,
+    "fields": {
+      "financial_year": 1,
+      "usage": "factor",
+      "name": "توضیحات زیر ردیف های فاکتور برگشت از خرید",
+      "key": "under_back_from_buy_factor_rows"
+    }
+  },
+  {
+    "model": "home.defaulttext",
+    "pk": 4,
+    "fields": {
+      "financial_year": 1,
+      "usage": "factor",
+      "name": "توضیحات زیر فاکتور برگشت از خرید",
+      "key": "under_back_from_buy_factor"
+    }
+  }
+]

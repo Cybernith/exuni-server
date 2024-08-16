@@ -1,0 +1,36 @@
+.DS_Store
+node_modules/
+# /dist/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+media/*/
+*.log
+backups/refresh_balance
+backups/refresh_inventory
+
+# Editor directories and files
+.idea/
+.vscode
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+db.sqlite3
+**/__pycache__
+.git.bfg-report
+bfg.jar
+
+
+tmp_test.py
+venv
+senv
+backup.gz
+env
+javid-note
+.coverage
+rclone.exe
+accounts/~$coding.xlsx
+
+.dbf
+*.dbf

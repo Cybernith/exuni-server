@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% load export_verifiers %}
+
+{% block body %}
+    <body
+            {% if print_document %}
+                onload="setTimeout(print, 500);"
+            {% endif %}
+    >
+    <div class="container-fluid rtl">
+
+
+        {% for form in forms %}
+            <div class="{{ forloop.last | yesno:",break-after" }}">
+
+
+                {% include 'export/export_header.html' with right_header_template=right_header_template user=form.created_by company=company form=form %}
+
+                {% include form_content_template with form=form %}
+
+                {% show_verifiers verifier_form_name user %}
+
+            </div>
+
+        {% endfor %}
+    </div>
+    </body>
+{% endblock %}

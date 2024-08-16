@@ -1,0 +1,48 @@
+{% load report_filters %}
+
+<div class="col-sm-12 mt-3">
+
+    <table class="table table-bordered table-striped mt-1">
+        <tr>
+            <th class="text-center">ردیف</th>
+            <th class="text-center">کد کالا</th>
+            <th class="text-center"> نام کالا</th>
+            <th class="text-center">واحد</th>
+            <th class="text-center">واحد اصلی</th>
+            <th class="text-center">ضریب تبدیل</th>
+            <th class="text-center">نوع قیمت</th>
+            <th class="text-center">قیمت</th>
+        </tr>
+        {% for item in forms %}
+            <tr>
+                <td>
+                    {{ forloop.counter }}
+                </td>
+                <td>
+                    {{ item.ware.code  | default:'-'}}
+                </td>
+                <td>
+                    {{ item.ware.name  | default:'-'}}
+                </td>
+                <td>
+                    {{ item.unit.name | default:'-' }}
+                </td>
+                <td>
+                    {{ item.mainUnit.name | default:'-' }}
+                </td>
+                <td>
+                    {{ item.conversion_factor  | default:'-'}}
+                </td>
+                <td>
+                    {{ item.type.name | default:'-' }}
+                </td>
+                <td>
+                    {{ item.price | default:'-' }}
+                </td>
+            </tr>
+        {% endfor %}
+
+    </table>
+</div>
+
+

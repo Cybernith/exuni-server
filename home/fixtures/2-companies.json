@@ -1,0 +1,33 @@
+[
+  {
+    "model": "companies.company",
+    "pk": 1,
+    "fields": {
+      "superuser": 1,
+      "name": "\u0646\u0627\u0645 \u0634\u0631\u06a9\u062a",
+      "address1": null,
+      "address2": null,
+      "country": null,
+      "sabt_number": null,
+      "phone1": null,
+      "phone2": null,
+      "fax": null,
+      "email": null,
+      "website": null,
+      "postal_code": null,
+      "eghtesadi_code": null,
+      "shenase": null
+    }
+  },
+  {
+    "model": "companies.financialyear",
+    "pk": 1,
+    "fields": {
+      "name": "98",
+      "start": "1397-12-28",
+      "end": "1398-12-28",
+      "explanation": "",
+      "company": 1
+    }
+  }
+]

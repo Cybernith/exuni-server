@@ -1,0 +1,32 @@
+{% load report_filters %}
+<div class="col-sm-12 mt-3">
+    <table class="table table-bordered table-striped">
+        <tr>
+            <th>کد حساب</th>
+            <th>نام حساب</th>
+            <th>نوع</th>
+            <th>زمان ساخت</th>
+            <th>ساخته شده توسط</th>
+        </tr>
+        {% for form in forms %}
+            <tr>
+                <td>{{ form.code | default:'-' }}</td>
+                <td>{{ form.name | default:'-' }}</td>
+                {% if form.type %}
+                    <td>{{ form.type.name | default:'-' }}</td>
+                {% endif %}
+                {% if not form.type %}
+                    <td>-</td>
+                {% endif %}
+                <td>{{ form.created_at | jDate }}</td>
+                {% if form.created_by %}
+                    <td>{{ form.created_by.name }}</td>
+                {% endif %}
+                {% if not form.created_by %}
+                    <td>-</td>
+                {% endif %}
+            </tr>
+        {% endfor %}
+
+    </table>
+</div>

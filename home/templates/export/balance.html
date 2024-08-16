@@ -1,0 +1,89 @@
+{% load report_filters %}
+
+<div class="row">
+    <table class="center-block">
+        <tr>
+            <th class="text-center">
+                نام و نام خانوادگی : {{ forms.personnel.full_name | default:'-' }}
+            </th>
+            <td class="text-center">
+
+            </td>
+            <th class="text-center">
+                کد ملی : {{ forms.personnel.national_code | default:'-' }}
+            </th>
+            <td class="text-center">
+
+            </td>
+            <th class="text-center">
+                کد پرسنلی : {{ forms.personnel.personnel_code | default:'-' }}
+            <td class="text-center">
+
+            </td>
+        </tr>
+
+    </table>
+    <table class="table table-bordered table-striped mt-5">
+        <tr>
+            <th class="text-center">
+                ردیف
+            </th>
+            <th class="text-center">
+                تاریخ
+            </th>
+            <th class="text-center">
+                شرح
+            </th>
+            <th class="text-center">
+                شناسایی
+            </th>
+            <th class="text-center">
+                پرداخت
+            </th>
+            <th class="text-center">
+                مانده
+            </th>
+        </tr>
+        {% for item in form %}
+            <tr>
+                <td class="text-center">
+                    {{ forloop.counter }}
+                </td>
+                <td class="text-center">
+                    {{ item.date | jDate }}
+                </td>
+                <td class="text-center">
+                    {{ item.explanation | default:'-' }}
+
+                    {% if item.quit_job %}
+                        ( ترک کار کرده )
+                    {% endif %}
+                </td>
+                <td class="text-center">
+                    {{ item.amount | toIntiger | minusRTL}}
+                </td>
+                <td class="text-center">
+                    {{ item.paid  | toIntiger | minusRTL}}
+                </td>
+                <td class="text-center">
+                    {{ item.total  | toIntiger | minusRTL}}
+            </tr>
+        {% endfor %}
+        <tr>
+            <td colspan="3" class="text-center">
+                جمع
+            </td>
+            <td class="text-center">
+                {{ forms.balance_total.amount_total   | toIntiger | minusRTL}}
+            </td>
+            <td class="text-center">
+                {{ forms.balance_total.paid_total   | toIntiger | minusRTL}}
+            </td>
+
+            <td class="text-center">
+                {{ forms.balance_total.mande   | toIntiger | minusRTL}}
+            </td>
+        </tr>
+    </table>
+
+</div>

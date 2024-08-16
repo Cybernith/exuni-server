@@ -1,0 +1,32 @@
+[
+  {
+    "model": "home.option",
+    "pk": 2,
+    "fields": {
+      "name": "درصد مالیات ارزش افزوده ی بارگیری شرکت نفت",
+      "codename": "taxPercent",
+      "usage": "all",
+      "value": "0"
+    }
+  },
+  {
+    "model": "home.option",
+    "pk": 1,
+    "fields": {
+      "name": "درصد کمیسیون شرکت از بارگیری شرکت نفت",
+      "codename": "companyCommissionFromOilCompanyLading",
+      "usage": "dashtbashi",
+      "value": "0"
+    }
+  },
+  {
+    "model": "home.option",
+    "pk": 3,
+    "fields": {
+      "name": "درصد عوارض ارزش افزوده ی بارگیری شرکت نفت",
+      "codename": "addedValuePercentOfOilCompanyLading",
+      "usage": "dashtbashi",
+      "value": "0"
+    }
+  }
+]

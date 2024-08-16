@@ -1,0 +1,27 @@
+{% load static %}
+
+<html>
+
+<head>
+    {% load static %}
+    <title>{{ tab_title | default:title }}</title>
+    <link rel="stylesheet"
+          href="{% static 'styles/bootstrap.min.css' %}">
+    <link rel="stylesheet"
+          href="{% static 'styles/bootstrap-rtl.min.css' %}">
+    <link rel="stylesheet"
+          href="{% static 'styles/bootstrap-utilities.min.css' %}">
+    <link rel="stylesheet"
+          href="{% static 'styles/fontiran.css' %}">
+    <link rel="stylesheet"
+          href="{% static 'styles/print.css' %}">
+
+    <meta charset="UTF-8">
+
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+</head>
+
+{% block body %}
+{% endblock %}
+
+</html>

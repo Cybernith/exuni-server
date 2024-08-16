@@ -1,0 +1,9 @@
+python .\manage.py migrate distributions 0021
+python .\manage.py migrate cheques 0022
+python .\manage.py migrate imprests 0025
+
+python .\manage.py migrate transactions 0028
+python .\manage.py migrate accounts 0029
+python .\manage.py migrate sanads 0034
+python .\manage.py migrate factors 0067
+python .\manage.py migrate _dashtbashi 0074

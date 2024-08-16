@@ -1,0 +1,119 @@
+{% load report_filters %}
+
+<div class="row">
+
+    <table class="table table-bordered table-striped">
+        <tr>
+            <th colspan="6" class="text-center">
+                وضعیت اولیه ردیف پیمان {{ contract_row.contract_row }}
+            </th>
+        </tr>
+        <tr>
+            <th>ردیف پیمان</th>
+            <th>کد و نام کارگاه</th>
+            <th>تاریخ شروع قرارداد</th>
+            <th>تاریخ پایان قرارداد</th>
+            <th>مبلغ اولیه قرارداد</th>
+            <th>شناسه ملی واگذار کننده</th>
+        </tr>
+        <tr>
+            <td>{{ contract_row.title | default:'-' }}</td>
+            <td>{{ contract_row.workshop.workshop_title | default:'-' }}</td>
+            <td>{{ contract_row.from_date | jDate  }}</td>
+            <td>{{ contract_row.initial_to_date | jDate  }}</td>
+            <td>{{ contract_row.amount | money }}</td>
+            <td>{{ contract_row.assignor_national_code | default:'-' }}</td>
+
+        </tr>
+        <tr>
+            <th colspan="6" class="text-center">
+            </th>
+        </tr>
+        <tr>
+            <th colspan="6" class="text-center">
+                تغییرات ردیف پیمان {{ contract_row.contract_row | default:'-' }}
+            </th>
+        </tr>
+
+        <tr>
+            <th>ردیف پیمان</th>
+            <th>تاریخ ثبت تعدیل</th>
+            <th>تاریخ پایان جدید</th>
+            <th>مبلغ تعدیل قرارداد</th>
+            <th>نوع تعدیل مبلغ</th>
+            <th>توضیحات</th>
+
+        </tr>
+        {% for form in forms %}
+            <tr>
+                {% if form.contract_row %}
+                    <td>{{ form.contract_row.title | default:'-'}}</td>
+                {% endif %}
+                {% if not form.contract_row %}
+                    <td class="text-center"> -</td>
+                {% endif %}
+
+                <td>{{ form.date }}</td>
+
+                {% if form.change_date %}
+                    <td>{{ form.change_date | jDate  }}</td>
+                {% endif %}
+                {% if not form.change_date %}
+                    <td class="text-center"> -</td>
+                {% endif %}
+
+                {% if form.amount %}
+                    <td>{{ form.amount | money }}</td>
+                {% endif %}
+                {% if not form.amount %}
+                    <td class="text-center"> -</td>
+                {% endif %}
+
+                {% if form.status_display %}
+                    <td>{{ form.status_display }}</td>
+                {% endif %}
+                {% if not form.status_display %}
+                    <td class="text-center"> -</td>
+                {% endif %}
+
+                {% if form.explanation %}
+                    <td>{{ form.explanation }}</td>
+                {% endif %}
+                {% if not form.explanation %}
+                    <td class="text-center"> -</td>
+                {% endif %}
+
+
+            </tr>
+        {% endfor %}
+        <tr>
+            <th colspan="6" class="text-center">
+            </th>
+        </tr>
+        <tr>
+            <th colspan="6" class="text-center">
+                وضعیت فعلی ردیف پیمان {{ contract_row.contract_row }}
+            </th>
+        <tr>
+            <th>ردیف پیمان</th>
+            <th>کد و نام کارگاه</th>
+            <th>تاریخ شروع قرارداد</th>
+            <th>تاریخ پایان فعلی قرارداد</th>
+            <th>مبلغ فعلی قرارداد</th>
+            <th>شناسه ملی واگذار کننده</th>
+        </tr>
+        </tr>
+        <tr>
+            <td>{{ contract_row.title | default:'-' }}</td>
+            <td>{{ contract_row.workshop.workshop_title | default:'-' }}</td>
+            <td>{{ contract_row.from_date | jDate  }}</td>
+            <td>{{ contract_row.now_date | jDate  }}</td>
+            <td>{{ contract_row.amount | roundToTowDigits | money }}</td>
+            <td>{{ contract_row.assignor_national_code | default:'-' }}</td>
+
+        </tr>
+
+
+    </table>
+
+</div>

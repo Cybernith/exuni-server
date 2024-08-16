@@ -1,0 +1,32 @@
+{% load report_filters %}
+
+<div class="row">
+    <table class="table table-bordered table-striped">
+        <tr>
+            <th class="text-center">سریال</th>
+            <th class="text-center">شماره صیادی</th>
+            <th class="text-center">شرح</th>
+            <th class="text-center"> تاریخ</th>
+            <th class="text-center"> تاریخ سررسید</th>
+            <th class="text-center"> مبلغ</th>
+            <th class="text-center"> نام حساب</th>
+            <th class="text-center"> وضعیت</th>
+        </tr>
+        {% for item in forms %}
+            <tr>
+                <td class="text-center">{{ item.serial | default:'-' }}</td>
+                <td class="text-center">{{ item.iban | default:'-' }} </td>
+                <td class="text-center">{{ item.explanation | default:'-' }} </td>
+                <td class="text-center">{{ item.date | jDate }}</td>
+                <td class="text-center">{{ item.due | jDate }}</td>
+                <td class="text-center">{{ item.value | money }} </td>
+                <td class="text-center">{{ item.account.name | default:'-' }} </td>
+                <td class="text-center">{{ item.status_display | default:'-' }} </td>
+
+            </tr>
+        {% endfor %}
+    </table>
+
+</div>
+
+
