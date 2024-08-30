@@ -4,12 +4,23 @@ from django.contrib.auth.models import Permission
 
 from users.models import User, Role, PhoneVerification, Notification, UserNotification, City
 
-UserAdmin.fieldsets += (('ماژول ها', {'fields': ('modules',)}),)
-UserAdmin.fieldsets += (('شرکت و سال مالی فعال', {'fields': ('active_company', 'active_financial_year')}),)
-UserAdmin.fieldsets += (('محدودیت ها', {'fields': ('max_companies', 'max_users',)}),)
 UserAdmin.fieldsets += (('Secrets', {'fields': ('secret_key',)}),)
-UserAdmin.fieldsets += (('شماره موبایل', {'fields': ('phone',)}),)
-UserAdmin.fieldsets += (('عکس پروفایل', {'fields': ('profile_picture',)}),)
+UserAdmin.fieldsets += (('نوع کاربر', {'fields': ('user_type',)}),)
+UserAdmin.fieldsets += (('اطلاعات کاربر', {'fields': (
+    'mobile_number',
+    'national_code',
+    'profile_picture',
+    'cover_picture',
+    'city',
+    'address',
+    'about_us',
+)}),)
+UserAdmin.fieldsets += (('اطلاعات بانکی', {'fields': (
+    'bank_account_name',
+    'bank_account_number',
+    'bank_card_number',
+    'bank_sheba_number',
+)}),)
 
 
 class PermissionAdmin(admin.ModelAdmin):

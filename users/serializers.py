@@ -96,7 +96,7 @@ class UserCreateSerializer(MModelSerializer):
 
     class Meta:
         model = get_user_model()
-        fields = ('username', 'first_name', 'last_name', 'phone', 'password', 'token')
+        fields = ('username', 'first_name', 'last_name', 'mobile_number', 'password', 'token')
 
     def create(self, validated_data):
         user = super().create(validated_data)
@@ -111,7 +111,7 @@ class UserUpdateSerializer(MModelSerializer):
 
     class Meta:
         model = get_user_model()
-        fields = ('first_name', 'last_name', 'profile_picture')
+        fields = ('first_name', 'last_name', 'profile_picture', 'cover_picture')
 
 
 class CitySerializer(MModelSerializer):
