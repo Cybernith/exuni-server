@@ -170,7 +170,7 @@ class User(AbstractUser, BaseModel):
     city = models.CharField(max_length=30, blank=True, null=True)
     address = models.CharField(max_length=255, blank=True, null=True)
     about_us = models.CharField(max_length=255, blank=True, null=True)
-    user_type = models.CharField(max_length=6, choices=USER_TYPES, blank=True, null=True)
+    user_type = models.CharField(max_length=6, choices=USER_TYPES, default=CUSTOMER)
 
     roles = models.ManyToManyField(Role, related_name='users', blank=True)
     secret_key = models.CharField(max_length=32, null=True, blank=True, default=None)

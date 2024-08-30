@@ -53,6 +53,7 @@ INSTALLED_APPS = [
 
     'users',
     'home',
+    'main',
 
 
 
@@ -99,7 +100,6 @@ CORS_ALLOW_HEADERS = [
     'x-requested-with',
     'access-control-allow-origin',
     'Access-Control-Allow-Origin',
-    'financial-year',
 ]
 
 TEMPLATES = [
