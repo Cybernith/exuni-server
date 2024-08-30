@@ -28,7 +28,6 @@ class Business(BaseModel):
     address = models.CharField(max_length=255, blank=True, null=True)
     business_type = models.CharField(max_length=2, choices=BUSINESS_TYPES, default=ONLINE_MARKET)
 
-
     class Meta(BaseModel.Meta):
         verbose_name = 'Business'
         permission_basename = 'business'
