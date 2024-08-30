@@ -1,5 +1,4 @@
 from django.conf.urls import url
-from django.urls import path
 
 from main.lists.views import BusinessListView, StoreListView, CurrencyListView, SupplierListView
 from main.views import BusinessApiView, BusinessDetailView, StoreApiView, StoreDetailView, CurrencyApiView, \
