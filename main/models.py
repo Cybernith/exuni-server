@@ -110,12 +110,12 @@ class Supplier(BaseModel):
         verbose_name = 'Supplier'
         permission_basename = 'supplier'
         permissions = (
-            ('get.currency', 'مشاهده تامین کننده'),
-            ('create.currency', 'تعریف تامین کننده'),
-            ('update.currency', 'ویرایش تامین کننده'),
-            ('delete.currency', 'حذف تامین کننده'),
+            ('get.supplier', 'مشاهده تامین کننده'),
+            ('create.supplier', 'تعریف تامین کننده'),
+            ('update.supplier', 'ویرایش تامین کننده'),
+            ('delete.supplier', 'حذف تامین کننده'),
 
-            ('getOwn.currency', 'مشاهده تامین کننده خود'),
-            ('updateOwn.currency', 'ویرایش تامین کننده خود'),
-            ('deleteOwn.currency', 'حذف تامین کننده خود'),
+            ('getOwn.supplier', 'مشاهده تامین کننده خود'),
+            ('updateOwn.supplier', 'ویرایش تامین کننده خود'),
+            ('deleteOwn.supplier', 'حذف تامین کننده خود'),
         )
