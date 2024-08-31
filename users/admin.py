@@ -13,6 +13,7 @@ UserAdmin.fieldsets += (('اطلاعات کاربر', {'fields': (
     'cover_picture',
     'city',
     'address',
+    'location',
     'about_us',
 )}),)
 UserAdmin.fieldsets += (('اطلاعات بانکی', {'fields': (

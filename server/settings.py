@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.admindocs',
+    'location_field.apps.DefaultConfig',
 
     'debug_toolbar',
 
@@ -57,10 +58,14 @@ INSTALLED_APPS = [
     'main',
     'products',
 
-
-
 ]
 
+LOCATION_FIELD = {
+    'provider.google.api': '//maps.google.com/maps/api/js?sensor=false',
+    'provider.google.api_key': '<PLACE YOUR API KEY HERE>',
+    'provider.google.api_libraries': '',
+    'provider.google.map.type': 'ROADMAP',
+}
 ALLOWED_HOSTS = ['*']
 
 MIDDLEWARE = [

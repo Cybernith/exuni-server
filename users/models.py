@@ -9,7 +9,7 @@ from rest_framework.exceptions import ValidationError, PermissionDenied
 
 from helpers.models import BaseModel, BaseManager
 from helpers.sms import Sms
-
+from location_field.models.plain import PlainLocationField
 
 class Role(BaseModel):
     name = models.CharField(max_length=255)
@@ -166,7 +166,7 @@ class User(AbstractUser, BaseModel):
     bank_account_number = models.CharField(max_length=50, blank=True, null=True)
     bank_card_number = models.CharField(max_length=50, blank=True, null=True)
     bank_sheba_number = models.CharField(max_length=50, blank=True, null=True)
-    #location
+    location = PlainLocationField(based_fields=['city'], zoom=7, blank=True, null=True)
     city = models.CharField(max_length=30, blank=True, null=True)
     address = models.CharField(max_length=255, blank=True, null=True)
     about_us = models.CharField(max_length=255, blank=True, null=True)
