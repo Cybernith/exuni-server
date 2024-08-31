@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     'rest_framework_swagger',
     'rest_framework.authtoken',
     'django_extensions',
+    'colorfield',
 
     'users',
     'home',

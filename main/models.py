@@ -2,7 +2,7 @@ from django.db import models
 
 from helpers.models import BaseModel, DECIMAL
 from users.models import custom_upload_to, User
-
+from colorfield.fields import ColorField
 
 class Business(BaseModel):
     ONLINE_MARKET = 'om'
@@ -19,9 +19,9 @@ class Business(BaseModel):
     domain_address = models.CharField(max_length=150, blank=True, null=True)
     logo = models.ImageField(upload_to=custom_upload_to, null=True, blank=True, default=None)
     api_token = models.CharField(max_length=150, blank=True, null=True)
-    primary_business_color = models.CharField(max_length=7, blank=True, null=True)
-    secondary_business_color = models.CharField(max_length=7, blank=True, null=True)
-    theme_business_color = models.CharField(max_length=7, blank=True, null=True)
+    primary_business_color = ColorField(blank=True, null=True)
+    secondary_business_color = ColorField(blank=True, null=True)
+    theme_business_color = ColorField(blank=True, null=True)
     business_owner_national_card_picture = models.ImageField(upload_to=custom_upload_to,
                                                              null=True, blank=True, default=None)
     about_us = models.CharField(max_length=255, blank=True, null=True)

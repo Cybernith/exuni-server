@@ -71,6 +71,7 @@ class ProductProperty(BaseModel):
 class Category(BaseModel):
     name = models.CharField(max_length=150)
     parent = models.ForeignKey('self', on_delete=models.PROTECT, related_name='children', blank=True, null=True)
+    picture = models.ImageField(upload_to=custom_upload_to, null=True, blank=True, default=None)
 
     class Meta(BaseModel.Meta):
         verbose_name = 'Category'
