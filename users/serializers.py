@@ -6,11 +6,11 @@ from rest_framework import serializers
 from rest_framework.authtoken.models import Token
 
 from helpers.functions import get_current_user
-from helpers.serializers import MModelSerializer
+from helpers.serializers import SModelSerializer
 from users.models import Role, User, City, UserNotification, Notification
 
 
-class RoleSerializer(MModelSerializer):
+class RoleSerializer(SModelSerializer):
     permissions = serializers.PrimaryKeyRelatedField(many=True, queryset=Permission.objects.all())
 
     class Meta:
@@ -19,13 +19,13 @@ class RoleSerializer(MModelSerializer):
         read_only_fields = ('id', 'company', 'created_at', 'updated_at')
 
 
-class ContentTypeSerializer(MModelSerializer):
+class ContentTypeSerializer(SModelSerializer):
     class Meta:
         model = ContentType
         fields = '__all__'
 
 
-class PermissionListSerializer(MModelSerializer):
+class PermissionListSerializer(SModelSerializer):
     content_type = ContentTypeSerializer()
     contentType = content_type
 
@@ -34,7 +34,7 @@ class PermissionListSerializer(MModelSerializer):
         fields = '__all__'
 
 
-class RoleWithPermissionListSerializer(MModelSerializer):
+class RoleWithPermissionListSerializer(SModelSerializer):
     permissions = PermissionListSerializer(many=True)
 
     class Meta:
@@ -42,7 +42,7 @@ class RoleWithPermissionListSerializer(MModelSerializer):
         fields = '__all__'
 
 
-class UserSimpleSerializer(MModelSerializer):
+class UserSimpleSerializer(SModelSerializer):
     name = serializers.SerializerMethodField()
     profile_picture = serializers.ImageField(read_only=True)
 
@@ -54,7 +54,7 @@ class UserSimpleSerializer(MModelSerializer):
         fields = ('id', 'first_name', 'last_name', 'name', 'username', 'phone', 'profile_picture')
 
 
-class UserListSerializer(MModelSerializer):
+class UserListSerializer(SModelSerializer):
     name = serializers.SerializerMethodField()
     has_two_factor_authentication = serializers.SerializerMethodField()
     unread_notifications_count = serializers.SerializerMethodField()
@@ -86,7 +86,7 @@ class UserRetrieveSerializer(UserListSerializer):
         pass
 
 
-class UserCreateSerializer(MModelSerializer):
+class UserCreateSerializer(SModelSerializer):
     password = serializers.CharField(default=None, allow_null=True, write_only=True)
     token = serializers.SerializerMethodField()
 
@@ -106,7 +106,7 @@ class UserCreateSerializer(MModelSerializer):
         return user
 
 
-class UserUpdateSerializer(MModelSerializer):
+class UserUpdateSerializer(SModelSerializer):
     profile_picture = serializers.ImageField(required=False)
 
     class Meta:
@@ -114,7 +114,7 @@ class UserUpdateSerializer(MModelSerializer):
         fields = ('first_name', 'last_name', 'profile_picture', 'cover_picture')
 
 
-class CitySerializer(MModelSerializer):
+class CitySerializer(SModelSerializer):
     class Meta:
         model = City
         fields = '__all__'
@@ -123,7 +123,7 @@ class CitySerializer(MModelSerializer):
         fields = ('id', 'company_name', 'status')
 
 
-class NotificationSerializer(MModelSerializer):
+class NotificationSerializer(SModelSerializer):
 
     class Meta:
         model = Notification
@@ -131,7 +131,7 @@ class NotificationSerializer(MModelSerializer):
         read_only_fields = ('created_at', 'updated_at')
 
 
-class UserNotificationSerializer(MModelSerializer):
+class UserNotificationSerializer(SModelSerializer):
     user = serializers.CharField(source='user.name')
     created_by = serializers.CharField(source='created_by.name', read_only=True)
     status = serializers.CharField(source='get_status_display')
@@ -146,7 +146,7 @@ class UserNotificationSerializer(MModelSerializer):
                   'status_codename', 'user', 'notification')
 
 
-class SendNotificationSerializer(MModelSerializer):
+class SendNotificationSerializer(SModelSerializer):
     userNotifications = UserNotificationSerializer(many=True, read_only=True)
 
     class Meta:
@@ -161,7 +161,7 @@ class SendNotificationSerializer(MModelSerializer):
         return value
 
 
-class ReminderNotificationSerializer(MModelSerializer):
+class ReminderNotificationSerializer(SModelSerializer):
     class Meta:
         model = Notification
         fields = ('id', 'title', 'explanation', 'send_date', 'send_time')
@@ -175,7 +175,7 @@ class ReminderNotificationSerializer(MModelSerializer):
         return value
 
 
-class CurrentUserNotificationSerializer(MModelSerializer):
+class CurrentUserNotificationSerializer(SModelSerializer):
     unread_notifications_count = serializers.SerializerMethodField()
     pop_up_notifications = serializers.SerializerMethodField()
 

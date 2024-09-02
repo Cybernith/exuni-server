@@ -1,4 +1,4 @@
-from entrance.models import EntrancePackageItem, EntrancePackage
+from entrance.models import EntrancePackageItem, EntrancePackage, StoreReceiptItem, StoreReceipt
 from helpers.serializers import SModelSerializer
 from rest_framework import serializers
 
@@ -51,6 +51,55 @@ class EntrancePackageListSerializer(SModelSerializer):
 
     class Meta:
         model = EntrancePackage
+        fields = '__all__'
+        read_only_fields = ('created_at', 'updated_at')
+
+
+class StoreReceiptItemSerializer(SModelSerializer):
+    class Meta:
+        model = StoreReceiptItem
+        fields = '__all__'
+        read_only_fields = ('created_at', 'updated_at')
+
+    def update(self, instance, validated_data):
+        if instance.store_receipt.is_verified:
+            raise serializers.ValidationError("ردیف رسید ورود انبار غیر قابل ویرایش می باشند")
+        return super(StoreReceiptItemSerializer, self).update(instance, validated_data)
+
+
+class StoreReceiptItemListRetrieveSerializer(StoreReceiptItemSerializer):
+    class Meta(StoreReceiptItemSerializer.Meta):
+        pass
+
+
+class StoreReceiptSerializer(SModelSerializer):
+    class Meta:
+        model = StoreReceipt
+        fields = '__all__'
+        read_only_fields = ('created_at', 'updated_at')
+
+    def update(self, instance, validated_data):
+        if instance.is_verified:
+            raise serializers.ValidationError("رسید ورود انبار غیر قابل ویرایش می باشند")
+        return super(StoreReceiptSerializer, self).update(instance, validated_data)
+
+
+class StoreReceiptRetrieveSerializer(StoreReceiptSerializer):
+    items = StoreReceiptItemListRetrieveSerializer(read_only=True, many=True)
+    entrance_packages = EntrancePackageSerializer(read_only=True, many=True)
+    store = StoreSerializer(read_only=True, many=True)
+    created_by = UserSimpleSerializer(read_only=True)
+    storekeeper = UserSimpleSerializer(read_only=True)
+
+    class Meta(StoreReceiptSerializer.Meta):
+        fields = '__all__'
+
+
+class StoreReceiptListSerializer(SModelSerializer):
+    created_by = UserSimpleSerializer(many=False)
+
+    class Meta:
+        model = StoreReceipt
         fields = '__all__'
         read_only_fields = ('created_at', 'updated_at')
 

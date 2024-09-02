@@ -25,16 +25,16 @@ class EntrancePackage(BaseModel):
 
     class Meta(BaseModel.Meta):
         verbose_name = 'EntrancePackage'
-        permission_basename = 'entrance_packages'
+        permission_basename = 'entrance_package'
         permissions = (
-            ('get.entrance_packages', 'مشاهده پکیج ورودی'),
-            ('create.entrance_packages', 'تعریف پکیج ورودی'),
-            ('update.entrance_packages', 'ویرایش پکیج ورودی'),
-            ('delete.entrance_packages', 'حذف پکیج ورودی'),
+            ('get.entrance_package', 'مشاهده پکیج ورودی'),
+            ('create.entrance_package', 'تعریف پکیج ورودی'),
+            ('update.entrance_package', 'ویرایش پکیج ورودی'),
+            ('delete.entrance_package', 'حذف پکیج ورودی'),
 
-            ('getOwn.entrance_packages', 'مشاهده پکیج ورودی خود'),
-            ('updateOwn.entrance_packages', 'ویرایش پکیج ورودی خود'),
-            ('deleteOwn.entrance_packages', 'حذف پکیج ورودی خود'),
+            ('getOwn.entrance_package', 'مشاهده پکیج ورودی خود'),
+            ('updateOwn.entrance_package', 'ویرایش پکیج ورودی خود'),
+            ('deleteOwn.entrance_package', 'حذف پکیج ورودی خود'),
         )
 
 
@@ -86,6 +86,7 @@ class StoreReceipt(BaseModel):
     store = models.ForeignKey(Store, related_name="store_receipt",
                               on_delete=models.SET_NULL, blank=True, null=True)
     box_count = models.IntegerField(default=0)
+    is_verified = models.BooleanField(default=False)
 
     explanation = EXPLANATION()
 
