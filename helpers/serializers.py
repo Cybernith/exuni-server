@@ -37,12 +37,12 @@ class JDateTimeField(DateTimeField):
         return ''
 
 
-class MModelSerializer(serializers.ModelSerializer):
+class SModelSerializer(serializers.ModelSerializer):
     created_by = serializers.CharField(source='created_by.name', allow_null=True, allow_blank=True, read_only=True)
 
     @property
     def serializer_field_mapping(self):
-        mapping = super(MModelSerializer, self).serializer_field_mapping
+        mapping = super(SModelSerializer, self).serializer_field_mapping
         mapping[models.DateField] = JDateField
         mapping[models.DateTimeField] = JDateTimeField
         return mapping

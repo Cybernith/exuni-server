@@ -57,6 +57,7 @@ INSTALLED_APPS = [
     'home',
     'main',
     'products',
+    'entrance',
 
 ]
 

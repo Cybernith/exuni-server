@@ -83,7 +83,7 @@ class BasicCRUDPermission(BasicObjectPermission):
         permission_codename = permission_codenames[0]
         permission = Permission.objects.filter(codename=permission_codename).first()
         if permission:
-            self.message = "شما اجازه این عملیات را ندارید: {}".format(permission.name)
+            self.message = "شما دسترسی این عملیات را ندارید: {}".format(permission.name)
         else:
             self.message = "not found permission: {}".format(permission_codename)
 
