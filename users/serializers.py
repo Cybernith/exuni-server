@@ -45,13 +45,15 @@ class RoleWithPermissionListSerializer(SModelSerializer):
 class UserSimpleSerializer(SModelSerializer):
     name = serializers.SerializerMethodField()
     profile_picture = serializers.ImageField(read_only=True)
+    cover_picture = serializers.ImageField(read_only=True)
 
     def get_name(self, obj: User):
         return obj.first_name + ' ' + obj.last_name
 
     class Meta:
         model = get_user_model()
-        fields = ('id', 'first_name', 'last_name', 'name', 'username', 'phone', 'profile_picture')
+        fields = ('id', 'first_name', 'last_name',  'username', 'mobile_number', 'name',
+                  'profile_picture', 'cover_picture')
 
 
 class UserListSerializer(SModelSerializer):

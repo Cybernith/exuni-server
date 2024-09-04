@@ -1,9 +1,11 @@
 from rest_framework import serializers
 
 from products.models import Brand, Avail, ProductProperty, Category, Product, ProductGallery
+from users.serializers import UserSimpleSerializer
 
 
 class BrandSerializer(serializers.ModelSerializer):
+    created_by = UserSimpleSerializer(read_only=True)
 
     class Meta:
         read_only_fields = ('created_at', 'updated_at')
@@ -12,6 +14,7 @@ class BrandSerializer(serializers.ModelSerializer):
 
 
 class AvailSerializer(serializers.ModelSerializer):
+    created_by = UserSimpleSerializer(read_only=True)
 
     class Meta:
         read_only_fields = ('created_at', 'updated_at')
@@ -20,6 +23,7 @@ class AvailSerializer(serializers.ModelSerializer):
 
 
 class ProductPropertySerializer(serializers.ModelSerializer):
+    created_by = UserSimpleSerializer(read_only=True)
 
     class Meta:
         read_only_fields = ('created_at', 'updated_at')
@@ -28,6 +32,7 @@ class ProductPropertySerializer(serializers.ModelSerializer):
 
 
 class CategorySerializer(serializers.ModelSerializer):
+    created_by = UserSimpleSerializer(read_only=True)
 
     class Meta:
         read_only_fields = ('created_at', 'updated_at')
@@ -36,6 +41,7 @@ class CategorySerializer(serializers.ModelSerializer):
 
 
 class ProductGallerySerializer(serializers.ModelSerializer):
+    created_by = UserSimpleSerializer(read_only=True)
 
     class Meta:
         read_only_fields = ('created_at', 'updated_at')
@@ -44,11 +50,18 @@ class ProductGallerySerializer(serializers.ModelSerializer):
 
 
 class ProductSerializer(serializers.ModelSerializer):
+    created_by = UserSimpleSerializer(read_only=True)
     gallery = ProductGallerySerializer(many=True, read_only=True)
     avails = AvailSerializer(many=True, read_only=True)
     properties = ProductPropertySerializer(many=True, read_only=True)
     category = CategorySerializer(read_only=True)
     brand = CategorySerializer(read_only=True)
+    made_in = serializers.ReadOnlyField()
+    is_domestic = serializers.ReadOnlyField()
+    inventory = serializers.ReadOnlyField()
+    is_freeze = serializers.ReadOnlyField()
+    is_expired_closed = serializers.ReadOnlyField()
+    content_production_completed = serializers.ReadOnlyField()
 
     class Meta:
         read_only_fields = ('created_at', 'updated_at')

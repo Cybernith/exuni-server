@@ -1,12 +1,21 @@
-from rest_framework.permissions import IsAuthenticated
-from helpers.auth import BasicObjectPermission
-from rest_framework.views import APIView
-from django.http import Http404
-
+from main.lists.filters import CurrencyFilter
 from main.models import Business, Store, Currency, Supplier
 from main.serializers import BusinessSerializer, StoreSerializer, CurrencySerializer, SupplierSerializer
-from rest_framework.response import Response
+
+from django.http import Http404
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
 from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
+from helpers.auth import BasicCRUDPermission, BasicObjectPermission
+from helpers.views.RetrieveUpdateDestroyAPIViewWithAutoFinancialYear import \
+    RetrieveUpdateDestroyAPIViewWithAutoFinancialYear
+from helpers.views.ListCreateAPIViewWithAutoFinancialYear import ListCreateAPIViewWithAutoFinancialYear
+from rest_framework import generics
+from rest_framework.pagination import LimitOffsetPagination
 
 
 class BusinessApiView(APIView):
@@ -108,7 +117,7 @@ class CurrencyApiView(APIView):
     permission_basename = 'currency'
 
     def get(self, request):
-        query = Store.objects.all()
+        query = Currency.objects.all()
         serializers = CurrencySerializer(query, many=True, context={'request': request})
         return Response(serializers.data, status=status.HTTP_200_OK)
 
@@ -148,6 +157,29 @@ class CurrencyDetailView(APIView):
         query = self.get_object(pk)
         query.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class CurrencyListCreate(ListCreateAPIViewWithAutoFinancialYear, generics.ListAPIView):
+    permission_classes = (IsAuthenticated, BasicCRUDPermission)
+    permission_basename = 'currency'
+    serializer_class = CurrencySerializer
+    permission_codename = "get.currency"
+    filterset_class = CurrencyFilter
+    ordering_fields = '__all__'
+    pagination_class = LimitOffsetPagination
+
+    def perform_create(self, serializer: CurrencySerializer) -> None:
+        serializer.save()
+
+    def get_queryset(self):
+        return Currency.objects.all()
+
+
+class CurrencyCRUD(RetrieveUpdateDestroyAPIViewWithAutoFinancialYear):
+    permission_classes = (IsAuthenticated, BasicCRUDPermission)
+    permission_basename = 'currency'
+    serializer_class = CurrencySerializer
 
 
 class SupplierApiView(APIView):
