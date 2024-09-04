@@ -13,8 +13,10 @@ class BusinessSerializer(serializers.ModelSerializer):
         model = Business
         fields = '__all__'
 
+
 class StoreSerializer(serializers.ModelSerializer):
     created_by = UserSimpleSerializer(read_only=True)
+    storekeeper_name = serializers.CharField(source='storekeeper.name', read_only=True)
 
     class Meta:
         read_only_fields = ('created_at', 'updated_at')

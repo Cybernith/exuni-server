@@ -39,7 +39,7 @@ class StoreFilter(filters.FilterSet):
         model = Store
         fields = {
             'id': ('exact',),
-            'manager': ('exact',),
+            'storekeeper': ('exact',),
             'is_central': ('exact',),
             'name': BASE_FIELD_FILTERS,
             'address': BASE_FIELD_FILTERS,

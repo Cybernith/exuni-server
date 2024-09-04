@@ -47,7 +47,7 @@ class Store(BaseModel):
 
     name = models.CharField(max_length=150)
     address = models.CharField(max_length=255, blank=True, null=True)
-    manager = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='stores', blank=True, null=True)
+    storekeeper = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='stores', blank=True, null=True)
     is_central = models.BooleanField(default=False)
 
     class Meta(BaseModel.Meta):

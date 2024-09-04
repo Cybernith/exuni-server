@@ -3,7 +3,7 @@ from django.urls import path
 
 from main.lists.views import BusinessListView, StoreListView, CurrencyListView, SupplierListView
 from main.views import BusinessApiView, BusinessDetailView, StoreApiView, StoreDetailView, CurrencyApiView, \
-    CurrencyDetailView, SupplierApiView, SupplierDetailView, CurrencyListCreate, CurrencyCRUD
+    CurrencyDetailView, SupplierApiView, SupplierDetailView, CurrencyListCreate, CurrencyCRUD, StorekeeperApiView
 
 app_name = 'main'
 urlpatterns = [
@@ -14,6 +14,7 @@ urlpatterns = [
     url(r'^store$', StoreApiView.as_view(), name='storeApiView'),
     url(r'^store/(?P<pk>[0-9]+)$', StoreDetailView.as_view(), name='storeDetailView'),
     url(r'^store/all$', StoreListView.as_view(), name='storeListView'),
+    url(r'^storekeeper/all$', StorekeeperApiView.as_view(), name='storekeeperApiView'),
 
     url(r'^currency$', CurrencyApiView.as_view(), name='currencyApiView'),
     url(r'^currency/(?P<pk>[0-9]+)$', CurrencyDetailView.as_view(), name='currencyDetailView'),

@@ -17,6 +17,9 @@ from helpers.views.ListCreateAPIViewWithAutoFinancialYear import ListCreateAPIVi
 from rest_framework import generics
 from rest_framework.pagination import LimitOffsetPagination
 
+from users.models import User
+from users.serializers import UserSimpleSerializer
+
 
 class BusinessApiView(APIView):
     permission_classes = (IsAuthenticated, BasicObjectPermission)
@@ -227,3 +230,13 @@ class SupplierDetailView(APIView):
         query = self.get_object(pk)
         query.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class StorekeeperApiView(APIView):
+    permission_classes = (IsAuthenticated, BasicObjectPermission)
+    permission_basename = 'user'
+
+    def get(self, request):
+        query = User.objects.filter(user_type=User.STORE_KEEPER)
+        serializers = UserSimpleSerializer(query, many=True, context={'request': request})
+        return Response(serializers.data, status=status.HTTP_200_OK)
