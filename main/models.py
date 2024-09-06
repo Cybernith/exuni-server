@@ -3,6 +3,8 @@ from django.db import models
 from helpers.models import BaseModel, DECIMAL
 from users.models import custom_upload_to, User
 from colorfield.fields import ColorField
+import os
+import binascii
 
 class Business(BaseModel):
     ONLINE_MARKET = 'om'
@@ -19,14 +21,30 @@ class Business(BaseModel):
     domain_address = models.CharField(max_length=150, blank=True, null=True)
     logo = models.ImageField(upload_to=custom_upload_to, null=True, blank=True, default=None)
     api_token = models.CharField(max_length=150, blank=True, null=True)
-    primary_business_color = ColorField(blank=True, null=True)
-    secondary_business_color = ColorField(blank=True, null=True)
-    theme_business_color = ColorField(blank=True, null=True)
+    primary_business_color = ColorField(default='#FF8700')
+    secondary_business_color = ColorField(default='#002357')
+    theme_business_color = ColorField(default='#dae3ed')
     business_owner_national_card_picture = models.ImageField(upload_to=custom_upload_to,
                                                              null=True, blank=True, default=None)
     about_us = models.CharField(max_length=255, blank=True, null=True)
     address = models.CharField(max_length=255, blank=True, null=True)
     business_type = models.CharField(max_length=2, choices=BUSINESS_TYPES, default=ONLINE_MARKET)
+    admin = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='business', blank=True, null=True)
+    phone = models.CharField(max_length=11, blank=True, null=True)
+
+
+    @property
+    def new_api_token(self):
+        return binascii.hexlify(os.urandom(50)).decode()
+
+    def save(self, *args, **kwargs):
+        if not self.id:
+            api_token = self.new_api_token
+            while Business.objects.filter(api_token=api_token).exists():
+                api_token = self.new_api_token
+            self.api_token = api_token
+
+        super().save(*args, **kwargs)
 
     class Meta(BaseModel.Meta):
         verbose_name = 'Business'
