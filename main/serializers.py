@@ -1,5 +1,6 @@
 from rest_framework import serializers
 
+from helpers.serializers import SModelSerializer
 from main.models import Business, Store, Currency, Supplier
 from users.serializers import UserSimpleSerializer
 
@@ -13,6 +14,22 @@ class BusinessSerializer(serializers.ModelSerializer):
         read_only_fields = ('created_at', 'updated_at')
         model = Business
         fields = '__all__'
+
+
+class BusinessLogoUpdateSerializer(SModelSerializer):
+    logo = serializers.ImageField(required=False)
+
+    class Meta:
+        model = Business
+        fields = ('id', 'logo')
+
+
+class BusinessOwnerNationalCardPictureUpdateSerializer(SModelSerializer):
+    business_owner_national_card_picture = serializers.ImageField(required=False)
+
+    class Meta:
+        model = Business
+        fields = ('id', 'business_owner_national_card_picture')
 
 
 class StoreSerializer(serializers.ModelSerializer):

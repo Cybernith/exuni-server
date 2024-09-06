@@ -1,6 +1,7 @@
 from main.lists.filters import CurrencyFilter
 from main.models import Business, Store, Currency, Supplier
-from main.serializers import BusinessSerializer, StoreSerializer, CurrencySerializer, SupplierSerializer
+from main.serializers import BusinessSerializer, StoreSerializer, CurrencySerializer, SupplierSerializer, \
+    BusinessLogoUpdateSerializer, BusinessOwnerNationalCardPictureUpdateSerializer
 
 from django.http import Http404
 from django.utils.decorators import method_decorator
@@ -19,6 +20,9 @@ from rest_framework.pagination import LimitOffsetPagination
 
 from users.models import User
 from users.serializers import UserSimpleSerializer
+from rest_framework.parsers import MultiPartParser, FormParser
+from helpers.models import manage_files
+from django.db.models import QuerySet
 
 
 class BusinessApiView(APIView):
@@ -66,6 +70,34 @@ class BusinessDetailView(APIView):
         query = self.get_object(pk)
         query.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class BusinessLogoUpdateView(generics.UpdateAPIView):
+    permission_classes = (IsAuthenticated,)
+    permission_basename = 'business'
+    serializer_class = BusinessLogoUpdateSerializer
+    parser_classes = (MultiPartParser, FormParser)
+
+    def get_queryset(self) -> QuerySet:
+        return Business.objects.filter(id=self.request.data['id'])
+
+    def perform_update(self, serializer: BusinessLogoUpdateSerializer) -> None:
+        manage_files(serializer.instance, self.request.data, ['logo'])
+        serializer.save()
+
+
+class BusinessOwnerNationalCardPictureUpdateView(generics.UpdateAPIView):
+    permission_classes = (IsAuthenticated,)
+    permission_basename = 'business'
+    serializer_class = BusinessOwnerNationalCardPictureUpdateSerializer
+    parser_classes = (MultiPartParser, FormParser)
+
+    def get_queryset(self) -> QuerySet:
+        return Business.objects.filter(id=self.request.data['id'])
+
+    def perform_update(self, serializer: BusinessOwnerNationalCardPictureUpdateSerializer) -> None:
+        manage_files(serializer.instance, self.request.data, ['business_owner_national_card_picture'])
+        serializer.save()
 
 
 class StoreApiView(APIView):
