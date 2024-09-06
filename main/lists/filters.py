@@ -53,7 +53,7 @@ class CurrencyFilter(filters.FilterSet):
         fields = {
             'id': ('exact',),
             'name': BASE_FIELD_FILTERS,
-            'exchange_rate_to_rial': BASE_FIELD_FILTERS,
+            'exchange_rate_to_toman': BASE_FIELD_FILTERS,
         }
 
 

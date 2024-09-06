@@ -67,17 +67,17 @@ class Store(BaseModel):
 
 class Currency(BaseModel):
     name = models.CharField(max_length=150)
-    exchange_rate_to_rial = DECIMAL()
+    exchange_rate_to_toman = models.IntegerField(default=1)
 
     def exchange_to_rial(self, amount):
         if amount:
-            return amount * self.exchange_rate_to_rial
+            return amount * self.exchange_rate_to_toman
         else:
             return 0
 
     def exchange_rial_to_currency(self, amount):
         if amount:
-            return amount / self.exchange_rate_to_rial
+            return amount / self.exchange_rate_to_toman
         else:
             return 0
 
