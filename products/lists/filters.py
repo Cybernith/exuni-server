@@ -5,10 +5,14 @@ from products.models import Brand, Avail, ProductProperty, Category, Product, Pr
 
 
 def supplier_name_filter(queryset, name, value):
+    return queryset.filter(supplier__name=value)
+
+def supplier_name_contains_filter(queryset, name, value):
     return queryset.filter(supplier__name__contains=value)
 
 class BrandFilter(filters.FilterSet):
     supplier_name = filters.CharFilter(method=supplier_name_filter)
+    supplier_name__icontains = filters.CharFilter(method=supplier_name_contains_filter)
 
     class Meta:
         model = Brand
@@ -43,7 +47,17 @@ class ProductPropertyFilter(filters.FilterSet):
         }
 
 
+def parent_name_filter(queryset, name, value):
+    return queryset.filter(parent__name=value)
+
+
+def parent_name_contains_filter(queryset, name, value):
+    return queryset.filter(parent__name__contains=value)
+
+
 class CategoryFilter(filters.FilterSet):
+    parent_name = filters.CharFilter(method=parent_name_filter)
+    parent_name__icontains = filters.CharFilter(method=parent_name_contains_filter)
 
     class Meta:
         model = Category

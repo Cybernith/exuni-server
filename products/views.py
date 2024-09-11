@@ -8,7 +8,7 @@ from rest_framework import status
 
 from products.models import Brand, Avail, ProductProperty, Category, Product, ProductGallery
 from products.serializers import BrandSerializer, AvailSerializer, ProductPropertySerializer, CategorySerializer, \
-    ProductSerializer, ProductGallerySerializer, BrandLogoUpdateSerializer
+    ProductSerializer, ProductGallerySerializer, BrandLogoUpdateSerializer, CategoryPictureUpdateSerializer
 
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework import generics
@@ -215,6 +215,20 @@ class CategoryDetailView(APIView):
         query = self.get_object(pk)
         query.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class CategoryPictureUpdateView(generics.UpdateAPIView):
+    permission_classes = (IsAuthenticated,)
+    permission_basename = 'category'
+    serializer_class = CategoryPictureUpdateSerializer
+    parser_classes = (MultiPartParser, FormParser)
+
+    def get_queryset(self) -> QuerySet:
+        return Category.objects.filter(id=self.request.data['id'])
+
+    def perform_update(self, serializer: CategoryPictureUpdateSerializer) -> None:
+        manage_files(serializer.instance, self.request.data, ['logo'])
+        serializer.save()
 
 
 class ProductApiView(APIView):

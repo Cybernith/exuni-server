@@ -43,11 +43,20 @@ class ProductPropertySerializer(serializers.ModelSerializer):
 
 class CategorySerializer(serializers.ModelSerializer):
     created_by = UserSimpleSerializer(read_only=True)
+    parent_name = serializers.CharField(source='parent.name', read_only=True)
 
     class Meta:
-        read_only_fields = ('created_at', 'updated_at')
+        read_only_fields = ('created_at', 'updated_at', 'picture')
         model = Category
         fields = '__all__'
+
+
+class CategoryPictureUpdateSerializer(SModelSerializer):
+    picture = serializers.ImageField(required=False)
+
+    class Meta:
+        model = Category
+        fields = ('id', 'picture')
 
 
 class ProductGallerySerializer(serializers.ModelSerializer):
