@@ -11,7 +11,7 @@ class BusinessSerializer(serializers.ModelSerializer):
     admin_name = serializers.CharField(source='admin.name', read_only=True)
 
     class Meta:
-        read_only_fields = ('created_at', 'updated_at')
+        read_only_fields = ('created_at', 'updated_at', 'logo', 'business_owner_national_card_picture')
         model = Business
         fields = '__all__'
 

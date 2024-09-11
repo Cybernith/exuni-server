@@ -4,13 +4,14 @@ from products.lists.views import BrandListView, AvailListView, ProductPropertyLi
     ProductListView, CategoryListView
 from products.views import BrandApiView, BrandDetailView, AvailApiView, AvailDetailView, ProductPropertyApiView, \
     ProductPropertyDetailView, CategoryApiView, CategoryDetailView, ProductApiView, ProductDetailView, \
-    ProductGalleryApiView, ProductGalleryDetailView, GalleryOfProductApiView
+    ProductGalleryApiView, ProductGalleryDetailView, GalleryOfProductApiView, BrandLogoUpdateView
 
 app_name = 'products'
 urlpatterns = [
     url(r'^brand$', BrandApiView.as_view(), name='brandApiView'),
     url(r'^brand/(?P<pk>[0-9]+)$', BrandDetailView.as_view(), name='brandDetailView'),
     url(r'^brand/all$', BrandListView.as_view(), name='brandListView'),
+    url(r'^brandsLogoUpdate/(?P<pk>[0-9]+)$', BrandLogoUpdateView.as_view(), name='brandLogoUpdateView'),
 
     url(r'^avail$', AvailApiView.as_view(), name='availApiView'),
     url(r'^avail/(?P<pk>[0-9]+)$', AvailDetailView.as_view(), name='availDetailView'),

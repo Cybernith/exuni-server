@@ -1,16 +1,26 @@
 from rest_framework import serializers
 
+from helpers.serializers import SModelSerializer
 from products.models import Brand, Avail, ProductProperty, Category, Product, ProductGallery
 from users.serializers import UserSimpleSerializer
 
 
 class BrandSerializer(serializers.ModelSerializer):
     created_by = UserSimpleSerializer(read_only=True)
+    supplier_name = serializers.CharField(source='supplier.name', read_only=True)
 
     class Meta:
-        read_only_fields = ('created_at', 'updated_at')
+        read_only_fields = ('created_at', 'updated_at', 'logo')
         model = Brand
         fields = '__all__'
+
+
+class BrandLogoUpdateSerializer(SModelSerializer):
+    logo = serializers.ImageField(required=False)
+
+    class Meta:
+        model = Brand
+        fields = ('id', 'logo')
 
 
 class AvailSerializer(serializers.ModelSerializer):

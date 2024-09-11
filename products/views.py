@@ -8,8 +8,12 @@ from rest_framework import status
 
 from products.models import Brand, Avail, ProductProperty, Category, Product, ProductGallery
 from products.serializers import BrandSerializer, AvailSerializer, ProductPropertySerializer, CategorySerializer, \
-    ProductSerializer, ProductGallerySerializer
+    ProductSerializer, ProductGallerySerializer, BrandLogoUpdateSerializer
 
+from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework import generics
+from helpers.models import manage_files
+from django.db.models import QuerySet
 
 class BrandApiView(APIView):
     permission_classes = (IsAuthenticated, BasicObjectPermission)
@@ -56,6 +60,20 @@ class BrandDetailView(APIView):
         query = self.get_object(pk)
         query.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class BrandLogoUpdateView(generics.UpdateAPIView):
+    permission_classes = (IsAuthenticated,)
+    permission_basename = 'brand'
+    serializer_class = BrandLogoUpdateSerializer
+    parser_classes = (MultiPartParser, FormParser)
+
+    def get_queryset(self) -> QuerySet:
+        return Brand.objects.filter(id=self.request.data['id'])
+
+    def perform_update(self, serializer: BrandLogoUpdateSerializer) -> None:
+        manage_files(serializer.instance, self.request.data, ['logo'])
+        serializer.save()
 
 
 class AvailApiView(APIView):

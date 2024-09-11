@@ -222,7 +222,7 @@ class SupplierApiView(APIView):
     permission_basename = 'supplier'
 
     def get(self, request):
-        query = Store.objects.all()
+        query = Supplier.objects.all()
         serializers = SupplierSerializer(query, many=True, context={'request': request})
         return Response(serializers.data, status=status.HTTP_200_OK)
 

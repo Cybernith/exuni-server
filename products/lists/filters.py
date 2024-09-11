@@ -4,7 +4,11 @@ from helpers.filters import BASE_FIELD_FILTERS
 from products.models import Brand, Avail, ProductProperty, Category, Product, ProductGallery
 
 
+def supplier_name_filter(queryset, name, value):
+    return queryset.filter(supplier__name__contains=value)
+
 class BrandFilter(filters.FilterSet):
+    supplier_name = filters.CharFilter(method=supplier_name_filter)
 
     class Meta:
         model = Brand
