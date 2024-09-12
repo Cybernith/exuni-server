@@ -153,7 +153,10 @@ class Product(BaseModel):
 
     @property
     def is_expired_closed(self):
-        return self.expired_date.__le__(datetime.date.today() - relativedelta(months=1))
+        if self.expired_date:
+            return self.expired_date.__le__(datetime.date.today() - relativedelta(months=2))
+        else:
+            return False
 
     @property
     def content_production_completed(self):

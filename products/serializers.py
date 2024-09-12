@@ -74,7 +74,7 @@ class ProductSerializer(serializers.ModelSerializer):
     avails = AvailSerializer(many=True, read_only=True)
     properties = ProductPropertySerializer(many=True, read_only=True)
     category = CategorySerializer(read_only=True)
-    brand = CategorySerializer(read_only=True)
+    brand = BrandSerializer(read_only=True)
     made_in = serializers.ReadOnlyField()
     is_domestic = serializers.ReadOnlyField()
     inventory = serializers.ReadOnlyField()
