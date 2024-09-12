@@ -81,6 +81,7 @@ class ProductSerializer(serializers.ModelSerializer):
     is_freeze = serializers.ReadOnlyField()
     is_expired_closed = serializers.ReadOnlyField()
     content_production_completed = serializers.ReadOnlyField()
+    status_display = serializers.CharField(source='get_status_display', read_only=True)
 
     class Meta:
         read_only_fields = ('created_at', 'updated_at')
