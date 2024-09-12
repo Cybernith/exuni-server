@@ -29,7 +29,7 @@ urlpatterns = [
         name='categoryPictureUpdateView'),
 
     url(r'^product$', ProductApiView.as_view(), name='productApiView'),
-    url(r'^product/(?P<pk>[0-9]+)$', ProductDetailView.as_view(), name='productDetailView'),
+    url(r'^product/(?P<pk>[0-9]+)/$', ProductDetailView.as_view(), name='productDetailView'),
     url(r'^product/all$', ProductListView.as_view(), name='productListView'),
 
     url(r'^productGallery$', ProductGalleryApiView.as_view(), name='productGalleryApiView'),
