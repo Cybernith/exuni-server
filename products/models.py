@@ -100,8 +100,14 @@ class Product(BaseModel):
     product_id = models.CharField(max_length=150, unique=True,
                                   error_messages={'unique': "کالا با این شناسه از قبل در اکسونی ثبت شده"})
 
+    group_id = models.CharField(max_length=150, blank=True, null=True)
+
     name = models.CharField(max_length=150)
+
     picture = models.ImageField(upload_to=custom_upload_to, null=True, blank=True, default=None)
+    first_texture_picture = models.ImageField(upload_to=custom_upload_to, null=True, blank=True, default=None)
+    second_texture_picture = models.ImageField(upload_to=custom_upload_to, null=True, blank=True, default=None)
+
     first_inventory = models.IntegerField(default=0)
     shelf_code = models.IntegerField(null=True, blank=True)
     min_inventory = models.IntegerField(default=0)
