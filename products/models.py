@@ -9,7 +9,7 @@ from users.models import custom_upload_to, User
 
 
 class Brand(BaseModel):
-    name = models.CharField(max_length=150)
+    name = models.CharField(max_length=150, unique=True)
     logo = models.ImageField(upload_to=custom_upload_to, null=True, blank=True, default=None)
     is_domestic = models.BooleanField(default=True)
     made_in = models.CharField(max_length=150, blank=True, null=True)
@@ -113,6 +113,7 @@ class Product(BaseModel):
     min_inventory = models.IntegerField(default=0)
 
     price = DECIMAL()
+    sale_price = DECIMAL()
     shipping_cost = DECIMAL()
     currency = models.ForeignKey(Currency, on_delete=models.SET_NULL, related_name='products', blank=True, null=True)
     profit_percent = DECIMAL()
