@@ -58,58 +58,6 @@ class BaseManager(models.Manager):
 
         return queryset.none()
 
-    def inFinancialYear(self, financial_year=None):
-        from helpers.functions import get_current_user
-        from companies.models import Company
-
-        qs = super().get_queryset()
-
-        company: Company = None
-        if financial_year:
-            company = financial_year.company
-        else:
-            user = get_current_user()
-
-            if not user:
-                return super().get_queryset()
-
-            financial_year = user.active_financial_year
-            if financial_year:
-                company = financial_year.company
-
-        q = Q(financial_year__company=company)
-
-        if self.model._meta.backward_financial_year:
-            q &= Q(financial_year__id__lte=financial_year.id)
-        else:
-            q &= Q(financial_year=financial_year.id)
-
-        if self.model._meta.has_global_objects:
-            q |= Q(financial_year=None)
-
-        return qs.filter(q)
-
-    def inCompany(self, company=None):
-        from helpers.functions import get_current_user
-        from companies.models import Company
-
-        qs = super().get_queryset()
-
-        company: Company = company
-        if company is None:
-            user = get_current_user()
-            if not user:
-                return super().get_queryset()
-            company = user.active_company
-
-        filters = Q(company=company)
-
-        if hasattr(self.model, 'is_system_predefined'):
-            filters |= Q(is_system_predefined=True)
-
-        qs = qs.filter(filters)
-
-        return qs
 
 
 class BaseModel(models.Model):
@@ -144,7 +92,6 @@ class BaseModel(models.Model):
         super().save(*args, **kwargs)
 
     def delete(self, *args, **kwargs):
-        from sanads.models import SanadItem
 
         try:
             result = super(BaseModel, self).delete(*args, **kwargs)
@@ -155,10 +102,6 @@ class BaseModel(models.Model):
                     'related_id': obj.id,
                     'related_class': obj.__class__.__name__
                 }
-
-                if isinstance(obj, SanadItem):
-                    data['financial_year'] = obj.financial_year.name
-                    data['code'] = obj.sanad.code
 
                 related_objects.append(data)
 

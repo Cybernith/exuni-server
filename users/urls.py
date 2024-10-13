@@ -10,7 +10,7 @@ from users.views.rolesView import RoleCreateView, RoleUpdateView, RoleDestroyVie
 from users.views.usersView import CurrentUserApiView, UserCreateView, \
     UserUpdateView, UserListView, ChangePasswordView, SendVerificationCodeView, CheckVerificationCodeView, \
     ChangePasswordByVerificationCodeView, ChangePhoneView, \
-    CheckVerificationForRegister, UserByUsernameSearch, SendVerificationCodeForRegisterView, \
+    CheckVerificationForRegister, \
     CurrentUserNotificationApiView
 
 router = DefaultRouter()
@@ -26,7 +26,6 @@ urlpatterns = router.urls + [
     url(r'^list$', UserListView.as_view(), name='list-users'),
 
     url(r'^sendVerificationCode$', SendVerificationCodeView.as_view()),
-    url(r'^sendVerificationCodeForRegister$', SendVerificationCodeForRegisterView.as_view()),
     url(r'^checkVerificationCode$', CheckVerificationCodeView.as_view()),
     url(r'^checkVerificationForRegister$', CheckVerificationForRegister.as_view()),
     url(r'^changePasswordByVerificationCode$', ChangePasswordByVerificationCodeView.as_view()),
@@ -50,7 +49,5 @@ urlpatterns = router.urls + [
     url('notifications/changeStatus', ChangeUserNotificationStatusView.as_view(),
         name='change-user-notification-status'),
     url('notifications', UserNotificationListView.as_view(), name='user-notifications-list'),
-
-    path('search/<str:username>/', UserByUsernameSearch.as_view(), name='userByUsernameSearch'),
 
 ]
