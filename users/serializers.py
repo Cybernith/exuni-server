@@ -48,7 +48,10 @@ class UserSimpleSerializer(SModelSerializer):
     cover_picture = serializers.ImageField(read_only=True)
 
     def get_name(self, obj: User):
-        return obj.first_name + ' ' + obj.last_name
+        if obj.first_name and obj.last_name:
+            return obj.first_name + ' ' + obj.last_name
+        else:
+            return obj.username
 
     class Meta:
         model = get_user_model()
@@ -71,7 +74,10 @@ class UserListSerializer(SModelSerializer):
         return obj.notifications.exclude(status=UserNotification.READ).count()
 
     def get_name(self, obj: User):
-        return obj.first_name + ' ' + obj.last_name
+        if obj.first_name and obj.last_name:
+            return obj.first_name + ' ' + obj.last_name
+        else:
+            return obj.username
 
     def get_has_two_factor_authentication(self, obj: User):
         return obj.secret_key is not None
