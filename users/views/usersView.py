@@ -1,6 +1,5 @@
 from django.contrib.auth import authenticate
 from django.db.models import QuerySet
-from django.http import Http404
 from rest_framework import status, generics
 from rest_framework.exceptions import ValidationError
 from rest_framework.generics import get_object_or_404
@@ -9,12 +8,11 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from helpers.auth import BasicCRUDPermission
-from helpers.functions import get_current_user
 from helpers.models import manage_files
 from helpers.views.recaptcha import RecaptchaView
 from users.models import User, PhoneVerification
 from users.serializers import UserListSerializer, UserCreateSerializer, UserUpdateSerializer, \
-     UserRetrieveSerializer, UserNotificationSerializer, CurrentUserNotificationSerializer
+     UserRetrieveSerializer, CurrentUserNotificationSerializer
 from rest_framework.parsers import MultiPartParser, FormParser
 
 
@@ -80,32 +78,6 @@ class SendVerificationCodeView(APIView, RecaptchaView):
             return Response(data={'phone_sample': phone_sample}, status=status.HTTP_200_OK)
         else:
             return Response(status=status.HTTP_404_NOT_FOUND)
-
-
-class SendVerificationCodeForRegisterView(APIView, RecaptchaView):
-    throttle_scope = 'verification_code'
-
-    def post(self, request):
-        data = request.data
-        username = data.get('username')
-
-        if not self.request.user:
-            self.verify_recaptcha()
-
-        if User.objects.filter(username=username).exists():
-            raise ValidationError('کد ملی قبلا در سامانه ثبت شده است')
-        else:
-            phone = PhoneVerification.send_verification_code(username=None, phone=data.get('phone'))
-
-            if phone is not None:
-
-                phone_sample = phone[8:] + " **** " + phone[:4]
-
-                return Response(data={'phone_sample': phone_sample}, status=status.HTTP_200_OK)
-
-            else:
-
-                return Response(status=status.HTTP_404_NOT_FOUND)
 
 
 class CheckVerificationCodeView(APIView, RecaptchaView):
@@ -212,20 +184,3 @@ class ChangePasswordByVerificationCodeView(APIView, RecaptchaView):
         except User.DoesNotExist:
             raise ValidationError('نام کاربری اشتباه می باشد')
 
-
-
-
-class UserByUsernameSearch(APIView):
-    permission_classes = (IsAuthenticated,)
-    permission_basename = 'workshop'
-
-    def get_object(self, username):
-        try:
-            return User.objects.hasAccess('get').get(username=username)
-        except User.DoesNotExist:
-            raise Http404
-
-    def get(self, request, username):
-        query = self.get_object(username)
-        serializers = UserUpdateSerializer(query)
-        return Response(serializers.data, status=status.HTTP_200_OK)

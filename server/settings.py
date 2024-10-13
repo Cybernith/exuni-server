@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.admindocs',
+    'location_field.apps.DefaultConfig',
 
     'debug_toolbar',
 
@@ -50,14 +51,22 @@ INSTALLED_APPS = [
     'rest_framework_swagger',
     'rest_framework.authtoken',
     'django_extensions',
+    'colorfield',
 
     'users',
     'home',
-
-
+    'main',
+    'products',
+    'entrance',
 
 ]
 
+LOCATION_FIELD = {
+    'provider.google.api': '//maps.google.com/maps/api/js?sensor=false',
+    'provider.google.api_key': '<PLACE YOUR API KEY HERE>',
+    'provider.google.api_libraries': '',
+    'provider.google.map.type': 'ROADMAP',
+}
 ALLOWED_HOSTS = ['*']
 
 MIDDLEWARE = [
@@ -99,7 +108,6 @@ CORS_ALLOW_HEADERS = [
     'x-requested-with',
     'access-control-allow-origin',
     'Access-Control-Allow-Origin',
-    'financial-year',
 ]
 
 TEMPLATES = [

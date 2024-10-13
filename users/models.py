@@ -9,7 +9,7 @@ from rest_framework.exceptions import ValidationError, PermissionDenied
 
 from helpers.models import BaseModel, BaseManager
 from helpers.sms import Sms
-
+from location_field.models.plain import PlainLocationField
 
 class Role(BaseModel):
     name = models.CharField(max_length=255)
@@ -38,6 +38,108 @@ def custom_upload_to(instance, filename):
 
 
 class User(AbstractUser, BaseModel):
+
+    BANSAR = 'BANSAR'
+    BCDEVE = 'BCDEVE'
+    BCITY = 'BCITY'
+    BDAY = 'BDAY'
+    BEDIRA = 'BEDIRA'
+    BEGHTE = 'BEGHTE'
+    BGHARZ = 'BGHARZ'
+    BHEKMA = 'BHEKMA'
+    BINDMI = 'BINDMI'
+    BKARAF = 'BKARAF'
+    BKESHA = 'BKESHA'
+    BMASKA = 'BMASKA'
+    BMELLA = 'BMELLA'
+    BMELLI = 'BMELLI'
+    BPARSI = 'BPARSI'
+    BPASAR = 'BPASAR'
+    BPOST = 'BPOST'
+    BREFAH = 'BREFAH'
+    BSADER = 'BSADER'
+    BSAMAN = 'BSAMAN'
+    BSARMA = 'BSARMA'
+    BSEPAH = 'BSEPAH'
+    BSINA = 'BSINA'
+    BTEJAR = 'BTEJAR'
+    BTOURI = 'BTOURI'
+    BRESALA = 'BRESALA'
+    BAYAN = 'BAYAN'
+    CHART = 'CHART'
+    EURO = 'EURO'
+    KHAVA = 'KHAVA'
+    VENE = 'VENE'
+    ESLA = 'ESLA'
+    FUTU = 'FUTU'
+    CASP = 'CASP'
+    TOSE = 'TOSE'
+    MELAL = 'MELAL'
+    NOR = 'NOR'
+    ZAMIN = 'ZAMIN'
+
+    BANK_NAMES = (
+        (BCDEVE, 'بانک توسعه تعاون'),
+        (BCITY, 'بانک شهر'),
+        (BDAY, 'بانک دی'),
+        (BEDIRA, 'بانک توسعه صادرات  ایران'),
+        (BEGHTE, 'بانک اقتصاد نوین'),
+        (BGHARZ, 'بانک قرض الحسنه مهر ایران'),
+        (BINDMI, 'بانک صنعت و معدن'),
+        (BKARAF, 'بانک کارآفرین'),
+        (BKESHA, 'بانک کشاورزی'),
+        (BMASKA, 'بانک مسکن'),
+        (BMELLA, 'بانک ملت'),
+        (BMELLI, 'بانک  ملی ایران'),
+        (BPARSI, 'بانک پارسیان'),
+        (BPASAR, 'بانک پاسارگاد'),
+        (BPOST, 'پست بانک'),
+        (BREFAH, 'بانک  رفاه کارگران'),
+        (BSADER, 'بانک صادرات'),
+        (BSAMAN, 'بانک سامان'),
+        (BSARMA, 'بانک سرمایه'),
+        (BSEPAH, 'بانک  سپه'),
+        (BSINA, 'بانک سینا'),
+        (BTEJAR, 'بانک تجارت'),
+        (BTOURI, 'بانک  گردشگری'),
+        (BRESALA, 'بانک قرض الحسنه رسالت'),
+        (BAYAN, 'بانک آینده'),
+        (CHART, 'استاندارد چارترد'),
+        (EURO, 'بانک تجاری ایران و اروپا'),
+        (KHAVA, 'بانک خاورمیانه'),
+        (VENE, 'بانک مشترک ایران - ونزوئلا'),
+        (ESLA, 'تعاون اسلامی برای سرمایه‌گذاری'),
+        (FUTU, 'فیوچر بانک (المستقبل)'),
+        (CASP, 'مؤسسه اعتباری غیربانکی کاسپین '),
+        (TOSE, 'مؤسسه اعتباری غیربانکی توسعه '),
+        (MELAL, 'مؤسسه اعتباری غیربانکی ملل '),
+        (NOR, 'مؤسسه اعتباری غیربانکی نور '),
+        (ZAMIN, 'بانک ایران زمین'),
+
+    )
+
+    MANAGER = 'ma'
+    STORE_KEEPER = 'stke'
+    CONTENT_PRODUCTOR = 'copr'
+    SALE_ADMIN = 'saad'
+    CUSTOMER = 'cu'
+    PACKING_ADMIN = 'paad'
+    BUSINESS_OWNER = 'buow'
+    PRODUCT_DEPARTURE_ADMIN = 'prdead'
+    SUPPLIER_ADMIN = 'suad'
+
+    USER_TYPES = (
+        (MANAGER, 'مدیر'),
+        (STORE_KEEPER, 'انباردار'),
+        (CONTENT_PRODUCTOR, 'ادمین  تولید محتوا'),
+        (SALE_ADMIN, 'ادمین  فروش دستی'),
+        (CUSTOMER, 'مشتری'),
+        (PACKING_ADMIN, 'ادمین بسته بندی'),
+        (BUSINESS_OWNER, 'صاحب کسب و کار'),
+        (PRODUCT_DEPARTURE_ADMIN, 'ادمین خروج کالا'),
+        (SUPPLIER_ADMIN, 'ادمین تامین کننده'),
+    )
+
     superuser = models.ForeignKey('self', on_delete=models.CASCADE, related_name='users', null=True, blank=True)
 
     username = models.CharField(
@@ -50,27 +152,28 @@ class User(AbstractUser, BaseModel):
             )
         ],
         error_messages={
-            'unique': "A user with that username already exists."
+            'unique': "این نام کاربری از قبل در اکسونی ثبت شده"
         },
     )
 
-
-    first_name = models.CharField(max_length=30)
-    last_name = models.CharField(max_length=150)
-    phone = models.CharField(max_length=11)
-
-    # this field is not required, because it moved to CompanyUser
-    roles = models.ManyToManyField(Role, related_name='users', blank=True)
-
-    # this field is required for cave users
-    modules = ArrayField(models.CharField(max_length=30), default=list, blank=True)
-
-    max_companies = models.IntegerField(default=0)
-    max_users = models.IntegerField(default=0)
-
-    secret_key = models.CharField(max_length=32, null=True, blank=True, default=None)
-
+    national_code = models.CharField(max_length=15, blank=True, null=True)
+    first_name = models.CharField(max_length=30, blank=True, null=True)
+    last_name = models.CharField(max_length=150, blank=True, null=True)
+    mobile_number = models.CharField(max_length=11, blank=True, null=True)
     profile_picture = models.ImageField(upload_to=custom_upload_to, null=True, blank=True, default=None)
+    cover_picture = models.ImageField(upload_to=custom_upload_to, null=True, blank=True, default=None)
+    bank_account_name = models.CharField(max_length=10, choices=BANK_NAMES, blank=True, null=True)
+    bank_account_number = models.CharField(max_length=50, blank=True, null=True)
+    bank_card_number = models.CharField(max_length=50, blank=True, null=True)
+    bank_sheba_number = models.CharField(max_length=50, blank=True, null=True)
+    location = PlainLocationField(based_fields=['city'], zoom=7, blank=True, null=True)
+    city = models.CharField(max_length=30, blank=True, null=True)
+    address = models.CharField(max_length=255, blank=True, null=True)
+    about_us = models.CharField(max_length=255, blank=True, null=True)
+    user_type = models.CharField(max_length=6, choices=USER_TYPES, default=CUSTOMER)
+
+    roles = models.ManyToManyField(Role, related_name='users', blank=True)
+    secret_key = models.CharField(max_length=32, null=True, blank=True, default=None)
 
     @property
     def name(self):
@@ -104,16 +207,16 @@ class User(AbstractUser, BaseModel):
     def get_superuser(self):
         return self.superuser or self
 
-    def has_perm(self, permission_codename, company=None):
+    def has_perm(self, permission_codename):
         return True
 
 
-    def has_object_perm(self, instance: BaseModel, permission_codename, company=None, raise_exception=False):
-        has_perm = self.has_perm(permission_codename, company)
+    def has_object_perm(self, instance: BaseModel, permission_codename, raise_exception=False):
+        has_perm = self.has_perm(permission_codename)
         if not has_perm and instance.created_by == self:
             operation = permission_codename.split('.')[0]
             permission_codename.replace(operation, "{}Own".format(operation))
-            has_perm = self.has_perm(permission_codename, company)
+            has_perm = self.has_perm(permission_codename)
 
         if not has_perm and raise_exception:
             raise PermissionDenied()

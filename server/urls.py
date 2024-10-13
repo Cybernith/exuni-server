@@ -37,6 +37,9 @@ urlpatterns = [
 
     url(r'^login$', ObtainAuthTokenView.as_view(), name='login'),
     url(r'^users/', include('users.urls')),
+    url(r'^main/', include('main.urls')),
+    url(r'^product/', include('products.urls')),
+    url(r'^entrance/', include('entrance.urls')),
 
     path('admin/', admin.site.urls),
 

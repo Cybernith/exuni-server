@@ -1,14 +1,10 @@
 import pyotp
-from datetime import date
-from rest_framework import status
 from rest_framework.authtoken.models import Token
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-
-from helpers.views.recaptcha import RecaptchaView
 
 
 class SecretKeyView(APIView):
@@ -22,13 +18,13 @@ class SecretKeyView(APIView):
         if is_verified:
             return True
         else:
-            raise ValidationError("کد قابل قبول نمی باشد")
+            raise ValidationError("کد اشتباه است")
 
     def get(self, request):
         secret_key = pyotp.random_base32()
         return Response({
             'secret_key': secret_key,
-            'qr_code': pyotp.totp.TOTP(secret_key).provisioning_uri(name=request.user.username, issuer_name="سبحان")
+            'qr_code': pyotp.totp.TOTP(secret_key).provisioning_uri(name=request.user.username, issuer_name="اکسونی")
         })
 
     def put(self, request):
@@ -37,9 +33,6 @@ class SecretKeyView(APIView):
         code = data.get('code', '')
 
         user = request.user
-
-        if user.secret_key is not None:
-            return Response(["ورود دو عاملی برای شما فعال شده است"], status=status.HTTP_400_BAD_REQUEST)
 
         if self.verify(secret_key, code):
             user.secret_key = request.data.get('secret_key')
@@ -56,7 +49,7 @@ class SecretKeyView(APIView):
 
         return Response([])
 
-#RecaptchaView
+
 class ObtainAuthTokenView(ObtainAuthToken):
 
     def post(self, request, *args, **kwargs):
