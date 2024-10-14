@@ -1,3 +1,5 @@
+from django.db.models import QuerySet
+from django.http import Http404
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 
@@ -6,12 +8,16 @@ from rest_framework import status
 from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from entrance.models import EntrancePackage, EntrancePackageItem, StoreReceipt
 from entrance.serializers import EntrancePackageSerializer, EntrancePackageRetrieveSerializer, StoreReceiptSerializer, \
-    StoreReceiptItemSerializer, StoreReceiptRetrieveSerializer, EntrancePackageItemSerializer
-from helpers.auth import BasicCRUDPermission
+    StoreReceiptItemSerializer, StoreReceiptRetrieveSerializer, EntrancePackageItemSerializer, \
+    EntrancePackageFileUploadSerializer
+from helpers.auth import BasicCRUDPermission, BasicObjectPermission
+from helpers.models import manage_files
 from helpers.views.MassRelatedCUD import MassRelatedCUD
+from rest_framework.parsers import FileUploadParser, MultiPartParser, FormParser
 
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -47,6 +53,53 @@ class EntrancePackageCreateView(generics.CreateAPIView):
 
         return Response(EntrancePackageRetrieveSerializer(instance=serializer.instance).data,
                         status=status.HTTP_201_CREATED)
+
+
+class EntrancePackageApiView(APIView):
+    permission_classes = (IsAuthenticated, BasicObjectPermission)
+    permission_basename = 'brand'
+
+    def get(self, request):
+        query = EntrancePackage.objects.all()
+        serializers = EntrancePackageSerializer(query, many=True, context={'request': request})
+        return Response(serializers.data, status=status.HTTP_200_OK)
+
+    def post(self, request):
+        data = request.data
+        serializer = EntrancePackageSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class EntrancePackageDetailView(APIView):
+    permission_classes = (IsAuthenticated, BasicObjectPermission)
+    permission_basename = 'brand'
+
+    def get_object(self, pk):
+        try:
+            return EntrancePackage.objects.get(pk=pk)
+        except EntrancePackage.DoesNotExist:
+            raise Http404
+
+    def get(self, request, pk):
+        query = self.get_object(pk)
+        serializers = EntrancePackageSerializer(query)
+        return Response(serializers.data, status=status.HTTP_200_OK)
+
+    def put(self, request, pk):
+        query = self.get_object(pk)
+        serializer = EntrancePackageSerializer(query, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, pk):
+        query = self.get_object(pk)
+        query.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class EntrancePackageDetailView(generics.RetrieveUpdateAPIView):
@@ -171,4 +224,17 @@ class StoreReceiptDetailView(generics.RetrieveUpdateAPIView):
 
         return Response(StoreReceiptRetrieveSerializer(instance=serializer.instance).data, status=status.HTTP_200_OK)
 
+
+class EntrancePackageFileUpdateView(generics.UpdateAPIView):
+    permission_classes = (IsAuthenticated,)
+    permission_basename = 'entrance_package'
+    serializer_class = EntrancePackageFileUploadSerializer
+    parser_classes = (MultiPartParser, FormParser)
+
+    def get_queryset(self) -> QuerySet:
+        return EntrancePackage.objects.filter(id=self.request.data['id'])
+
+    def perform_update(self, serializer: EntrancePackageFileUploadSerializer) -> None:
+        manage_files(serializer.instance, self.request.data, ['entrance_file'])
+        serializer.save()
 

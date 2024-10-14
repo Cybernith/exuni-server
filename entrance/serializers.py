@@ -103,3 +103,11 @@ class StoreReceiptListSerializer(SModelSerializer):
         fields = '__all__'
         read_only_fields = ('created_at', 'updated_at')
 
+
+class EntrancePackageFileUploadSerializer(SModelSerializer):
+        entrance_file = serializers.FileField(required=False)
+
+        class Meta:
+            model = EntrancePackage
+            fields = ('id', 'entrance_file')
+

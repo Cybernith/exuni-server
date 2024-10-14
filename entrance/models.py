@@ -8,6 +8,9 @@ from main.models import Supplier, Currency, Store
 from products.models import Product
 from users.models import custom_upload_to, User
 
+def excel_upload_to(instance, filename):
+    return 'files/{filename}'.format(filename=filename)
+
 
 class EntrancePackage(BaseModel):
     manager = models.ForeignKey(User, related_name="entrance_packages",
@@ -22,6 +25,7 @@ class EntrancePackage(BaseModel):
     is_received = models.BooleanField(default=False)
     is_verified = models.BooleanField(default=False)
     explanation = EXPLANATION()
+    entrance_file = models.FileField(upload_to=excel_upload_to, blank=True, null=True)
 
     class Meta(BaseModel.Meta):
         verbose_name = 'EntrancePackage'
@@ -36,6 +40,28 @@ class EntrancePackage(BaseModel):
             ('updateOwn.entrance_package', 'ویرایش پکیج ورودی خود'),
             ('deleteOwn.entrance_package', 'حذف پکیج ورودی خود'),
         )
+
+
+class EntrancePackageFileColumn(BaseModel):
+    PRODUCT_CODE = 'c'
+    PRODUCT_NAME = 'n'
+    PRODUCT_PRICE = 'p'
+    PRODUCT_QUANTITY = 'q'
+    PRODUCT_BOX_QUANTITY = 'b'
+
+    KEYS = (
+        (PRODUCT_PRICE, 'مبلغ محصول'),
+        (PRODUCT_NAME, 'نام محصول'),
+        (PRODUCT_CODE, 'کد محصول'),
+        (PRODUCT_QUANTITY, 'تعداد محصول'),
+        (PRODUCT_BOX_QUANTITY, 'تعداد کارتون محصول'),
+    )
+
+    entrance_package = models.ForeignKey(EntrancePackage, related_name="file_columns", on_delete=models.CASCADE)
+    key = models.CharField(max_length=1, choices=KEYS)
+    column_number = models.IntegerField()
+
+
 
 
 class EntrancePackageItem(BaseModel):
