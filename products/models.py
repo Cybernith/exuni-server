@@ -100,6 +100,8 @@ class Product(BaseModel):
     product_id = models.CharField(max_length=150, unique=True,
                                   error_messages={'unique': "کالا با این شناسه از قبل در اکسونی ثبت شده"})
 
+    sixteen_digit_code = models.CharField(max_length=16, blank=True, null=True)
+
     group_id = models.CharField(max_length=150, blank=True, null=True)
 
     name = models.CharField(max_length=150)
