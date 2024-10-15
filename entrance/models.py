@@ -22,10 +22,14 @@ class EntrancePackage(BaseModel):
                                  on_delete=models.SET_NULL, blank=True, null=True)
     store = models.ForeignKey(Store, related_name="entrance_packages",
                               on_delete=models.SET_NULL, blank=True, null=True)
+    currency = models.ForeignKey(Currency, related_name="entrance_packages",
+                              on_delete=models.PROTECT, blank=True, null=True)
     is_received = models.BooleanField(default=False)
     is_verified = models.BooleanField(default=False)
     explanation = EXPLANATION()
     entrance_file = models.FileField(upload_to=excel_upload_to, blank=True, null=True)
+
+    is_inserted = models.BooleanField(default=False)
 
     class Meta(BaseModel.Meta):
         verbose_name = 'EntrancePackage'
@@ -42,39 +46,34 @@ class EntrancePackage(BaseModel):
         )
 
 
-class EntrancePackageFileColumn(BaseModel):
-    PRODUCT_CODE = 'c'
-    PRODUCT_NAME = 'n'
-    PRODUCT_PRICE = 'p'
-    PRODUCT_QUANTITY = 'q'
-    PRODUCTS_PER_BOX = 'b'
+class EntrancePackageItem(BaseModel):
+    MANUAL = 'm'
+    WITH_AMOUNT = 'a'
+    WITH_PERCENTAGE = 'p'
 
-    KEYS = (
-        (PRODUCT_PRICE, 'مبلغ محصول'),
-        (PRODUCT_NAME, 'نام محصول'),
-        (PRODUCT_CODE, 'کد محصول'),
-        (PRODUCT_QUANTITY, 'تعداد محصول'),
-        (PRODUCTS_PER_BOX, 'تعداد کارتون محصول'),
+    IN_CASE_OF_SALES_TYPES = (
+        (MANUAL, 'دستی'),
+        (WITH_AMOUNT, 'مبلغ'),
+        (WITH_PERCENTAGE, 'درصد'),
     )
 
-    entrance_package = models.ForeignKey(EntrancePackage, related_name="file_columns", on_delete=models.CASCADE)
-    key = models.CharField(max_length=1, choices=KEYS)
-    column_number = models.IntegerField()
-
-
-class EntrancePackageItem(BaseModel):
-    entrance_packages = models.ForeignKey(EntrancePackage, related_name="items",
+    entrance_package = models.ForeignKey(EntrancePackage, related_name="items",
                                           on_delete=models.SET_NULL, blank=True, null=True)
     product = models.ForeignKey(Product, related_name="entrance_package_items",
                                 on_delete=models.SET_NULL, blank=True, null=True)
     product_code = models.CharField(max_length=150, null=True, blank=True)
     default_picture = models.ImageField(upload_to=custom_upload_to, null=True, blank=True, default=None)
     default_name = models.CharField(max_length=150)
-    product_in_box_count = models.IntegerField(default=0)
-    box_count = models.IntegerField(default=0)
+    number_of_products_per_box = models.IntegerField(default=0)
+    number_of_box = models.IntegerField(default=0)
+    sixteen_digit_code = models.CharField(max_length=16, blank=True, null=True)
+    barcode = models.CharField(max_length=100, blank=True, null=True)
     default_price = DECIMAL()
+    price_in_case_of_sale = DECIMAL()
+    in_case_of_sale_type = models.CharField(max_length=2, choices=IN_CASE_OF_SALES_TYPES, blank=True, null=True)
     currency = models.ForeignKey(Currency, related_name="entrance_package_items", on_delete=models.SET_NULL,
                                  blank=True, null=True)
+
     margin_profit_percent = DECIMAL()
     content_production_count = models.IntegerField(default=0)
     explanation = EXPLANATION()
@@ -96,6 +95,35 @@ class EntrancePackageItem(BaseModel):
     @property
     def product_count(self):
         return self.box_count * self.product_in_box_count
+
+
+class EntrancePackageFileColumn(BaseModel):
+    PRODUCT_CODE = 'pc'
+    PRODUCT_NAME = 'pn'
+    PRODUCT_PRICE = 'pp'
+    NUMBER_OF_BOXES = 'nb'
+    NUMBER_OF_PRODUCTS_PER_BOX = 'pb'
+    SIXTEEN_DIGIT_CODE = 'sd'
+    PRICE_IN_CASE_OF_SALE = 'ic'
+    BARCODE = 'ba'
+    IMAGE = 'im'
+
+    KEYS = (
+        (PRODUCT_PRICE, 'مبلغ محصول'),
+        (PRODUCT_NAME, 'نام محصول'),
+        (PRODUCT_CODE, 'کد محصول'),
+        (NUMBER_OF_BOXES, 'تعداد کارتون'),
+        (NUMBER_OF_PRODUCTS_PER_BOX, 'تعداد محصول در کارتون'),
+        (SIXTEEN_DIGIT_CODE, 'کد 16 رقمی'),
+        (PRICE_IN_CASE_OF_SALE, 'قیمت در صورت فروش'),
+        (BARCODE, 'بارکد'),
+        (IMAGE, 'تصویر'),
+    )
+
+    entrance_package = models.ForeignKey(EntrancePackage, related_name="file_columns", on_delete=models.CASCADE)
+    key = models.CharField(max_length=2, choices=KEYS)
+    column_number = models.IntegerField()
+    in_case_of_sale_type = models.CharField(max_length=2, choices=EntrancePackageItem.IN_CASE_OF_SALES_TYPES, blank=True, null=True)
 
 
 class StoreReceipt(BaseModel):

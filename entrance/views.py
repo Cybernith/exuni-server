@@ -10,7 +10,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from entrance.models import EntrancePackage, EntrancePackageItem, StoreReceipt
+from entrance.models import EntrancePackage, EntrancePackageItem, StoreReceipt, EntrancePackageFileColumn
 from entrance.serializers import EntrancePackageSerializer, EntrancePackageRetrieveSerializer, StoreReceiptSerializer, \
     StoreReceiptItemSerializer, StoreReceiptRetrieveSerializer, EntrancePackageItemSerializer, \
     EntrancePackageFileUploadSerializer
@@ -18,6 +18,9 @@ from helpers.auth import BasicCRUDPermission, BasicObjectPermission
 from helpers.models import manage_files
 from helpers.views.MassRelatedCUD import MassRelatedCUD
 from rest_framework.parsers import FileUploadParser, MultiPartParser, FormParser
+
+from server.settings import BASE_DIR
+import pandas as pd
 
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -57,7 +60,7 @@ class EntrancePackageCreateView(generics.CreateAPIView):
 
 class EntrancePackageApiView(APIView):
     permission_classes = (IsAuthenticated, BasicObjectPermission)
-    permission_basename = 'brand'
+    permission_basename = 'entrance_package'
 
     def get(self, request):
         query = EntrancePackage.objects.all()
@@ -75,7 +78,7 @@ class EntrancePackageApiView(APIView):
 
 class EntrancePackageDetailView(APIView):
     permission_classes = (IsAuthenticated, BasicObjectPermission)
-    permission_basename = 'brand'
+    permission_basename = 'entrance_package'
 
     def get_object(self, pk):
         try:
@@ -237,4 +240,60 @@ class EntrancePackageFileUpdateView(generics.UpdateAPIView):
     def perform_update(self, serializer: EntrancePackageFileUploadSerializer) -> None:
         manage_files(serializer.instance, self.request.data, ['entrance_file'])
         serializer.save()
+
+
+class EntrancePackageInsertExcelApiView(APIView):
+    permission_classes = (IsAuthenticated, BasicObjectPermission)
+    permission_basename = 'entrance_package'
+
+    def post(self, request):
+        data = request.data
+        entrance_packages_columns = data.get('packages_columns')
+        entrance_package = data.get('entrance_package')
+        entrance_package = EntrancePackage.objects.get(id=entrance_package)
+
+        EntrancePackageFileColumn.objects.filter(entrance_package=entrance_package).delete()
+        for column in entrance_packages_columns:
+            if column['is_in_case_of_sale']:
+                EntrancePackageFileColumn.objects.create(
+                    entrance_package=entrance_package,
+                    key=column['key'],
+                    column_number=column['column_number'],
+                    in_case_of_sale_type=column['in_case_of_sale_type']
+                )
+            else:
+                EntrancePackageFileColumn.objects.create(
+                    entrance_package=entrance_package,
+                    key=column['key'],
+                    column_number=column['column_number']
+                )
+
+        file_path = entrance_package.entrance_file
+        EntrancePackageItem.objects.filter(entrance_package=entrance_package).delete()
+        data = pd.read_excel(file_path, skiprows=0).values
+        for row in data:
+            entrance_package_item = EntrancePackageItem.objects.create(entrance_package=entrance_package)
+            for item in EntrancePackageFileColumn.objects.filter(entrance_package=entrance_package):
+                if item.key == EntrancePackageFileColumn.PRODUCT_CODE:
+                    entrance_package_item.product_code = row[item.column_number - 1]
+                elif item.key == EntrancePackageFileColumn.PRODUCT_NAME:
+                    entrance_package_item.default_name = row[item.column_number - 1]
+                elif item.key == EntrancePackageFileColumn.PRODUCT_PRICE:
+                    entrance_package_item.default_price = row[item.column_number - 1]
+                elif item.key == EntrancePackageFileColumn.NUMBER_OF_BOXES:
+                    entrance_package_item.number_of_box = row[item.column_number - 1]
+                elif item.key == EntrancePackageFileColumn.NUMBER_OF_PRODUCTS_PER_BOX:
+                    entrance_package_item.number_of_products_per_box = row[item.column_number - 1]
+                elif item.key == EntrancePackageFileColumn.SIXTEEN_DIGIT_CODE:
+                    entrance_package_item.sixteen_digit_code = row[item.column_number - 1]
+                elif item.key == EntrancePackageFileColumn.PRICE_IN_CASE_OF_SALE:
+                    entrance_package_item.price_in_case_of_sale = row[item.column_number - 1]
+                    entrance_package_item.in_case_of_sale_type = item.in_case_of_sale_type
+                elif item.key == EntrancePackageFileColumn.BARCODE:
+                    entrance_package_item.barcode = row[item.column_number - 1]
+            entrance_package_item.save()
+
+        entrance_package.is_inserted = True
+        return Response({'msg': 'success'}, status=status.HTTP_201_CREATED)
+
 
