@@ -297,3 +297,52 @@ class EntrancePackageInsertExcelApiView(APIView):
         return Response({'msg': 'success'}, status=status.HTTP_201_CREATED)
 
 
+class GetTableOfPackageApiView(APIView):
+    permission_classes = (IsAuthenticated, BasicObjectPermission)
+    permission_basename = 'entrance_package'
+
+    def get_object(self, pk):
+        try:
+            return EntrancePackage.objects.get(pk=pk)
+        except EntrancePackage.DoesNotExist:
+            raise Http404
+
+    def get(self, request, pk):
+        package = self.get_object(pk)
+
+        if not package.entrance_file:
+            return Response({'message': 'package file is not available'}, status=status.HTTP_204_NO_CONTENT)
+
+        file_path = package.entrance_file
+        data = pd.read_excel(file_path, skiprows=0, keep_default_na='').values
+        response = {'result': data}
+        return Response(response, status=status.HTTP_200_OK)
+
+
+class PackageDetailView(APIView):
+    permission_classes = (IsAuthenticated, BasicObjectPermission)
+    permission_basename = 'entrance_package'
+
+    def get_object(self, pk):
+        try:
+            return EntrancePackage.objects.get(pk=pk)
+        except EntrancePackage.DoesNotExist:
+            raise Http404
+
+    def get(self, request, pk):
+        query = self.get_object(pk)
+        serializers = EntrancePackageSerializer(query)
+        return Response(serializers.data, status=status.HTTP_200_OK)
+
+    def put(self, request, pk):
+        query = self.get_object(pk)
+        serializer = EntrancePackageSerializer(query, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, pk):
+        query = self.get_object(pk)
+        query.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)

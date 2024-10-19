@@ -6,6 +6,7 @@ from colorfield.fields import ColorField
 import os
 import binascii
 
+
 class Business(BaseModel):
     ONLINE_MARKET = 'om'
     COMMISSION_SELLER = 'cs'

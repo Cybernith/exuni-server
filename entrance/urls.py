@@ -2,7 +2,8 @@ from django.conf.urls import url
 
 from entrance.lists.views import EntrancePackageListView, StoreReceiptListView
 from entrance.views import EntrancePackageCreateView, EntrancePackageDetailView, StoreReceiptCreateView, \
-    StoreReceiptDetailView, EntrancePackageFileUpdateView, EntrancePackageApiView, EntrancePackageInsertExcelApiView
+    StoreReceiptDetailView, EntrancePackageFileUpdateView, EntrancePackageApiView, EntrancePackageInsertExcelApiView, \
+    GetTableOfPackageApiView, PackageDetailView
 
 app_name = 'entrance'
 urlpatterns = [
@@ -10,6 +11,8 @@ urlpatterns = [
     url(r'^entrancePackage/(?P<pk>[0-9]+)/$', EntrancePackageDetailView.as_view(), name='entrancePackageDetail'),
     url(r'^lists/entrancePackage$', EntrancePackageListView.as_view(), name='entrancePackageListView'),
     url(r'^fileUpload/(?P<pk>[0-9]+)$', EntrancePackageFileUpdateView.as_view(), name='entrancePackageFileUpdateView'),
+    url(r'^package/(?P<pk>[0-9]+)$', PackageDetailView.as_view(), name='getTableOfPackageApiView'),
+    url(r'^packageTable/(?P<pk>[0-9]+)$', GetTableOfPackageApiView.as_view(), name='getTableOfPackageApiView'),
     url(r'^entrancePackageInsertExcel$', EntrancePackageInsertExcelApiView.as_view(),
         name='entrancePackageInsertExcelApiView'),
 
