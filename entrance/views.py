@@ -275,25 +275,27 @@ class EntrancePackageInsertExcelApiView(APIView):
             entrance_package_item = EntrancePackageItem.objects.create(entrance_package=entrance_package)
             for item in EntrancePackageFileColumn.objects.filter(entrance_package=entrance_package):
                 if item.key == EntrancePackageFileColumn.PRODUCT_CODE:
-                    entrance_package_item.product_code = row[item.column_number - 1]
+                    entrance_package_item.product_code = row[item.column_number]
                 elif item.key == EntrancePackageFileColumn.PRODUCT_NAME:
-                    entrance_package_item.default_name = row[item.column_number - 1]
+                    entrance_package_item.default_name = row[item.column_number]
                 elif item.key == EntrancePackageFileColumn.PRODUCT_PRICE:
-                    entrance_package_item.default_price = row[item.column_number - 1]
+                    entrance_package_item.default_price = row[item.column_number]
                 elif item.key == EntrancePackageFileColumn.NUMBER_OF_BOXES:
-                    entrance_package_item.number_of_box = row[item.column_number - 1]
+                    entrance_package_item.number_of_box = row[item.column_number]
                 elif item.key == EntrancePackageFileColumn.NUMBER_OF_PRODUCTS_PER_BOX:
-                    entrance_package_item.number_of_products_per_box = row[item.column_number - 1]
+                    entrance_package_item.number_of_products_per_box = row[item.column_number]
                 elif item.key == EntrancePackageFileColumn.SIXTEEN_DIGIT_CODE:
-                    entrance_package_item.sixteen_digit_code = row[item.column_number - 1]
+                    entrance_package_item.sixteen_digit_code = row[item.column_number]
                 elif item.key == EntrancePackageFileColumn.PRICE_IN_CASE_OF_SALE:
-                    entrance_package_item.price_in_case_of_sale = row[item.column_number - 1]
+                    entrance_package_item.price_in_case_of_sale = row[item.column_number]
                     entrance_package_item.in_case_of_sale_type = item.in_case_of_sale_type
                 elif item.key == EntrancePackageFileColumn.BARCODE:
-                    entrance_package_item.barcode = row[item.column_number - 1]
+                    entrance_package_item.barcode = row[item.column_number]
             entrance_package_item.save()
 
         entrance_package.is_inserted = True
+        entrance_package.save()
+
         return Response({'msg': 'success'}, status=status.HTTP_201_CREATED)
 
 
@@ -346,3 +348,58 @@ class PackageDetailView(APIView):
         query = self.get_object(pk)
         query.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class PackageItemDetailView(APIView):
+    permission_classes = (IsAuthenticated, BasicObjectPermission)
+    permission_basename = 'entrance_package_item'
+
+    def get_object(self, pk):
+        return EntrancePackageItem.objects.filter(entrance_package_id=pk)
+
+    def get(self, request, pk):
+        query = self.get_object(pk)
+        serializers = EntrancePackageItemSerializer(query)
+        return Response(serializers.data, status=status.HTTP_200_OK)
+
+
+class UpdatePackageItemsView(APIView):
+    permission_classes = (IsAuthenticated, BasicObjectPermission)
+    permission_basename = 'entrance_package_item'
+
+    def put(self, request):
+
+        data = request.data
+        for item in data:
+            entrance_package_item = EntrancePackageItem.objects.get(id=item['id'])
+            entrance_package_item.product_code = item['product_code']
+            entrance_package_item.default_name = item['default_name']
+            entrance_package_item.number_of_products_per_box = item['number_of_products_per_box']
+            entrance_package_item.number_of_box = item['number_of_box']
+            entrance_package_item.default_price = item['default_price']
+            entrance_package_item.save()
+
+        return Response({'msg': 'success'}, status=status.HTTP_200_OK)
+
+
+class RemoveExcelView(APIView):
+    permission_classes = (IsAuthenticated, BasicObjectPermission)
+    permission_basename = 'entrance_package'
+
+    def get_object(self, pk):
+        try:
+            return EntrancePackage.objects.get(pk=pk)
+        except EntrancePackage.DoesNotExist:
+            raise Http404
+
+    def delete(self, request, pk):
+        query = self.get_object(pk)
+        EntrancePackageItem.objects.filter(entrance_package=query).delete()
+        EntrancePackageFileColumn.objects.filter(entrance_package=query).delete()
+        query.is_inserted = False
+        query.entrance_file = None
+        query.save()
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+

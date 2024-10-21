@@ -24,6 +24,8 @@ class EntrancePackageItemListRetrieveSerializer(EntrancePackageItemSerializer):
 
 
 class EntrancePackageSerializer(SModelSerializer):
+    items = EntrancePackageItemSerializer(read_only=True, many=True)
+
     class Meta:
         model = EntrancePackage
         fields = '__all__'
