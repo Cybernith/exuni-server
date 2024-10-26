@@ -19,6 +19,8 @@ class EntrancePackageItemSerializer(SModelSerializer):
 
 
 class EntrancePackageItemListRetrieveSerializer(EntrancePackageItemSerializer):
+    net_purchase_price = serializers.ReadOnlyField()
+
     class Meta(EntrancePackageItemSerializer.Meta):
         pass
 

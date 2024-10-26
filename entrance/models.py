@@ -65,6 +65,7 @@ class EntrancePackageItem(BaseModel):
     default_picture = models.ImageField(upload_to=custom_upload_to, null=True, blank=True, default=None)
     default_name = models.CharField(max_length=150)
     number_of_products_per_box = models.IntegerField(default=0)
+    number_of_products = models.IntegerField(default=0)
     number_of_box = models.IntegerField(default=0)
     sixteen_digit_code = models.CharField(max_length=16, blank=True, null=True)
     barcode = models.CharField(max_length=100, blank=True, null=True)
@@ -75,6 +76,7 @@ class EntrancePackageItem(BaseModel):
                                  blank=True, null=True)
 
     margin_profit_percent = DECIMAL()
+    price_sum = DECIMAL()
     content_production_count = models.IntegerField(default=0)
     explanation = EXPLANATION()
 
@@ -94,7 +96,23 @@ class EntrancePackageItem(BaseModel):
 
     @property
     def product_count(self):
-        return self.box_count * self.product_in_box_count
+        return self.number_of_box * self.number_of_products_per_box
+
+    def save(self, *args, **kwargs):
+        if not self.number_of_products:
+            self.number_of_products = self.number_of_products_per_box * self.number_of_box
+
+        if self.entrance_package.items.filter(default_name=self.default_name).exists():
+            for item in self.entrance_package.items.filter(default_name=self.default_name):
+                self.number_of_products += item.number_of_products
+                self.price_sum += item.price_sum
+                item.delete()
+
+        super().save(*args, **kwargs)
+
+    @property
+    def net_purchase_price(self):
+        return self.price_sum / self.number_of_products
 
 
 class EntrancePackageFileColumn(BaseModel):
@@ -103,10 +121,12 @@ class EntrancePackageFileColumn(BaseModel):
     PRODUCT_PRICE = 'pp'
     NUMBER_OF_BOXES = 'nb'
     NUMBER_OF_PRODUCTS_PER_BOX = 'pb'
+    NUMBER_OF_PRODUCTS = 'np'
     SIXTEEN_DIGIT_CODE = 'sd'
     PRICE_IN_CASE_OF_SALE = 'ic'
     BARCODE = 'ba'
     IMAGE = 'im'
+    PRICE_SUM = 'ps'
 
     KEYS = (
         (PRODUCT_PRICE, 'مبلغ محصول'),
@@ -114,10 +134,12 @@ class EntrancePackageFileColumn(BaseModel):
         (PRODUCT_CODE, 'کد محصول'),
         (NUMBER_OF_BOXES, 'تعداد کارتون'),
         (NUMBER_OF_PRODUCTS_PER_BOX, 'تعداد محصول در کارتون'),
+        (NUMBER_OF_PRODUCTS, 'تعداد محصول'),
         (SIXTEEN_DIGIT_CODE, 'کد 16 رقمی'),
         (PRICE_IN_CASE_OF_SALE, 'قیمت در صورت فروش'),
         (BARCODE, 'بارکد'),
         (IMAGE, 'تصویر'),
+        (PRICE_SUM, 'مبلغ کل'),
     )
 
     entrance_package = models.ForeignKey(EntrancePackage, related_name="file_columns", on_delete=models.CASCADE)
