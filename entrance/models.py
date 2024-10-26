@@ -65,7 +65,7 @@ class EntrancePackageItem(BaseModel):
     default_name = models.CharField(max_length=150)
     number_of_products_per_box = models.IntegerField(default=0)
     number_of_products = models.IntegerField(default=0)
-    number_of_box = models.IntegerField(default=0)
+    number_of_box = models.IntegerField(default=1)
     sixteen_digit_code = models.CharField(max_length=16, blank=True, null=True)
     barcode = models.CharField(max_length=100, blank=True, null=True)
     default_price = DECIMAL()
@@ -113,6 +113,13 @@ class EntrancePackageItem(BaseModel):
     def product_count(self):
         return self.number_of_box * self.number_of_products_per_box
 
+    @property
+    def net_purchase_price(self):
+        if self.price_sum and self.number_of_products:
+            return round(self.price_sum / self.number_of_products)
+        else:
+            return 0
+
     def save(self, *args, **kwargs):
         if not self.number_of_products and self.number_of_products_per_box and self.number_of_box:
             self.number_of_products = self.number_of_products_per_box * self.number_of_box
@@ -123,15 +130,11 @@ class EntrancePackageItem(BaseModel):
                 self.price_sum += item.price_sum
                 item.delete()
 
+        if not self.price_sum:
+            if self.number_of_products_per_box and self.number_of_box:
+                self.price_sum = self.number_of_products_per_box * self.number_of_box
+
         super().save(*args, **kwargs)
-
-    @property
-    def net_purchase_price(self):
-        if self.price_sum and self.number_of_products:
-            return round(self.price_sum / self.number_of_products)
-        else:
-            return 0
-
 
 class EntrancePackageFileColumn(BaseModel):
     PRODUCT_CODE = 'pc'
