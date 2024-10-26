@@ -386,6 +386,8 @@ class UpdatePackageItemsView(APIView):
             entrance_package_item.number_of_products = item['number_of_products']
             entrance_package_item.number_of_box = item['number_of_box']
             entrance_package_item.default_price = item['default_price']
+            entrance_package_item.in_case_of_sale_type = item['in_case_of_sale_type']
+            entrance_package_item.price_in_case_of_sale = item['price_in_case_of_sale']
             entrance_package_item.save()
 
         return Response({'msg': 'success'}, status=status.HTTP_200_OK)
