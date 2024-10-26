@@ -73,6 +73,8 @@ class EntrancePackageItem(BaseModel):
     in_case_of_sale_type = models.CharField(max_length=2, choices=IN_CASE_OF_SALES_TYPES, default=WITH_AMOUNT)
     currency = models.ForeignKey(Currency, related_name="entrance_package_items", on_delete=models.SET_NULL,
                                  blank=True, null=True)
+    discount = DECIMAL(default=0)
+    discount_type = models.CharField(max_length=2, choices=IN_CASE_OF_SALES_TYPES, default=WITH_AMOUNT)
 
     margin_profit_percent = DECIMAL()
     price_sum = DECIMAL()
@@ -99,6 +101,13 @@ class EntrancePackageItem(BaseModel):
             return self.net_purchase_price + self.price_in_case_of_sale
         else:
             return self.net_purchase_price + (self.net_purchase_price * self.price_in_case_of_sale / 100)
+
+    @property
+    def final_price_after_discount(self):
+        if self.discount_type == self.WITH_AMOUNT:
+            return self.in_case_of_sale - self.discount
+        else:
+            return self.in_case_of_sale + (self.in_case_of_sale * self.discount / 100)
 
     @property
     def product_count(self):
