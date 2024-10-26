@@ -1,4 +1,4 @@
-from django.db.models import QuerySet
+from django.db.models import QuerySet, Q
 from django.http import Http404
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
@@ -19,6 +19,7 @@ from helpers.models import manage_files
 from helpers.views.MassRelatedCUD import MassRelatedCUD
 from rest_framework.parsers import FileUploadParser, MultiPartParser, FormParser
 
+from main.models import Currency
 from server.settings import BASE_DIR
 import pandas as pd
 
@@ -254,6 +255,9 @@ class EntrancePackageInsertExcelApiView(APIView):
 
         EntrancePackageFileColumn.objects.filter(entrance_package=entrance_package).delete()
         for column in entrance_packages_columns:
+            if column['currency']:
+                entrance_package.currency = Currency.objects.get(id=column['currency'])
+                entrance_package.save()
             if column['is_in_case_of_sale']:
                 EntrancePackageFileColumn.objects.create(
                     entrance_package=entrance_package,
@@ -291,6 +295,8 @@ class EntrancePackageInsertExcelApiView(APIView):
                     entrance_package_item.in_case_of_sale_type = item.in_case_of_sale_type
                 elif item.key == EntrancePackageFileColumn.BARCODE:
                     entrance_package_item.barcode = row[item.column_number]
+                elif item.key == EntrancePackageFileColumn.PRICE_SUM:
+                    entrance_package_item.price_sum = row[item.column_number]
             entrance_package_item.save()
 
         entrance_package.is_inserted = True
