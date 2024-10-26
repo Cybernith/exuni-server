@@ -52,7 +52,6 @@ class EntrancePackageItem(BaseModel):
     WITH_PERCENTAGE = 'p'
 
     IN_CASE_OF_SALES_TYPES = (
-        (MANUAL, 'دستی'),
         (WITH_AMOUNT, 'مبلغ'),
         (WITH_PERCENTAGE, 'درصد'),
     )
@@ -70,8 +69,8 @@ class EntrancePackageItem(BaseModel):
     sixteen_digit_code = models.CharField(max_length=16, blank=True, null=True)
     barcode = models.CharField(max_length=100, blank=True, null=True)
     default_price = DECIMAL()
-    price_in_case_of_sale = DECIMAL()
-    in_case_of_sale_type = models.CharField(max_length=2, choices=IN_CASE_OF_SALES_TYPES, blank=True, null=True)
+    price_in_case_of_sale = DECIMAL(default=0)
+    in_case_of_sale_type = models.CharField(max_length=2, choices=IN_CASE_OF_SALES_TYPES, default=WITH_AMOUNT)
     currency = models.ForeignKey(Currency, related_name="entrance_package_items", on_delete=models.SET_NULL,
                                  blank=True, null=True)
 
@@ -95,11 +94,18 @@ class EntrancePackageItem(BaseModel):
         )
 
     @property
+    def in_case_of_sale(self):
+        if self.in_case_of_sale_type == self.WITH_AMOUNT:
+            return self.net_purchase_price + self.price_in_case_of_sale
+        else:
+            return self.net_purchase_price + (self.net_purchase_price * self.price_in_case_of_sale / 100)
+
+    @property
     def product_count(self):
         return self.number_of_box * self.number_of_products_per_box
 
     def save(self, *args, **kwargs):
-        if not self.number_of_products:
+        if not self.number_of_products and self.number_of_products_per_box and self.number_of_box:
             self.number_of_products = self.number_of_products_per_box * self.number_of_box
 
         if self.entrance_package.items.filter(default_name=self.default_name).exists():
@@ -112,7 +118,10 @@ class EntrancePackageItem(BaseModel):
 
     @property
     def net_purchase_price(self):
-        return self.price_sum / self.number_of_products
+        if self.price_sum and self.number_of_products:
+            return round(self.price_sum / self.number_of_products)
+        else:
+            return 0
 
 
 class EntrancePackageFileColumn(BaseModel):

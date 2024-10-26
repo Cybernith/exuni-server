@@ -297,6 +297,8 @@ class EntrancePackageInsertExcelApiView(APIView):
                     entrance_package_item.barcode = row[item.column_number]
                 elif item.key == EntrancePackageFileColumn.PRICE_SUM:
                     entrance_package_item.price_sum = row[item.column_number]
+                elif item.key == EntrancePackageFileColumn.NUMBER_OF_PRODUCTS:
+                    entrance_package_item.number_of_products = row[item.column_number]
             entrance_package_item.save()
 
         entrance_package.is_inserted = True
@@ -322,7 +324,7 @@ class GetTableOfPackageApiView(APIView):
             return Response({'message': 'package file is not available'}, status=status.HTTP_204_NO_CONTENT)
 
         file_path = package.entrance_file
-        data = pd.read_excel(file_path, skiprows=0, keep_default_na='').values
+        data = pd.read_excel(file_path, keep_default_na='').values
         response = {'result': data}
         return Response(response, status=status.HTTP_200_OK)
 
@@ -381,6 +383,7 @@ class UpdatePackageItemsView(APIView):
             entrance_package_item.product_code = item['product_code']
             entrance_package_item.default_name = item['default_name']
             entrance_package_item.number_of_products_per_box = item['number_of_products_per_box']
+            entrance_package_item.number_of_products = item['number_of_products']
             entrance_package_item.number_of_box = item['number_of_box']
             entrance_package_item.default_price = item['default_price']
             entrance_package_item.save()

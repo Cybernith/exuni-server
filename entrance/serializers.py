@@ -7,6 +7,9 @@ from users.serializers import UserSimpleSerializer
 
 
 class EntrancePackageItemSerializer(SModelSerializer):
+    net_purchase_price = serializers.ReadOnlyField()
+    in_case_of_sale = serializers.ReadOnlyField()
+
     class Meta:
         model = EntrancePackageItem
         fields = '__all__'
@@ -20,6 +23,7 @@ class EntrancePackageItemSerializer(SModelSerializer):
 
 class EntrancePackageItemListRetrieveSerializer(EntrancePackageItemSerializer):
     net_purchase_price = serializers.ReadOnlyField()
+    in_case_of_sale = serializers.ReadOnlyField()
 
     class Meta(EntrancePackageItemSerializer.Meta):
         pass
@@ -60,6 +64,7 @@ class EntrancePackageListSerializer(SModelSerializer):
 
 
 class StoreReceiptItemSerializer(SModelSerializer):
+
     class Meta:
         model = StoreReceiptItem
         fields = '__all__'
