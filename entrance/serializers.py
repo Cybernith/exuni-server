@@ -9,6 +9,7 @@ from users.serializers import UserSimpleSerializer
 class EntrancePackageItemSerializer(SModelSerializer):
     net_purchase_price = serializers.ReadOnlyField()
     in_case_of_sale = serializers.ReadOnlyField()
+    final_price_after_discount = serializers.ReadOnlyField()
 
     class Meta:
         model = EntrancePackageItem
@@ -24,6 +25,7 @@ class EntrancePackageItemSerializer(SModelSerializer):
 class EntrancePackageItemListRetrieveSerializer(EntrancePackageItemSerializer):
     net_purchase_price = serializers.ReadOnlyField()
     in_case_of_sale = serializers.ReadOnlyField()
+    final_price_after_discount = serializers.ReadOnlyField()
 
     class Meta(EntrancePackageItemSerializer.Meta):
         pass
