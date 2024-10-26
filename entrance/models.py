@@ -115,7 +115,9 @@ class EntrancePackageItem(BaseModel):
 
     @property
     def net_purchase_price(self):
-        if self.price_sum and self.number_of_products:
+        if self.default_price:
+            return self.default_price
+        elif self.price_sum and self.number_of_products:
             return round(self.price_sum / self.number_of_products)
         else:
             return 0
