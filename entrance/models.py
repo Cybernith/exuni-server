@@ -45,6 +45,28 @@ class EntrancePackage(BaseModel):
             ('deleteOwn.entrance_package', 'حذف پکیج ورودی خود'),
         )
 
+    @property
+    def remain_items(self):
+        items = {}
+        for row in self.items.all():
+            items[row.default_name] = {
+                'number_of_products_per_box': row.number_of_products_per_box,
+                'number_of_box': row.number_of_box,
+            }
+
+        for row in StoreReceiptItem.objects.filter(store_receipt__entrance_packages=self):
+            items[row.default_name]['number_of_box'] -= row.number_of_box
+
+        return items
+
+    @property
+    def inserted_to_store(self):
+        remain = self.remain_items
+        for key in remain:
+            if remain[key]['number_of_box'] > 0:
+                return False
+        return True
+
 
 class EntrancePackageItem(BaseModel):
     MANUAL = 'm'

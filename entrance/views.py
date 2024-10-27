@@ -422,6 +422,11 @@ class StorePackagesView(APIView):
     permission_basename = 'entrance_package'
 
     def get_object(self, pk):
+        ids = []
+        for package in EntrancePackage.objects.filter(store_id=pk):
+            if not package.inserted_to_store:
+                ids.append(package.id)
+        #return EntrancePackage.objects.filter(id__in=ids)
         return EntrancePackage.objects.filter(store_id=pk)
 
     def get(self, request, pk):

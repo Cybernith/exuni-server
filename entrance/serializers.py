@@ -32,6 +32,7 @@ class EntrancePackageItemListRetrieveSerializer(EntrancePackageItemSerializer):
 
 
 class EntrancePackageSerializer(SModelSerializer):
+    remain_item = serializers.JSONField(source='remain_items', read_only=True)
     items = EntrancePackageItemSerializer(read_only=True, many=True)
 
     class Meta:
@@ -46,6 +47,7 @@ class EntrancePackageSerializer(SModelSerializer):
 
 
 class EntrancePackageRetrieveSerializer(EntrancePackageSerializer):
+    remain_item = serializers.JSONField(source='remain_items', read_only=True)
     items = EntrancePackageItemListRetrieveSerializer(read_only=True, many=True)
     supplier = SupplierSerializer(read_only=True, many=True)
     store = StoreSerializer(read_only=True, many=True)
@@ -57,6 +59,7 @@ class EntrancePackageRetrieveSerializer(EntrancePackageSerializer):
 
 
 class EntrancePackageListSerializer(SModelSerializer):
+    remain_item = serializers.JSONField(source='remain_items', read_only=True)
     created_by = UserSimpleSerializer(many=False)
 
     class Meta:
