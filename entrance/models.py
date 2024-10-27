@@ -138,6 +138,7 @@ class EntrancePackageItem(BaseModel):
 
         super().save(*args, **kwargs)
 
+
 class EntrancePackageFileColumn(BaseModel):
     PRODUCT_CODE = 'pc'
     PRODUCT_NAME = 'pn'
@@ -216,8 +217,8 @@ class StoreReceiptItem(BaseModel):
                                       blank=True, null=True)
     product = models.ForeignKey(Product, related_name="store_receipt_items",
                                 on_delete=models.SET_NULL, blank=True, null=True)
-    product_in_box_count = models.IntegerField(default=0)
-    box_count = models.IntegerField(default=0)
+    number_of_products_per_box = models.IntegerField(default=0)
+    number_of_box = models.IntegerField(default=1)
 
     product_code = models.CharField(max_length=150, null=True, blank=True)
 
@@ -255,6 +256,6 @@ class StoreReceiptItem(BaseModel):
     @property
     def product_count(self):
         if self.type == self.BOX:
-            return self.box_count * self.product_in_box_count
+            return self.number_of_box * self.number_of_products_per_box
         else:
-            return self.box_count
+            return self.number_of_products_per_box
