@@ -84,6 +84,7 @@ class StoreReceiptItemListRetrieveSerializer(StoreReceiptItemSerializer):
 
 
 class StoreReceiptSerializer(SModelSerializer):
+    items = StoreReceiptItemListRetrieveSerializer(read_only=True, many=True)
     class Meta:
         model = StoreReceipt
         fields = '__all__'
@@ -108,6 +109,7 @@ class StoreReceiptRetrieveSerializer(StoreReceiptSerializer):
 
 class StoreReceiptListSerializer(SModelSerializer):
     created_by = UserSimpleSerializer(many=False)
+    items = StoreReceiptItemListRetrieveSerializer(read_only=True, many=True)
 
     class Meta:
         model = StoreReceipt

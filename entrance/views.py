@@ -10,7 +10,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from entrance.models import EntrancePackage, EntrancePackageItem, StoreReceipt, EntrancePackageFileColumn
+from entrance.models import EntrancePackage, EntrancePackageItem, StoreReceipt, EntrancePackageFileColumn, \
+    StoreReceiptItem
 from entrance.serializers import EntrancePackageSerializer, EntrancePackageRetrieveSerializer, StoreReceiptSerializer, \
     StoreReceiptItemSerializer, StoreReceiptRetrieveSerializer, EntrancePackageItemSerializer, \
     EntrancePackageFileUploadSerializer
@@ -415,4 +416,86 @@ class RemoveExcelView(APIView):
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+
+class StorePackagesView(APIView):
+    permission_classes = (IsAuthenticated, BasicObjectPermission)
+    permission_basename = 'entrance_package'
+
+    def get_object(self, pk):
+        return EntrancePackage.objects.filter(store_id=pk)
+
+    def get(self, request, pk):
+        query = self.get_object(pk)
+        serializers = EntrancePackageSerializer(query, many=True)
+        return Response(serializers.data, status=status.HTTP_200_OK)
+
+
+class StoreReceiptApiView(APIView):
+    permission_classes = (IsAuthenticated, BasicObjectPermission)
+    permission_basename = 'store_receipt'
+
+    def get(self, request):
+        query = StoreReceipt.objects.all()
+        serializers = StoreReceiptSerializer(query, many=True, context={'request': request})
+        return Response(serializers.data, status=status.HTTP_200_OK)
+
+    def post(self, request):
+        data = request.data
+        serializer = StoreReceiptSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class StoreReceiptDetail(APIView):
+    permission_classes = (IsAuthenticated, BasicObjectPermission)
+    permission_basename = 'store_receipt'
+
+    def get_object(self, pk):
+        try:
+            return StoreReceipt.objects.get(pk=pk)
+        except StoreReceipt.DoesNotExist:
+            raise Http404
+
+    def get(self, request, pk):
+        query = self.get_object(pk)
+        serializers = StoreReceiptSerializer(query)
+        return Response(serializers.data, status=status.HTTP_200_OK)
+
+    def put(self, request, pk):
+        query = self.get_object(pk)
+        serializer = StoreReceiptSerializer(query, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, pk):
+        query = self.get_object(pk)
+        query.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class CreateReceiptsItemsView(APIView):
+    permission_classes = (IsAuthenticated, BasicObjectPermission)
+    permission_basename = 'store_receipt_item'
+
+    def post(self, request):
+        data = request.data
+        store_receipt = data.get('store_receipt')
+        store_receipt = StoreReceipt.objects.get(id=store_receipt)
+        items = data.get('items')
+
+        for item in items:
+            StoreReceiptItem.objects.create(
+                store_receipt=store_receipt,
+                product_code=item['product_code'],
+                default_name=item['default_name'],
+                number_of_products_per_box=item['number_of_products_per_box'],
+                number_of_box=item['number_of_box'],
+                new_product_shelf_code=item['new_product_shelf_code'],
+            )
+
+        return Response({'msg': 'success'}, status=status.HTTP_200_OK)
 
