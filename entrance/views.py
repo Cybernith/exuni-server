@@ -497,9 +497,11 @@ class CreateReceiptsItemsView(APIView):
                 store_receipt=store_receipt,
                 product_code=item['product_code'],
                 default_name=item['default_name'],
-                number_of_products_per_box=item['number_of_products_per_box'],
-                number_of_box=item['number_of_box'],
+                number_of_products_per_box=item['input_product_per_box'],
+                number_of_box=item['input_box'],
                 new_product_shelf_code=item['new_product_shelf_code'],
+                content_production_count=item['content_production_count'],
+                failure_count=item['failure_count'],
             )
 
         return Response({'msg': 'success'}, status=status.HTTP_200_OK)
