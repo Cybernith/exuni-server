@@ -52,18 +52,23 @@ class EntrancePackage(BaseModel):
             items[row.default_name] = {
                 'number_of_products_per_box': row.number_of_products_per_box,
                 'number_of_box': row.number_of_box,
+                'product_code': row.product_code,
+                'default_name': row.default_name,
             }
 
         for row in StoreReceiptItem.objects.filter(store_receipt__entrance_packages=self):
             items[row.default_name]['number_of_box'] -= row.number_of_box
+        result = []
+        for key in items:
+            result.append(items[key])
 
-        return items
+        return result
 
     @property
     def inserted_to_store(self):
         remain = self.remain_items
-        for key in remain:
-            if remain[key]['number_of_box'] > 0:
+        for item in remain:
+            if item['number_of_box'] > 0:
                 return False
         return True
 
@@ -261,6 +266,7 @@ class StoreReceiptItem(BaseModel):
     currency = models.ForeignKey(Currency, related_name="store_receipt_items", on_delete=models.SET_NULL,
                                  blank=True, null=True)
     explanation = EXPLANATION()
+    failure_count = models.IntegerField(default=0)
 
     class Meta(BaseModel.Meta):
         verbose_name = 'StoreReceiptItem'
