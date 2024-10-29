@@ -101,6 +101,7 @@ class EntrancePackageItem(BaseModel):
     margin_profit_percent = DECIMAL()
     price_sum = DECIMAL()
     content_production_count = models.IntegerField(default=0)
+    failure_count = models.IntegerField(default=0)
     explanation = EXPLANATION()
 
     class Meta(BaseModel.Meta):
