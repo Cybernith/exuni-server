@@ -61,6 +61,8 @@ class EntrancePackageRetrieveSerializer(EntrancePackageSerializer):
 class EntrancePackageListSerializer(SModelSerializer):
     remain_item = serializers.JSONField(source='remain_items', read_only=True)
     created_by = UserSimpleSerializer(many=False)
+    supplier_name = serializers.CharField(source='supplier.name', read_only=True)
+    store_name = serializers.CharField(source='store.name', read_only=True)
 
     class Meta:
         model = EntrancePackage
