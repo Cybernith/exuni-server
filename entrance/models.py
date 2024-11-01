@@ -16,6 +16,7 @@ class EntrancePackage(BaseModel):
     manager = models.ForeignKey(User, related_name="entrance_packages",
                                 on_delete=models.SET_NULL, blank=True, null=True)
     name = models.CharField(max_length=150)
+    factor_number = models.CharField(max_length=150, blank=True, null=True)
     registration_date = models.DateField(blank=True, null=True)
     registration_time = models.TimeField(blank=True, null=True)
     supplier = models.ForeignKey(Supplier, related_name="entrance_packages",
