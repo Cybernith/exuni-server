@@ -85,7 +85,7 @@ class EntrancePackageItem(BaseModel):
     )
 
     entrance_package = models.ForeignKey(EntrancePackage, related_name="items",
-                                          on_delete=models.SET_NULL, blank=True, null=True)
+                                          on_delete=models.CASCADE, blank=True, null=True)
     product = models.ForeignKey(Product, related_name="entrance_package_items",
                                 on_delete=models.SET_NULL, blank=True, null=True)
     product_code = models.CharField(max_length=150, null=True, blank=True)
@@ -242,7 +242,7 @@ class StoreReceiptItem(BaseModel):
     )
     type = models.CharField(max_length=1, choices=TYPES, default=BOX)
 
-    store_receipt = models.ForeignKey(StoreReceipt, related_name="items", on_delete=models.SET_NULL,
+    store_receipt = models.ForeignKey(StoreReceipt, related_name="items", on_delete=models.CASCADE,
                                       blank=True, null=True)
     product = models.ForeignKey(Product, related_name="store_receipt_items",
                                 on_delete=models.SET_NULL, blank=True, null=True)
@@ -264,6 +264,7 @@ class StoreReceiptItem(BaseModel):
 
     default_name = models.CharField(max_length=150)
     default_price = DECIMAL()
+    barcode = models.CharField(max_length=150, blank=True, null=True)
     currency = models.ForeignKey(Currency, related_name="store_receipt_items", on_delete=models.SET_NULL,
                                  blank=True, null=True)
     explanation = EXPLANATION()

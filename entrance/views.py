@@ -502,6 +502,7 @@ class CreateReceiptsItemsView(APIView):
                 new_product_shelf_code=item['new_product_shelf_code'],
                 content_production_count=item['content_production_count'],
                 failure_count=item['failure_count'],
+                barcode=item['barcode'],
             )
 
         return Response({'msg': 'success'}, status=status.HTTP_200_OK)
