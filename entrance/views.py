@@ -298,8 +298,6 @@ class EntrancePackageInsertExcelApiView(APIView):
                     entrance_package_item.barcode = row[item.column_number]
                 elif item.key == EntrancePackageFileColumn.PRICE_SUM:
                     entrance_package_item.price_sum = row[item.column_number]
-                elif item.key == EntrancePackageFileColumn.NUMBER_OF_PRODUCTS:
-                    entrance_package_item.number_of_products = row[item.column_number]
             entrance_package_item.initial_registration = True
             entrance_package_item.save()
 
