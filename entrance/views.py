@@ -384,14 +384,13 @@ class UpdatePackageItemsView(APIView):
             entrance_package_item = EntrancePackageItem.objects.get(id=item['id'])
             entrance_package_item.product_code = item['product_code']
             entrance_package_item.default_name = item['default_name']
-            entrance_package_item.number_of_products_per_box = item['number_of_products_per_box']
-            entrance_package_item.number_of_products = item['number_of_products']
-            entrance_package_item.number_of_box = item['number_of_box']
-            entrance_package_item.default_price = item['default_price']
+            entrance_package_item.number_of_products_per_box = float(item['number_of_products_per_box'])
+            entrance_package_item.number_of_box = float(item['number_of_box'])
+            entrance_package_item.default_price = float(item['default_price'])
             entrance_package_item.in_case_of_sale_type = item['in_case_of_sale_type']
-            entrance_package_item.price_in_case_of_sale = item['price_in_case_of_sale']
+            entrance_package_item.price_in_case_of_sale = float(item['price_in_case_of_sale'])
             entrance_package_item.discount_type = item['discount_type']
-            entrance_package_item.discount = item['discount']
+            entrance_package_item.discount = float(item['discount'])
             entrance_package_item.save()
 
         return Response({'msg': 'success'}, status=status.HTTP_200_OK)
