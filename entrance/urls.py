@@ -4,7 +4,7 @@ from entrance.lists.views import EntrancePackageListView, StoreReceiptListView
 from entrance.views import EntrancePackageCreateView, EntrancePackageDetailView, StoreReceiptCreateView, \
     StoreReceiptDetailView, EntrancePackageFileUpdateView, EntrancePackageApiView, EntrancePackageInsertExcelApiView, \
     GetTableOfPackageApiView, PackageDetailView, PackageItemDetailView, UpdatePackageItemsView, RemoveExcelView, \
-    StorePackagesView, StoreReceiptApiView, StoreReceiptDetail, CreateReceiptsItemsView
+    StorePackagesView, StoreReceiptApiView, StoreReceiptDetail, CreateReceiptsItemsView, SupplierRemainItems
 
 app_name = 'entrance'
 urlpatterns = [
@@ -27,5 +27,5 @@ urlpatterns = [
     url(r'^storeReceipt/(?P<pk>[0-9]+)/$', StoreReceiptDetailView.as_view(), name='storeReceiptDetail'),
     url(r'^lists/storeReceipt$', StoreReceiptListView.as_view(), name='storeReceiptList'),
     url(r'^receipt/(?P<pk>[0-9]+)$', StoreReceiptDetail.as_view(), name='storeReceiptDetail'),
-
+    url(r'^supplierPackageRemain/(?P<pk>[0-9]+)$', SupplierRemainItems.as_view(), name='supplierRemainItems'),
 ]

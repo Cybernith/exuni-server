@@ -34,8 +34,8 @@ class StoreReceiptFilter(filters.FilterSet):
         fields = {
             'id': ['exact', 'in'],
             'storekeeper': ['exact', 'in'],
-            'entrance_packages': ['exact', 'in'],
             'store': ['exact', 'in'],
+            'supplier': ['exact', 'in'],
             'is_verified': ['exact'],
             'name': BASE_FIELD_FILTERS,
             'driver_name': BASE_FIELD_FILTERS,

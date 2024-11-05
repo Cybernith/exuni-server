@@ -48,22 +48,7 @@ class EntrancePackage(BaseModel):
 
     @property
     def remain_items(self):
-        items = {}
-        for row in self.items.all():
-            items[row.default_name] = {
-                'number_of_products_per_box': row.number_of_products_per_box,
-                'number_of_box': row.number_of_box,
-                'product_code': row.product_code,
-                'default_name': row.default_name,
-            }
-
-        for row in StoreReceiptItem.objects.filter(store_receipt__entrance_packages=self):
-            items[row.default_name]['number_of_box'] -= row.number_of_box
-        result = []
-        for key in items:
-            result.append(items[key])
-
-        return result
+        return []
 
     @property
     def inserted_to_store(self):
@@ -204,8 +189,8 @@ class EntrancePackageFileColumn(BaseModel):
 class StoreReceipt(BaseModel):
     storekeeper = models.ForeignKey(User, related_name="store_receipt", on_delete=models.SET_NULL,
                                     blank=True, null=True)
-    entrance_packages = models.ForeignKey(EntrancePackage, related_name="store_receipt",
-                                          on_delete=models.SET_NULL, blank=True, null=True)
+    supplier = models.ForeignKey(Supplier, related_name="store_receipt",
+                                 blank=True, null=True, on_delete=models.SET_NULL)
     name = models.CharField(max_length=150)
     driver_name = models.CharField(max_length=255, blank=True, null=True)
     enter_date = models.DateField(blank=True, null=True)
