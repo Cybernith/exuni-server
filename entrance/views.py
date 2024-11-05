@@ -493,17 +493,49 @@ class CreateReceiptsItemsView(APIView):
         items = data.get('items')
 
         for item in items:
-            StoreReceiptItem.objects.create(
-                store_receipt=store_receipt,
-                product_code=item['product_code'],
-                default_name=item['default_name'],
-                number_of_products_per_box=item['input_product_per_box'],
-                number_of_box=item['input_box'],
-                new_product_shelf_code=item['new_product_shelf_code'],
-                content_production_count=item['content_production_count'],
-                failure_count=item['failure_count'],
-                barcode=item['barcode'],
-            )
+            if 'input_box' in item.keys():
+                StoreReceiptItem.objects.create(
+                    store_receipt=store_receipt,
+                    product_code=item['product_code'],
+                    default_name=item['default_name'],
+                    number_of_products_per_box=item['input_product_per_box'],
+                    number_of_box=item['input_box'],
+                    new_product_shelf_code=item['new_product_shelf_code'],
+                    content_production_count=item['content_production_count'],
+                    failure_count=item['failure_count'],
+                    barcode=item['barcode'],
+                )
 
         return Response({'msg': 'success'}, status=status.HTTP_200_OK)
 
+
+class SupplierRemainItems(APIView):
+    permission_classes = (IsAuthenticated, BasicObjectPermission)
+    permission_basename = 'entrance_package_item'
+
+    def get_objects(self, pk):
+        result = {}
+        items = EntrancePackageItem.objects.filter(entrance_package__supplier_id=pk)
+        for item in items:
+            if item.default_name in result.keys():
+                continue
+            else:
+                result[item.default_name] = {
+                    'default_name': item.default_name,
+                    'product_code': item.product_code,
+                    'number_of_products_per_box': item.number_of_products_per_box,
+                    'number_of_box': item.number_of_box,
+                }
+        return result
+
+    def get(self, request, pk):
+        items = self.get_objects(pk)
+        store_receipt_items = StoreReceiptItem.objects.filter(store_receipt__supplier_id=pk)
+        for row in store_receipt_items:
+            items[row.default_name]['number_of_box'] -= row.number_of_box
+        result = []
+        for key in items:
+            if items[key]['number_of_box'] > 0:
+                result.append(items[key])
+
+        return Response(result, status=status.HTTP_200_OK)
