@@ -1,4 +1,6 @@
 import datetime
+import random
+
 from dateutil.relativedelta import relativedelta
 
 from django.db import models
@@ -148,6 +150,13 @@ class Product(BaseModel):
         return self.brand.made_in
 
     @property
+    def new_id(self):
+        new_id = random.randint(1000000000, 9999999999)
+        while Product.objects.filter(product_id=new_id).exists():
+            new_id = random.randint(1000000000, 9999999999)
+        return new_id
+
+    @property
     def is_domestic(self):
         return self.brand.is_domestic
 
@@ -188,6 +197,10 @@ class Product(BaseModel):
             ('deleteOwn.product', 'حذف محصول خود'),
         )
 
+    def save(self, *args, **kwargs):
+        if not self.product_id:
+            self.product_id = self.new_id
+        super().save(*args, **kwargs)
 
 class ProductGallery(BaseModel):
     product = models.ForeignKey(Product, related_name='gallery', on_delete=models.CASCADE)
