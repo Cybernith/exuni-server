@@ -180,7 +180,6 @@ class EntrancePackageFileColumn(BaseModel):
     PRODUCT_PRICE = 'pp'
     NUMBER_OF_BOXES = 'nb'
     NUMBER_OF_PRODUCTS_PER_BOX = 'pb'
-    NUMBER_OF_PRODUCTS = 'np'
     SIXTEEN_DIGIT_CODE = 'sd'
     PRICE_IN_CASE_OF_SALE = 'ic'
     BARCODE = 'ba'
@@ -193,7 +192,6 @@ class EntrancePackageFileColumn(BaseModel):
         (PRODUCT_CODE, 'کد محصول'),
         (NUMBER_OF_BOXES, 'تعداد کارتون'),
         (NUMBER_OF_PRODUCTS_PER_BOX, 'تعداد محصول در کارتون'),
-        (NUMBER_OF_PRODUCTS, 'تعداد محصول'),
         (SIXTEEN_DIGIT_CODE, 'کد 16 رقمی'),
         (PRICE_IN_CASE_OF_SALE, 'قیمت در صورت فروش'),
         (BARCODE, 'بارکد'),
