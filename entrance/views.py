@@ -497,11 +497,11 @@ class CreateReceiptsItemsView(APIView):
                     product_code=item['product_code'],
                     default_name=item['default_name'],
                     number_of_products_per_box=item['input_product_per_box'],
-                    number_of_box=item['input_box'],
-                    new_product_shelf_code=item['new_product_shelf_code'],
-                    content_production_count=item['content_production_count'],
-                    failure_count=item['failure_count'],
-                    barcode=item['barcode'],
+                    number_of_box=item['input_box'] if 'input_box' in item.keys() else 1,
+                    new_product_shelf_code=item['new_product_shelf_code'] if 'new_product_shelf_code' in item.keys() else 0,
+                    content_production_count=item['content_production_count'] if 'content_production_count' in item.keys() else 0,
+                    failure_count=item['failure_count'] if 'failure_count' in item.keys() else 0,
+                    barcode=item['barcode'] if 'barcode' in item.keys() else '',
                 )
 
         return Response({'msg': 'success'}, status=status.HTTP_200_OK)
@@ -516,13 +516,13 @@ class SupplierRemainItems(APIView):
         items = EntrancePackageItem.objects.filter(entrance_package__supplier_id=pk)
         for item in items:
             if item.default_name in result.keys():
-                continue
+                result[item.default_name]['number_of_products'] +=\
+                    (item.number_of_box * item.number_of_products_per_box)
             else:
                 result[item.default_name] = {
                     'default_name': item.default_name,
                     'product_code': item.product_code,
-                    'number_of_products_per_box': item.number_of_products_per_box,
-                    'number_of_box': item.number_of_box,
+                    'number_of_products': item.number_of_box * item.number_of_products_per_box,
                 }
         return result
 
@@ -530,10 +530,10 @@ class SupplierRemainItems(APIView):
         items = self.get_objects(pk)
         store_receipt_items = StoreReceiptItem.objects.filter(store_receipt__supplier_id=pk)
         for row in store_receipt_items:
-            items[row.default_name]['number_of_box'] -= row.number_of_box
+            items[row.default_name]['number_of_products'] -= row.product_count
         result = []
         for key in items:
-            if items[key]['number_of_box'] > 0:
+            if items[key]['number_of_products'] > 0:
                 result.append(items[key])
 
         return Response(result, status=status.HTTP_200_OK)
