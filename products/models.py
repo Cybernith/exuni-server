@@ -144,6 +144,7 @@ class Product(BaseModel):
     properties = models.ManyToManyField(ProductProperty, related_name="products_with_this_properties", blank=True)
 
     category = models.ForeignKey(Category, related_name='products', on_delete=models.SET_NULL, blank=True, null=True)
+    barcode = models.CharField(max_length=150, blank=True, null=True)
 
     @property
     def made_in(self):

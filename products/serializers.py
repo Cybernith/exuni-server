@@ -1,9 +1,12 @@
 from rest_framework import serializers
 
+from entrance.models import StoreReceiptItem
+from helpers.functions import change_to_num
 from helpers.serializers import SModelSerializer
 from products.models import Brand, Avail, ProductProperty, Category, Product, ProductGallery
 from users.serializers import UserSimpleSerializer
 
+from django.db.models import Sum, IntegerField, Q, Count, F
 
 class BrandSerializer(serializers.ModelSerializer):
     created_by = UserSimpleSerializer(read_only=True)
@@ -83,6 +86,18 @@ class ProductSerializer(serializers.ModelSerializer):
     is_expired_closed = serializers.ReadOnlyField()
     content_production_completed = serializers.ReadOnlyField()
     status_display = serializers.CharField(source='get_status_display', read_only=True)
+    inventory = serializers.SerializerMethodField()
+
+    def get_inventory(self, obj: Product):
+        items = StoreReceiptItem.objects.filter(product=obj).annotate(
+            product_count=Sum((F('number_of_box') * F('number_of_products_per_box')), output_field=IntegerField()),
+        ).aggregate(
+            Sum('product_count'),
+        )
+
+        # calculate sale products
+
+        return obj.first_inventory + change_to_num(items['product_count__sum'])
 
     class Meta:
         read_only_fields = ('created_at', 'updated_at')

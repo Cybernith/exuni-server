@@ -1,3 +1,4 @@
+from django.core.exceptions import ValidationError
 from django.db.models import QuerySet, Q
 from django.http import Http404
 from django.utils.decorators import method_decorator
@@ -21,6 +22,7 @@ from helpers.views.MassRelatedCUD import MassRelatedCUD
 from rest_framework.parsers import FileUploadParser, MultiPartParser, FormParser
 
 from main.models import Currency
+from products.models import Product
 from server.settings import BASE_DIR
 import pandas as pd
 
@@ -492,7 +494,24 @@ class CreateReceiptsItemsView(APIView):
 
         for item in items:
             if 'input_box' in item.keys():
+                if 'barcode' not in item.keys():
+                    raise ValidationError('بارکد الزامیست')
+
+                if 'new_product_shelf_code' not in item.keys() and \
+                        not Product.objects.filter(barcode=item['barcode']).exists():
+                    raise ValidationError('کد قفسه کالا جدید الزامیست الزامیست')
+
+                product = Product.objects.get(barcode=item['barcode']) if \
+                    Product.objects.filter(barcode=item['barcode']).exists() else None
+                if not product:
+                    product = Product.objects.create(
+                        barcode=item['barcode'],
+                        product_id=item['product_code'] if 'product_code' in item.keys() else None,
+                        name=item['default_name'] if 'default_name' in item.keys() else None,
+                        sale_price=item['final_price']
+                    )
                 StoreReceiptItem.objects.create(
+                    product=product,
                     store_receipt=store_receipt,
                     product_code=item['product_code'],
                     default_name=item['default_name'],
@@ -501,7 +520,8 @@ class CreateReceiptsItemsView(APIView):
                     new_product_shelf_code=item['new_product_shelf_code'] if 'new_product_shelf_code' in item.keys() else 0,
                     content_production_count=item['content_production_count'] if 'content_production_count' in item.keys() else 0,
                     failure_count=item['failure_count'] if 'failure_count' in item.keys() else 0,
-                    barcode=item['barcode'] if 'barcode' in item.keys() else '',
+                    barcode=item['barcode'],
+                    sale_price=item['final_price']
                 )
 
         return Response({'msg': 'success'}, status=status.HTTP_200_OK)
@@ -520,6 +540,7 @@ class SupplierRemainItems(APIView):
                     (item.number_of_box * item.number_of_products_per_box)
             else:
                 result[item.default_name] = {
+                    'final_price': item.final_price_after_discount,
                     'default_name': item.default_name,
                     'product_code': item.product_code,
                     'number_of_products': item.number_of_box * item.number_of_products_per_box,

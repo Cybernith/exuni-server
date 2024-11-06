@@ -354,3 +354,10 @@ def get_financial_year_months(to_now=True):
     else:
         return results
 
+
+
+def change_to_num(val):
+    if val:
+        return round(val)
+    else:
+        return 0
