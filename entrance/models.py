@@ -144,26 +144,30 @@ class EntrancePackageItem(BaseModel):
         if self.initial_registration:
             if not self.default_name and not self.product_code:
                 raise ValidationError('برای ثبت ردیف پکیج ها باید کد یا نام کالا داشته باشند')
+
+            if self.price_sum:
+                self.default_price = float(self.price_sum) / float(self.number_of_products)
             else:
-                if self.default_name and Product.objects.filter(name=self.default_name).exists():
-                    self.product = Product.objects.filter(name=self.default_name).first()
-                elif self.product_code and Product.objects.filter(product_id=self.product_code).exists():
-                    self.product = Product.objects.get(product_id=self.product_code)
-                else:
-                    product = Product.objects.create(name=self.default_name)
-                    product.price = self.net_purchase_price
-                    if self.product_code:
-                        product.product_id = self.product_code
-                    if self.default_picture:
-                        product.picture = self.default_picture
-                    product.save()
-                    self.product = product
+                self.price_sum = float(self.number_of_products) * float(self.default_price)
 
-            if not self.price_sum:
-                self.price_sum = self.number_of_products * self.default_price
+            #else:
+            #    if self.default_name and Product.objects.filter(name=self.default_name).exists():
+            #        self.product = Product.objects.filter(name=self.default_name).first()
+            #    elif self.product_code and Product.objects.filter(product_id=self.product_code).exists():
+            #        self.product = Product.objects.get(product_id=self.product_code)
+            #    else:
+            #        product = Product.objects.create(name=self.default_name)
+            #        product.price = self.net_purchase_price
+            #        if self.product_code:
+            #            product.product_id = self.product_code
+            #        if self.default_picture:
+            #            product.picture = self.default_picture
+            #        product.save()
+            #        self.product = product
 
-            if self.in_case_of_sale_type and self.price_in_case_of_sale:
-                self.product.sale_price = self.final_price_after_discount
+
+            #if self.in_case_of_sale_type and self.price_in_case_of_sale:
+            #    self.product.sale_price = self.final_price_after_discount
 
             if self.entrance_package.with_offer and self.entrance_package.items.filter(product=self.product).exists():
                 for item in self.entrance_package.items.filter(product=self.product):
@@ -273,6 +277,7 @@ class StoreReceiptItem(BaseModel):
                                  blank=True, null=True)
     explanation = EXPLANATION()
     failure_count = models.IntegerField(default=0)
+    sale_price = DECIMAL()
 
     class Meta(BaseModel.Meta):
         verbose_name = 'StoreReceiptItem'
