@@ -535,14 +535,18 @@ class SupplierRemainItems(APIView):
         result = {}
         items = EntrancePackageItem.objects.filter(entrance_package__supplier_id=pk)
         for item in items:
-            if item.default_name in result.keys():
-                result[item.default_name]['number_of_products'] +=\
+            item_key = item.default_name + str(item.number_of_products_per_box) + str(round(item.final_price_after_discount))
+            if item_key in result.keys():
+                result[item_key]['number_of_products'] +=\
                     (item.number_of_box * item.number_of_products_per_box)
+                result[item_key]['number_of_box'] += item.number_of_box
             else:
-                result[item.default_name] = {
+                result[item_key] = {
                     'final_price': item.final_price_after_discount,
                     'default_name': item.default_name,
                     'product_code': item.product_code,
+                    'number_of_box': item.number_of_box,
+                    'number_of_products_per_box': item.number_of_products_per_box,
                     'number_of_products': item.number_of_box * item.number_of_products_per_box,
                 }
         return result
@@ -551,10 +555,13 @@ class SupplierRemainItems(APIView):
         items = self.get_objects(pk)
         store_receipt_items = StoreReceiptItem.objects.filter(store_receipt__supplier_id=pk)
         for row in store_receipt_items:
-            items[row.default_name]['number_of_products'] -= row.product_count
+            row_key = row.default_name + str(row.number_of_products_per_box) + str(round(row.sale_price))
+            if row_key in items.keys():
+                items[row_key]['number_of_products'] -= row.product_count
+                items[row_key]['number_of_box'] -= row.number_of_box
         result = []
         for key in items:
-            if items[key]['number_of_products'] > 0:
+            if items[key]['number_of_products'] and items[key]['number_of_box'] > 0:
                 result.append(items[key])
 
         return Response(result, status=status.HTTP_200_OK)
