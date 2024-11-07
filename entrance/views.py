@@ -565,3 +565,17 @@ class SupplierRemainItems(APIView):
                 result.append(items[key])
 
         return Response(result, status=status.HTTP_200_OK)
+
+
+class SupplierStoreReceiptsView(APIView):
+    permission_classes = (IsAuthenticated, BasicObjectPermission)
+    permission_basename = 'store_receipt'
+
+    def get_object(self, pk):
+        return StoreReceipt.objects.filter(supplier_id=pk)
+
+    def get(self, request, pk):
+        query = self.get_object(pk)
+        serializers = StoreReceiptSerializer(query, many=True)
+        return Response(serializers.data, status=status.HTTP_200_OK)
+
