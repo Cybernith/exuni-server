@@ -63,6 +63,7 @@ class EntrancePackageListSerializer(SModelSerializer):
     created_by = UserSimpleSerializer(many=False)
     supplier_name = serializers.CharField(source='supplier.name', read_only=True)
     store_name = serializers.CharField(source='store.name', read_only=True)
+    items = EntrancePackageItemListRetrieveSerializer(read_only=True, many=True)
 
     class Meta:
         model = EntrancePackage
