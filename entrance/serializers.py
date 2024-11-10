@@ -70,7 +70,18 @@ class EntrancePackageListSerializer(SModelSerializer):
         read_only_fields = ('created_at', 'updated_at')
 
 
+class StoreReceiptSimpleSerializer(SModelSerializer):
+    store_name = serializers.CharField(source='store.name', read_only=True)
+    supplier_name = serializers.CharField(source='supplier.name', read_only=True)
+
+    class Meta:
+        model = StoreReceipt
+        fields = '__all__'
+        read_only_fields = ('created_at', 'updated_at')
+
+
 class StoreReceiptItemSerializer(SModelSerializer):
+    store_receipt = StoreReceiptSimpleSerializer(read_only=True)
 
     class Meta:
         model = StoreReceiptItem
