@@ -17,7 +17,8 @@ from products.serializers import BrandSerializer, AvailSerializer, ProductProper
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework import generics
 from helpers.models import manage_files
-from django.db.models import QuerySet
+from django.db.models import QuerySet, Q
+
 
 class BrandApiView(APIView):
     permission_classes = (IsAuthenticated, BasicObjectPermission)
@@ -365,5 +366,22 @@ class ProductsStoreReceiptsView(APIView):
     def get(self, request, pk):
         query = self.get_object(pk)
         serializers = StoreReceiptItemSerializer(query, many=True)
+        return Response(serializers.data, status=status.HTTP_200_OK)
+
+
+class NoContentProductsView(APIView):
+    permission_classes = (IsAuthenticated, BasicObjectPermission)
+    permission_basename = 'product'
+
+    def get_object(self, pk):
+        return Product.objects.filter(
+            Q(picture__isnull=True) |
+            Q(explanation__isnull=True) |
+            Q(summary_explanation__isnull=True)
+        )
+
+    def get(self, request, pk):
+        query = self.get_object(pk)
+        serializers = ProductSerializer(query, many=True)
         return Response(serializers.data, status=status.HTTP_200_OK)
 
