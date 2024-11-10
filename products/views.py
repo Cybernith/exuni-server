@@ -1,4 +1,7 @@
 from rest_framework.permissions import IsAuthenticated
+
+from entrance.models import StoreReceiptItem
+from entrance.serializers import StoreReceiptItemSerializer
 from helpers.auth import BasicObjectPermission
 from rest_framework.views import APIView
 from django.http import Http404
@@ -8,7 +11,8 @@ from rest_framework import status
 
 from products.models import Brand, Avail, ProductProperty, Category, Product, ProductGallery
 from products.serializers import BrandSerializer, AvailSerializer, ProductPropertySerializer, CategorySerializer, \
-    ProductSerializer, ProductGallerySerializer, BrandLogoUpdateSerializer, CategoryPictureUpdateSerializer
+    ProductSerializer, ProductGallerySerializer, BrandLogoUpdateSerializer, CategoryPictureUpdateSerializer, \
+    ProductSimpleSerializer
 
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework import generics
@@ -231,6 +235,16 @@ class CategoryPictureUpdateView(generics.UpdateAPIView):
         serializer.save()
 
 
+class ProductSimpleApiView(APIView):
+    permission_classes = (IsAuthenticated, BasicObjectPermission)
+    permission_basename = 'product'
+
+    def get(self, request):
+        query = Product.objects.all()
+        serializers = ProductSimpleSerializer(query, many=True, context={'request': request})
+        return Response(serializers.data, status=status.HTTP_200_OK)
+
+
 class ProductApiView(APIView):
     permission_classes = (IsAuthenticated, BasicObjectPermission)
     permission_basename = 'product'
@@ -338,5 +352,18 @@ class GalleryOfProductApiView(APIView):
     def get(self, request, pk):
         query = self.get_objects(pk)
         serializers = ProductGallerySerializer(query, many=True)
+        return Response(serializers.data, status=status.HTTP_200_OK)
+
+
+class ProductsStoreReceiptsView(APIView):
+    permission_classes = (IsAuthenticated, BasicObjectPermission)
+    permission_basename = 'store_receipt'
+
+    def get_object(self, pk):
+        return StoreReceiptItem.objects.filter(product_id=pk)
+
+    def get(self, request, pk):
+        query = self.get_object(pk)
+        serializers = StoreReceiptItemSerializer(query, many=True)
         return Response(serializers.data, status=status.HTTP_200_OK)
 

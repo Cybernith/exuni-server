@@ -71,6 +71,15 @@ class ProductGallerySerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class ProductSimpleSerializer(serializers.ModelSerializer):
+    created_by = UserSimpleSerializer(read_only=True)
+
+    class Meta:
+        read_only_fields = ('created_at', 'updated_at')
+        model = Product
+        fields = 'created_by', 'updated_at', 'name', 'id', 'barcode'
+
+
 class ProductSerializer(serializers.ModelSerializer):
     created_by = UserSimpleSerializer(read_only=True)
     gallery = ProductGallerySerializer(many=True, read_only=True)
