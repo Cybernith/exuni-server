@@ -26,6 +26,14 @@ class BrandLogoUpdateSerializer(SModelSerializer):
         fields = ('id', 'logo')
 
 
+class ProductPictureUpdateSerializer(SModelSerializer):
+    picture = serializers.ImageField(required=False)
+
+    class Meta:
+        model = Product
+        fields = ('id', 'picture')
+
+
 class AvailSerializer(serializers.ModelSerializer):
     created_by = UserSimpleSerializer(read_only=True)
 
@@ -78,6 +86,54 @@ class ProductSimpleSerializer(serializers.ModelSerializer):
         read_only_fields = ('created_at', 'updated_at')
         model = Product
         fields = 'created_by', 'updated_at', 'name', 'id', 'barcode'
+
+
+class ProductContentDevelopmentSerializer(serializers.ModelSerializer):
+    created_by = UserSimpleSerializer(read_only=True)
+
+    class Meta:
+        read_only_fields = ('created_at', 'updated_at', 'picture')
+        model = Product
+        fields = 'created_by', 'updated_at', 'name', 'picture', 'id', 'barcode',\
+                 'explanation', 'how_to_use', 'summary_explanation', 'category'
+
+
+class NoContentProductSimpleSerializer(serializers.ModelSerializer):
+    created_by = UserSimpleSerializer(read_only=True)
+    has_explanation = serializers.SerializerMethodField(read_only=True)
+    has_picture = serializers.SerializerMethodField(read_only=True)
+    has_summary_explanation = serializers.SerializerMethodField(read_only=True)
+    has_how_to_use = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        read_only_fields = ('created_at', 'updated_at', 'picture')
+        model = Product
+        fields = 'created_by', 'updated_at', 'name', 'id', 'barcode', 'has_explanation', 'has_picture',\
+                 'has_summary_explanation', 'has_how_to_use', 'picture'
+
+    def get_has_explanation(self, obj: Product):
+        if obj.explanation:
+            return True
+        else:
+            return False
+
+    def get_has_picture(self, obj: Product):
+        if obj.picture:
+            return True
+        else:
+            return False
+
+    def get_has_summary_explanation(self, obj: Product):
+        if obj.summary_explanation:
+            return True
+        else:
+            return False
+
+    def get_has_how_to_use(self, obj: Product):
+        if obj.how_to_use:
+            return True
+        else:
+            return False
 
 
 class ProductSerializer(serializers.ModelSerializer):
