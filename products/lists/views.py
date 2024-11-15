@@ -1,12 +1,13 @@
+from django.db.models import Q
 from rest_framework import generics
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import IsAuthenticated
 from helpers.auth import BasicObjectPermission
 from products.lists.filters import BrandFilter, AvailFilter, ProductPropertyFilter, CategoryFilter, ProductFilter, \
-    ProductGalleryFilter
+    ProductGalleryFilter, NoContentProductFilter
 from products.models import Brand, Avail, ProductProperty, Category, Product, ProductGallery
 from products.serializers import BrandSerializer, AvailSerializer, ProductPropertySerializer, CategorySerializer, \
-    ProductSerializer, ProductGallerySerializer
+    ProductSerializer, ProductGallerySerializer, NoContentProductSimpleSerializer
 
 
 class BrandListView(generics.ListAPIView):
@@ -91,3 +92,26 @@ class ProductGalleryListView(generics.ListAPIView):
 
     def get_queryset(self):
         return ProductGallery.objects.all()
+
+
+class NoContentProductListView(generics.ListAPIView):
+    permission_classes = (IsAuthenticated, BasicObjectPermission)
+
+    permission_codename = "get.product"
+
+    serializer_class = NoContentProductSimpleSerializer
+    filterset_class = NoContentProductFilter
+    ordering_fields = '__all__'
+    pagination_class = LimitOffsetPagination
+
+    def get_queryset(self):
+        return Product.objects.filter(
+            Q(picture=None) |
+            Q(explanation=None) |
+            Q(summary_explanation=None) |
+            Q(how_to_use=None) |
+            Q(picture='') |
+            Q(explanation='') |
+            Q(summary_explanation='') |
+            Q(how_to_use='')
+        )

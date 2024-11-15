@@ -12,7 +12,7 @@ from rest_framework import status
 from products.models import Brand, Avail, ProductProperty, Category, Product, ProductGallery
 from products.serializers import BrandSerializer, AvailSerializer, ProductPropertySerializer, CategorySerializer, \
     ProductSerializer, ProductGallerySerializer, BrandLogoUpdateSerializer, CategoryPictureUpdateSerializer, \
-    ProductSimpleSerializer
+    ProductSimpleSerializer, ProductContentDevelopmentSerializer, ProductPictureUpdateSerializer
 
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework import generics
@@ -377,7 +377,8 @@ class NoContentProductsView(APIView):
         return Product.objects.filter(
             Q(picture__isnull=True) |
             Q(explanation__isnull=True) |
-            Q(summary_explanation__isnull=True)
+            Q(summary_explanation__isnull=True) |
+            Q(how_to_use__isnull=True)
         )
 
     def get(self, request, pk):
@@ -385,3 +386,40 @@ class NoContentProductsView(APIView):
         serializers = ProductSerializer(query, many=True)
         return Response(serializers.data, status=status.HTTP_200_OK)
 
+
+class ProductContentDevelopmentDetailView(APIView):
+    permission_classes = (IsAuthenticated, BasicObjectPermission)
+    permission_basename = 'product'
+
+    def get_object(self, pk):
+        try:
+            return Product.objects.get(pk=pk)
+        except Product.DoesNotExist:
+            raise Http404
+
+    def get(self, request, pk):
+        query = self.get_object(pk)
+        serializers = ProductContentDevelopmentSerializer(query)
+        return Response(serializers.data, status=status.HTTP_200_OK)
+
+    def put(self, request, pk):
+        query = self.get_object(pk)
+        serializer = ProductContentDevelopmentSerializer(query, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ProductPictureUpdateView(generics.UpdateAPIView):
+    permission_classes = (IsAuthenticated,)
+    permission_basename = 'product'
+    serializer_class = ProductPictureUpdateSerializer
+    parser_classes = (MultiPartParser, FormParser)
+
+    def get_queryset(self) -> QuerySet:
+        return Product.objects.filter(id=self.request.data['id'])
+
+    def perform_update(self, serializer: BrandLogoUpdateSerializer) -> None:
+        manage_files(serializer.instance, self.request.data, ['logo'])
+        serializer.save()
