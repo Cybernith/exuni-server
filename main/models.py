@@ -21,7 +21,7 @@ class Business(BaseModel):
     name = models.CharField(max_length=150)
     domain_address = models.CharField(max_length=150, blank=True, null=True)
     logo = models.ImageField(upload_to=custom_upload_to, null=True, blank=True, default=None)
-    api_token = models.CharField(max_length=150, blank=True, null=True)
+    api_token = models.CharField(max_length=150, blank=True, null=True, unique=True)
     primary_business_color = ColorField(default='#FF8700')
     secondary_business_color = ColorField(default='#002357')
     theme_business_color = ColorField(default='#dae3ed')
