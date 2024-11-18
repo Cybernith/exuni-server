@@ -85,7 +85,7 @@ class ProductSimpleSerializer(serializers.ModelSerializer):
     class Meta:
         read_only_fields = ('created_at', 'updated_at')
         model = Product
-        fields = 'created_by', 'updated_at', 'name', 'id', 'barcode'
+        fields = 'created_by', 'updated_at', 'name', 'id', 'barcode', 'sixteen_digit_code', 'summary_explanation'
 
 
 class ProductContentDevelopmentSerializer(serializers.ModelSerializer):

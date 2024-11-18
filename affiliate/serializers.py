@@ -9,6 +9,11 @@ from django.db.models import Sum, IntegerField, Q, Count, F
 
 from affiliate.models import AffiliateFactor, AffiliateFactorItem
 
+from products.serializers import ProductSimpleSerializer
+
+from main.serializers import BusinessSerializer
+from users.serializers import UserSimpleSerializer
+
 
 class AffiliateFactorCreateSerializer(serializers.ModelSerializer):
 
@@ -17,9 +22,20 @@ class AffiliateFactorCreateSerializer(serializers.ModelSerializer):
         fields = 'business', 'customer_name', 'phone', 'address', 'postal_code'
 
 
-class AffiliateFactorItemCreateSerializer(serializers.ModelSerializer):
+class AffiliateFactorItemsListSerializer(serializers.ModelSerializer):
+    product = ProductSimpleSerializer(read_only=True)
 
     class Meta:
         model = AffiliateFactorItem
-        read_only_fields = ('created_at', 'updated_at')
         fields = '__all__'
+
+
+class AffiliateFactorListSerializer(serializers.ModelSerializer):
+    items = AffiliateFactorItemsListSerializer(many=True, read_only=True)
+    business = BusinessSerializer(read_only=True)
+    customer = UserSimpleSerializer(read_only=True)
+
+    class Meta:
+        model = AffiliateFactor
+        fields = '__all__'
+
