@@ -1,9 +1,10 @@
 from rest_framework import serializers
-
+import os
 from entrance.models import StoreReceiptItem
 from helpers.functions import change_to_num
 from helpers.serializers import SModelSerializer
 from products.models import Brand, Avail, ProductProperty, Category, Product, ProductGallery
+from server.settings import BASE_DIR, SERVER_URL
 from users.serializers import UserSimpleSerializer
 
 from django.db.models import Sum, IntegerField, Q, Count, F
@@ -170,3 +171,63 @@ class ProductSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class AffiliateProductRetrieveSerializer(serializers.ModelSerializer):
+    product_code = serializers.CharField(source='barcode', read_only=True)
+    title = serializers.CharField(source='name', read_only=True)
+    description = serializers.CharField(source='explanation', read_only=True)
+    features = serializers.CharField(source='summary_explanation', read_only=True)
+    weight = serializers.IntegerField(source='postal_weight', read_only=True)
+    price = serializers.SerializerMethodField(read_only=True)
+    stock = serializers.SerializerMethodField(read_only=True)
+    min_stock = serializers.IntegerField(source='min_inventory', read_only=True)
+    type = serializers.ReadOnlyField()
+    images = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        read_only_fields = ('created_at', 'updated_at')
+        model = Product
+        fields = 'created_by', 'updated_at', 'id', 'product_code', 'title', 'description', 'features', 'weight',\
+                 'price', 'stock', 'min_stock', 'type', 'group_id', 'images'
+
+    def get_stock(self, obj: Product):
+        items = StoreReceiptItem.objects.filter(product=obj).annotate(
+            product_count=Sum((F('number_of_box') * F('number_of_products_per_box')), output_field=IntegerField()),
+        ).aggregate(
+            Sum('product_count'),
+        )
+
+
+        return obj.first_inventory + change_to_num(items['product_count__sum'])
+
+    def get_images(self, obj: Product):
+
+        images = []
+        images.append(SERVER_URL + obj.picture.url)
+        for gallery in ProductGallery.objects.filter(product=obj):
+            images.append(SERVER_URL + gallery.picture.url)
+        return images
+
+    def get_price(self, obj: Product):
+        item = StoreReceiptItem.objects.filter(product=obj).order_by('store_receipt__enter_date').last()
+        if item:
+            return item.sale_price
+        else:
+            return obj.price
+
+
+class AffiliateReceiveProductsInventorySerializer(serializers.ModelSerializer):
+    product_code = serializers.CharField(source='barcode', read_only=True)
+    stock = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = Product
+        fields = 'product_code', 'stock'
+
+    def get_stock(self, obj: Product):
+        items = StoreReceiptItem.objects.filter(product=obj).annotate(
+            product_count=Sum((F('number_of_box') * F('number_of_products_per_box')), output_field=IntegerField()),
+        ).aggregate(
+            Sum('product_count'),
+        )
+
+        return obj.first_inventory + change_to_num(items['product_count__sum'])

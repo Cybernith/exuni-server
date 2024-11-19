@@ -19,6 +19,7 @@ import sys
 from server.configs import Databases, RequestLogs
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+SERVER_URL = 'http://127.0.0.1:7000'
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/2.0/howto/deployment/checklist/

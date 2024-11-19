@@ -1,28 +1,28 @@
 from rest_framework.exceptions import ValidationError
-from rest_framework.permissions import IsAuthenticated
-
-from entrance.models import StoreReceiptItem
-from entrance.serializers import StoreReceiptItemSerializer
-from helpers.auth import BasicObjectPermission
 from rest_framework.views import APIView
-from django.http import Http404
 
 from rest_framework.response import Response
 from rest_framework import status
 
-from rest_framework.parsers import MultiPartParser, FormParser
-from rest_framework import generics
-from helpers.models import manage_files
-from django.db.models import QuerySet, Q
-
 from affiliate.models import AffiliateFactorItem, AffiliateFactor
 from affiliate.serializers import AffiliateFactorCreateSerializer
-from helpers.auth import BasicObjectPermission
 from products.models import Product
 
 from main.models import Business
+from products.serializers import AffiliateProductRetrieveSerializer, AffiliateReceiveProductsInventorySerializer
 
 from users.models import User
+
+
+def get_business_from_request(req):
+    business_token = req.GET.get('businessToken', None)
+    if not business_token:
+        raise ValidationError('توکن فروشگاه ارسال نشده')
+    else:
+        if Business.objects.filter(api_token=business_token).exists():
+            return Business.objects.get(api_token=business_token)
+        else:
+            raise ValidationError('توکن فروشگاه نامعتبر میباشد')
 
 
 class AffiliateFactorCreateApiView(APIView):
@@ -31,15 +31,7 @@ class AffiliateFactorCreateApiView(APIView):
     def post(self, request):
         data = request.data
         items = data.get('products', [])
-        business_token = self.request.GET.get('businessToken', None)
-        if not business_token:
-            raise ValidationError('توکن فروشگاه ارسال نشده')
-        else:
-            if Business.objects.filter(api_token=business_token).exists():
-                business = Business.objects.get(api_token=business_token)
-            else:
-                raise ValidationError('توکن فروشگاه نامعتبر میباشد')
-
+        business = get_business_from_request(self.request)
         data['business'] = business.id
 
         for item in items:
@@ -73,3 +65,29 @@ class AffiliateFactorCreateApiView(APIView):
 
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class AffiliateProductsRetrieveView(APIView):
+    permission_basename = 'product'
+
+    def get_objects(self):
+        business = get_business_from_request(self.request)
+        return Product.objects.filter(business=business.id)
+
+    def get(self, request):
+        query = self.get_objects()
+        serializers = AffiliateProductRetrieveSerializer(query, many=True)
+        return Response(serializers.data, status=status.HTTP_200_OK)
+
+
+class AffiliateReceiveProductsInventoryView(APIView):
+    permission_basename = 'product'
+
+    def get_objects(self):
+        business = get_business_from_request(self.request)
+        return Product.objects.filter(business=business.id)
+
+    def get(self, request):
+        query = self.get_objects()
+        serializers = AffiliateReceiveProductsInventorySerializer(query, many=True)
+        return Response(serializers.data, status=status.HTTP_200_OK)
