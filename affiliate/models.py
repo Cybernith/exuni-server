@@ -7,6 +7,19 @@ from users.models import User
 
 
 class AffiliateFactor(BaseModel):
+    INITIAL_REGISTRATION_STAGE = 'irs'
+    IN_PROCESSING = 'ipr'
+    IN_PACKING = 'ipa'
+    SHIPPED = 'shp'
+
+    STATUSES = (
+        (INITIAL_REGISTRATION_STAGE, 'ثبت اولیه'),
+        (IN_PROCESSING, 'درحال پردازش'),
+        (IN_PACKING, 'در حال بسته بندی'),
+        (SHIPPED, 'ارسال شده'),
+    )
+
+    status = models.CharField(max_length=3, choices=STATUSES, default=INITIAL_REGISTRATION_STAGE)
     business = models.ForeignKey(Business, related_name='affiliate_factors', blank=True, null=True,
                                  on_delete=models.PROTECT)
     customer = models.ForeignKey(User, related_name='affiliate_factors_as_customer',
