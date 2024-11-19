@@ -6,7 +6,7 @@ from dateutil.relativedelta import relativedelta
 from django.db import models
 
 from helpers.models import BaseModel, DECIMAL
-from main.models import Supplier, Currency
+from main.models import Supplier, Currency, Business
 from users.models import custom_upload_to, User
 
 
@@ -145,6 +145,15 @@ class Product(BaseModel):
 
     category = models.ForeignKey(Category, related_name='products', on_delete=models.SET_NULL, blank=True, null=True)
     barcode = models.CharField(max_length=150, blank=True, null=True)
+    business = models.ManyToManyField(Business)
+
+    @property
+    def last_price(self):
+        return self.price
+
+    @property
+    def type(self):
+        return 'simple'
 
     @property
     def made_in(self):
@@ -202,6 +211,7 @@ class Product(BaseModel):
         if not self.product_id:
             self.product_id = self.new_id
         super().save(*args, **kwargs)
+
 
 class ProductGallery(BaseModel):
     product = models.ForeignKey(Product, related_name='gallery', on_delete=models.CASCADE)

@@ -102,7 +102,8 @@ class StoreReceiptItemListRetrieveSerializer(StoreReceiptItemSerializer):
 
 class StoreReceiptSerializer(SModelSerializer):
     items = StoreReceiptItemListRetrieveSerializer(read_only=True, many=True)
-    store_name = serializers.CharField(source='store.name')
+    store_name = serializers.CharField(source='store.name', read_only=True)
+
     class Meta:
         model = StoreReceipt
         fields = '__all__'
