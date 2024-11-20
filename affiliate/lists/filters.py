@@ -4,6 +4,30 @@ from helpers.filters import BASE_FIELD_FILTERS
 
 from affiliate.models import AffiliateFactor
 
+def status_display_contains_filter(queryset, name, value):
+    statuses = {
+        'ثبت اولیه': AffiliateFactor.INITIAL_REGISTRATION_STAGE,
+        'درحال پردازش': AffiliateFactor.IN_PROCESSING,
+        'در حال بسته بندی': AffiliateFactor.IN_PACKING,
+        'ارسال شده': AffiliateFactor.SHIPPED,
+    }
+    for status in statuses:
+        if value in status:
+            return queryset.filter(status=statuses[status])
+    return queryset.none()
+
+def status_display_filter(queryset, name, value):
+    statuses = {
+        'ثبت اولیه': AffiliateFactor.INITIAL_REGISTRATION_STAGE,
+        'درحال پردازش': AffiliateFactor.IN_PROCESSING,
+        'در حال بسته بندی': AffiliateFactor.IN_PACKING,
+        'ارسال شده': AffiliateFactor.SHIPPED,
+    }
+    for status in statuses:
+        if value == status:
+            return queryset.filter(status=statuses[status])
+    return queryset.none()
+
 def business_name_filter(queryset, name, value):
     return queryset.filter(business_name=value)
 
@@ -14,6 +38,8 @@ def business_name_contains_filter(queryset, name, value):
 class AffiliateFactorFilter(filters.FilterSet):
     business_name = filters.CharFilter(method=business_name_filter)
     business_name__icontains = filters.CharFilter(method=business_name_contains_filter)
+    status_display = filters.CharFilter(method=status_display_filter)
+    status_display__icontains = filters.CharFilter(method=status_display_contains_filter)
 
     class Meta:
         model = AffiliateFactor
@@ -21,6 +47,7 @@ class AffiliateFactorFilter(filters.FilterSet):
             'id': ('exact',),
             'business': ('exact',),
             'customer': ('exact',),
+            'status': ('exact',),
             'customer_name': BASE_FIELD_FILTERS,
             'phone': BASE_FIELD_FILTERS,
             'address': BASE_FIELD_FILTERS,

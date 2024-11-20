@@ -1,6 +1,8 @@
 from rest_framework import generics
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import IsAuthenticated
+
+from affiliate.views import get_business_from_request
 from helpers.auth import BasicObjectPermission
 
 from affiliate.serializers import AffiliateFactorListSerializer
@@ -21,6 +23,7 @@ class AffiliateFactorListView(generics.ListAPIView):
     pagination_class = LimitOffsetPagination
 
     def get_queryset(self):
-        return AffiliateFactor.objects.all()
+        business = get_business_from_request(self.request)
+        return AffiliateFactor.objects.filter(business=business)
 
 

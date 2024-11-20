@@ -72,6 +72,22 @@ class BusinessDetailView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
+class BusinessByTokenDetailView(APIView):
+    permission_classes = (IsAuthenticated, BasicObjectPermission)
+    permission_basename = 'business'
+
+    def get_object(self, token):
+        try:
+            return Business.objects.get(api_token=token)
+        except Business.DoesNotExist:
+            raise Http404
+
+    def get(self, request, token):
+        query = self.get_object(token)
+        serializers = BusinessSerializer(query)
+        return Response(serializers.data, status=status.HTTP_200_OK)
+
+
 class BusinessLogoUpdateView(generics.UpdateAPIView):
     permission_classes = (IsAuthenticated,)
     permission_basename = 'business'
