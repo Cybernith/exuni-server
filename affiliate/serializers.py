@@ -34,6 +34,8 @@ class AffiliateFactorListSerializer(serializers.ModelSerializer):
     items = AffiliateFactorItemsListSerializer(many=True, read_only=True)
     business = BusinessSerializer(read_only=True)
     customer = UserSimpleSerializer(read_only=True)
+    status_display = serializers.CharField(source='get_status_display', read_only=True)
+    factor_price_sum = serializers.ReadOnlyField()
 
     class Meta:
         model = AffiliateFactor

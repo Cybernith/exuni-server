@@ -4,12 +4,14 @@ from django.urls import path
 from main.lists.views import BusinessListView, StoreListView, CurrencyListView, SupplierListView
 from main.views import BusinessApiView, BusinessDetailView, StoreApiView, StoreDetailView, CurrencyApiView, \
     CurrencyDetailView, SupplierApiView, SupplierDetailView, CurrencyListCreate, CurrencyCRUD, StorekeeperApiView, \
-    SupplierAdminsApiView, BusinessOwnersApiView, BusinessLogoUpdateView, BusinessOwnerNationalCardPictureUpdateView
+    SupplierAdminsApiView, BusinessOwnersApiView, BusinessLogoUpdateView, BusinessOwnerNationalCardPictureUpdateView, \
+    BusinessByTokenDetailView
 
 app_name = 'main'
 urlpatterns = [
     url(r'^business$', BusinessApiView.as_view(), name='businessApiView'),
     url(r'^business/(?P<pk>[0-9]+)$', BusinessDetailView.as_view(), name='BusinessDetailView'),
+    path('businessByToken/<str:token>', BusinessByTokenDetailView.as_view(), name='businessByTokenDetailView'),
     url(r'^business/all$', BusinessListView.as_view(), name='businessListView'),
     url(r'^businessOwner/all$', BusinessOwnersApiView.as_view(), name='businessOwnersApiView'),
     url(r'^businessLogoUpdate/(?P<pk>[0-9]+)$', BusinessLogoUpdateView.as_view(), name='businessLogoUpdateView'),

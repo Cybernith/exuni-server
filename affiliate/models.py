@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models import Sum, F, DecimalField
 
 from helpers.models import BaseModel, DECIMAL
 from main.models import Business
@@ -43,6 +44,13 @@ class AffiliateFactor(BaseModel):
             ('updateOwn.affiliate_factor', 'ویرایش فاکتور افیلیت خود'),
             ('deleteOwn.affiliate_factor', 'حذف فاکتور افیلیت خود'),
         )
+
+    @property
+    def factor_price_sum(self):
+        items = self.items.all().annotate(
+            final_price=Sum(F('quantity') * F('price'), output_field=DecimalField()),
+        ).aggregate(Sum('final_price'))
+        return items['final_price__sum']
 
 
 class AffiliateFactorItem(BaseModel):
