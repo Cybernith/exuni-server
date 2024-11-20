@@ -1,5 +1,6 @@
 from rest_framework.permissions import IsAuthenticated
 
+from affiliate.views import get_business_from_request
 from entrance.models import StoreReceiptItem
 from entrance.serializers import StoreReceiptItemSerializer
 from helpers.auth import BasicObjectPermission
@@ -423,3 +424,19 @@ class ProductPictureUpdateView(generics.UpdateAPIView):
     def perform_update(self, serializer: BrandLogoUpdateSerializer) -> None:
         manage_files(serializer.instance, self.request.data, ['logo'])
         serializer.save()
+
+
+class AffiliateProductAddBusinessView(APIView):
+    permission_classes = (IsAuthenticated, BasicObjectPermission)
+    permission_basename = 'product'
+
+    def put(self, request):
+        data = request.data
+        business = get_business_from_request(self.request)
+        business.products_for_sale.add(*data)
+        business_products = Product.objects.filter(id__in=data)
+        exclude_products = Product.objects.exclude(id__in=data)
+        business.products_for_sale.remove(*exclude_products)
+        return Response({'msg': 'updated'}, status=status.HTTP_201_CREATED)
+
+

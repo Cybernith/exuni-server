@@ -145,7 +145,7 @@ class Product(BaseModel):
 
     category = models.ForeignKey(Category, related_name='products', on_delete=models.SET_NULL, blank=True, null=True)
     barcode = models.CharField(max_length=150, blank=True, null=True)
-    business = models.ManyToManyField(Business)
+    business = models.ManyToManyField(Business, related_name='products_for_sale')
 
     @property
     def last_price(self):
