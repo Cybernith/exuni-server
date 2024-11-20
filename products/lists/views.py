@@ -2,6 +2,8 @@ from django.db.models import Q
 from rest_framework import generics
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import IsAuthenticated
+
+from affiliate.views import get_business_from_request
 from helpers.auth import BasicObjectPermission
 from products.lists.filters import BrandFilter, AvailFilter, ProductPropertyFilter, CategoryFilter, ProductFilter, \
     ProductGalleryFilter, NoContentProductFilter
@@ -78,6 +80,21 @@ class ProductListView(generics.ListAPIView):
 
     def get_queryset(self):
         return Product.objects.all()
+
+
+class AffiliateForSaleProductsListView(generics.ListAPIView):
+    permission_classes = (IsAuthenticated, BasicObjectPermission)
+
+    permission_codename = "get.product"
+
+    serializer_class = ProductSerializer
+    filterset_class = ProductFilter
+    ordering_fields = '__all__'
+    pagination_class = LimitOffsetPagination
+
+    def get_queryset(self):
+        business = get_business_from_request(self.request)
+        return Product.objects.filter(business=business.id)
 
 
 class ProductGalleryListView(generics.ListAPIView):

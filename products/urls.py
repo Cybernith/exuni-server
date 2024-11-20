@@ -1,12 +1,12 @@
 from django.conf.urls import url
 
 from products.lists.views import BrandListView, AvailListView, ProductPropertyListView, ProductGalleryListView, \
-    ProductListView, CategoryListView, NoContentProductListView
+    ProductListView, CategoryListView, NoContentProductListView, AffiliateForSaleProductsListView
 from products.views import BrandApiView, BrandDetailView, AvailApiView, AvailDetailView, ProductPropertyApiView, \
     ProductPropertyDetailView, CategoryApiView, CategoryDetailView, ProductApiView, ProductDetailView, \
     ProductGalleryApiView, ProductGalleryDetailView, GalleryOfProductApiView, BrandLogoUpdateView, \
     CategoryPictureUpdateView, ProductsStoreReceiptsView, ProductSimpleApiView, NoContentProductsView, \
-    ProductContentDevelopmentDetailView, ProductPictureUpdateView
+    ProductContentDevelopmentDetailView, ProductPictureUpdateView, AffiliateProductAddBusinessView
 
 app_name = 'products'
 urlpatterns = [
@@ -35,6 +35,10 @@ urlpatterns = [
     url(r'^allProduct$', ProductSimpleApiView.as_view(), name='productSimpleApiView'),
     url(r'^product/(?P<pk>[0-9]+)/$', ProductDetailView.as_view(), name='productDetailView'),
     url(r'^product/all$', ProductListView.as_view(), name='productListView'),
+    url(r'^affiliateForSaleProducts$', AffiliateForSaleProductsListView.as_view(),
+        name='affiliateForSaleProductsListView'),
+    url(r'^affiliateProductAddBusiness$', AffiliateProductAddBusinessView.as_view(),
+        name='affiliateProductAddBusinessView'),
     url(r'^product/noContent$', NoContentProductListView.as_view(), name='noContentProductListView'),
     url(r'^product/storeReceipts/(?P<pk>[0-9]+)$', ProductsStoreReceiptsView.as_view(), name='productsStoreReceiptsView'),
     url(r'^productPictureUpdateView/(?P<pk>[0-9]+)$', ProductPictureUpdateView.as_view(),
