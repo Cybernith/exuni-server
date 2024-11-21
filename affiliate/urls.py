@@ -2,9 +2,9 @@ from django.conf.urls import url
 from django.urls import path
 
 from affiliate.views import AffiliateFactorCreateApiView, AffiliateProductsRetrieveView, \
-    AffiliateReceiveProductsInventoryView
+    AffiliateReceiveProductsInventoryView, PaymentInvoiceCreateApiView
 
-from affiliate.lists.views import AffiliateFactorListView
+from affiliate.lists.views import AffiliateFactorListView, PaymentInvoiceListView
 
 app_name = 'affiliate'
 urlpatterns = [
@@ -13,5 +13,8 @@ urlpatterns = [
     url(r'^productsRetrieve$', AffiliateProductsRetrieveView.as_view(), name='affiliateProductsRetrieveView'),
     url(r'^receiveProductsInventory$', AffiliateReceiveProductsInventoryView.as_view(),
         name='affiliateReceiveProductsInventoryView'),
+
+    url(r'^paymentInvoiceCreate$', PaymentInvoiceCreateApiView.as_view(), name='paymentInvoiceCreateApiView'),
+    url(r'^paymentInvoice/all$', PaymentInvoiceListView.as_view(), name='paymentInvoiceListView'),
 
 ]

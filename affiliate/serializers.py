@@ -7,7 +7,7 @@ from users.serializers import UserSimpleSerializer
 
 from django.db.models import Sum, IntegerField, Q, Count, F
 
-from affiliate.models import AffiliateFactor, AffiliateFactorItem
+from affiliate.models import AffiliateFactor, AffiliateFactorItem, PaymentInvoice, PaymentInvoiceItem
 
 from products.serializers import ProductSimpleSerializer
 
@@ -39,5 +39,30 @@ class AffiliateFactorListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = AffiliateFactor
+        fields = '__all__'
+
+
+class PaymentInvoiceCreateSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = PaymentInvoice
+        fields = 'business', 'id'
+
+
+class PaymentInvoiceItemsListSerializer(serializers.ModelSerializer):
+    type_display = serializers.CharField(source='get_type_display', read_only=True)
+    name = serializers.ReadOnlyField()
+
+    class Meta:
+        model = PaymentInvoiceItem
+        fields = '__all__'
+
+
+class PaymentInvoiceListSerializer(serializers.ModelSerializer):
+    items = PaymentInvoiceItemsListSerializer(many=True, read_only=True)
+    business = BusinessSerializer(read_only=True)
+
+    class Meta:
+        model = PaymentInvoice
         fields = '__all__'
 

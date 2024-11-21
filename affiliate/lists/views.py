@@ -5,11 +5,12 @@ from rest_framework.permissions import IsAuthenticated
 from affiliate.views import get_business_from_request
 from helpers.auth import BasicObjectPermission
 
-from affiliate.serializers import AffiliateFactorListSerializer
+from affiliate.serializers import AffiliateFactorListSerializer, PaymentInvoiceItemsListSerializer, \
+    PaymentInvoiceListSerializer
 
-from affiliate.lists.filters import AffiliateFactorFilter
+from affiliate.lists.filters import AffiliateFactorFilter, PaymentInvoiceFilter
 
-from affiliate.models import AffiliateFactor
+from affiliate.models import AffiliateFactor, PaymentInvoice
 
 
 class AffiliateFactorListView(generics.ListAPIView):
@@ -25,5 +26,20 @@ class AffiliateFactorListView(generics.ListAPIView):
     def get_queryset(self):
         business = get_business_from_request(self.request)
         return AffiliateFactor.objects.filter(business=business)
+
+
+class PaymentInvoiceListView(generics.ListAPIView):
+    permission_classes = (IsAuthenticated, BasicObjectPermission)
+
+    permission_codename = "get.payment_invoice"
+
+    serializer_class = PaymentInvoiceListSerializer
+    filterset_class = PaymentInvoiceFilter
+    ordering_fields = '__all__'
+    pagination_class = LimitOffsetPagination
+
+    def get_queryset(self):
+        business = get_business_from_request(self.request)
+        return PaymentInvoice.objects.filter(business=business)
 
 

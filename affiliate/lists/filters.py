@@ -2,7 +2,8 @@ from django_filters import rest_framework as filters
 
 from helpers.filters import BASE_FIELD_FILTERS
 
-from affiliate.models import AffiliateFactor
+from affiliate.models import AffiliateFactor, PaymentInvoice
+
 
 def status_display_contains_filter(queryset, name, value):
     statuses = {
@@ -53,5 +54,19 @@ class AffiliateFactorFilter(filters.FilterSet):
             'address': BASE_FIELD_FILTERS,
             'postal_code': BASE_FIELD_FILTERS,
             'is_paid': ('exact',),
+        }
+
+
+class PaymentInvoiceFilter(filters.FilterSet):
+
+    class Meta:
+        model = PaymentInvoice
+        fields = {
+            'id': ('exact',),
+            'business': ('exact',),
+            'is_paid': ('exact',),
+            'amount': BASE_FIELD_FILTERS,
+            'payment_data_time': BASE_FIELD_FILTERS,
+            'description': BASE_FIELD_FILTERS,
         }
 
