@@ -9,6 +9,7 @@ from django.db.models.aggregates import Max
 from rest_framework.exceptions import ValidationError
 
 from affiliate.models import AffiliateFactor
+from main.models import Business
 from server.configs import PEC
 
 from helpers.functions import get_current_user, sanad_exp
@@ -186,6 +187,7 @@ class FactorManager(models.Manager):
 
 class Factor(BaseModel):
     user = models.ForeignKey('users.User', on_delete=models.PROTECT)
+    business = models.ForeignKey(Business, on_delete=models.PROTECT, null=True, blank=True)
     is_paid = models.BooleanField(default=False)
     amount = DECIMAL()
 
@@ -241,19 +243,11 @@ class Factor(BaseModel):
 
 
 class FactorItem(BaseModel):
-    CREATE_COMPANY = 'cc'
-    BUY_EXTENSION = 'be'
-    EXTEND_EXTENSION = 'ee'
-    ADD_USER = 'au'
-    ADD_WAREHOUSE = 'aw'
+    CUSTOMER_AFFILIATE_FACTOR = 'af'
     OTHER = 'o'
 
     TYPES = (
-        (CREATE_COMPANY, 'ساخت شرکت'),
-        (BUY_EXTENSION, 'خرید ماژول'),
-        (EXTEND_EXTENSION, 'تمدید ماژول'),
-        (ADD_USER, 'اضافه کردن کاربر'),
-        (ADD_WAREHOUSE, 'اضافه کردن انبار'),
+        (CUSTOMER_AFFILIATE_FACTOR, 'فروش در افیلیت'),
         (OTHER, 'سایر')
     )
 
@@ -275,21 +269,11 @@ class FactorItem(BaseModel):
 
     def update_amount(self, save):
         assert not self.factor.is_paid
-        if self.type == self.CREATE_COMPANY:
-            self.amount = 0
-
-        elif self.type in (self.BUY_EXTENSION, self.EXTEND_EXTENSION):
-            self.amount = self.extension.price
-
-        elif self.type == self.ADD_USER:
-            self.amount = 180000
-
-        elif self.type == self.ADD_WAREHOUSE:
-            self.amount = 900000
+        if self.type == self.CUSTOMER_AFFILIATE_FACTOR:
+            self.amount = self.affiliate_factor.factor_price_sum
 
         elif self.type == self.OTHER:
             pass
-
         else:
             raise Exception("Invalid FactorItem type")
 
@@ -299,12 +283,6 @@ class FactorItem(BaseModel):
         return self.amount
 
     def save(self, update_amount=True, *args, **kwargs) -> None:
-        if self.type != self.OTHER:
-            # if self.type == self.BUY_PLAN:
-            #     validate_required_fields(self, ['plan'])
-            if self.type == self.BUY_EXTENSION:
-                validate_required_fields(self, ['extension'])
-
         if update_amount:
             self.update_amount(False)
 
@@ -429,16 +407,8 @@ class Transaction(BaseModel):
                 )
         else:
             if self.factor:
-                if self.factor.items.filter(type=FactorItem.CREATE_COMPANY).exists():
-                    explanation = "ساخت کسب و کار"
-                elif self.factor.items.filter(type=FactorItem.ADD_USER).exists():
-                    explanation = "افزودن کاربر"
-                elif self.factor.items.filter(type=FactorItem.ADD_WAREHOUSE).exists():
-                    explanation = "افزودن انبار"
-                elif self.factor.items.filter(type=FactorItem.BUY_EXTENSION).exists():
-                    explanation = "خرید ماژول"
-                elif self.factor.items.filter(type=FactorItem.EXTEND_EXTENSION).exists():
-                    explanation = "تمدید ماژول"
+                if self.factor.items.filter(type=FactorItem.CUSTOMER_AFFILIATE_FACTOR).exists():
+                    explanation = "پرداخت فاکتور افیلیت"
                 else:
                     explanation = "برداشت از حساب"
 
@@ -505,7 +475,7 @@ class Transaction(BaseModel):
                 "LoginAccount": PEC['PIN_CODE'],
                 "Amount": int(transaction.amount),
                 "OrderId": order_id,
-                "CallBackUrl": "https://api.app.sobhan.net/subscriptions/callback",
+                "CallBackUrl": "http://localhost:8080/subscriptions/callback",
                 "Originator": phone
             }
             client = zeep.Client("https://pec.shaparak.ir/NewIPGServices/Sale/SaleService.asmx?WSDL")
