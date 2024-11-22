@@ -1,3 +1,4 @@
+from django.shortcuts import get_object_or_404
 from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
@@ -11,6 +12,9 @@ from products.models import Product
 
 from main.models import Business
 from products.serializers import AffiliateProductRetrieveSerializer, AffiliateReceiveProductsInventorySerializer
+from server.settings import DEVELOPING
+from subscription.models import Factor, FactorItem, DiscountCode, Transaction
+from subscription.views import TransactionCallbackView
 
 from users.models import User
 
@@ -101,6 +105,9 @@ class PaymentInvoiceCreateApiView(APIView):
     def post(self, request):
         data = request.data
         items = data.get('items', [])
+        user = request.user
+        discount_code = data.pop('discount_code', None)
+        pay_from_wallet = data.pop('pay_from_wallet')
 
         business_token = data.get('business_token', [])
         if not business_token:
@@ -115,22 +122,46 @@ class PaymentInvoiceCreateApiView(APIView):
             if 'amount' and 'id' not in item.keys():
                 raise ValidationError('ساختار ردیف ها کامل نیست')
 
-        serializer = PaymentInvoiceCreateSerializer(data=data)
+        factor: Factor = Factor.objects.create(
+            user=user,
+            business=Business.objects.get(api_token=business_token),
+            is_paid=False,
+        )
+        for item in items:
+            affiliate_factor = AffiliateFactor.objects.get(pk=item['id'])
+            FactorItem.objects.create(
+                factor=factor,
+                affiliate_factor=affiliate_factor,
+                type=FactorItem.CUSTOMER_AFFILIATE_FACTOR
+            )
+            affiliate_factor.status = AffiliateFactor.IN_PROCESSING
+            affiliate_factor.save()
 
-        if serializer.is_valid():
-            serializer.save()
-            for item in items:
-                factor = AffiliateFactor.objects.get(pk=item['id'])
-                PaymentInvoiceItem.objects.create(
-                    payment_invoice=serializer.instance,
-                    amount=item['amount'],
-                    affiliate_factor=factor,
-                    type=PaymentInvoiceItem.CUSTOMER_AFFILIATE_FACTOR
-                )
-                factor.status = AffiliateFactor.IN_PROCESSING
-                factor.save()
-            serializer.instance.set_amount()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        factor.update_amounts()
+
+        if discount_code:
+            discount_code = get_object_or_404(DiscountCode, code=discount_code)
+            discount_code.verify()
+
+        payable_amount = factor.get_payable_amount()
+        if pay_from_wallet:
+            wallet = user.get_wallet()
+            payable_amount = max(payable_amount - wallet.balance, 0)
+
+        if payable_amount > 0:
+            transaction = Transaction.create_transaction(Transaction.DEPOSIT, user, payable_amount, factor)
+            return Response({
+                'redirect_url': Transaction.get_redirect_url(transaction)
+            })
+        else:
+            factor.pay()
+            if DEVELOPING:
+                return Response({
+                    'redirect_url': 'http://localhost:8080/panel/financialYears'
+                })
+            else:
+                return Response({
+                    'redirect_url': TransactionCallbackView.get_redirect_URL(True)
+                })
 
 

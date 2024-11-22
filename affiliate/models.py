@@ -58,6 +58,10 @@ class AffiliateFactor(BaseModel):
         ).aggregate(Sum('final_price'))
         return items['final_price__sum']
 
+    @property
+    def title(self):
+        return 'فاکتور فروش در افیلیت به ' + self.customer_name + ' با شماره تماس ' + self.phone
+
 
 class AffiliateFactorItem(BaseModel):
     affiliate_factor = models.ForeignKey(AffiliateFactor, related_name='items', on_delete=models.CASCADE)
@@ -82,7 +86,7 @@ class AffiliateFactorItem(BaseModel):
 
 class PaymentInvoice(BaseModel):
     business = models.ForeignKey(Business, related_name='payment_invoices', on_delete=models.PROTECT)
-    payment_data_time = models.DateTimeField(default=datetime.datetime.now())
+    payment_data_time = models.DateTimeField(blank=True, null=True)
     is_paid = models.BooleanField(default=False)
     amount = DECIMAL(default=0)
 

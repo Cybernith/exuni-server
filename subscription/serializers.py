@@ -35,6 +35,7 @@ class FactorItemCreateUpdateSerializer(SModelSerializer):
 
 class FactorItemListSerializer(SModelSerializer):
     type_display = serializers.SerializerMethodField()
+    affiliate_factor_title = serializers.CharField(source='affiliate_factor.title', read_only=True)
 
     def get_type_display(self, obj: FactorItem):
         return obj.get_type_display()
@@ -51,8 +52,8 @@ class FactorListSerializer(SModelSerializer):
     after_discount_amount = serializers.ReadOnlyField()
     payable_amount = serializers.ReadOnlyField()
     user_name = serializers.CharField(source='user.name', read_only=True)
-    company_name = serializers.CharField(source='company.name', read_only=True)
-    company_plan = serializers.CharField(source='company.plan.title', read_only=True)
+    business_name = serializers.CharField(source='business.name')
+
 
     class Meta:
         model = Factor
@@ -62,7 +63,7 @@ class FactorListSerializer(SModelSerializer):
 class FactorRetrieveSerializer(SModelSerializer):
     items = FactorItemListSerializer(read_only=True, many=True)
     created_by = serializers.CharField(source='created_by.name')
-    expired_at = serializers.SerializerMethodField()
+    business_name = serializers.CharField(source='business.name')
 
     class Meta:
         model = Factor

@@ -30,9 +30,9 @@ class TransactionCallbackView(APIView):
     def get_redirect_URL(success):
         if success:
             if DEVELOPING:
-                return 'http://localhost:8080/panel/financialYears'
+                return 'http://localhost:8080/panel/wallet'
             else:
-                return 'https://app.sobhan.net/panel/financialYears'
+                return 'https://app.sobhan.net/panel/wallet'
         else:
             if DEVELOPING:
                 return 'http://localhost:8080/panel/transactionFailed'
