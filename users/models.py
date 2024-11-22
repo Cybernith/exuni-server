@@ -10,6 +10,7 @@ from rest_framework.exceptions import ValidationError, PermissionDenied
 from helpers.models import BaseModel, BaseManager
 from helpers.sms import Sms
 from location_field.models.plain import PlainLocationField
+from subscription.models import Wallet
 
 class Role(BaseModel):
     name = models.CharField(max_length=255)
@@ -174,6 +175,20 @@ class User(AbstractUser, BaseModel):
     postal_code = models.CharField(max_length=10, blank=True, null=True)
     roles = models.ManyToManyField(Role, related_name='users', blank=True)
     secret_key = models.CharField(max_length=32, null=True, blank=True, default=None)
+    _wallet = models.ForeignKey(Wallet, on_delete=models.PROTECT, null=True, blank=True)
+
+
+    def get_wallet(self):
+        if self._wallet:
+            return self._wallet
+
+        wallet = Wallet()
+        wallet.save()
+
+        self._wallet = wallet
+        self.save()
+
+        return wallet
 
     @property
     def name(self):

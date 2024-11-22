@@ -11,7 +11,6 @@ from main.models import Business
 from products.models import Product
 from server.configs import PEC
 from server.settings import DEVELOPING
-from users.models import User
 
 
 class AffiliateFactor(BaseModel):
@@ -30,7 +29,7 @@ class AffiliateFactor(BaseModel):
     status = models.CharField(max_length=3, choices=STATUSES, default=INITIAL_REGISTRATION_STAGE)
     business = models.ForeignKey(Business, related_name='affiliate_factors', blank=True, null=True,
                                  on_delete=models.PROTECT)
-    customer = models.ForeignKey(User, related_name='affiliate_factors_as_customer',
+    customer = models.ForeignKey('users.User', related_name='affiliate_factors_as_customer',
                                  blank=True, null=True, on_delete=models.PROTECT)
     customer_name = models.CharField(max_length=150, blank=True, null=True)
     phone = models.CharField(max_length=20, blank=True, null=True)
@@ -152,171 +151,3 @@ class PaymentInvoiceItem(BaseModel):
             ('updateOwn.payment_invoice_item', 'ویرایش ردیف فاکتور پرداخت خود'),
             ('deleteOwn.payment_invoice_item', 'حذف ردیف فاکتور پرداخت خود'),
         )
-
-
-class Wallet(BaseModel):
-    business = models.OneToOneField(Business, related_name='wallet', on_delete=models.PROTECT)
-    balance = DECIMAL(default=0)
-
-    class Meta(BaseModel.Meta):
-        pass
-
-    def deposit(self, amount):
-        self.balance += Decimal(amount)
-        self.save()
-
-    def withdraw(self, amount):
-        if self.balance < amount:
-            raise ValidationError("موجودی کیف پول کافی نمی باشد")
-        self.balance -= Decimal(amount)
-        self.save()
-
-    def save(self, *args, **kwargs) -> None:
-        if self.balance < 0:
-            raise ValueError("Negative wallet balance")
-
-        super().save(*args, **kwargs)
-
-    def __str__(self):
-        return str(self.id)
-
-
-class Transaction(BaseModel):
-    DEPOSIT = 'd'
-    WITHDRAW = 'w'
-    PAYMENT = 'p'
-
-    TYPES = (
-        (DEPOSIT, 'واریز'),
-        (WITHDRAW, 'برداشت'),
-        (PAYMENT, 'پرداخت'),
-    )
-
-    type = models.CharField(max_length=1, choices=TYPES)
-
-    wallet = models.ForeignKey(Wallet, on_delete=models.PROTECT, null=True, blank=True)
-
-    amount = DECIMAL()
-
-    bed = DECIMAL()
-    bes = DECIMAL()
-
-    datetime = models.DateTimeField()
-
-    # this factor will pay if transaction was successful and transaction type is PAYMENT
-    payment_invoice = models.ForeignKey(PaymentInvoice, on_delete=models.PROTECT, null=True, blank=True)
-
-    _is_successful = models.BooleanField(default=False)
-
-    # + other gateway fields
-    _order_id = models.BigIntegerField(null=True, blank=True)
-
-    _gateway_callback = models.JSONField(null=True, blank=True)
-    """
-        Example:
-        {
-            "Token": "218072956457997",
-            "OrderId": "21",
-            "TerminalNo": "98826118",
-            "RRN": "735373431081",
-            "status": "0",
-            "HashCardNumber": "2291EC7CCC5AA9AACBB86C17F652137B472AD582C38E8BA4976D397D6B2BA7FB",
-            "Amount": "1,000",
-            "SwAmount": "",
-            "STraceNo": "65424",
-            "DiscoutedProduct": ""
-        }
-    """
-
-    explanation = EXPLANATION()
-
-    class Meta(BaseModel.Meta):
-        pass
-
-    def __str__(self):
-        if self.type == self.PAYMENT:
-            return "{} - {} ({})".format(self.get_type_display(), self.payment_invoice.business.name, self.id)
-        else:
-            return "{} - {} ({})".format(self.get_type_display(), self.wallet.business.name, self.id)
-
-    def success(self):
-        if self._is_successful:
-            raise Exception("Transaction is already successful")
-
-        self._is_successful = True
-        self.save()
-
-        if self.type == self.DEPOSIT:
-            self.wallet.deposit(self.amount)
-        elif self.type == self.WITHDRAW:
-            self.wallet.withdraw(self.amount)
-            self.payment_invoice.pay()
-        elif self.type == self.PAYMENT:
-            self.payment_invoice.pay()
-
-        else:
-            raise Exception("Invalid transaction type")
-
-    @staticmethod
-    def create_transaction(transaction_type, business, amount, payment_invoice, wallet):
-        bed = bes = 0
-        if transaction_type == Transaction.DEPOSIT:
-            bed = amount
-        else:
-            bes = amount
-
-        transaction = Transaction(
-            type=transaction_type,
-            business=business,
-            wallet=wallet,
-            amount=amount,
-            bed=bed,
-            bes=bes,
-            datetime=datetime.datetime.now(),
-            payment_invoice=payment_invoice
-        )
-        transaction.save()
-        transaction.refresh_from_db()
-        return transaction
-
-    @staticmethod
-    def get_redirect_url(transaction):
-
-        order_id = (Transaction.objects.aggregate(Max('_order_id'))['_order_id__max'] or 0) + 1
-
-        if DEVELOPING:
-            transaction._order_id = order_id
-            transaction.success()
-            if transaction.payment_invoice:
-                return f'http://localhost:8080/panel/subscriptionFactorForm/{transaction.payment_invoice.id}?success=true'
-            else:
-                return f'http://localhost:8080/panel/wallet'
-
-        phone = transaction.payment_invoice.business.admin.phone
-        if not phone.startswith('98'):  # 0917..., 917...
-            if phone.startswith('0'):
-                phone = '98' + phone[1:]
-            else:
-                phone = '98' + phone
-
-        while True:
-            data = {
-                "LoginAccount": PEC['PIN_CODE'],
-                "Amount": int(transaction.amount),
-                "OrderId": order_id,
-                "CallBackUrl": "https://api.app.sobhan.net/subscriptions/callback",
-                "Originator": phone
-            }
-            client = zeep.Client("https://pec.shaparak.ir/NewIPGServices/Sale/SaleService.asmx?WSDL")
-            res = client.service.SalePaymentRequest(data)
-            status = res['Status']
-            if status == 0:
-                transaction._order_id = order_id
-                transaction.save()
-                return f"https://pec.shaparak.ir/NewIPG/?token={res['Token']}"
-            elif status == -112:
-                # duplicate order id
-                order_id += 1
-                continue
-
-

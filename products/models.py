@@ -7,7 +7,9 @@ from django.db import models
 
 from helpers.models import BaseModel, DECIMAL
 from main.models import Supplier, Currency, Business
-from users.models import custom_upload_to, User
+
+def custom_upload_to(instance, filename):
+    return 'images/{filename}'.format(filename=filename)
 
 
 class Brand(BaseModel):

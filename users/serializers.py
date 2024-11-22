@@ -8,6 +8,7 @@ from rest_framework.authtoken.models import Token
 from helpers.functions import get_current_user
 from helpers.serializers import SModelSerializer
 from main.models import Business
+from subscription.serializers import WalletSerializer
 from users.models import Role, User, City, UserNotification, Notification
 
 
@@ -93,11 +94,15 @@ class UserListSerializer(SModelSerializer):
 
     class Meta:
         model = get_user_model()
-        exclude = ('password', 'secret_key')
+        exclude = ('password', 'secret_key', '_wallet')
 
 
 class UserRetrieveSerializer(UserListSerializer):
     profile_picture = serializers.ImageField(read_only=True)
+    wallet = serializers.SerializerMethodField()
+
+    def get_wallet(self, obj: User):
+        return WalletSerializer(obj.get_wallet()).data
 
     class Meta(UserListSerializer.Meta):
         pass
