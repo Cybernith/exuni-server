@@ -20,98 +20,6 @@ from server.settings import DEVELOPING
 TAX = Decimal(0.1)
 
 
-class Plan(BaseModel):
-    title = models.CharField(max_length=300)
-    explanation = EXPLANATION()
-
-    # for each duration (days)
-    prices = JSONField(default=dict)
-    extra_user_prices = JSONField(default=dict)
-
-    users_count = models.IntegerField()
-    modules = models.CharField(max_length=1000, blank=True)
-    features = models.CharField(max_length=1000, blank=True)
-
-    is_active = models.BooleanField(default=True)
-
-    def get_extra_user_price(self, duration):
-        price = self.extra_user_prices.get('0')
-        if price:
-            return price
-        return self.extra_user_prices[duration]
-
-    class Meta(BaseModel.Meta):
-        permission_basename = 'plan'
-        permissions = (
-            ('addUser.plan', 'افزودن کاربر اشتراک'),
-            ('extendSubscription.plan', 'تمدید اشتراک'),
-        )
-
-
-class Extension(BaseModel):
-    EIGHT_LEVEL_ACCOUNTING = 'EIGHT_LEVEL_ACCOUNTING'
-    ONLINE_SUPPORT = 'ONLINE_SUPPORT'
-    PAYROLL = 'PAYROLL'
-    MOADIAN = 'MOADIAN'
-    PROFESSIONAL_DASHBOARD = 'PROFESSIONAL_DASHBOARD'
-    WOOCOMMERCE_API = 'WOOCOMMERCE_API'
-    CREATE_NEW_ACCOUNT = 'CREATE_NEW_ACCOUNT'
-    CREATE_NEW_CHEQUE = 'CREATE_NEW_CHEQUE'
-    CREATE_NEW_IMPREST = 'CREATE_NEW_IMPREST'
-    PROFESSIONAL_REPORT = 'PROFESSIONAL_REPORT'
-    DAEMI_SYSTEM = 'DAEMI_SYSTEM'
-    FIRST_IN_FIRST_OUT_PRICING = 'FIRST_IN_FIRST_OUT_PRICING'
-    UNLIMITED_CREATE_PERSON = 'UNLIMITED_CREATE_PERSON'
-    UNLIMITED_CREATE_TREASURY_ACCOUNT = 'UNLIMITED_CREATE_TREASURY_ACCOUNT'
-    INVENTORY_CLERK = 'INVENTORY_CLERK'
-    CONSUMPTION_WARE_FACTOR = 'CONSUMPTION_WARE_FACTOR'
-    RECEIPT_AND_REMITTANCE = 'RECEIPT_AND_REMITTANCE'
-    GROUP_PRICE_CHANGE = 'GROUP_PRICE_CHANGE'
-
-    CODENAMES = (
-        (EIGHT_LEVEL_ACCOUNTING, 'حسابداری 8 سطحی'),
-        (ONLINE_SUPPORT, 'پشتیبانی آنلاین'),
-        (PAYROLL, 'منابع انسانی'),
-        (MOADIAN, 'مودیان'),
-        (PROFESSIONAL_DASHBOARD, 'داشبورد حرفه ای'),
-        (WOOCOMMERCE_API, 'پلاگین فروشگاهی و API'),
-        (CREATE_NEW_ACCOUNT, 'تعریف حساب'),
-        (CREATE_NEW_CHEQUE, 'تعریف چک'),
-        (CREATE_NEW_IMPREST, 'تعریف تنخواه'),
-        (PROFESSIONAL_REPORT, 'گزارشات حرفه ای'),
-        (DAEMI_SYSTEM, 'سیستم دائمی'),
-        (FIRST_IN_FIRST_OUT_PRICING, 'قیمت گذاری کالا به روش فایفو'),
-        (UNLIMITED_CREATE_PERSON, 'تعریف نامحدود حساب اشخاص'),
-        (UNLIMITED_CREATE_TREASURY_ACCOUNT, 'تعریف نامحدود حساب های خزانه'),
-        (INVENTORY_CLERK, 'انبار گردانی'),
-        (CONSUMPTION_WARE_FACTOR, 'حواله کالای مصرفی'),
-        (RECEIPT_AND_REMITTANCE, 'رسید و حواله، تعدیل انبار'),
-        (GROUP_PRICE_CHANGE, 'تغییر گروهی قیمت کالا '),
-    )
-
-    name = models.CharField(choices=CODENAMES, unique=True, max_length=100)
-    explanation = EXPLANATION()
-    price = DECIMAL()
-    is_active = models.BooleanField(default=True)
-    is_permanent = models.BooleanField(default=False)
-
-    class Meta(BaseModel.Meta):
-        pass
-
-
-class CompanyExtension(BaseModel):
-    extension = models.ForeignKey(Extension, related_name='company_extensions', on_delete=models.CASCADE)
-    start_at = models.DateField(null=True, blank=True)
-    expire_at = models.DateField(null=True, blank=True)
-
-    class Meta(BaseModel.Meta):
-        pass
-
-    @property
-    def remain_days(self):
-        return (self.expire_at - datetime.date.today()).days
-
-
 class DiscountCode(BaseModel):
     code = models.CharField(max_length=31, unique=True)
 
@@ -254,9 +162,6 @@ class FactorItem(BaseModel):
     factor = models.ForeignKey(Factor, related_name='items', on_delete=models.CASCADE)
     type = models.CharField(max_length=2, choices=TYPES)
 
-    # extension is only required for BUY/EXTEND_EXTENSION
-    extension = models.ForeignKey(Extension, on_delete=models.PROTECT,
-                                  related_name='subscription_factor_items', null=True, blank=True)
     affiliate_factor = models.ForeignKey(AffiliateFactor, related_name='affiliate_factor_items',
                                          on_delete=models.CASCADE, null=True, blank=True)
 
@@ -491,9 +396,3 @@ class Transaction(BaseModel):
                 continue
 
 
-def has_extension(extension_name):
-    user = get_current_user()
-    company_extensions = user.active_company.company_extensions.filter(
-        Q(extension__name=extension_name) & Q(start_at__lte=datetime.date.today()) & Q(expire_at__gte=datetime.date.today())
-    )
-    return company_extensions.exists()

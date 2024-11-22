@@ -1,11 +1,10 @@
 from django.contrib import admin
 
 # Register your models here.
-from subscription.models import Plan, Wallet, Extension, Transaction, DiscountCode, CompanyExtension
+from subscription.models import Wallet, Transaction, DiscountCode, Factor, FactorItem
 
-admin.site.register(Plan)
-admin.site.register(Extension)
-admin.site.register(CompanyExtension)
 admin.site.register(Wallet)
 admin.site.register(Transaction)
 admin.site.register(DiscountCode)
+admin.site.register(Factor)
+admin.site.register(FactorItem)
