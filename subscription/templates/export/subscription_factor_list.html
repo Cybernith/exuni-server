@@ -1,0 +1,40 @@
+{% load report_filters %}
+
+<div class="row" style="margin-top: -1px">
+    <table class="table table-bordered table-striped">
+
+        <tr>
+            <th class="text-center">ردیف</th>
+            <th class="text-center">شناسه یکتا</th>
+            <th class="text-center">تاریخ</th>
+            <th class="text-center">ساعت</th>
+            <th class="text-center">مبلغ</th>
+            <th class="text-center">مبلغ تخفیف</th>
+            <th class="text-center">مبلغ پس از تخفیف</th>
+            <th class="text-center">مالیات ارزش افزوده</th>
+            <th class="text-center">مبلغ نهایی</th>
+            <th class="text-center">وضعیت پرداخت</th>
+
+        </tr>
+        {% for form in forms %}
+            <tr>
+                <td class="text-center">{{ forloop.counter }}</td>
+                <td class="text-center">{{ form.id }}</td>
+                <td class="text-center">{{ form.created_at | jDate }}</td>
+                <td class="text-center">{{ form.created_at | dateToTime }}</td>
+                <td class="text-center">{{ form.amount | toIntiger | money}}</td>
+                <td class="text-center">{{ form.discount_amount  | toIntiger | money }}</td>
+                <td class="text-center">{{ form.after_discount_amount  | toIntiger | money }}</td>
+                <td class="text-center">{{ form.value_added_tax  | toIntiger | money }}</td>
+                <td class="text-center">{{ form.final_amount  | toIntiger | money }}</td>
+                <td class="text-center">
+                    {% if form.is_paid %}
+                        <span>موفق</span>
+                    {% else %}
+                        <span>نا موفق</span>
+                    {% endif %}
+                </td>
+            </tr>
+        {% endfor %}
+    </table>
+</div>

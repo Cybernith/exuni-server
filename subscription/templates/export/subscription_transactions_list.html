@@ -1,0 +1,30 @@
+{% load report_filters %}
+
+<div class="row" style="margin-top: -1px">
+    <table class="table table-bordered table-striped">
+
+        <tr>
+            <th class="text-center">ردیف</th>
+            <th class="text-center">تاریخ</th>
+            <th class="text-center">ساعت</th>
+            <th class="text-center">توضیحات</th>
+            <th class="text-center">بدهکار</th>
+            <th class="text-center">بستانکار</th>
+            <th class="text-center">مانده</th>
+            <th class="text-center">فاکتور</th>
+
+        </tr>
+        {% for form in forms %}
+            <tr>
+                <td class="text-center">{{ forloop.counter }}</td>
+                <td class="text-center">{{ form.created_at | jDate }}</td>
+                <td class="text-center">{{ form.created_at | dateToTime }}</td>
+                <td class="text-center">{{ form.explanation}}</td>
+                <td class="text-center">{{ form.bed | money }}</td>
+                <td class="text-center">{{ form.bes | money }}</td>
+                <td class="text-center">{{ form.cumulative_remain | money }}</td>
+                <td class="text-center">{{ form.factor.id  | default:'-'  }}</td>
+            </tr>
+        {% endfor %}
+    </table>
+</div>

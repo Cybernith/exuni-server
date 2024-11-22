@@ -1,10 +1,12 @@
 from django.db import models
 
 from helpers.models import BaseModel, DECIMAL
-from users.models import custom_upload_to, User
 from colorfield.fields import ColorField
 import os
 import binascii
+
+def custom_upload_to(instance, filename):
+    return 'images/{filename}'.format(filename=filename)
 
 
 class Business(BaseModel):
@@ -30,7 +32,7 @@ class Business(BaseModel):
     about_us = models.CharField(max_length=255, blank=True, null=True)
     address = models.CharField(max_length=255, blank=True, null=True)
     business_type = models.CharField(max_length=2, choices=BUSINESS_TYPES, default=ONLINE_MARKET)
-    admin = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='business', blank=True, null=True)
+    admin = models.ForeignKey('users.User', on_delete=models.SET_NULL, related_name='business', blank=True, null=True)
     phone = models.CharField(max_length=11, blank=True, null=True)
 
     @property
@@ -65,7 +67,7 @@ class Store(BaseModel):
 
     name = models.CharField(max_length=150)
     address = models.CharField(max_length=255, blank=True, null=True)
-    storekeeper = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='stores', blank=True, null=True)
+    storekeeper = models.ForeignKey('users.User', on_delete=models.SET_NULL, related_name='stores', blank=True, null=True)
     is_central = models.BooleanField(default=False)
 
     class Meta(BaseModel.Meta):
@@ -121,7 +123,7 @@ class Supplier(BaseModel):
     bank_sheba_number = models.CharField(max_length=50, blank=True, null=True)
     address = models.CharField(max_length=255, blank=True, null=True)
     phone = models.CharField(max_length=11, blank=True, null=True)
-    admin = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='supplies', blank=True, null=True)
+    admin = models.ForeignKey('users.User', on_delete=models.SET_NULL, related_name='supplies', blank=True, null=True)
 
     class Meta(BaseModel.Meta):
         verbose_name = 'Supplier'
