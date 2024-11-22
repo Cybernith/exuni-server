@@ -1,7 +1,5 @@
 from django.contrib import admin
 
-from affiliate.models import AffiliateFactor, AffiliateFactorItem, PaymentInvoice, PaymentInvoiceItem
+from affiliate.models import AffiliateFactor, AffiliateFactorItem
 admin.site.register(AffiliateFactor)
 admin.site.register(AffiliateFactorItem)
-admin.site.register(PaymentInvoice)
-admin.site.register(PaymentInvoiceItem)

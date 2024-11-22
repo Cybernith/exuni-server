@@ -6,8 +6,8 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 
-from affiliate.models import AffiliateFactorItem, AffiliateFactor, PaymentInvoiceItem
-from affiliate.serializers import AffiliateFactorCreateSerializer, PaymentInvoiceCreateSerializer
+from affiliate.models import AffiliateFactorItem, AffiliateFactor
+from affiliate.serializers import AffiliateFactorCreateSerializer
 from products.models import Product
 
 from main.models import Business
@@ -98,7 +98,7 @@ class AffiliateReceiveProductsInventoryView(APIView):
         return Response(serializers.data, status=status.HTTP_200_OK)
 
 
-class PaymentInvoiceCreateApiView(APIView):
+class AffiliateFactorPaymentApiView(APIView):
     permission_classes = (IsAuthenticated,)
     permission_basename = 'payment_invoice'
 
