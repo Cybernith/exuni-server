@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
 from helpers.serializers import SModelSerializer
-from subscription.models import Wallet, Transaction, FactorItem, Factor, Plan, Extension, CompanyExtension
+from subscription.models import Wallet, Transaction, FactorItem, Factor
 
 
 class WalletSerializer(SModelSerializer):
@@ -67,29 +67,6 @@ class FactorRetrieveSerializer(SModelSerializer):
 
     class Meta:
         model = Factor
-        fields = '__all__'
-
-
-class PlanListSerializer(SModelSerializer):
-    class Meta:
-        model = Plan
-        fields = '__all__'
-
-
-class ExtensionSerializer(SModelSerializer):
-    title = serializers.CharField(source='get_name_display', read_only=True)
-
-    class Meta:
-        model = Extension
-        fields = '__all__'
-
-
-class CompanyExtensionSerializer(SModelSerializer):
-    extension = ExtensionSerializer(read_only=True)
-    remain_days = serializers.ReadOnlyField()
-
-    class Meta:
-        model = CompanyExtension
         fields = '__all__'
 
 

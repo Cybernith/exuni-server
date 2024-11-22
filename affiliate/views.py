@@ -107,7 +107,7 @@ class AffiliateFactorPaymentApiView(APIView):
         items = data.get('items', [])
         user = request.user
         discount_code = data.pop('discount_code', None)
-        pay_from_wallet = data.pop('pay_from_wallet')
+        pay_from_wallet = data.pop('pay_from_wallet', False)
 
         business_token = data.get('business_token', [])
         if not business_token:
@@ -157,7 +157,7 @@ class AffiliateFactorPaymentApiView(APIView):
             factor.pay()
             if DEVELOPING:
                 return Response({
-                    'redirect_url': 'http://localhost:8080/panel/financialYears'
+                    'redirect_url': 'http://localhost:8080/panel/wallet'
                 })
             else:
                 return Response({
