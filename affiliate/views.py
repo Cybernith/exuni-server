@@ -17,6 +17,7 @@ from subscription.models import Factor, FactorItem, DiscountCode, Transaction
 from subscription.views import TransactionCallbackView
 
 from users.models import User
+from users.serializers import UserSimpleSerializer
 
 
 def get_business_from_request(req):
@@ -48,6 +49,11 @@ class AffiliateFactorCreateApiView(APIView):
             serializer.save()
             if User.objects.filter(mobile_number=serializer.instance.phone).exists():
                 customer = User.objects.get(mobile_number=serializer.instance.phone)
+                if not customer.postal_code:
+                    customer.postal_code = serializer.instance.postal_code
+                if not customer.address:
+                    customer.address = serializer.instance.address
+                customer.save()
             else:
                 customer = User.objects.create(
                     username=serializer.instance.phone,
@@ -60,6 +66,8 @@ class AffiliateFactorCreateApiView(APIView):
                 )
             serializer.instance.customer = customer
             serializer.instance.save()
+            business.customers.add(customer)
+            business.save()
             for item in items:
                 AffiliateFactorItem.objects.create(
                     affiliate_factor=serializer.instance,
@@ -165,3 +173,14 @@ class AffiliateFactorPaymentApiView(APIView):
                 })
 
 
+class AffiliateCustomersView(APIView):
+    permission_basename = 'user'
+
+    def get_objects(self):
+        business = get_business_from_request(self.request)
+        return business.customers.all()
+
+    def get(self, request):
+        query = self.get_objects()
+        serializers = UserSimpleSerializer(query, many=True)
+        return Response(serializers.data, status=status.HTTP_200_OK)

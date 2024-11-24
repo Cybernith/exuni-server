@@ -58,7 +58,7 @@ class UserSimpleSerializer(SModelSerializer):
     class Meta:
         model = get_user_model()
         fields = ('id', 'first_name', 'last_name',  'username', 'mobile_number', 'name',
-                  'profile_picture', 'cover_picture')
+                  'profile_picture', 'cover_picture', 'address', 'postal_code')
 
 
 class UserListSerializer(SModelSerializer):

@@ -35,6 +35,8 @@ class Business(BaseModel):
     admin = models.ForeignKey('users.User', on_delete=models.SET_NULL, related_name='business', blank=True, null=True)
     phone = models.CharField(max_length=11, blank=True, null=True)
 
+    customers = models.ManyToManyField('users.User', related_name='businesses_customer')
+
     @property
     def new_api_token(self):
         return binascii.hexlify(os.urandom(50)).decode()
