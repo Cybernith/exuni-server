@@ -3,6 +3,7 @@ from django_filters import rest_framework as filters
 from helpers.filters import BASE_FIELD_FILTERS
 
 from affiliate.models import AffiliateFactor
+from users.models import User
 
 
 def status_display_contains_filter(queryset, name, value):
@@ -54,6 +55,20 @@ class AffiliateFactorFilter(filters.FilterSet):
             'address': BASE_FIELD_FILTERS,
             'postal_code': BASE_FIELD_FILTERS,
             'is_paid': ('exact',),
+        }
+
+
+class AffiliateCustomersFilter(filters.FilterSet):
+
+    class Meta:
+        model = User
+        fields = {
+            'id': ('exact',),
+            'first_name': BASE_FIELD_FILTERS,
+            'last_name': BASE_FIELD_FILTERS,
+            'username': BASE_FIELD_FILTERS,
+            'mobile_number': BASE_FIELD_FILTERS,
+
         }
 
 

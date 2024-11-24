@@ -147,6 +147,11 @@ class Factor(BaseModel):
         transaction.success()
 
         self.is_paid = True
+
+        for item in self.items.all():
+            item.affiliate_factor.is_paid = True
+            item.affiliate_factor.save()
+
         self.save()
 
 

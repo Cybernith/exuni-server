@@ -6,9 +6,11 @@ from affiliate.views import get_business_from_request
 from helpers.auth import BasicObjectPermission
 
 from affiliate.serializers import AffiliateFactorListSerializer
-from affiliate.lists.filters import AffiliateFactorFilter
+from affiliate.lists.filters import AffiliateFactorFilter, AffiliateCustomersFilter
 
 from affiliate.models import AffiliateFactor
+from users.filters import UserNotificationFilter
+from users.serializers import UserSimpleSerializer
 
 
 class AffiliateFactorListView(generics.ListAPIView):
@@ -24,3 +26,18 @@ class AffiliateFactorListView(generics.ListAPIView):
     def get_queryset(self):
         business = get_business_from_request(self.request)
         return AffiliateFactor.objects.filter(business=business)
+
+
+class AffiliateCustomersListView(generics.ListAPIView):
+    permission_classes = (IsAuthenticated, BasicObjectPermission)
+
+    permission_codename = "get.user"
+
+    serializer_class = UserSimpleSerializer
+    filterset_class = AffiliateCustomersFilter
+    ordering_fields = '__all__'
+    pagination_class = LimitOffsetPagination
+
+    def get_queryset(self):
+        business = get_business_from_request(self.request)
+        return business.customers.all()
