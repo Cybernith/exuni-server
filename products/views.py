@@ -433,10 +433,10 @@ class AffiliateProductAddBusinessView(APIView):
     def put(self, request):
         data = request.data
         business = get_business_from_request(self.request)
-        business.products_for_sale.add(*data)
         business_products = Product.objects.filter(id__in=data)
+        business.products.add(*business_products)
         exclude_products = Product.objects.exclude(id__in=data)
-        business.products_for_sale.remove(*exclude_products)
+        business.products.remove(*exclude_products)
         return Response({'msg': 'updated'}, status=status.HTTP_201_CREATED)
 
 

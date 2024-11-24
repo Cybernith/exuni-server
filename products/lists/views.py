@@ -94,7 +94,7 @@ class AffiliateForSaleProductsListView(generics.ListAPIView):
 
     def get_queryset(self):
         business = get_business_from_request(self.request)
-        return Product.objects.filter(business=business.id)
+        return business.products.all()
 
 
 class ProductGalleryListView(generics.ListAPIView):

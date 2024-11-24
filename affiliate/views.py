@@ -98,7 +98,7 @@ class AffiliateReceiveProductsInventoryView(APIView):
 
     def get_objects(self):
         business = get_business_from_request(self.request)
-        return Product.objects.filter(business=business.id)
+        return business.products.all()
 
     def get(self, request):
         query = self.get_objects()

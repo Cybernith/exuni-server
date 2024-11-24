@@ -36,6 +36,7 @@ class Business(BaseModel):
     phone = models.CharField(max_length=11, blank=True, null=True)
 
     customers = models.ManyToManyField('users.User', related_name='businesses_customer')
+    products = models.ManyToManyField('products.Product', related_name='businesses')
 
     @property
     def new_api_token(self):
