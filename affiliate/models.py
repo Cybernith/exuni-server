@@ -15,15 +15,11 @@ from server.settings import DEVELOPING
 
 class AffiliateFactor(BaseModel):
     INITIAL_REGISTRATION_STAGE = 'irs'
-    IN_PROCESSING = 'ipr'
-    IN_PACKING = 'ipa'
-    SHIPPED = 'shp'
+    PAID = 'pid'
 
     STATUSES = (
         (INITIAL_REGISTRATION_STAGE, 'ثبت اولیه'),
-        (IN_PROCESSING, 'درحال پردازش'),
-        (IN_PACKING, 'در حال بسته بندی'),
-        (SHIPPED, 'ارسال شده'),
+        (PAID, 'پرداخت شده'),
     )
 
     status = models.CharField(max_length=3, choices=STATUSES, default=INITIAL_REGISTRATION_STAGE)

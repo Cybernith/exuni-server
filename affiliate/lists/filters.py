@@ -9,9 +9,7 @@ from users.models import User
 def status_display_contains_filter(queryset, name, value):
     statuses = {
         'ثبت اولیه': AffiliateFactor.INITIAL_REGISTRATION_STAGE,
-        'درحال پردازش': AffiliateFactor.IN_PROCESSING,
-        'در حال بسته بندی': AffiliateFactor.IN_PACKING,
-        'ارسال شده': AffiliateFactor.SHIPPED,
+        'پرداخت شده': AffiliateFactor.PAID,
     }
     for status in statuses:
         if value in status:
@@ -21,9 +19,7 @@ def status_display_contains_filter(queryset, name, value):
 def status_display_filter(queryset, name, value):
     statuses = {
         'ثبت اولیه': AffiliateFactor.INITIAL_REGISTRATION_STAGE,
-        'درحال پردازش': AffiliateFactor.IN_PROCESSING,
-        'در حال بسته بندی': AffiliateFactor.IN_PACKING,
-        'ارسال شده': AffiliateFactor.SHIPPED,
+        'پرداخت شده': AffiliateFactor.PAID,
     }
     for status in statuses:
         if value == status:
