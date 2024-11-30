@@ -142,7 +142,7 @@ class AffiliateFactorPaymentApiView(APIView):
                 affiliate_factor=affiliate_factor,
                 type=FactorItem.CUSTOMER_AFFILIATE_FACTOR
             )
-            affiliate_factor.status = AffiliateFactor.IN_PROCESSING
+            affiliate_factor.status = AffiliateFactor.PAID
             affiliate_factor.save()
 
         factor.update_amounts()
