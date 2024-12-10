@@ -8,6 +8,8 @@ from packing.serializers import OrderPackageSerializer
 from rest_framework.response import Response
 from rest_framework import status
 
+from users.models import User
+
 
 class OrderPackageApiView(APIView):
     permission_classes = (IsAuthenticated, BasicObjectPermission)
@@ -56,3 +58,16 @@ class OrderPackageDetailView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
+class AddAdminToOrdersApiView(APIView):
+    permission_classes = (IsAuthenticated,)
+    permission_basename = 'order_package'
+
+    def post(self, request):
+        data = request.data
+        items = data.get('items', [])
+        admin = data.get('admin', None)
+
+        order_packages = OrderPackage.objects.filter(id__in=items)
+        order_packages.update(packing_admin=User.objects.get(id=admin))
+
+        return Response({'msg': 'ok'}, status=status.HTTP_201_CREATED)

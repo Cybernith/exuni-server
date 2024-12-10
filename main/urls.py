@@ -5,7 +5,7 @@ from main.lists.views import BusinessListView, StoreListView, CurrencyListView, 
 from main.views import BusinessApiView, BusinessDetailView, StoreApiView, StoreDetailView, CurrencyApiView, \
     CurrencyDetailView, SupplierApiView, SupplierDetailView, CurrencyListCreate, CurrencyCRUD, StorekeeperApiView, \
     SupplierAdminsApiView, BusinessOwnersApiView, BusinessLogoUpdateView, BusinessOwnerNationalCardPictureUpdateView, \
-    BusinessByTokenDetailView
+    BusinessByTokenDetailView, PackingAdminApiView
 
 app_name = 'main'
 urlpatterns = [
@@ -22,6 +22,7 @@ urlpatterns = [
     url(r'^store/(?P<pk>[0-9]+)$', StoreDetailView.as_view(), name='storeDetailView'),
     url(r'^store/all$', StoreListView.as_view(), name='storeListView'),
     url(r'^storekeeper/all$', StorekeeperApiView.as_view(), name='storekeeperApiView'),
+    url(r'^packingAdmin/all$', PackingAdminApiView.as_view(), name='packingAdminApiView'),
 
     url(r'^currency$', CurrencyApiView.as_view(), name='currencyApiView'),
     url(r'^currency/(?P<pk>[0-9]+)$', CurrencyDetailView.as_view(), name='currencyDetailView'),
