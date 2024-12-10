@@ -308,3 +308,14 @@ class BusinessOwnersApiView(APIView):
         query = User.objects.filter(user_type=User.BUSINESS_OWNER)
         serializers = UserSimpleSerializer(query, many=True, context={'request': request})
         return Response(serializers.data, status=status.HTTP_200_OK)
+
+
+class PackingAdminApiView(APIView):
+    permission_classes = (IsAuthenticated, BasicObjectPermission)
+    permission_basename = 'user'
+
+    def get(self, request):
+        query = User.objects.filter(user_type=User.PACKING_ADMIN)
+        serializers = UserSimpleSerializer(query, many=True, context={'request': request})
+        return Response(serializers.data, status=status.HTTP_200_OK)
+
