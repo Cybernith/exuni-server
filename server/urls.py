@@ -42,6 +42,7 @@ urlpatterns = [
     url(r'^entrance/', include('entrance.urls')),
     url(r'^affiliate/', include('affiliate.urls')),
     url(r'^subscriptions/', include('subscription.urls')),
+    url(r'^packing/', include('packing.urls')),
 
     path('admin/', admin.site.urls),
 

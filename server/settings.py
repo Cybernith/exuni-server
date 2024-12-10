@@ -61,6 +61,7 @@ INSTALLED_APPS = [
     'entrance',
     'affiliate',
     'subscription',
+    'packing',
 
 ]
 
