@@ -1,0 +1,46 @@
+<div class="row header_box">
+    <div class="col-xs-3 mt-2">
+        <div class="form-header">
+            <div class="row" style="font-size: x-small">
+                <div class="col-sm-12 pt-2">
+                    {% if user_name %}
+                        <span class="font-weight-bold">کاربر:</span>
+                        <span> {{ user_name }} </span>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if right_header_template %}
+                {% include right_header_template with form=form %}
+            {% endif %}
+
+        </div>
+    </div>
+    <div class="col-xs-6">
+        <div class="text-center" >
+            <h4 class="font-weight-bold">
+                اکسونی
+            </h4>
+        </div>
+        <div class="text-center" style="font-size: 0.9em;">
+            {{ title }}
+        </div>
+    </div>
+    <div class="col-xs-3 logo">
+        {% if logo %}
+            <img
+                    class="float-left mt-2 img-responsive"
+                    style="height: 60px;width: 60px;"
+                    src="{{ logo }}" alt=""
+            />
+        {% endif %}
+    </div>
+</div>
+<style>
+    div.header_box {
+        margin-top: 30px;
+        padding: 5px;
+        border: 1px solid black;
+    }
+</style>
+

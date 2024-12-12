@@ -1,0 +1,11 @@
+{% if col_number %}
+    <div class="row" style="margin-top: 50px">
+        {% for verifier in verifiers %}
+            <div class="col-xs-{{ col_number }} text-center mb-5">
+                {{ verifier.post }}
+                <br>
+                {{ verifier.name | default:'' }}
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}

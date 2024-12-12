@@ -62,6 +62,7 @@ INSTALLED_APPS = [
     'affiliate',
     'subscription',
     'packing',
+    'reports',
 
 ]
 
