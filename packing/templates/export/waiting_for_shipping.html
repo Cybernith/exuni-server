@@ -1,0 +1,28 @@
+{% load report_filters %}
+
+<div class="row" style="margin-top: -1px">
+    <table class="table table-bordered table-striped">
+
+        <tr>
+            <th class="text-center">ردیف</th>
+            <th class="text-center">نام کسب و کار</th>
+            <th class="text-center">نام مشتری</th>
+            <th class="text-center">تلفن</th>
+            <th class="text-center">آدرس</th>
+            <th class="text-center">تعداد اقلام</th>
+            <th class="text-center">زمان بسته بندی</th>
+
+        </tr>
+        {% for form in forms %}
+            <tr>
+            <td class="text-center">{{ forloop.counter }}</td>
+            <td class="text-center">{{ form.business.name }}</td>
+            <td class="text-center">{{ form.customer_name }}</td>
+            <td class="text-center">{{ form.phone }}</td>
+            <td class="text-center">{{ form.address }}</td>
+            <td class="text-center">{{ form.products_quantity }}</td>
+            <td class="text-center">{{ form.packing_data_time }}</td>
+            </tr>
+        {% endfor %}
+    </table>
+</div>

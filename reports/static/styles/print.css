@@ -1,0 +1,71 @@
+/* Body ----------------------------------------------- */
+body {
+    background-color: white !important;
+    color: black !important;
+}
+
+/* Table ----------------------------------------------- */
+.table-bordered, .table-bordered td, .table-bordered th {
+    border-color: black !important;
+}
+
+/* Fonts ---------------------------------------------- */
+* {
+    font-family: IRANSans !important;
+}
+
+th, td {
+    font-size: 12px !important;
+    padding: 5px !important;
+    vertical-align: middle !important;
+}
+
+/* Helpers -------------------------------------------- */
+.ltr {
+    direction: ltr !important;
+    text-align: left !important;
+}
+
+.break-after {
+    page-break-after: always;
+}
+
+.text-left {
+    text-align: left !important;
+}
+
+.text-right {
+    text-align: right !important;
+}
+
+/* Other-------------------------------------------- */
+.form-header {
+    /* font-weight: bold; */
+}
+
+.form-header span {
+    font-weight: normal;
+    text-align: justify;
+}
+
+.part {
+    margin-bottom: 15px;
+}
+
+tr {
+    page-break-inside: avoid !important;
+    page-break-after: auto !important;
+}
+
+@media print {
+    .tr {
+        page-break-inside: avoid !important;
+        -webkit-column-break-inside: avoid;
+        break-inside: avoid;
+        -webkit-region-break-inside: avoid;
+    }
+}
+
+td, th {
+    page-break-inside: avoid !important;
+}

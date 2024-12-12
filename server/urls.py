@@ -43,6 +43,7 @@ urlpatterns = [
     url(r'^affiliate/', include('affiliate.urls')),
     url(r'^subscriptions/', include('subscription.urls')),
     url(r'^packing/', include('packing.urls')),
+    url(r'^reports/', include('reports.urls')),
 
     path('admin/', admin.site.urls),
 
