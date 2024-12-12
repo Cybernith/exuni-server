@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models import Sum
 
 from helpers.models import BaseModel, EXPLANATION
 from main.models import Business
@@ -38,6 +39,10 @@ class OrderPackage(BaseModel):
             ('updateOwn.affiliate_factor', 'ویرایش بسته سفارش خود'),
             ('deleteOwn.affiliate_factor', 'حذف بسته سفارش خود'),
         )
+
+    @property
+    def products_quantity(self):
+        return self.items.all().aggregate(Sum('quantity'))['quantity__sum']
 
 
 class OrderPackageItem(BaseModel):

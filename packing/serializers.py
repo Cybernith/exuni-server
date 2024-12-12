@@ -16,6 +16,7 @@ class OrderPackageSerializer(serializers.ModelSerializer):
     items = OrderPackageItemSerializer(many=True, read_only=True)
     business = BusinessSerializer(read_only=True)
     customer = UserSimpleSerializer(read_only=True)
+    products_quantity = serializers.ReadOnlyField()
 
     class Meta:
         model = OrderPackage
