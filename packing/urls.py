@@ -3,7 +3,7 @@ from django.conf.urls import url
 from packing.lists.views import OrderPackageWithoutAdminListView, WaitingForPackingOrdersListView, \
     WaitingForShippingOrdersListView, AdminPackingReportListView
 from packing.views import OrderPackageApiView, OrderPackageDetailView, AddAdminToOrdersApiView, \
-    PackedOrderPackagesApiView, ShippingOrderPackagesApiView
+    PackedOrderPackagesApiView, ShippingOrderPackagesApiView, GetOrderPackageView
 
 app_name = 'packing'
 urlpatterns = [
@@ -16,5 +16,6 @@ urlpatterns = [
     url(r'^shippedOrderPackages$', ShippingOrderPackagesApiView.as_view(), name='shippingOrderPackagesApiView'),
     url(r'^order$', OrderPackageApiView.as_view(), name='orderPackageApiView'),
     url(r'^order/(?P<pk>[0-9]+)$', OrderPackageDetailView.as_view(), name='orderPackageDetailView'),
+    url(r'^getOrder/(?P<pk>[0-9]+)$', GetOrderPackageView.as_view(), name='getOrderPackageView'),
 
 ]

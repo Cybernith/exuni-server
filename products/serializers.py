@@ -89,6 +89,13 @@ class ProductSimpleSerializer(serializers.ModelSerializer):
         fields = 'created_by', 'updated_at', 'name', 'id', 'barcode', 'sixteen_digit_code', 'summary_explanation'
 
 
+class ProductOrderSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Product
+        fields = 'name', 'id', 'barcode', 'sixteen_digit_code', 'shelf_code', 'picture'
+
+
 class ProductContentDevelopmentSerializer(serializers.ModelSerializer):
     created_by = UserSimpleSerializer(read_only=True)
 
