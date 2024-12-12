@@ -115,7 +115,7 @@ class Product(BaseModel):
     second_texture_picture = models.ImageField(upload_to=custom_upload_to, null=True, blank=True, default=None)
 
     first_inventory = models.IntegerField(default=0)
-    shelf_code = models.IntegerField(null=True, blank=True)
+    shelf_code = models.CharField(max_length=20, null=True, blank=True)
     min_inventory = models.IntegerField(default=0)
 
     price = DECIMAL()

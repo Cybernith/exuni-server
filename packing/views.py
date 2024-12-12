@@ -8,7 +8,7 @@ from rest_framework.views import APIView
 from helpers.auth import BasicObjectPermission
 from helpers.functions import get_current_user
 from packing.models import OrderPackage
-from packing.serializers import OrderPackageSerializer
+from packing.serializers import OrderPackageSerializer, OrderPackageSimpleSerializer, OrderPackageItemSerializer
 from rest_framework.response import Response
 from rest_framework import status
 
@@ -113,3 +113,30 @@ class ShippingOrderPackagesApiView(APIView):
         order_packages.update(shipping_data_time=datetime.datetime.now())
 
         return Response({'message': 'shipping successfully'}, status=status.HTTP_201_CREATED)
+
+
+class GetOrderPackageView(APIView):
+    permission_classes = (IsAuthenticated, BasicObjectPermission)
+    permission_basename = 'order_package'
+
+    def get_object(self, pk):
+        try:
+            return OrderPackage.objects.get(pk=pk)
+        except OrderPackage.DoesNotExist:
+            raise Http404
+
+    def get(self, request, pk):
+        response = {}
+        order_package = self.get_object(pk)
+
+        if order_package.packing_admin != get_current_user():
+            raise ValidationError('سفارش {} برای شما نمباشد'.format(order_package.customer_name))
+
+        order_package_serializer = OrderPackageSimpleSerializer(order_package)
+        response['order_package'] = order_package_serializer.data
+        order_package_items = order_package.items.all().order_by('product__shelf_code')
+        order_package_items_serializer = OrderPackageItemSerializer(order_package_items, many=True)
+
+        response['order_package_items'] = order_package_items_serializer.data
+
+        return Response({'response': response}, status=status.HTTP_200_OK)
