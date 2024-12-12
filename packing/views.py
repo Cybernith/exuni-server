@@ -1,8 +1,12 @@
+import datetime
+
 from django.http import Http404
+from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 
 from helpers.auth import BasicObjectPermission
+from helpers.functions import get_current_user
 from packing.models import OrderPackage
 from packing.serializers import OrderPackageSerializer
 from rest_framework.response import Response
@@ -70,4 +74,42 @@ class AddAdminToOrdersApiView(APIView):
         order_packages = OrderPackage.objects.filter(id__in=items)
         order_packages.update(packing_admin=User.objects.get(id=admin))
 
-        return Response({'msg': 'ok'}, status=status.HTTP_201_CREATED)
+        return Response({'message': 'admin added succesfully'}, status=status.HTTP_201_CREATED)
+
+
+class PackedOrderPackagesApiView(APIView):
+    permission_classes = (IsAuthenticated,)
+    permission_basename = 'order_package'
+
+    def post(self, request):
+        data = request.data
+        items = data.get('items', [])
+
+        for order in OrderPackage.objects.filter(id__in=items):
+            if order.packing_admin != get_current_user():
+                raise ValidationError('سفارش {} برای شما نمباشد'.format(order.customer_name))
+
+        order_packages = OrderPackage.objects.filter(id__in=items)
+        order_packages.update(is_packaged=True)
+        order_packages.update(packing_data_time=datetime.datetime.now())
+
+        return Response({'message': 'packing successfully'}, status=status.HTTP_201_CREATED)
+
+
+class ShippingOrderPackagesApiView(APIView):
+    permission_classes = (IsAuthenticated,)
+    permission_basename = 'order_package'
+
+    def post(self, request):
+        data = request.data
+        items = data.get('items', [])
+
+        for order in OrderPackage.objects.filter(id__in=items):
+            if order.packing_admin != get_current_user():
+                raise ValidationError('سفارش {} برای شما نمباشد'.format(order.customer_name))
+
+        order_packages = OrderPackage.objects.filter(id__in=items)
+        order_packages.update(is_shipped=True)
+        order_packages.update(shipping_data_time=datetime.datetime.now())
+
+        return Response({'message': 'shipping successfully'}, status=status.HTTP_201_CREATED)
