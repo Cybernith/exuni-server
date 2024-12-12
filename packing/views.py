@@ -129,7 +129,7 @@ class GetOrderPackageView(APIView):
         response = {}
         order_package = self.get_object(pk)
 
-        if order_package.packing_admin != get_current_user():
+        if order_package.packing_admin != get_current_user() and get_current_user().user_type not in ['ma', 'stke']:
             raise ValidationError('سفارش {} برای شما نمباشد'.format(order_package.customer_name))
 
         order_package_serializer = OrderPackageSimpleSerializer(order_package)
