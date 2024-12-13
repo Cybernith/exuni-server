@@ -158,7 +158,8 @@ class AffiliateFactorPaymentApiView(APIView):
                 OrderPackageItem.objects.create(
                     order_package=order_package,
                     product=order_item.product,
-                    quantity=order_item.quantity
+                    quantity=order_item.quantity,
+                    amount=order_item.price
                 )
         factor.update_amounts()
 

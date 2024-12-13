@@ -79,11 +79,13 @@
                     <span style="font-size: xx-small">{{ forloop.counter }}</span>
                 </td>
                 <td class="text-center" width="50">
+                    {%  if item.product.picture  %}
                     <img
                             class="float-right img-responsive"
                             style="height: 40px;width: 40px;"
                             src="{{ item.product.picture.url }}" alt=""
                     />
+                    {% endif %}
                 </td>
                 <td class="text-center">
                     <span style="font-size: x-small">

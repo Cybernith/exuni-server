@@ -1,7 +1,9 @@
 from django.conf.urls import url
 
 from packing.lists.export_views import OrderWithoutAdminExportView, WaitingForPackingOrdersExportView, \
-    WaitingForShippingOrdersExportView, AdminPackingReportExportView, OrderPackageExportView
+    WaitingForShippingOrdersExportView, AdminPackingReportExportView, OrderPackageExportView, \
+    AdminPackingAllOrdersReportExportView, WaitingForShippingAllOrdersReportExportView, \
+    WaitingForPackingAllOrdersReportExportView, AllOrdersWithoutAdminReportExportView
 from packing.lists.views import OrderPackageWithoutAdminListView, WaitingForPackingOrdersListView, \
     WaitingForShippingOrdersListView, AdminPackingReportListView
 from packing.views import OrderPackageApiView, OrderPackageDetailView, AddAdminToOrdersApiView, \
@@ -11,15 +13,19 @@ app_name = 'packing'
 urlpatterns = [
     url(r'^orderWithoutAdmin$', OrderPackageWithoutAdminListView.as_view(), name='orderPackageWithoutAdminListView'),
     url(r'^orderWithoutAdmin/(?P<export_type>\S+)', OrderWithoutAdminExportView.as_view(), name=''),
+    url(r'^allOrdersWithoutAdminReport/(?P<export_type>\S+)', AllOrdersWithoutAdminReportExportView.as_view(), name=''),
 
     url(r'^waitingForPackingOrders$', WaitingForPackingOrdersListView.as_view(), name='waitingForPackingOrdersListView'),
     url(r'^waitingForPackingOrders/(?P<export_type>\S+)', WaitingForPackingOrdersExportView.as_view(), name=''),
+    url(r'^waitingForPackingAllOrders/(?P<export_type>\S+)', WaitingForPackingAllOrdersReportExportView.as_view(), name=''),
 
     url(r'^waitingForShippingOrders$', WaitingForShippingOrdersListView.as_view(), name='waitingForShippingOrdersListView'),
     url(r'^waitingForShippingOrders/(?P<export_type>\S+)', WaitingForShippingOrdersExportView.as_view(), name=''),
+    url(r'^waitingForShippingAllOrders/(?P<export_type>\S+)', WaitingForShippingAllOrdersReportExportView.as_view(), name=''),
 
     url(r'^adminPackingReport$', AdminPackingReportListView.as_view(), name='adminPackingReportListView'),
     url(r'^adminPackingReport/(?P<export_type>\S+)', AdminPackingReportExportView.as_view(), name=''),
+    url(r'^adminPackingAllOrdersReport/(?P<export_type>\S+)', AdminPackingAllOrdersReportExportView.as_view(), name=''),
 
     url(r'^addAdminToOrders$', AddAdminToOrdersApiView.as_view(), name='addAdminToOrdersApiView'),
     url(r'^packedOrderPackages$', PackedOrderPackagesApiView.as_view(), name='packedOrderPackagesApiView'),
