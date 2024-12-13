@@ -26,6 +26,20 @@ class OrderPackageWithoutAdminListView(generics.ListAPIView):
         return OrderPackage.objects.filter(packing_admin__isnull=True)
 
 
+class OrderPackageListView(generics.ListAPIView):
+    permission_classes = (IsAuthenticated, BasicObjectPermission)
+
+    permission_codename = "get.order_package"
+
+    serializer_class = OrderPackageSerializer
+    filterset_class = OrderPackageFilter
+    ordering_fields = '__all__'
+    pagination_class = LimitOffsetPagination
+
+    def get_queryset(self):
+        return OrderPackage.objects.all()
+
+
 class WaitingForPackingOrdersListView(generics.ListAPIView):
     permission_classes = (IsAuthenticated, BasicObjectPermission)
 
@@ -72,4 +86,18 @@ class AdminPackingReportListView(generics.ListAPIView):
                                            Q(is_packaged=True) &
                                            Q(is_shipped=True)
                                            )
+
+
+class AffiliateAdminOrderPackagesReportListView(generics.ListAPIView):
+    permission_classes = (IsAuthenticated, BasicObjectPermission)
+
+    permission_codename = "get.order_package"
+
+    serializer_class = OrderPackageSerializer
+    filterset_class = OrderPackageFilter
+    ordering_fields = '__all__'
+    pagination_class = LimitOffsetPagination
+
+    def get_queryset(self):
+        return OrderPackage.objects.filter(business__admin=get_current_user())
 

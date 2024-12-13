@@ -13,6 +13,8 @@ class OrderPackageFilter(filters.FilterSet):
             'id': ('exact',),
             'business': ('exact',),
             'customer': ('exact',),
+            'is_packaged': ('exact',),
+            'is_shipped': ('exact',),
             'customer_name': BASE_FIELD_FILTERS,
             'phone': BASE_FIELD_FILTERS,
             'address': BASE_FIELD_FILTERS,
