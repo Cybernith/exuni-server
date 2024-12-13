@@ -1,0 +1,186 @@
+{% load report_filters %}
+
+{% for form in forms %}
+    <div class="row header_box">
+        <div class="col-xs-3 mt-2">
+            <div class="form-header">
+                <div class="row" style="font-size: x-small">
+                    <div class="col-sm-12 pt-2">
+                        {% if form.packing_data_time %}
+                            <span class="font-weight-bold">زمان بسته بندی:</span>
+                            <span> {{ form.packing_data_time }} </span>
+                        {% endif %}
+                    </div>
+                    <div class="col-sm-12 pt-2">
+                        {% if form.shipping_data_time %}
+                            <span class="font-weight-bold">زمان پست:</span>
+                            <span> {{ form.shipping_data_time }} </span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xs-6">
+            <div class="text-center">
+                <h4 class="font-weight-bold">
+                    {{ form.business.name }}
+                </h4>
+            </div>
+            <div class="text-center" style="font-size: 1em; margin-top: -5px">
+                {{ form.business.domain_address }}
+            </div>
+        </div>
+        <div class="col-xs-3 logo">
+            {% if form.business.logo %}
+                <img
+                        class="float-left mt-2 img-responsive"
+                        style="height: 60px;width: 60px;"
+                        src="{{ form.business.logo.url }}" alt=""
+                />
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="row">
+        <table class="table-head" style="margin-top: -1px">
+            <tbody>
+            <tr>
+                <td colspan="2" width="60%">
+                    <span style="font-size: x-small" class="font-weight-bold">  خریدار : </span>
+                    <span style="font-size: x-small"> {{ form.customer_name }} </span>
+                </td>
+                <td colspan="1">
+                    <span style="font-size: x-small" class="font-weight-bold">  تلفن : </span>
+                    <span style="font-size: x-small"> {{ form.phone }} </span>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2" width="60%">
+                    <span style="font-size: x-small" class="font-weight-bold">آدرس : </span>
+                    <span style="font-size: x-small"> {{ form.address | default:'-' }} </span>
+                </td>
+                <td width="20%">
+                    <span style="font-size: x-small" class="font-weight-bold">کد پستی : </span>
+                    <span style="font-size: x-small"> {{ form.postal_code | default:'-' }} </span>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+    {% if form.explanation %}
+        <div class="row">
+            <table class="table-head" style="margin-top: -1px">
+                <tbody>
+                <tr>
+                    <td>
+                        <span style="font-size: x-small" class="font-weight-bold">شرح : </span>
+                        <span style="font-size: x-small"> {{ form.explanation }} </span>
+                    </td>
+                </tr>
+
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+
+
+    <div class="row">
+        <table class="table table-bordered table-striped" style="margin-top: -1px">
+            <thead>
+            <tr>
+                <th class="text-center" width="20">
+                    <span style="font-size: xx-small;">ردیف</span>
+                </th>
+                <th class="text-center">
+                    <span style="font-size: x-small"> تصویر</span>
+                </th>
+                <th class="text-center">
+                    <span style="font-size: x-small"> نام کالا</span>
+                </th>
+                <th class="text-center">
+                    <span style="font-size: x-small">بارکد کالا</span>
+                </th>
+                <th class="text-center">
+                    <span style="font-size: x-small">تعداد</span>
+                </th>
+                <th class="text-center">
+                    <span style="font-size: x-small">قیمت واحد</span>
+                </th>
+                <th class="text-center">
+                    <span style="font-size: x-small">قیمت کل</span>
+                </th>
+            </tr>
+            </thead>
+            <tbody>
+            {% get_ordered_items form as items %}
+            {% for item in items %}
+                <tr>
+                    <td class="text-center" width="20">
+                        <span style="font-size: xx-small">{{ forloop.counter }}</span>
+                    </td>
+                    <td class="text-center" width="50">
+                    {%  if item.product.picture  %}
+                    <img
+                            class="float-right img-responsive"
+                            style="height: 40px;width: 40px;"
+                            src="{{ item.product.picture.url }}" alt=""
+                    />
+                    {% endif %}
+                    </td>
+                    <td class="text-center">
+                    <span style="font-size: x-small">
+                            {{ item.product.name }}
+                    </span>
+                    </td>
+                    <td class="text-center">
+                    <span style="font-size: x-small">
+                            {{ item.product.barcode }}
+                    </span>
+                    </td>
+                    <td class="text-center">
+                        <span style="font-size: x-small">
+                            {{ item.quantity }}
+                        </span>
+                    </td>
+                    <td class="text-center">
+                        <span style="font-size: x-small">
+                            {{ item.amount | money }}
+                        </span>
+                    </td>
+                    <td class="text-center">
+                        <span style="font-size: x-small">
+                            {{ item.amount_sum | money }}
+                        </span>
+                    </td>
+                </tr>
+            {% endfor %}
+
+            <tr>
+                <td colspan="6"></td>
+                <td class="text-center">
+                <span style="font-size: x-small">
+                    {{ form.amount_sum | money }}
+                </span>
+
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+    <div class="break-after"></div>
+
+{% endfor %}
+
+
+<style>
+    div.header_box {
+        margin-top: 30px;
+        padding: 5px;
+        border: 1px solid black;
+    }
+
+    table.table-head {
+        width: 100%;
+        border: 1px solid black;
+    }
+</style>
