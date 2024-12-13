@@ -3,9 +3,10 @@ from django.conf.urls import url
 from packing.lists.export_views import OrderWithoutAdminExportView, WaitingForPackingOrdersExportView, \
     WaitingForShippingOrdersExportView, AdminPackingReportExportView, OrderPackageExportView, \
     AdminPackingAllOrdersReportExportView, WaitingForShippingAllOrdersReportExportView, \
-    WaitingForPackingAllOrdersReportExportView, AllOrdersWithoutAdminReportExportView
+    WaitingForPackingAllOrdersReportExportView, AllOrdersWithoutAdminReportExportView, \
+    AffiliateAdminOrderPackagesReportExportView
 from packing.lists.views import OrderPackageWithoutAdminListView, WaitingForPackingOrdersListView, \
-    WaitingForShippingOrdersListView, AdminPackingReportListView
+    WaitingForShippingOrdersListView, AdminPackingReportListView, AffiliateAdminOrderPackagesReportListView
 from packing.views import OrderPackageApiView, OrderPackageDetailView, AddAdminToOrdersApiView, \
     PackedOrderPackagesApiView, ShippingOrderPackagesApiView, GetOrderPackageView
 
@@ -21,6 +22,7 @@ urlpatterns = [
 
     url(r'^waitingForShippingOrders$', WaitingForShippingOrdersListView.as_view(), name='waitingForShippingOrdersListView'),
     url(r'^waitingForShippingOrders/(?P<export_type>\S+)', WaitingForShippingOrdersExportView.as_view(), name=''),
+    url(r'^waitingForShippingOrders/(?P<export_type>\S+)', AffiliateAdminOrderPackagesReportExportView.as_view(), name=''),
     url(r'^waitingForShippingAllOrders/(?P<export_type>\S+)', WaitingForShippingAllOrdersReportExportView.as_view(), name=''),
 
     url(r'^adminPackingReport$', AdminPackingReportListView.as_view(), name='adminPackingReportListView'),
@@ -35,5 +37,10 @@ urlpatterns = [
     url(r'^getOrder/(?P<pk>[0-9]+)$', GetOrderPackageView.as_view(), name='getOrderPackageView'),
 
     url(r'^orderPackageExport/(?P<export_type>\S+)', OrderPackageExportView.as_view(), name=''),
+
+    url(r'^affiliateAdminOrderPackages$', AffiliateAdminOrderPackagesReportListView.as_view(),
+        name='affiliateAdminOrderPackagesReportListView'),
+    url(r'^affiliateAdminOrderPackages/(?P<export_type>\S+)', AffiliateAdminOrderPackagesReportExportView.as_view(),
+        name=''),
 
 ]
