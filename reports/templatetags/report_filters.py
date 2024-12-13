@@ -137,7 +137,7 @@ def get_value(obj, key, headers):
 
 @register.simple_tag
 def get_ordered_items(obj):
-    return obj.items.order_by('order')
+    return obj.items.order_by('product__shelf_code')
 
 
 @register.simple_tag
