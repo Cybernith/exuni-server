@@ -1,7 +1,7 @@
 from django.conf.urls import url
 
 from packing.lists.export_views import OrderWithoutAdminExportView, WaitingForPackingOrdersExportView, \
-    WaitingForShippingOrdersExportView, AdminPackingReportExportView
+    WaitingForShippingOrdersExportView, AdminPackingReportExportView, OrderPackageExportView
 from packing.lists.views import OrderPackageWithoutAdminListView, WaitingForPackingOrdersListView, \
     WaitingForShippingOrdersListView, AdminPackingReportListView
 from packing.views import OrderPackageApiView, OrderPackageDetailView, AddAdminToOrdersApiView, \
@@ -28,5 +28,6 @@ urlpatterns = [
     url(r'^order/(?P<pk>[0-9]+)$', OrderPackageDetailView.as_view(), name='orderPackageDetailView'),
     url(r'^getOrder/(?P<pk>[0-9]+)$', GetOrderPackageView.as_view(), name='getOrderPackageView'),
 
+    url(r'^orderPackageExport/(?P<export_type>\S+)', OrderPackageExportView.as_view(), name=''),
 
 ]

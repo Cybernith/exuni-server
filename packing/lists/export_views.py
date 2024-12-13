@@ -343,3 +343,37 @@ class AdminPackingReportExportView(AdminPackingReportListView, BaseExportView):
             ])
         return data
 
+
+class OrderPackageExportView(AdminPackingReportListView, BaseExportView):
+    template_name = 'export/sample_order_export.html'
+    filename = 'OrderPackage'
+
+    context = {
+        'title': 'سفارش',
+    }
+    pagination_class = None
+
+    def get_queryset(self):
+        return self.filterset_class(self.request.GET, queryset=super().get_queryset()).qs
+
+    def get(self, request, export_type, *args, **kwargs):
+        return self.export(request, export_type, *args, **kwargs)
+
+    def get_context_data(self, user, print_document=False, **kwargs):
+        qs = self.get_queryset()
+        context = {
+            'forms': qs,
+            'form': qs.first(),
+            'user_name': get_current_user().first_name + ' ' +  get_current_user().last_name,
+            'print_document': print_document,
+            'logo': qs.first().business.logo.url,
+            'packed_date': qs.first().packing_data_time,
+            'shipped_date': qs.first().shipping_data_time
+        }
+
+        context['form_content_template'] = 'export/order_package.html'
+        context['right_header_template'] = 'export/sample_head.html'
+
+        context.update(self.context)
+
+        return context
