@@ -6,15 +6,18 @@ from django.db import models
 
 from helpers.models import BaseModel, DECIMAL, EXPLANATION
 from main.models import Supplier, Currency, Store
-from products.models import Product
-from users.models import custom_upload_to, User
+
 
 def excel_upload_to(instance, filename):
     return 'files/{filename}'.format(filename=filename)
 
 
+def custom_upload_to(instance, filename):
+    return 'images/{filename}'.format(filename=filename)
+
+
 class EntrancePackage(BaseModel):
-    manager = models.ForeignKey(User, related_name="entrance_packages",
+    manager = models.ForeignKey('users.User', related_name="entrance_packages",
                                 on_delete=models.SET_NULL, blank=True, null=True)
     name = models.CharField(max_length=150)
     factor_number = models.CharField(max_length=150, blank=True, null=True)
@@ -69,7 +72,7 @@ class EntrancePackageItem(BaseModel):
     entrance_package = models.ForeignKey(EntrancePackage, related_name="items",
                                           on_delete=models.CASCADE, blank=True, null=True)
 
-    product = models.ForeignKey(Product, related_name="entrance_package_items",
+    product = models.ForeignKey('products.Product', related_name="entrance_package_items",
                                 on_delete=models.SET_NULL, blank=True, null=True)
 
     product_code = models.CharField(max_length=150, null=True, blank=True)
@@ -210,7 +213,7 @@ class EntrancePackageFileColumn(BaseModel):
 
 
 class StoreReceipt(BaseModel):
-    storekeeper = models.ForeignKey(User, related_name="store_receipt", on_delete=models.SET_NULL,
+    storekeeper = models.ForeignKey('users.User', related_name="store_receipt", on_delete=models.SET_NULL,
                                     blank=True, null=True)
     supplier = models.ForeignKey(Supplier, related_name="store_receipt",
                                  blank=True, null=True, on_delete=models.SET_NULL)
@@ -252,7 +255,7 @@ class StoreReceiptItem(BaseModel):
 
     store_receipt = models.ForeignKey(StoreReceipt, related_name="items", on_delete=models.CASCADE,
                                       blank=True, null=True)
-    product = models.ForeignKey(Product, related_name="store_receipt_items",
+    product = models.ForeignKey('products.Product', related_name="store_receipt_items",
                                 on_delete=models.SET_NULL, blank=True, null=True)
     number_of_products_per_box = models.IntegerField(default=0)
     number_of_box = models.IntegerField(default=1)

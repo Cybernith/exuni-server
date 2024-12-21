@@ -2,11 +2,17 @@ import datetime
 import random
 
 from dateutil.relativedelta import relativedelta
+from django.core.exceptions import ValidationError
 
 from django.db import models
+from django.db.models import IntegerField, F, Sum
 
+from entrance.models import StoreReceiptItem
+from helpers.functions import change_to_num
 from helpers.models import BaseModel, DECIMAL
 from main.models import Supplier, Currency, Business
+from packing.models import OrderPackageItem
+
 
 def custom_upload_to(instance, filename):
     return 'images/{filename}'.format(filename=filename)
@@ -231,3 +237,44 @@ class ProductGallery(BaseModel):
             ('updateOwn.product_gallery', 'ویرایش گالری محصول خود'),
             ('deleteOwn.product_gallery', 'حذف گالری محصول خود'),
         )
+
+
+class ProductInventory(models.Model):
+    product = models.OneToOneField(Product, related_name='product_inventory', on_delete=models.CASCADE)
+    inventory = models.IntegerField(default=0)
+    price = DECIMAL()
+
+    def add_to_inventory(self, val):
+        self.inventory += val
+        self.save()
+
+    def subtract_from_inventory(self, val):
+        if self.inventory >= val:
+            self.inventory -= val
+            self.save()
+        else:
+            raise ValidationError('موجودی کالا کافی نیست')
+
+    @staticmethod
+    def set_product_inventory(self):
+        self.inventory = self.product.first_inventory
+
+        entrance_items = StoreReceiptItem.objects.filter(product=self.product).annotate(
+            product_count=Sum((F('number_of_box') * F('number_of_products_per_box')), output_field=IntegerField()),
+        ).aggregate(
+            Sum('product_count'),
+        )
+
+        sale_items = OrderPackageItem.objects.filter(product=self.product).aggregate(
+            Sum('quantity'),
+        )
+
+        self.inventory += change_to_num(entrance_items['quantity__sum'])
+        self.inventory -= change_to_num(sale_items['quantity__sum'])
+        self.save()
+
+    @staticmethod
+    def set_product_price(self):
+        self.price = self.product.price
+        self.save()
+

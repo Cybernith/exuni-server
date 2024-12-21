@@ -4,7 +4,6 @@ from rest_framework.fields import IntegerField
 
 from helpers.models import BaseModel, EXPLANATION, DECIMAL
 from main.models import Business
-from products.models import Product
 
 
 class OrderPackage(BaseModel):
@@ -56,7 +55,7 @@ class OrderPackage(BaseModel):
 
 class OrderPackageItem(BaseModel):
     order_package = models.ForeignKey(OrderPackage, related_name='items', on_delete=models.CASCADE)
-    product = models.ForeignKey(Product, related_name='order_items', on_delete=models.PROTECT)
+    product = models.ForeignKey('products.Product', related_name='order_items', on_delete=models.PROTECT)
     quantity = models.IntegerField(default=1)
     amount = DECIMAL()
 
