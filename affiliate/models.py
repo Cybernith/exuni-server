@@ -55,6 +55,11 @@ class AffiliateFactor(BaseModel):
         return items['final_price__sum']
 
     @property
+    def factor_quantity_sum(self):
+        items = self.items.all().aggregate(Sum('quantity'))
+        return items['quantity__sum']
+
+    @property
     def title(self):
         return 'فاکتور فروش در افیلیت به ' + self.customer_name + ' با شماره تماس ' + self.phone
 
