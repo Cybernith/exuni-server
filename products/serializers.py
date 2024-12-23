@@ -3,7 +3,7 @@ import os
 from entrance.models import StoreReceiptItem
 from helpers.functions import change_to_num
 from helpers.serializers import SModelSerializer
-from products.models import Brand, Avail, ProductProperty, Category, Product, ProductGallery
+from products.models import Brand, Avail, ProductProperty, Category, Product, ProductGallery, ProductInventory
 from server.settings import BASE_DIR, SERVER_URL
 from users.serializers import UserSimpleSerializer
 
@@ -196,14 +196,7 @@ class AffiliateProductRetrieveSerializer(serializers.ModelSerializer):
                  'price', 'stock', 'min_stock', 'type', 'group_id', 'images'
 
     def get_stock(self, obj: Product):
-        items = StoreReceiptItem.objects.filter(product=obj).annotate(
-            product_count=Sum((F('number_of_box') * F('number_of_products_per_box')), output_field=IntegerField()),
-        ).aggregate(
-            Sum('product_count'),
-        )
-
-
-        return obj.first_inventory + change_to_num(items['product_count__sum'])
+        return ProductInventory.objects.get(product=obj).inventory
 
     def get_images(self, obj: Product):
 
@@ -214,11 +207,7 @@ class AffiliateProductRetrieveSerializer(serializers.ModelSerializer):
         return images
 
     def get_price(self, obj: Product):
-        item = StoreReceiptItem.objects.filter(product=obj).order_by('store_receipt__enter_date').last()
-        if item:
-            return item.sale_price
-        else:
-            return obj.price
+        return ProductInventory.objects.get(product=obj).price
 
 
 class AffiliateReceiveProductsInventorySerializer(serializers.ModelSerializer):
@@ -230,10 +219,4 @@ class AffiliateReceiveProductsInventorySerializer(serializers.ModelSerializer):
         fields = 'product_code', 'stock'
 
     def get_stock(self, obj: Product):
-        items = StoreReceiptItem.objects.filter(product=obj).annotate(
-            product_count=Sum((F('number_of_box') * F('number_of_products_per_box')), output_field=IntegerField()),
-        ).aggregate(
-            Sum('product_count'),
-        )
-
-        return obj.first_inventory + change_to_num(items['product_count__sum'])
+        return ProductInventory.objects.get(product=obj).inventory

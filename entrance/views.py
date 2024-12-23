@@ -22,7 +22,7 @@ from helpers.views.MassRelatedCUD import MassRelatedCUD
 from rest_framework.parsers import FileUploadParser, MultiPartParser, FormParser
 
 from main.models import Currency
-from products.models import Product
+from products.models import Product, ProductInventory
 from server.settings import BASE_DIR
 import pandas as pd
 
@@ -510,7 +510,7 @@ class CreateReceiptsItemsView(APIView):
                         name=item['default_name'] if 'default_name' in item.keys() else None,
                         sale_price=item['final_price']
                     )
-                StoreReceiptItem.objects.create(
+                receipt_item = StoreReceiptItem.objects.create(
                     product=product,
                     store_receipt=store_receipt,
                     product_code=item['product_code'],
@@ -523,6 +523,10 @@ class CreateReceiptsItemsView(APIView):
                     barcode=item['barcode'],
                     sale_price=item['final_price']
                 )
+                product_inventory = ProductInventory.objects.get(product=product)
+                product_inventory.add_to_inventory(receipt_item.product_count)
+                product_inventory.price = receipt_item.sale_price
+                product_inventory.save()
 
         return Response({'msg': 'success'}, status=status.HTTP_200_OK)
 

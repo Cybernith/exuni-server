@@ -255,7 +255,6 @@ class ProductInventory(models.Model):
         else:
             raise ValidationError('موجودی کالا کافی نیست')
 
-    @staticmethod
     def set_product_inventory(self):
         self.inventory = self.product.first_inventory
 
@@ -269,12 +268,15 @@ class ProductInventory(models.Model):
             Sum('quantity'),
         )
 
-        self.inventory += change_to_num(entrance_items['quantity__sum'])
+        self.inventory += change_to_num(entrance_items['product_count__sum'])
         self.inventory -= change_to_num(sale_items['quantity__sum'])
         self.save()
 
-    @staticmethod
     def set_product_price(self):
         self.price = self.product.price
+        last_receipt_item = StoreReceiptItem.objects.filter(
+            product=self.product).order_by('store_receipt__enter_date').last()
+        if last_receipt_item:
+            self.price = last_receipt_item.sale_price
         self.save()
 

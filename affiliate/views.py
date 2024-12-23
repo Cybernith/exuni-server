@@ -9,7 +9,7 @@ from rest_framework import status
 from affiliate.models import AffiliateFactorItem, AffiliateFactor
 from affiliate.serializers import AffiliateFactorCreateSerializer
 from packing.models import OrderPackage, OrderPackageItem
-from products.models import Product
+from products.models import Product, ProductInventory
 
 from main.models import Business
 from products.serializers import AffiliateProductRetrieveSerializer, AffiliateReceiveProductsInventorySerializer
@@ -155,12 +155,14 @@ class AffiliateFactorPaymentApiView(APIView):
                 postal_code=affiliate_factor.postal_code,
             )
             for order_item in affiliate_factor.items.all():
-                OrderPackageItem.objects.create(
+                order_item = OrderPackageItem.objects.create(
                     order_package=order_package,
                     product=order_item.product,
                     quantity=order_item.quantity,
                     amount=order_item.price
                 )
+                ProductInventory.objects.get(product=order_item.product).subtract_from_inventory(order_item.quantity)
+
         factor.update_amounts()
 
         if discount_code:

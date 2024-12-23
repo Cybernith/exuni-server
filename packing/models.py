@@ -76,3 +76,9 @@ class OrderPackageItem(BaseModel):
     @property
     def amount_sum(self):
         return round(self.amount) * self.quantity
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        super().delete(*args, **kwargs)
