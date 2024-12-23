@@ -1,3 +1,4 @@
+from django.db.models import Sum, F, DecimalField
 from django.shortcuts import get_object_or_404
 from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated
@@ -202,3 +203,31 @@ class AffiliateCustomersView(APIView):
         query = self.get_objects()
         serializers = UserSimpleSerializer(query, many=True)
         return Response(serializers.data, status=status.HTTP_200_OK)
+
+
+class BusinessAffiliateReportView(APIView):
+    permission_basename = 'business'
+
+    def get(self, request):
+        response = []
+        for business in Business.objects.all():
+            affiliate_factors = AffiliateFactor.objects.filter(business=business).select_related('business')
+            affiliate_factor_quantity_sum = AffiliateFactorItem.objects.filter(
+                affiliate_factor__in=affiliate_factors).aggregate(Sum('quantity'))['quantity__sum']
+            affiliate_factor_price_sum = AffiliateFactorItem.objects.filter(
+                affiliate_factor__in=affiliate_factors).annotate(
+                final_price=Sum(F('quantity') * F('price'), output_field=DecimalField()),
+            ).aggregate(Sum('final_price'))['final_price__sum']
+
+            result = {
+                'business': business.name,
+                'domain_address': business.domain_address,
+                'factors_count': affiliate_factors.count(),
+                'sale_price_sum': affiliate_factor_price_sum,
+                'sale_quantity_sum': affiliate_factor_quantity_sum,
+            }
+
+            response.append(result)
+
+        return Response(response, status=status.HTTP_200_OK)
+
