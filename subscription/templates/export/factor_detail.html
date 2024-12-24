@@ -14,22 +14,8 @@
                 <span style="font-size: x-small;"> {{ forms.created_by.name }} </span>
             </td>
             <td>
-                <span style="font-size: x-small" class="font-weight-bold"> نام کسب و کار : </span>
-                <span style="font-size: x-small"> {{ forms.company_name | default:company.name  }} </span>
-            </td>
-        </tr>
-        <tr>
-            <td>
                 <span style="font-size: x-small" class="font-weight-bold"> تاریخ  : </span>
                 <span style="font-size: x-small"> {{ forms.created_at | jDate }} </span>
-            </td>
-            <td>
-                <span style="font-size: x-small" class="font-weight-bold"> تاریخ پایان اشتراک : </span>
-                {% if forms.company.expired_at %}
-                    <span style="font-size: x-small"> {{ forms.company.expired_at | jDate }} </span>
-                    {% else %}
-                        <span style="font-size: x-small"> {{ company.expired_at | jDate }} </span>
-                {% endif %}
             </td>
 
         </tr>
@@ -49,7 +35,7 @@
             <th class="text-center">
                 <span style="font-size: x-small">نوع</span>
             </th>
-            <th class="text-center" style="width: 200px">
+            <th class="text-center">
                 <span style="font-size: x-small">عنوان</span>
             </th>
             <th class="text-center">
@@ -69,16 +55,9 @@
                         </span>
                 </td>
                 <td class="text-center">
-                    {% if item.plan %}
-                        <span style="font-size: x-small">
-                            {{ item.plan.title  | default:'-' }}
-                        </span>
-                    {% else %}
-                        <span style="font-size: x-small">
-                            {{ item.extension.title  | default:'-' }}
-                        </span>
-
-                    {% endif %}
+                    <span style="font-size: x-small">
+                        {{ item.affiliate_factor.title  | default:'-' }}
+                    </span>
                 </td>
                 <td class="text-center">
                         <span style="font-size: x-small">

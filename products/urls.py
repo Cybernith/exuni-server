@@ -41,7 +41,7 @@ urlpatterns = [
         name='affiliateProductAddBusinessView'),
     url(r'^product/noContent$', NoContentProductListView.as_view(), name='noContentProductListView'),
     url(r'^product/storeReceipts/(?P<pk>[0-9]+)$', ProductsStoreReceiptsView.as_view(), name='productsStoreReceiptsView'),
-    url(r'^productPictureUpdateView/(?P<pk>[0-9]+)$', ProductPictureUpdateView.as_view(),
+    url(r'^productPictureUpdate/(?P<pk>[0-9]+)$', ProductPictureUpdateView.as_view(),
         name='productPictureUpdateView'),
 
     url(r'^productGallery$', ProductGalleryApiView.as_view(), name='productGalleryApiView'),
