@@ -422,7 +422,7 @@ class ProductPictureUpdateView(generics.UpdateAPIView):
         return Product.objects.filter(id=self.request.data['id'])
 
     def perform_update(self, serializer: BrandLogoUpdateSerializer) -> None:
-        manage_files(serializer.instance, self.request.data, ['logo'])
+        manage_files(serializer.instance, self.request.data, ['picture'])
         serializer.save()
 
 
