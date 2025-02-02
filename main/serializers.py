@@ -9,9 +9,11 @@ class BusinessSerializer(serializers.ModelSerializer):
     created_by = UserSimpleSerializer(read_only=True)
     business_type_display = serializers.CharField(source='get_business_type_display', read_only=True)
     admin_name = serializers.CharField(source='admin.name', read_only=True)
+    logo = serializers.ImageField(required=False, read_only=True)
 
     class Meta:
-        read_only_fields = ('created_at', 'updated_at', 'logo', 'business_owner_national_card_picture')
+        read_only_fields = ('created_at', 'updated_at', 'business_owner_national_card_picture',
+                            'products', 'customers')
         model = Business
         fields = '__all__'
 
@@ -20,8 +22,15 @@ class BusinessLogoUpdateSerializer(SModelSerializer):
     logo = serializers.ImageField(required=False)
 
     class Meta:
+        read_only_fields = ('created_at', 'updated_at', 'name', 'domain_address', 'api_token', 'primary_business_color',
+                            'secondary_business_color', 'theme_business_color', 'about_us', 'address', 'business_type',
+                            'admin', 'phone')
+
         model = Business
-        fields = ('id', 'logo')
+        fields = ('id', 'logo', 'name', 'domain_address', 'api_token', 'primary_business_color',
+                  'secondary_business_color', 'theme_business_color', 'about_us', 'address', 'business_type', 'admin',
+                  'phone', 'created_at', 'updated_at',)
+
 
 
 class BusinessOwnerNationalCardPictureUpdateSerializer(SModelSerializer):
