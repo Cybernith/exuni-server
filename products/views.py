@@ -56,6 +56,7 @@ class BrandDetailView(APIView):
 
     def put(self, request, pk):
         query = self.get_object(pk)
+        request.data['logo'] = None
         serializer = BrandSerializer(query, data=request.data)
         if serializer.is_valid():
             serializer.save()

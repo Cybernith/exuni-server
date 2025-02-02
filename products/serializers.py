@@ -12,9 +12,10 @@ from django.db.models import Sum, IntegerField, Q, Count, F
 class BrandSerializer(serializers.ModelSerializer):
     created_by = UserSimpleSerializer(read_only=True)
     supplier_name = serializers.CharField(source='supplier.name', read_only=True)
+    logo = serializers.ImageField(required=False, read_only=True)
 
     class Meta:
-        read_only_fields = ('created_at', 'updated_at', 'logo')
+        read_only_fields = ('created_at', 'updated_at')
         model = Brand
         fields = '__all__'
 
@@ -23,8 +24,9 @@ class BrandLogoUpdateSerializer(SModelSerializer):
     logo = serializers.ImageField(required=False)
 
     class Meta:
+        read_only_fields = ('created_at', 'updated_at', 'name', 'is_domestic', 'made_in', 'supplier')
         model = Brand
-        fields = ('id', 'logo')
+        fields = ('id', 'logo', 'created_at', 'updated_at', 'name', 'is_domestic', 'made_in', 'supplier')
 
 
 class ProductPictureUpdateSerializer(SModelSerializer):
