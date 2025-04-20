@@ -44,6 +44,7 @@ urlpatterns = [
     url(r'^subscriptions/', include('subscription.urls')),
     url(r'^packing/', include('packing.urls')),
     url(r'^reports/', include('reports.urls')),
+    url(r'^shop/', include('shop.urls')),
 
     path('admin/', admin.site.urls),
 
