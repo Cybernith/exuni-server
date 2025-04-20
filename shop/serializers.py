@@ -1,9 +1,11 @@
 from rest_framework import serializers
 
 from helpers.serializers import SModelSerializer
+from products.serializers import ProductSerializer
 from server.settings import BASE_DIR, SERVER_URL
 from shop.models import Cart, WishList, Comparison, Comment, Rate, LimitedTimeOffer, LimitedTimeOfferItems, \
     ShipmentAddress, Payment, ShopOrder, ShopOrderItem
+from users.models import User
 from users.serializers import UserSimpleSerializer
 from django.db.models import Sum, IntegerField, Q, Count, F
 
@@ -99,10 +101,56 @@ class ShopOrderItemSerializer(serializers.ModelSerializer):
 
 class ShopOrderSerializer(serializers.ModelSerializer):
     customer = UserSimpleSerializer(read_only=True)
-    shop_order = ShopOrderItemSerializer(read_only=True)
+    items = ShopOrderItemSerializer(read_only=True)
 
     class Meta:
         read_only_fields = ('created_at', 'updated_at')
         model = ShopOrder
+        fields = '__all__'
+
+
+class CartItemsRetrieveSerializer(serializers.ModelSerializer):
+    product = ProductSerializer(read_only=True)
+
+    class Meta:
+        read_only_fields = ('created_at', 'updated_at')
+        model = User
+        fields = '__all__'
+
+
+class CustomerCartItemsSerializer(serializers.ModelSerializer):
+    cart_items = CartItemsRetrieveSerializer(read_only=True)
+
+    class Meta:
+        read_only_fields = ('created_at', 'updated_at')
+        model = User
+        fields = '__all__'
+
+
+class ShopOrderItemRetrieveSerializer(serializers.ModelSerializer):
+    product = ProductSerializer(read_only=True)
+
+    class Meta:
+        read_only_fields = ('created_at', 'updated_at')
+        model = ShopOrderItem
+        fields = '__all__'
+
+
+class CustomerShopOrdersRetrieveSerializer(serializers.ModelSerializer):
+    customer = UserSimpleSerializer(read_only=True)
+    items = ShopOrderItemRetrieveSerializer(read_only=True)
+
+    class Meta:
+        read_only_fields = ('created_at', 'updated_at')
+        model = ShopOrder
+        fields = '__all__'
+
+
+class CustomerShopOrdersSerializer(serializers.ModelSerializer):
+    shop_order = CustomerShopOrdersRetrieveSerializer(read_only=True)
+
+    class Meta:
+        read_only_fields = ('created_at', 'updated_at')
+        model = User
         fields = '__all__'
 
