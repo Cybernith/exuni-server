@@ -4,6 +4,7 @@ from django.db import models
 from helpers.models import BaseModel, DECIMAL
 import random
 
+
 class Cart(BaseModel):
     customer = models.ForeignKey('users.User', related_name='cart_items', on_delete=models.PROTECT)
     product = models.ForeignKey('products.Product', related_name='products_in_cart',  on_delete=models.PROTECT)
@@ -66,7 +67,7 @@ class Comment(BaseModel):
     customer = models.ForeignKey('users.User', related_name='comments', on_delete=models.CASCADE)
     product = models.ForeignKey('products.Product', related_name='product_comments',  on_delete=models.CASCADE,
                                 blank=True, null=True)
-    date_time = models.DateTimeField(default=datetime.datetime.now())
+    date_time = models.DateTimeField(blank=True, null=True)
     reply = models.ForeignKey('self', related_name='replies',  on_delete=models.CASCADE)
     text = models.TextField()
 
@@ -135,7 +136,7 @@ class LimitedTimeOffer(BaseModel):
     offer_type = models.CharField(max_length=1, default=NONE)
     name = models.CharField(max_length=255, default='فروش ویژه')
     description = models.TextField(blank=True, null=True)
-    from_date_time = models.DateTimeField(default=datetime.datetime.now())
+    from_date_time = models.DateTimeField(blank=True, null=True)
     to_date_time = models.DateTimeField(blank=True, null=True)
 
     class Meta(BaseModel.Meta):
@@ -209,7 +210,7 @@ class Payment(BaseModel):
     payment_method = models.CharField(max_length=100)
     tracking_code = models.CharField(max_length=50)
     amount = DECIMAL()
-    date_time = models.DateTimeField(default=datetime.datetime.now())
+    date_time = models.DateTimeField(blank=True, null=True)
 
     class Meta(BaseModel.Meta):
         verbose_name = 'Payment'
@@ -231,7 +232,7 @@ class ShopOrder(BaseModel):
     total_price = DECIMAL()
     total_product_quantity = DECIMAL(default=1)
     offer_price = DECIMAL(default=0)
-    date_time = models.DateTimeField(default=datetime.datetime.now())
+    date_time = models.DateTimeField(blank=True, null=True)
     is_paid = models.BooleanField(default=False)
     payment = models.OneToOneField(Payment, related_name='shop_order', on_delete=models.PROTECT, blank=True, null=True)
     is_sent = models.BooleanField(default=False)
