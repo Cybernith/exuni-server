@@ -63,10 +63,120 @@ class Comparison(BaseModel):
         )
 
 
+class ShipmentAddress(BaseModel):
+    customer = models.ForeignKey('users.User', related_name='shipment_address', on_delete=models.CASCADE)
+    country = models.CharField(max_length=100, default='ایران')
+    state = models.CharField(max_length=100)
+    city = models.CharField(max_length=100)
+    zip_code = models.CharField(max_length=10)
+    address = models.CharField(max_length=255)
+
+    class Meta(BaseModel.Meta):
+        verbose_name = 'ShipmentAddress'
+        permission_basename = 'shipment_address'
+        permissions = (
+            ('get.shipment_address', 'مشاهده آدرس'),
+            ('create.shipment_address', 'تعریف آدرس'),
+            ('update.shipment_address', 'ویرایش آدرس'),
+            ('delete.shipment_address', 'حذف آدرس'),
+
+            ('getOwn.shipment_address', 'مشاهده آدرس های خود'),
+            ('updateOwn.shipment_address', 'ویرایش آدرس های خود'),
+            ('deleteOwn.shipment_address', 'حذف آدرس های خود'),
+        )
+
+
+class Payment(BaseModel):
+    customer = models.ForeignKey('users.User', related_name='shop_payments', on_delete=models.CASCADE)
+    payment_method = models.CharField(max_length=100)
+    tracking_code = models.CharField(max_length=50)
+    amount = DECIMAL()
+    date_time = models.DateTimeField(blank=True, null=True)
+
+    class Meta(BaseModel.Meta):
+        verbose_name = 'Payment'
+        permission_basename = 'payment'
+        permissions = (
+            ('get.payment', 'مشاهده پرداخت'),
+            ('create.payment', 'تعریف پرداخت'),
+            ('update.payment', 'ویرایش پرداخت'),
+            ('delete.payment', 'حذف پرداخت'),
+
+            ('getOwn.payment', 'مشاهده پرداخت های خود'),
+            ('updateOwn.payment', 'ویرایش پرداخت های خود'),
+            ('deleteOwn.payment', 'حذف پرداخت های خود'),
+        )
+
+
+class ShopOrder(BaseModel):
+    customer = models.ForeignKey('users.User', related_name='shop_order', on_delete=models.PROTECT)
+    total_price = DECIMAL()
+    total_product_quantity = DECIMAL(default=1)
+    offer_price = DECIMAL(default=0)
+    date_time = models.DateTimeField(blank=True, null=True)
+    is_paid = models.BooleanField(default=False)
+    payment = models.OneToOneField(Payment, related_name='shop_order', on_delete=models.PROTECT, blank=True, null=True)
+    is_sent = models.BooleanField(default=False)
+    shipment_address = models.ForeignKey(ShipmentAddress, related_name='shop_orders', on_delete=models.PROTECT)
+    post_price = DECIMAL(blank=True, null=True)
+    post_date_time = models.DateTimeField(blank=True, null=True)
+    post_tracking_code = models.CharField(max_length=50, blank=True, null=True)
+    exuni_tracking_code = models.CharField(max_length=10, unique=True)
+
+    class Meta(BaseModel.Meta):
+        verbose_name = 'ShopOrder'
+        permission_basename = 'shop_order'
+        permissions = (
+            ('get.shop_order', 'مشاهده سفارش فروشگاه'),
+            ('create.shop_order', 'تعریف سفارش فروشگاه'),
+            ('update.shop_order', 'ویرایش سفارش فروشگاه'),
+            ('delete.shop_order', 'حذف سفارش فروشگاه'),
+
+            ('getOwn.shop_order', 'مشاهده سفارش های فروشگاه خود'),
+            ('updateOwn.shop_order', 'ویرایش سفارش های فروشگاه خود'),
+            ('deleteOwn.shop_order', 'حذف سفارش های فروشگاه خود'),
+        )
+
+    @property
+    def create_exuni_tracking_code(self):
+        create_exuni_tracking_code = random.randint(1000000000, 9999999999)
+        while ShopOrder.objects.filter(product_id=create_exuni_tracking_code).exists():
+            create_exuni_tracking_code = random.randint(1000000000, 9999999999)
+        return str(create_exuni_tracking_code)
+
+    def save(self, *args, **kwargs):
+        if not self.id:
+            self.exuni_tracking_code = self.create_exuni_tracking_code
+        super().save(*args, **kwargs)
+
+
+class ShopOrderItem(BaseModel):
+    shop_order = models.ForeignKey(ShopOrder, related_name='items', on_delete=models.CASCADE)
+    product = models.ForeignKey('products.Product', related_name='shop_order_items',  on_delete=models.CASCADE)
+    price = DECIMAL(default=0)
+    product_quantity = DECIMAL(default=1)
+
+    class Meta(BaseModel.Meta):
+        verbose_name = 'ShopOrderItem'
+        permission_basename = 'shop_order_item'
+        permissions = (
+            ('get.shop_order_item', 'مشاهده آیتم های سفارش فروشگاه'),
+            ('create.shop_order_item', 'تعریف آیتم های سفارش فروشگاه'),
+            ('update.shop_order_item', 'ویرایش آیتم های سفارش فروشگاه'),
+            ('delete.shop_order_item', 'حذف آیتم های سفارش فروشگاه'),
+
+            ('getOwn.shop_order_item', 'مشاهده آیتم های سفارش های فروشگاه خود'),
+            ('updateOwn.shop_order_item', 'ویرایش آیتم های سفارش های فروشگاه خود'),
+            ('deleteOwn.shop_order_item', 'حذف آیتم های سفارش های فروشگاه خود'),
+        )
+
+
 class Comment(BaseModel):
     customer = models.ForeignKey('users.User', related_name='comments', on_delete=models.CASCADE)
     product = models.ForeignKey('products.Product', related_name='product_comments',  on_delete=models.CASCADE,
                                 blank=True, null=True)
+    shop_order = models.ForeignKey(ShopOrder, related_name='comments',  on_delete=models.CASCADE,
+                                   blank=True, null=True)
     date_time = models.DateTimeField(blank=True, null=True)
     reply = models.ForeignKey('self', related_name='replies',  on_delete=models.CASCADE)
     text = models.TextField()
@@ -181,111 +291,4 @@ class LimitedTimeOfferItems(BaseModel):
             ('deleteOwn.limited_time_offer_items', 'حذف آیتم های فروش های ویژه به مدت محدود خود'),
         )
 
-
-class ShipmentAddress(BaseModel):
-    customer = models.ForeignKey('users.User', related_name='shipment_address', on_delete=models.CASCADE)
-    country = models.CharField(max_length=100, default='ایران')
-    state = models.CharField(max_length=100)
-    city = models.CharField(max_length=100)
-    zip_code = models.CharField(max_length=10)
-    address = models.CharField(max_length=255)
-
-    class Meta(BaseModel.Meta):
-        verbose_name = 'ShipmentAddress'
-        permission_basename = 'shipment_address'
-        permissions = (
-            ('get.shipment_address', 'مشاهده آدرس'),
-            ('create.shipment_address', 'تعریف آدرس'),
-            ('update.shipment_address', 'ویرایش آدرس'),
-            ('delete.shipment_address', 'حذف آدرس'),
-
-            ('getOwn.shipment_address', 'مشاهده آدرس های خود'),
-            ('updateOwn.shipment_address', 'ویرایش آدرس های خود'),
-            ('deleteOwn.shipment_address', 'حذف آدرس های خود'),
-        )
-
-
-class Payment(BaseModel):
-    customer = models.ForeignKey('users.User', related_name='shop_payments', on_delete=models.CASCADE)
-    payment_method = models.CharField(max_length=100)
-    tracking_code = models.CharField(max_length=50)
-    amount = DECIMAL()
-    date_time = models.DateTimeField(blank=True, null=True)
-
-    class Meta(BaseModel.Meta):
-        verbose_name = 'Payment'
-        permission_basename = 'payment'
-        permissions = (
-            ('get.payment', 'مشاهده پرداخت'),
-            ('create.payment', 'تعریف پرداخت'),
-            ('update.payment', 'ویرایش پرداخت'),
-            ('delete.payment', 'حذف پرداخت'),
-
-            ('getOwn.payment', 'مشاهده پرداخت های خود'),
-            ('updateOwn.payment', 'ویرایش پرداخت های خود'),
-            ('deleteOwn.payment', 'حذف پرداخت های خود'),
-        )
-
-
-class ShopOrder(BaseModel):
-    customer = models.ForeignKey('users.User', related_name='shop_order', on_delete=models.PROTECT)
-    total_price = DECIMAL()
-    total_product_quantity = DECIMAL(default=1)
-    offer_price = DECIMAL(default=0)
-    date_time = models.DateTimeField(blank=True, null=True)
-    is_paid = models.BooleanField(default=False)
-    payment = models.OneToOneField(Payment, related_name='shop_order', on_delete=models.PROTECT, blank=True, null=True)
-    is_sent = models.BooleanField(default=False)
-    shipment_address = models.ForeignKey(ShipmentAddress, related_name='shop_orders', on_delete=models.PROTECT)
-    post_price = DECIMAL(blank=True, null=True)
-    post_date_time = models.DateTimeField(blank=True, null=True)
-    post_tracking_code = models.CharField(max_length=50, blank=True, null=True)
-    exuni_tracking_code = models.CharField(max_length=10, unique=True)
-
-    class Meta(BaseModel.Meta):
-        verbose_name = 'ShopOrder'
-        permission_basename = 'shop_order'
-        permissions = (
-            ('get.shop_order', 'مشاهده سفارش فروشگاه'),
-            ('create.shop_order', 'تعریف سفارش فروشگاه'),
-            ('update.shop_order', 'ویرایش سفارش فروشگاه'),
-            ('delete.shop_order', 'حذف سفارش فروشگاه'),
-
-            ('getOwn.shop_order', 'مشاهده سفارش های فروشگاه خود'),
-            ('updateOwn.shop_order', 'ویرایش سفارش های فروشگاه خود'),
-            ('deleteOwn.shop_order', 'حذف سفارش های فروشگاه خود'),
-        )
-
-    @property
-    def create_exuni_tracking_code(self):
-        create_exuni_tracking_code = random.randint(1000000000, 9999999999)
-        while ShopOrder.objects.filter(product_id=create_exuni_tracking_code).exists():
-            create_exuni_tracking_code = random.randint(1000000000, 9999999999)
-        return str(create_exuni_tracking_code)
-
-    def save(self, *args, **kwargs):
-        if not self.id:
-            self.exuni_tracking_code = self.create_exuni_tracking_code
-        super().save(*args, **kwargs)
-
-
-class ShopOrderItem(BaseModel):
-    shop_order = models.ForeignKey(ShopOrder, related_name='items', on_delete=models.CASCADE)
-    product = models.ForeignKey('products.Product', related_name='shop_order_items',  on_delete=models.CASCADE)
-    price = DECIMAL(default=0)
-    product_quantity = DECIMAL(default=1)
-
-    class Meta(BaseModel.Meta):
-        verbose_name = 'ShopOrderItem'
-        permission_basename = 'shop_order_item'
-        permissions = (
-            ('get.shop_order_item', 'مشاهده آیتم های سفارش فروشگاه'),
-            ('create.shop_order_item', 'تعریف آیتم های سفارش فروشگاه'),
-            ('update.shop_order_item', 'ویرایش آیتم های سفارش فروشگاه'),
-            ('delete.shop_order_item', 'حذف آیتم های سفارش فروشگاه'),
-
-            ('getOwn.shop_order_item', 'مشاهده آیتم های سفارش های فروشگاه خود'),
-            ('updateOwn.shop_order_item', 'ویرایش آیتم های سفارش های فروشگاه خود'),
-            ('deleteOwn.shop_order_item', 'حذف آیتم های سفارش های فروشگاه خود'),
-        )
 
