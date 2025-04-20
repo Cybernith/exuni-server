@@ -21,6 +21,7 @@ class CartSerializer(serializers.ModelSerializer):
 
 class WishListSerializer(serializers.ModelSerializer):
     customer = UserSimpleSerializer(read_only=True)
+    cart_items = ProductSerializer(read_only=True)
 
     class Meta:
         read_only_fields = ('created_at', 'updated_at')
@@ -30,6 +31,7 @@ class WishListSerializer(serializers.ModelSerializer):
 
 class ComparisonSerializer(serializers.ModelSerializer):
     customer = UserSimpleSerializer(read_only=True)
+    cart_items = ProductSerializer(read_only=True)
 
     class Meta:
         read_only_fields = ('created_at', 'updated_at')
@@ -110,11 +112,11 @@ class ShopOrderSerializer(serializers.ModelSerializer):
 
 
 class CartItemsRetrieveSerializer(serializers.ModelSerializer):
-    product = ProductSerializer(read_only=True)
+    cart_items = ProductSerializer(read_only=True)
 
     class Meta:
         read_only_fields = ('created_at', 'updated_at')
-        model = User
+        model = Cart
         fields = '__all__'
 
 
@@ -152,5 +154,33 @@ class CustomerShopOrdersSerializer(serializers.ModelSerializer):
     class Meta:
         read_only_fields = ('created_at', 'updated_at')
         model = User
+        fields = '__all__'
+
+
+class CustomerWishListSerializer(serializers.ModelSerializer):
+    wish_list_items = WishListSerializer(read_only=True)
+
+    class Meta:
+        read_only_fields = ('created_at', 'updated_at')
+        model = User
+        fields = '__all__'
+
+
+class CustomerComparisonSerializer(serializers.ModelSerializer):
+    comparison_items = WishListSerializer(read_only=True)
+
+    class Meta:
+        read_only_fields = ('created_at', 'updated_at')
+        model = User
+        fields = '__all__'
+
+
+class CommentRepliesSerializer(serializers.ModelSerializer):
+    customer = UserSimpleSerializer(read_only=True)
+    replies = CommentSerializer(read_only=True)
+
+    class Meta:
+        read_only_fields = ('created_at', 'updated_at')
+        model = Comment
         fields = '__all__'
 
