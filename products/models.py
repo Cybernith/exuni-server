@@ -12,6 +12,7 @@ from helpers.functions import change_to_num
 from helpers.models import BaseModel, DECIMAL
 from main.models import Supplier, Currency, Business
 from packing.models import OrderPackageItem
+from shop.models import Rate
 
 
 def custom_upload_to(instance, filename):
@@ -157,6 +158,11 @@ class Product(BaseModel):
     @property
     def last_price(self):
         return self.price
+
+    @property
+    def rate(self):
+        rate_count = Rate.objects.filter(product__id=self.id).count()
+        return Rate.objects.filter(product__id=self.id).aggregate(Sum('final_price'))['final_price__sum'] / rate_count
 
     @property
     def type(self):

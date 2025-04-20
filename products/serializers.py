@@ -155,6 +155,7 @@ class ProductSerializer(serializers.ModelSerializer):
     brand_name = serializers.CharField(source='brand.name', read_only=True)
     supplier_name = serializers.CharField(source='supplier.name', read_only=True)
     made_in = serializers.ReadOnlyField()
+    rate = serializers.ReadOnlyField()
     is_domestic = serializers.ReadOnlyField()
     is_freeze = serializers.ReadOnlyField()
     is_expired_closed = serializers.ReadOnlyField()
