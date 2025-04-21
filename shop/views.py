@@ -10,11 +10,11 @@ from rest_framework import status
 
 from helpers.auth import BasicObjectPermission
 from helpers.functions import get_current_user
-from shop.models import Cart, WishList, Comparison, ShipmentAddress, LimitedTimeOffer, Rate
+from shop.models import Cart, WishList, Comparison, ShipmentAddress, LimitedTimeOffer, Rate, Comment
 from shop.serializers import CartCRUDSerializer, CartRetrieveSerializer, WishListRetrieveSerializer, \
     WishListCRUDSerializer, ComparisonRetrieveSerializer, ComparisonCRUDSerializer, ShipmentAddressCRUDSerializer, \
     ShipmentAddressRetrieveSerializer, LimitedTimeOfferItemsSerializer, LimitedTimeOfferSerializer, RateSerializer, \
-    RateRetrieveSerializer
+    RateRetrieveSerializer, PostCommentSerializer, CommentSerializer
 
 
 class CurrentUserCartApiView(APIView):
@@ -275,4 +275,48 @@ class ProductRateDetailView(APIView):
         query.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+
+class PostCommentApiView(APIView):
+    permission_classes = (IsAuthenticated, BasicObjectPermission)
+    permission_basename = 'comment'
+
+    def post(self, request):
+        data = request.data
+        data['customer'] = get_current_user().id
+        serializer = PostCommentSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class CommentDetailView(APIView):
+    permission_classes = (IsAuthenticated, BasicObjectPermission)
+    permission_basename = 'comment'
+
+    def get_object(self, pk):
+        try:
+            return Comment.objects.get(pk=pk)
+        except Comment.DoesNotExist:
+            raise Http404
+
+    def get(self, request, pk):
+        query = self.get_object(pk)
+        serializers = CommentSerializer(query)
+        return Response(serializers.data, status=status.HTTP_200_OK)
+
+    def put(self, request, pk):
+        query = self.get_object(pk)
+        data = request.data
+        data['customer'] = get_current_user().id
+        serializer = CommentSerializer(query, data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, pk):
+        query = self.get_object(pk)
+        query.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
