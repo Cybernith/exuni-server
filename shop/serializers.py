@@ -7,8 +7,17 @@ from users.models import User
 from users.serializers import UserSimpleSerializer
 
 
-class CartSerializer(serializers.ModelSerializer):
+class CartCRUDSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        read_only_fields = ('created_at', 'updated_at')
+        model = Cart
+        fields = '__all__'
+
+
+class CartRetrieveSerializer(serializers.ModelSerializer):
     customer = UserSimpleSerializer(read_only=True)
+    product = ProductSerializer(read_only=True)
 
     class Meta:
         read_only_fields = ('created_at', 'updated_at')
