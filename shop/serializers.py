@@ -97,7 +97,15 @@ class LimitedTimeOfferSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class ShipmentAddressSerializer(serializers.ModelSerializer):
+class ShipmentAddressCRUDSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        read_only_fields = ('created_at', 'updated_at')
+        model = ShipmentAddress
+        fields = '__all__'
+
+
+class ShipmentAddressRetrieveSerializer(serializers.ModelSerializer):
     customer = UserSimpleSerializer(read_only=True)
 
     class Meta:
