@@ -1,7 +1,10 @@
 import datetime
-from django.db import models
 
-from helpers.functions import datetime_to_str
+from django.core.exceptions import ValidationError
+from django.db import models
+from django.db.models import Q
+
+from helpers.functions import datetime_to_str, add_separator
 from helpers.models import BaseModel, DECIMAL
 import random
 
@@ -253,6 +256,11 @@ class Rate(BaseModel):
             ('deleteOwn.rate', 'حذف امتیاز های خود'),
         )
 
+    def save(self, *args, **kwargs):
+        if not self.id and Rate.objects.filter(Q(customer=self.customer) & Q(product=self.product)).exists():
+            raise ValidationError('Customer satisfaction rate already exist for this product')
+        super().save(*args, **kwargs)
+
 
 class LimitedTimeOffer(BaseModel):
     PERCENTAGE_OFFER = 'p'
@@ -260,8 +268,8 @@ class LimitedTimeOffer(BaseModel):
     NONE = 'n'
 
     OFFER_TYPES = (
-        (PERCENTAGE_OFFER, 'یک ستاره'),
-        (AMOUNT_OFFER, 'تخفیف درصدی'),
+        (PERCENTAGE_OFFER, 'تخفیف درصدی'),
+        (AMOUNT_OFFER, 'تخفیف مبلغی'),
         (NONE, 'هیچ کدام'),
     )
 
@@ -296,8 +304,8 @@ class LimitedTimeOfferItems(BaseModel):
     AMOUNT_OFFER = 'a'
 
     OFFER_TYPES = (
-        (PERCENTAGE_OFFER, 'یک ستاره'),
-        (AMOUNT_OFFER, 'تخفیف درصدی'),
+        (PERCENTAGE_OFFER, 'تخفیف درصدی'),
+        (AMOUNT_OFFER, 'تخفیف مبلغی'),
     )
     limited_time_offer = models.ForeignKey(LimitedTimeOffer, related_name='items',  on_delete=models.CASCADE)
     offer_type = models.CharField(max_length=1, default=PERCENTAGE_OFFER)
@@ -318,4 +326,27 @@ class LimitedTimeOfferItems(BaseModel):
             ('deleteOwn.limited_time_offer_items', 'حذف آیتم های فروش های ویژه به مدت محدود خود'),
         )
 
+    @property
+    def price_after_offer(self):
+        if self.offer_type == self.AMOUNT_OFFER:
+            return self.product.last_price - self.digit
+        else:
+            product_price = self.product.last_price
+            offer_amount = product_price / 100 * self.digit
+            return product_price - offer_amount
+
+    @property
+    def offer_amount(self):
+        if self.offer_type == self.AMOUNT_OFFER:
+            return self.digit
+        else:
+            offer_amount = self.product.last_price / 100 * self.digit
+            return offer_amount
+
+    @property
+    def offer_display(self):
+        if self.offer_type == self.AMOUNT_OFFER:
+            return ' {} تومان تخفیف'.format(add_separator(self.digit))
+        else:
+            return ' {}% تخفیف'.format(self.digit)
 
