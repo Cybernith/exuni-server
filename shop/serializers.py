@@ -25,8 +25,7 @@ class CartRetrieveSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class WishListSerializer(serializers.ModelSerializer):
-    customer = UserSimpleSerializer(read_only=True)
+class WishListCRUDSerializer(serializers.ModelSerializer):
 
     class Meta:
         read_only_fields = ('created_at', 'updated_at')
@@ -34,9 +33,27 @@ class WishListSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class ComparisonSerializer(serializers.ModelSerializer):
+class WishListRetrieveSerializer(serializers.ModelSerializer):
     customer = UserSimpleSerializer(read_only=True)
-    cart_items = ProductSerializer(many=True, read_only=True)
+    product = ProductSerializer(read_only=True)
+
+    class Meta:
+        read_only_fields = ('created_at', 'updated_at')
+        model = WishList
+        fields = '__all__'
+
+
+class ComparisonCRUDSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        read_only_fields = ('created_at', 'updated_at')
+        model = Comparison
+        fields = '__all__'
+
+
+class ComparisonRetrieveSerializer(serializers.ModelSerializer):
+    customer = UserSimpleSerializer(read_only=True)
+    product = ProductSerializer(read_only=True)
 
     class Meta:
         read_only_fields = ('created_at', 'updated_at')
@@ -116,17 +133,8 @@ class ShopOrderSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class CartItemsRetrieveSerializer(serializers.ModelSerializer):
-    cart_items = ProductSerializer(read_only=True)
-
-    class Meta:
-        read_only_fields = ('created_at', 'updated_at')
-        model = Cart
-        fields = '__all__'
-
-
 class CustomerCartItemsSerializer(serializers.ModelSerializer):
-    cart_items = CartItemsRetrieveSerializer(many=True, read_only=True)
+    cart_items = CartRetrieveSerializer(many=True, read_only=True)
 
     class Meta:
         read_only_fields = ('created_at', 'updated_at')
@@ -163,7 +171,7 @@ class CustomerShopOrdersSerializer(serializers.ModelSerializer):
 
 
 class CustomerWishListSerializer(serializers.ModelSerializer):
-    wish_list_items = WishListSerializer(many=True, read_only=True)
+    wish_list_items = WishListRetrieveSerializer(many=True, read_only=True)
 
     class Meta:
         read_only_fields = ('created_at', 'updated_at')
@@ -172,7 +180,7 @@ class CustomerWishListSerializer(serializers.ModelSerializer):
 
 
 class CustomerComparisonSerializer(serializers.ModelSerializer):
-    comparison_items = ComparisonSerializer(many=True, read_only=True)
+    comparison_items = ComparisonRetrieveSerializer(many=True, read_only=True)
 
     class Meta:
         read_only_fields = ('created_at', 'updated_at')
