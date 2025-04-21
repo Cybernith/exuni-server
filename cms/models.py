@@ -33,7 +33,9 @@ class HeaderElement(BaseModel):
         )
 
     def __str__(self):
-        return self.title + ' از ' + datetime_to_str(self.from_date_time) + ' تا ' + datetime_to_str(self.to_date_time)
+        return "{} از {} تا {}".format(
+            self.title, datetime_to_str(self.from_date_time), datetime_to_str(self.to_date_time)
+        )
 
 
 class PopUpElement(BaseModel):
@@ -67,7 +69,9 @@ class PopUpElement(BaseModel):
         )
 
     def __str__(self):
-        return self.title + ' از ' + datetime_to_str(self.from_date_time) + ' تا ' + datetime_to_str(self.to_date_time)
+        return "{} از {} تا {}".format(
+            self.title, datetime_to_str(self.from_date_time), datetime_to_str(self.to_date_time)
+        )
 
 
 class BannerContent(BaseModel):
@@ -110,7 +114,9 @@ class BannerContent(BaseModel):
 
     def __str__(self):
         title = self.title if self.title else ' '
-        return title + ' از ' + datetime_to_str(self.from_date_time) + ' تا ' + datetime_to_str(self.to_date_time)
+        return "{} از {} تا {}".format(
+            title, datetime_to_str(self.from_date_time), datetime_to_str(self.to_date_time)
+        )
 
 
 class BannerContentItem(BaseModel):
