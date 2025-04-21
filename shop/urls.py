@@ -2,7 +2,8 @@ from django.conf.urls import url
 
 from shop.views import CurrentUserCartApiView, CartDetailView, CurrentUserWishListApiView, WishListDetailView, \
     CurrentUserComparisonApiView, ComparisonDetailView, CurrentUserShipmentAddressApiView, ShipmentAddressDetailView, \
-    CurrentLimitedTimeOfferRetrieveView, ProductRateApiView, ProductRateDetailView
+    CurrentLimitedTimeOfferRetrieveView, ProductRateApiView, ProductRateDetailView, PostCommentApiView, \
+    CommentDetailView
 
 app_name = 'shop'
 urlpatterns = [
@@ -23,5 +24,8 @@ urlpatterns = [
 
     url(r'^rate$', ProductRateApiView.as_view(), name='productRate'),
     url(r'^rate/(?P<pk>[0-9]+)$', ProductRateDetailView.as_view(), name='productRateDetail'),
+
+    url(r'^postComment$', PostCommentApiView.as_view(), name='postComment'),
+    url(r'^comment/(?P<pk>[0-9]+)$', CommentDetailView.as_view(), name='commentDetail'),
 
 ]
