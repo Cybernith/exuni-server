@@ -1,6 +1,7 @@
 import datetime
 from django.db import models
 
+from helpers.functions import datetime_to_str
 from helpers.models import BaseModel, DECIMAL
 import random
 
@@ -24,6 +25,9 @@ class Cart(BaseModel):
             ('deleteOwn.cart', 'حذف آیتم سبد خرید خود'),
         )
 
+    def __str__(self):
+        return "محصول {} در سبد {}".format(self.product.name, self.customer.name)
+
 
 class WishList(BaseModel):
     customer = models.ForeignKey('users.User', related_name='wish_list_items', on_delete=models.CASCADE)
@@ -43,6 +47,9 @@ class WishList(BaseModel):
             ('deleteOwn.wish_list', 'حذف آیتم علاقه مندی های خود'),
         )
 
+    def __str__(self):
+        return "محصول {} در علاقه مندی های {}".format(self.product.name, self.customer.name)
+
 
 class Comparison(BaseModel):
     customer = models.ForeignKey('users.User', related_name='comparison_items', on_delete=models.CASCADE)
@@ -61,6 +68,9 @@ class Comparison(BaseModel):
             ('updateOwn.comparison', 'ویرایش آیتم های مقایسه خود'),
             ('deleteOwn.comparison', 'حذف آیتم های مقایسه خود'),
         )
+
+    def __str__(self):
+        return "محصول {} در مقایسه های {}".format(self.product.name, self.customer.name)
 
 
 class ShipmentAddress(BaseModel):
@@ -85,6 +95,9 @@ class ShipmentAddress(BaseModel):
             ('deleteOwn.shipment_address', 'حذف آدرس های خود'),
         )
 
+    def __str__(self):
+        return "آدرس {} {}".format(self.city, self.customer.name)
+
 
 class Payment(BaseModel):
     customer = models.ForeignKey('users.User', related_name='shop_payments', on_delete=models.CASCADE)
@@ -106,6 +119,9 @@ class Payment(BaseModel):
             ('updateOwn.payment', 'ویرایش پرداخت های خود'),
             ('deleteOwn.payment', 'حذف پرداخت های خود'),
         )
+
+    def __str__(self):
+        return "پرداخت {} {}".format(self.tracking_code, self.customer.name)
 
 
 class ShopOrder(BaseModel):
@@ -144,6 +160,9 @@ class ShopOrder(BaseModel):
             create_exuni_tracking_code = random.randint(1000000000, 9999999999)
         return str(create_exuni_tracking_code)
 
+    def __str__(self):
+        return "سفارش {} {}".format(self.exuni_tracking_code, self.customer.name)
+
     def save(self, *args, **kwargs):
         if not self.id:
             self.exuni_tracking_code = self.create_exuni_tracking_code
@@ -169,6 +188,9 @@ class ShopOrderItem(BaseModel):
             ('updateOwn.shop_order_item', 'ویرایش آیتم های سفارش های فروشگاه خود'),
             ('deleteOwn.shop_order_item', 'حذف آیتم های سفارش های فروشگاه خود'),
         )
+
+    def __str__(self):
+        return "آیتم های سفارش {} {}".format(self.shop_order.exuni_tracking_code, self.customer.name)
 
 
 class Comment(BaseModel):
@@ -261,6 +283,11 @@ class LimitedTimeOffer(BaseModel):
             ('getOwn.limited_time_offer', 'مشاهده فروش های ویژه به مدت محدود خود'),
             ('updateOwn.limited_time_offer', 'ویرایش فروش های ویژه به مدت محدود خود'),
             ('deleteOwn.limited_time_offer', 'حذف فروش های ویژه به مدت محدود خود'),
+        )
+
+    def __str__(self):
+        return "{} از {} تا {}".format(
+            self.name, datetime_to_str(self.from_date_time), datetime_to_str(self.to_date_time)
         )
 
 
