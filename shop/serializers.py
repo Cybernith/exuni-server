@@ -171,6 +171,7 @@ class CustomerCartItemsSerializer(serializers.ModelSerializer):
 
 class ShopOrderItemRetrieveSerializer(serializers.ModelSerializer):
     product = ProductSerializer(read_only=True)
+    price_sum = serializers.ReadOnlyField()
 
     class Meta:
         read_only_fields = ('created_at', 'updated_at')

@@ -217,7 +217,6 @@ class ShopOrderItem(BaseModel):
     def price_sum(self):
         return self.price * self.product_quantity
 
-
     def __str__(self):
         return "آیتم های سفارش {} {}".format(self.shop_order.exuni_tracking_code, self.customer.name)
 
