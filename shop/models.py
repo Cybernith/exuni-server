@@ -272,7 +272,7 @@ class LimitedTimeOfferItems(BaseModel):
         (PERCENTAGE_OFFER, 'یک ستاره'),
         (AMOUNT_OFFER, 'تخفیف درصدی'),
     )
-    limited_time_offer = models.ForeignKey(LimitedTimeOffer, on_delete=models.CASCADE)
+    limited_time_offer = models.ForeignKey(LimitedTimeOffer, related_name='items',  on_delete=models.CASCADE)
     offer_type = models.CharField(max_length=1, default=PERCENTAGE_OFFER)
     digit = DECIMAL()
     product = models.ForeignKey('products.Product', related_name='offers',  on_delete=models.CASCADE)
