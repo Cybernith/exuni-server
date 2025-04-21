@@ -2,6 +2,7 @@ import datetime
 
 from django.db.models import Q
 from django.http import Http404
+from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 
@@ -10,7 +11,7 @@ from rest_framework import status
 
 from helpers.auth import BasicObjectPermission
 from helpers.functions import get_current_user
-from shop.models import Cart, WishList, Comparison, ShipmentAddress, LimitedTimeOffer, Rate, Comment
+from shop.models import Cart, WishList, Comparison, ShipmentAddress, LimitedTimeOffer, Rate, Comment, ShopOrder
 from shop.serializers import CartCRUDSerializer, CartRetrieveSerializer, WishListRetrieveSerializer, \
     WishListCRUDSerializer, ComparisonRetrieveSerializer, ComparisonCRUDSerializer, ShipmentAddressCRUDSerializer, \
     ShipmentAddressRetrieveSerializer, LimitedTimeOfferItemsSerializer, LimitedTimeOfferSerializer, RateSerializer, \
@@ -319,4 +320,29 @@ class CommentDetailView(APIView):
         query = self.get_object(pk)
         query.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class ShopOrderRegistrationView(APIView):
+    permission_classes = (IsAuthenticated, BasicObjectPermission)
+    permission_basename = 'shop_order'
+
+    def post(self, request):
+        customer = get_current_user()
+        if not Cart.objects.filter(customer=customer).exists():
+            raise ValidationError('your cart is empty')
+        data = request.data
+        shop_order = ShopOrder.objects.create(
+            customer=customer,
+            date_time=datetime.datetime.now(),
+            shipment_address=data['address'],
+        )
+        shop_order.add_cart_to_order()
+        shop_order.set_constants()
+        return Response(
+            {
+                'status': 'initial order registration completed',
+                'exuni_tracking_code': shop_order.exuni_tracking_code
+             },
+            status=status.HTTP_201_CREATED)
+
 
