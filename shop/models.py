@@ -2,7 +2,7 @@ import datetime
 
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.db.models import Q
+from django.db.models import Q, Sum, F, DecimalField
 
 from helpers.functions import datetime_to_str, add_separator
 from helpers.models import BaseModel, DECIMAL
@@ -156,6 +156,27 @@ class ShopOrder(BaseModel):
             ('deleteOwn.shop_order', 'حذف سفارش های فروشگاه خود'),
         )
 
+    def add_cart_to_order(self):
+        cart_items = Cart.objects.filter(customer=self.customer).select_related('product')
+        for item in cart_items:
+            ShopOrderItem.objects.create(
+                shop_order=self,
+                product=item.product,
+                price=item.product.last_price * item.quantity,
+                price_sum=item.product.last_price * item.quantity,
+                product_quantity=item.quantity,
+            )
+            item.delete()
+
+    def set_constants(self):
+        items = self.items.all().annotate(
+            price_sum=Sum(F('product_quantity') * F('price'), output_field=DecimalField()),
+        ).aggregate(Sum('price_sum'), Sum('product_quantity'))
+        self.total_price = items['price_sum__sum']
+        self.total_product_quantity = items['product_quantity__sum']
+        self.save()
+
+
     @property
     def create_exuni_tracking_code(self):
         create_exuni_tracking_code = random.randint(1000000000, 9999999999)
@@ -191,6 +212,11 @@ class ShopOrderItem(BaseModel):
             ('updateOwn.shop_order_item', 'ویرایش آیتم های سفارش های فروشگاه خود'),
             ('deleteOwn.shop_order_item', 'حذف آیتم های سفارش های فروشگاه خود'),
         )
+
+    @property
+    def price_sum(self):
+        return self.price * self.product_quantity
+
 
     def __str__(self):
         return "آیتم های سفارش {} {}".format(self.shop_order.exuni_tracking_code, self.customer.name)
