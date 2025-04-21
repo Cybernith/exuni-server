@@ -64,6 +64,7 @@ INSTALLED_APPS = [
     'packing',
     'reports',
     'shop',
+    'cms',
 
 ]
 
