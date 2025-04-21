@@ -1,9 +1,7 @@
-import datetime
 from django.db import models
 from django.core.validators import MaxValueValidator, MinValueValidator
 
-from helpers.models import BaseModel, DECIMAL
-import random
+from helpers.models import BaseModel
 
 
 def custom_upload_to(instance, filename):
