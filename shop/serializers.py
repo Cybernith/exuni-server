@@ -70,8 +70,16 @@ class CommentSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class RateSerializer(serializers.ModelSerializer):
+class RateRetrieveSerializer(serializers.ModelSerializer):
     customer = UserSimpleSerializer(read_only=True)
+
+    class Meta:
+        read_only_fields = ('created_at', 'updated_at')
+        model = Rate
+        fields = '__all__'
+
+
+class RateSerializer(serializers.ModelSerializer):
 
     class Meta:
         read_only_fields = ('created_at', 'updated_at')

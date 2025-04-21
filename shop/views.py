@@ -10,10 +10,11 @@ from rest_framework import status
 
 from helpers.auth import BasicObjectPermission
 from helpers.functions import get_current_user
-from shop.models import Cart, WishList, Comparison, ShipmentAddress, LimitedTimeOffer
+from shop.models import Cart, WishList, Comparison, ShipmentAddress, LimitedTimeOffer, Rate
 from shop.serializers import CartCRUDSerializer, CartRetrieveSerializer, WishListRetrieveSerializer, \
     WishListCRUDSerializer, ComparisonRetrieveSerializer, ComparisonCRUDSerializer, ShipmentAddressCRUDSerializer, \
-    ShipmentAddressRetrieveSerializer, LimitedTimeOfferItemsSerializer, LimitedTimeOfferSerializer
+    ShipmentAddressRetrieveSerializer, LimitedTimeOfferItemsSerializer, LimitedTimeOfferSerializer, RateSerializer, \
+    RateRetrieveSerializer
 
 
 class CurrentUserCartApiView(APIView):
@@ -228,5 +229,50 @@ class CurrentLimitedTimeOfferRetrieveView(APIView):
             Q(to_date_time__lte=now) & Q(from_date_time__gte=now)).select_related('items')
         serializers = LimitedTimeOfferSerializer(query, many=True, context={'request': request})
         return Response(serializers.data, status=status.HTTP_200_OK)
+
+
+class ProductRateApiView(APIView):
+    permission_classes = (IsAuthenticated, BasicObjectPermission)
+    permission_basename = 'rate'
+
+    def post(self, request):
+        data = request.data
+        data['customer'] = get_current_user().id
+        serializer = RateSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ProductRateDetailView(APIView):
+    permission_classes = (IsAuthenticated, BasicObjectPermission)
+    permission_basename = 'rate'
+
+    def get_object(self, pk):
+        try:
+            return Rate.objects.get(pk=pk)
+        except Rate.DoesNotExist:
+            raise Http404
+
+    def get(self, request, pk):
+        query = self.get_object(pk)
+        serializers = RateRetrieveSerializer(query)
+        return Response(serializers.data, status=status.HTTP_200_OK)
+
+    def put(self, request, pk):
+        query = self.get_object(pk)
+        data = request.data
+        data['customer'] = get_current_user().id
+        serializer = RateSerializer(query, data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, pk):
+        query = self.get_object(pk)
+        query.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
