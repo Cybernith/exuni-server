@@ -103,7 +103,8 @@ class BannerContent(BaseModel):
 
 
 class BannerContentItem(BaseModel):
-    banner_content = models.ForeignKey(BannerContent, related_name='items', on_delete=models.CASCADE)
+    banner_content = models.ForeignKey(BannerContent, related_name='items',
+                                       on_delete=models.CASCADE, blank=True, null=True)
     title = models.CharField(max_length=100, blank=True, null=True)
     description = models.TextField(blank=True, null=True)
     mobile_image = models.ImageField(upload_to=custom_upload_to)
