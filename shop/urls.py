@@ -1,7 +1,8 @@
 from django.conf.urls import url
 
 from shop.views import CurrentUserCartApiView, CartDetailView, CurrentUserWishListApiView, WishListDetailView, \
-    CurrentUserComparisonApiView, ComparisonDetailView, CurrentUserShipmentAddressApiView, ShipmentAddressDetailView
+    CurrentUserComparisonApiView, ComparisonDetailView, CurrentUserShipmentAddressApiView, ShipmentAddressDetailView, \
+    CurrentLimitedTimeOfferRetrieveView
 
 app_name = 'shop'
 urlpatterns = [
@@ -14,7 +15,9 @@ urlpatterns = [
     url(r'^currentUserComparison$', CurrentUserComparisonApiView.as_view(), name='currentUserComparison'),
     url(r'^comparison/(?P<pk>[0-9]+)$', ComparisonDetailView.as_view(), name='comparisonDetail'),
 
-    url(r'^currentUserShipmentAddress$', CurrentUserShipmentAddressApiView.as_view(), name='currentUserShipmentAddress'),
+    url(r'^currentUserShipmentAddress$', CurrentUserShipmentAddressApiView.as_view(),
+        name='currentUserShipmentAddress'),
     url(r'^shipmentAddress/(?P<pk>[0-9]+)$', ShipmentAddressDetailView.as_view(), name='shipmentAddress'),
 
+    url(r'^currentLimitedTimeOffer$', CurrentLimitedTimeOfferRetrieveView.as_view(), name='currentLimitedTimeOffer'),
 ]

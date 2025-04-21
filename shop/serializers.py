@@ -80,6 +80,10 @@ class RateSerializer(serializers.ModelSerializer):
 
 
 class LimitedTimeOfferItemsSerializer(serializers.ModelSerializer):
+    price_after_offer = serializers.ReadOnlyField()
+    offer_amount = serializers.ReadOnlyField()
+    offer_display = serializers.ReadOnlyField()
+    product = ProductSerializer(read_only=True, many=True)
 
     class Meta:
         read_only_fields = ('created_at', 'updated_at')

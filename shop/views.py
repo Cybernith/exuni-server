@@ -1,3 +1,5 @@
+import datetime
+
 from django.db.models import Q
 from django.http import Http404
 from rest_framework.permissions import IsAuthenticated
@@ -8,10 +10,10 @@ from rest_framework import status
 
 from helpers.auth import BasicObjectPermission
 from helpers.functions import get_current_user
-from shop.models import Cart, WishList, Comparison, ShipmentAddress
+from shop.models import Cart, WishList, Comparison, ShipmentAddress, LimitedTimeOffer
 from shop.serializers import CartCRUDSerializer, CartRetrieveSerializer, WishListRetrieveSerializer, \
     WishListCRUDSerializer, ComparisonRetrieveSerializer, ComparisonCRUDSerializer, ShipmentAddressCRUDSerializer, \
-    ShipmentAddressRetrieveSerializer
+    ShipmentAddressRetrieveSerializer, LimitedTimeOfferItemsSerializer, LimitedTimeOfferSerializer
 
 
 class CurrentUserCartApiView(APIView):
@@ -216,5 +218,15 @@ class ShipmentAddressDetailView(APIView):
         query = self.get_object(pk)
         query.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class CurrentLimitedTimeOfferRetrieveView(APIView):
+
+    def get(self, request):
+        now = datetime.datetime.now()
+        query = LimitedTimeOffer.objects.filter(
+            Q(to_date_time__lte=now) & Q(from_date_time__gte=now)).select_related('items')
+        serializers = LimitedTimeOfferSerializer(query, many=True, context={'request': request})
+        return Response(serializers.data, status=status.HTTP_200_OK)
 
 
