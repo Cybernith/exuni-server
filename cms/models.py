@@ -1,6 +1,7 @@
 from django.db import models
 from django.core.validators import MaxValueValidator, MinValueValidator
 
+from helpers.functions import datetime_to_str
 from helpers.models import BaseModel
 
 
@@ -30,6 +31,9 @@ class HeaderElement(BaseModel):
             ('updateOwn.header_element', 'ویرایش عنصر هدر خود'),
             ('deleteOwn.header_element', 'حذف عنصر هدر خود'),
         )
+
+    def __str__(self):
+        return self.title + ' از ' + datetime_to_str(self.from_date_time) + ' تا ' + datetime_to_str(self.to_date_time)
 
 
 class PopUpElement(BaseModel):
@@ -61,6 +65,9 @@ class PopUpElement(BaseModel):
             ('updateOwn.pop_up_element', 'ویرایش عنصر پاپ آپ خود'),
             ('deleteOwn.pop_up_element', 'حذف عنصر پاپ آپ خود'),
         )
+
+    def __str__(self):
+        return self.title + ' از ' + datetime_to_str(self.from_date_time) + ' تا ' + datetime_to_str(self.to_date_time)
 
 
 class BannerContent(BaseModel):
@@ -100,6 +107,10 @@ class BannerContent(BaseModel):
             ('updateOwn.banner_content', 'ویرایش محتوا بنر خود'),
             ('deleteOwn.banner_content', 'حذف محتوا بنر خود'),
         )
+
+    def __str__(self):
+        title = self.title if self.title else ' '
+        return title + ' از ' + datetime_to_str(self.from_date_time) + ' تا ' + datetime_to_str(self.to_date_time)
 
 
 class BannerContentItem(BaseModel):
