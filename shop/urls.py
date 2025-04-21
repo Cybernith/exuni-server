@@ -2,7 +2,7 @@ from django.conf.urls import url
 
 from shop.views import CurrentUserCartApiView, CartDetailView, CurrentUserWishListApiView, WishListDetailView, \
     CurrentUserComparisonApiView, ComparisonDetailView, CurrentUserShipmentAddressApiView, ShipmentAddressDetailView, \
-    CurrentLimitedTimeOfferRetrieveView
+    CurrentLimitedTimeOfferRetrieveView, ProductRateApiView, ProductRateDetailView
 
 app_name = 'shop'
 urlpatterns = [
@@ -20,4 +20,8 @@ urlpatterns = [
     url(r'^shipmentAddress/(?P<pk>[0-9]+)$', ShipmentAddressDetailView.as_view(), name='shipmentAddress'),
 
     url(r'^currentLimitedTimeOffer$', CurrentLimitedTimeOfferRetrieveView.as_view(), name='currentLimitedTimeOffer'),
+
+    url(r'^rate$', ProductRateApiView.as_view(), name='productRate'),
+    url(r'^rate/(?P<pk>[0-9]+)$', ProductRateDetailView.as_view(), name='productRateDetail'),
+
 ]
