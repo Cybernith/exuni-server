@@ -162,8 +162,7 @@ class ShopOrder(BaseModel):
             ShopOrderItem.objects.create(
                 shop_order=self,
                 product=item.product,
-                price=item.product.last_price * item.quantity,
-                price_sum=item.product.last_price * item.quantity,
+                price=item.product.last_price,
                 product_quantity=item.quantity,
             )
             item.delete()

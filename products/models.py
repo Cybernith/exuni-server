@@ -4,7 +4,7 @@ import random
 from dateutil.relativedelta import relativedelta
 from django.core.exceptions import ValidationError
 
-from django.db import models
+from django.db import models, transaction
 from django.db.models import IntegerField, F, Sum
 
 from entrance.models import StoreReceiptItem
@@ -246,43 +246,83 @@ class ProductGallery(BaseModel):
 
 
 class ProductInventory(models.Model):
-    product = models.OneToOneField(Product, related_name='product_inventory', on_delete=models.CASCADE)
+    product = models.OneToOneField(Product, related_name='inventory', on_delete=models.CASCADE)
     inventory = models.IntegerField(default=0)
-    price = DECIMAL()
+    last_updated = models.DateTimeField(auto_now=True)
 
     def add_to_inventory(self, val):
         self.inventory += val
         self.save()
 
-    def subtract_from_inventory(self, val):
-        if self.inventory >= val:
+    def reduce_inventory(self, val, user=None):
+        with transaction.atomic():
+            if self.inventory < val:
+                raise ValidationError('موجودی کالا کافی نیست')
+            previous_quantity = self.inventory
             self.inventory -= val
             self.save()
-        else:
-            raise ValidationError('موجودی کالا کافی نیست')
 
-    def set_product_inventory(self):
-        self.inventory = self.product.first_inventory
+            ProductInventoryHistory.objects.create(
+                inventory=self,
+                action=ProductInventoryHistory.DECREASE,
+                amount=val,
+                previous_quantity=previous_quantity,
+                new_quantity=self.inventory,
+                changed_by=user
+            )
 
-        entrance_items = StoreReceiptItem.objects.filter(product=self.product).annotate(
-            product_count=Sum((F('number_of_box') * F('number_of_products_per_box')), output_field=IntegerField()),
-        ).aggregate(
-            Sum('product_count'),
-        )
+    def increase_inventory(self, val, user=None):
+        with transaction.atomic():
+            previous_quantity = self.inventory
+            self.inventory += val
+            self.save()
 
-        sale_items = OrderPackageItem.objects.filter(product=self.product).aggregate(
-            Sum('quantity'),
-        )
+            ProductInventoryHistory.objects.create(
+                inventory=self,
+                action=ProductInventoryHistory.INCREASE,
+                amount=val,
+                previous_quantity=previous_quantity,
+                new_quantity=self.inventory,
+                changed_by=user
+            )
 
-        self.inventory += change_to_num(entrance_items['product_count__sum'])
-        self.inventory -= change_to_num(sale_items['quantity__sum'])
-        self.save()
+    def __str__(self):
+        return '{} - {}'.format(self.product.name, self.inventory)
 
-    def set_product_price(self):
-        self.price = self.product.price
-        last_receipt_item = StoreReceiptItem.objects.filter(
-            product=self.product).order_by('store_receipt__enter_date').last()
-        if last_receipt_item:
-            self.price = last_receipt_item.sale_price
-        self.save()
+    #def set_product_inventory(self):
+    #    self.inventory = self.product.first_inventory
+    #
+    #    entrance_items = StoreReceiptItem.objects.filter(product=self.product).annotate(
+    #        product_count=Sum((F('number_of_box') * F('number_of_products_per_box')), output_field=IntegerField()),
+    #    ).aggregate(
+    #        Sum('product_count'),
+    #    )
+    #
+    #    sale_items = OrderPackageItem.objects.filter(product=self.product).aggregate(
+    #        Sum('quantity'),
+    #    )
+    #
+    #    self.inventory += change_to_num(entrance_items['product_count__sum'])
+    #    self.inventory -= change_to_num(sale_items['quantity__sum'])
+    #    self.save()
 
+
+class ProductInventoryHistory(models.Model):
+    INCREASE = 'i'
+    DECREASE = 'd'
+
+    ACTION_CHOICES = (
+        (INCREASE, 'افزایش'),
+        (DECREASE, 'کاهش'),
+    )
+
+    inventory = models.ForeignKey(ProductInventory, related_name='history', on_delete=models.CASCADE)
+    action = models.CharField(max_length=1, choices=ACTION_CHOICES)
+    amount = models.IntegerField()
+    previous_quantity = models.IntegerField()
+    new_quantity = models.IntegerField()
+    timestamp = models.DateTimeField(auto_now=True)
+    changed_by = models.ForeignKey('users.User', on_delete=models.SET_NULL, blank=True, null=True)
+
+    def __str__(self):
+        return f"{self.get_action_display()} موجودی {self.inventory.product.name} "
