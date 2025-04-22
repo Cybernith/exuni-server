@@ -5,9 +5,9 @@ from django.db import models
 from django.db.models import Q, Sum, F, DecimalField
 
 from helpers.functions import datetime_to_str, add_separator
-from helpers.models import BaseModel, DECIMAL
+from helpers.models import BaseModel, DECIMAL, EXPLANATION
 import random
-
+from django_fsm import FSMField, transition
 
 class Cart(BaseModel):
     customer = models.ForeignKey('users.User', related_name='cart_items', on_delete=models.PROTECT)
@@ -128,6 +128,22 @@ class Payment(BaseModel):
 
 
 class ShopOrder(BaseModel):
+    PENDING = 'pe'
+    PAID = 'pa'
+    PROCESSING = 'pr'
+    SHIPPED = 'sh'
+    DELIVERED = 'de'
+    CANCELLED = 'ca'
+
+    STATUS_CHOICES = (
+        (PENDING, 'در انتظار پرداخت'),
+        (PAID, 'پرداخت شده'),
+        (PROCESSING, 'درحال آماده سازی'),
+        (SHIPPED, 'ارسال شده'),
+        (DELIVERED, 'تحویل شده'),
+        (CANCELLED, 'لغو شده'),
+    )
+    status = FSMField(choices=STATUS_CHOICES, default=PENDING, protected=True)
     customer = models.ForeignKey('users.User', related_name='shop_order', on_delete=models.PROTECT)
     total_price = DECIMAL()
     total_product_quantity = DECIMAL(default=1)
@@ -156,16 +172,57 @@ class ShopOrder(BaseModel):
             ('deleteOwn.shop_order', 'حذف سفارش های فروشگاه خود'),
         )
 
-    def add_cart_to_order(self):
-        cart_items = Cart.objects.filter(customer=self.customer).select_related('product')
-        for item in cart_items:
-            ShopOrderItem.objects.create(
-                shop_order=self,
-                product=item.product,
-                price=item.product.last_price,
-                product_quantity=item.quantity,
-            )
-            item.delete()
+    # FSM status change functions
+
+    @transition(field='status', source=PENDING, target=PAID)
+    def mark_as_paid(self, user=None):
+        ShopOrderStatusHistory.objects.create(
+            shop_order=self,
+            previous_status=self.PENDING,
+            new_status=self.PAID,
+            changed_by=user,
+            note=f" order {self.id} mark as paid"
+        )
+
+    @transition(field='status', source=PAID, target=PROCESSING)
+    def process_order(self, user=None):
+        ShopOrderStatusHistory.objects.create(
+            shop_order=self,
+            previous_status=self.PAID,
+            new_status=self.PROCESSING,
+            changed_by=user,
+            note=f" order {self.id} moved to processing"
+        )
+
+    @transition(field='status', source=PROCESSING, target=SHIPPED)
+    def ship_order(self, user=None):
+        ShopOrderStatusHistory.objects.create(
+            shop_order=self,
+            previous_status=self.PROCESSING,
+            new_status=self.SHIPPED,
+            changed_by=user,
+            note=f" order {self.id} shipped"
+        )
+
+    @transition(field='status', source=SHIPPED, target=DELIVERED)
+    def deliver_order(self, user=None):
+        ShopOrderStatusHistory.objects.create(
+            shop_order=self,
+            previous_status=self.SHIPPED,
+            new_status=self.DELIVERED,
+            changed_by=user,
+            note=f" order {self.id} delivered"
+        )
+
+    @transition(field='status', source='*', target=CANCELLED)
+    def cancel_order(self, user=None):
+        ShopOrderStatusHistory.objects.create(
+            shop_order=self,
+            previous_status=self.status,
+            new_status=self.CANCELLED,
+            changed_by=user,
+            note=f" order {self.id} canceled"
+        )
 
     def set_constants(self):
         items = self.items.all().annotate(
@@ -190,6 +247,21 @@ class ShopOrder(BaseModel):
         if not self.id:
             self.exuni_tracking_code = self.create_exuni_tracking_code
         super().save(*args, **kwargs)
+
+
+class ShopOrderStatusHistory(BaseModel):
+    shop_order = models.ForeignKey(ShopOrder, related_name='history', on_delete=models.CASCADE)
+    previous_status = models.CharField(choices=ShopOrder.STATUS_CHOICES, max_length=2)
+    new_status = models.CharField(choices=ShopOrder.STATUS_CHOICES, max_length=2)
+    changed_at = models.DateTimeField(auto_now=True)
+    changed_by = models.ForeignKey('users.User', on_delete=models.SET_NULL, blank=True, null=True)
+    note = EXPLANATION()
+
+    class Meta:
+        ordering = ['-changed_at']
+
+    def __str__(self):
+        return f"{self.shop_order} from {self.get_previous_status_display()} to {self.get_new_status_display()}"
 
 
 class ShopOrderItem(BaseModel):
