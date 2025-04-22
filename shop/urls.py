@@ -3,7 +3,8 @@ from django.conf.urls import url
 from shop.views import CurrentUserCartApiView, CartDetailView, CurrentUserWishListApiView, WishListDetailView, \
     CurrentUserComparisonApiView, ComparisonDetailView, CurrentUserShipmentAddressApiView, ShipmentAddressDetailView, \
     CurrentLimitedTimeOfferRetrieveView, ProductRateApiView, ProductRateDetailView, PostCommentApiView, \
-    CommentDetailView, ShopOrderStatusHistoryApiView, StartPaymentApiView, PaymentCallbackApiView
+    CommentDetailView, ShopOrderStatusHistoryApiView, StartPaymentApiView, PaymentCallbackApiView, \
+    StartZarinpalPaymentApiView, ZarinpalCallbackApiView
 
 app_name = 'shop'
 urlpatterns = [
@@ -33,5 +34,8 @@ urlpatterns = [
 
     url(r'^paymentStart/(?P<order_id>[0-9]+)$', StartPaymentApiView.as_view(), name='startPayment'),
     url(r'^paymentCallback$', PaymentCallbackApiView.as_view(), name='paymentCallback'),
+
+    url(r'^zarinpalPaymentStart/(?P<order_id>[0-9]+)$', StartZarinpalPaymentApiView.as_view(), name='zarinpal_start'),
+    url(r'^zarinpalPaymentCallback$', ZarinpalCallbackApiView.as_view(), name='zarinpal_callback'),
 
 ]

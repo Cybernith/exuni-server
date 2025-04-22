@@ -1,11 +1,15 @@
 import datetime
 import hmac
 import hashlib
+from urllib.parse import urljoin
+
+import requests
 
 from django.db import transaction
 from django.db.models import Q, F
 from django.http import Http404, HttpResponseForbidden
 from django.shortcuts import get_object_or_404
+from django.urls import reverse
 from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.views import APIView
@@ -24,6 +28,7 @@ from shop.serializers import CartCRUDSerializer, CartRetrieveSerializer, WishLis
     WishListCRUDSerializer, ComparisonRetrieveSerializer, ComparisonCRUDSerializer, ShipmentAddressCRUDSerializer, \
     ShipmentAddressRetrieveSerializer, LimitedTimeOfferItemsSerializer, LimitedTimeOfferSerializer, RateSerializer, \
     RateRetrieveSerializer, PostCommentSerializer, CommentSerializer, ShopOrderStatusHistorySerializer
+from shop.zarinpal import ZarinpalGateway
 
 
 class CurrentUserCartApiView(APIView):
@@ -459,8 +464,73 @@ class PaymentCallbackApiView(APIView):
             payment.mark_as_success_payment(user=payment.customer)
             payment.order.mark_as_paid(user=payment.customer)
 
-            return Response({'detail': 'payment was successfully'}, status=status.HTTP_201_CREATED)
+            return Response({'detail': 'payment verify was successfully'}, status=status.HTTP_201_CREATED)
 
         else:
             payment.mark_as_failed_payment(user=payment.customer)
-            return Response({'detail': 'transaction failed'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'detail': 'transaction verify failed'}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class StartZarinpalPaymentApiView(APIView):
+
+    def post(self, request, order_id):
+        order = get_object_or_404(ShopOrder, id=order_id, customer=request.user)
+
+        if hasattr(order, 'payment'):
+            return Response({'detail': 'this order already have open payment'}, status=status.HTTP_400_BAD_REQUEST)
+
+        payment = Payment.objects.create(
+            order=order,
+            customer=request.user,
+            amount=order.total_price,
+            gateway='zarinpal',
+            status=Payment.INITIATED
+        )
+
+        payment.mark_as_pending(user=request.user)
+        relative_url = reverse('zarinpal_callback')
+
+        gateway = ZarinpalGateway(
+            amount=order.total_price,
+            description=f'پرداخت سفارش {order.id}',
+            callback_url=urljoin(request.build_absolute_url('/'), relative_url)
+        )
+
+        try:
+            result = gateway.request_payment()
+            payment.reference_id = result['authority']
+            payment.save()
+            return Response({'payment_url': result['payment_url']})
+
+        except Exception as exception:
+            return Response({'detail': str(exception)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ZarinpalCallbackApiView(APIView):
+
+    def get(self, request):
+        authority = request.query_params.get('Authority')
+        status = request.query_params.get('Status')
+
+        if status != 'OK':
+            return Response({'detail': 'payment failed'}, status=status.HTTP_400_BAD_REQUEST)
+
+        payment = get_object_or_404(Payment, reference_id=authority)
+        order = payment.order
+
+        gateway = ZarinpalGateway(
+            amount=payment.amount,
+            description=f'تایید پرداخت سفارش {order.id}',
+            callback_url=''
+        )
+
+        result = gateway.verify_payment(authority)
+        if result.get('data') and result['data'].get('code') == 100:
+            payment.mark_as_success_payment(user=payment.customer)
+            order.mark_as_paid(user=payment.customer)
+            return Response({'detail': 'payment verify was successfully', 'ref_id': result['data']['ref_id']},
+                            status=status.HTTP_200_OK)
+        else:
+            payment.mark_as_failed_payment(user=payment.customer)
+            return Response({'detail': 'transaction verify failed'}, status=status.HTTP_400_BAD_REQUEST)
+
