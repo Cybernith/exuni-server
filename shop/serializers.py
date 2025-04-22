@@ -2,7 +2,7 @@ from rest_framework import serializers
 
 from products.serializers import ProductSerializer
 from shop.models import Cart, WishList, Comparison, Comment, Rate, LimitedTimeOffer, LimitedTimeOfferItems, \
-    ShipmentAddress, Payment, ShopOrder, ShopOrderItem
+    ShipmentAddress, Payment, ShopOrder, ShopOrderItem, ShopOrderStatusHistory
 from users.models import User
 from users.serializers import UserSimpleSerializer
 
@@ -225,3 +225,9 @@ class CommentRepliesSerializer(serializers.ModelSerializer):
         model = Comment
         fields = '__all__'
 
+
+class ShopOrderStatusHistorySerializer(serializers.ModelSerializer):
+    class Meta:
+        read_only_fields = ('created_at', 'updated_at')
+        model = ShopOrderStatusHistory
+        fields = ['previous_status', 'new_status', 'changed_at', 'changed_by', 'note']

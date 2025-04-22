@@ -15,11 +15,11 @@ from helpers.functions import get_current_user
 from products.models import Product
 from shop.helpers import reduce_inventory
 from shop.models import Cart, WishList, Comparison, ShipmentAddress, LimitedTimeOffer, Rate, Comment, ShopOrder, \
-    ShopOrderItem
+    ShopOrderItem, ShopOrderStatusHistory
 from shop.serializers import CartCRUDSerializer, CartRetrieveSerializer, WishListRetrieveSerializer, \
     WishListCRUDSerializer, ComparisonRetrieveSerializer, ComparisonCRUDSerializer, ShipmentAddressCRUDSerializer, \
     ShipmentAddressRetrieveSerializer, LimitedTimeOfferItemsSerializer, LimitedTimeOfferSerializer, RateSerializer, \
-    RateRetrieveSerializer, PostCommentSerializer, CommentSerializer
+    RateRetrieveSerializer, PostCommentSerializer, CommentSerializer, ShopOrderStatusHistorySerializer
 
 
 class CurrentUserCartApiView(APIView):
@@ -379,4 +379,19 @@ class ShopOrderRegistrationView(APIView):
         except Exception as exception:
             return Response({'detail': str(exception)}, status=status.HTTP_400_BAD_REQUEST)
 
+
+class ShopOrderStatusHistoryApiView(APIView):
+    permission_classes = (IsAuthenticated)
+
+    def get_objects(self, pk, customer):
+        try:
+            order = ShopOrder.objects.get(id=pk, customer=customer)
+            return ShopOrderStatusHistory.objects.filter(shop_order=order)
+        except ShopOrderStatusHistory.DoesNotExist:
+            raise Http404
+
+    def get(self, request, order_id):
+        query = self.get_objects(order_id, request.user)
+        serializers = ShopOrderStatusHistorySerializer(query, many=True)
+        return Response(serializers.data, status=status.HTTP_200_OK)
 
