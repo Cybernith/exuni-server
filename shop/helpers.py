@@ -1,8 +1,12 @@
+import datetime
+from decimal import Decimal
+
 from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.db import transaction
-from django.db.models import F
+from django.db.models import F, Q
 
-from products.models import ProductInventoryHistory, ProductInventory
+from products.models import ProductInventoryHistory, ProductInventory, Product
+from shop.models import LimitedTimeOfferItems
 
 
 def reduce_inventory(product_id, val, user=None):

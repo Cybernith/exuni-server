@@ -374,6 +374,7 @@ class LimitedTimeOffer(BaseModel):
     description = models.TextField(blank=True, null=True)
     from_date_time = models.DateTimeField(blank=True, null=True)
     to_date_time = models.DateTimeField(blank=True, null=True)
+    is_active = models.BooleanField(default=False)
 
     class Meta(BaseModel.Meta):
         verbose_name = 'LimitedTimeOffer'
@@ -446,3 +447,9 @@ class LimitedTimeOfferItems(BaseModel):
         else:
             return ' {}% تخفیف'.format(self.digit)
 
+    @property
+    def is_valid(self):
+        now = datetime.datetime.now()
+        start_validation = self.limited_time_offer.from_date_time >= now
+        end_validation = self.limited_time_offer.to_date_time <= now
+        return self.limited_time_offer.is_active and start_validation and end_validation

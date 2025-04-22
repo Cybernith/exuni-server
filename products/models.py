@@ -1,18 +1,19 @@
 import datetime
 import random
+from decimal import Decimal
 
 from dateutil.relativedelta import relativedelta
 from django.core.exceptions import ValidationError
 
 from django.db import models, transaction
-from django.db.models import IntegerField, F, Sum
+from django.db.models import IntegerField, F, Sum, Q
 
 from entrance.models import StoreReceiptItem
 from helpers.functions import change_to_num
 from helpers.models import BaseModel, DECIMAL, EXPLANATION
 from main.models import Supplier, Currency, Business
 from packing.models import OrderPackageItem
-from shop.models import Rate
+from shop.models import Rate, LimitedTimeOfferItems
 
 
 def custom_upload_to(instance, filename):
@@ -162,7 +163,7 @@ class Product(BaseModel):
     @property
     def rate(self):
         rate_count = Rate.objects.filter(product__id=self.id).count()
-        return Rate.objects.filter(product__id=self.id).aggregate(Sum('final_price'))['final_price__sum'] / rate_count
+        return Rate.objects.filter(product__id=self.id).aggregate(Sum('level'))['level__sum'] / rate_count
 
     @property
     def type(self):
@@ -206,7 +207,6 @@ class Product(BaseModel):
             return True
         return False
 
-
     def change_price(self, new_price, user=None, note=''):
         current_price_object = getattr(self, 'current_price', None)
         old_price = current_price_object.price if current_price_object else 0
@@ -227,6 +227,27 @@ class Product(BaseModel):
                     changed_by=user,
                     note=note
                 )
+
+    @property
+    def final_price(self):
+        if hasattr(self, 'current_price'):
+            return self.current_price.price
+        raise ValueError(f"برای کالای {self.name} قیمت ثبت نشده")
+
+    @property
+    def effective_price(self):
+        price = self.final_price
+        now = datetime.datetime.now()
+        offer = LimitedTimeOfferItems.objects.filter(
+            Q(product=self) &
+            Q(limited_time_offer__is_active=True) &
+            Q(limited_time_offer__from_date_time__gte=now) &
+            Q(limited_time_offer__to_date_time__lte=now)
+        ).first()
+        if offer:
+            effective_price = price - offer.offer_amount
+            return effective_price if effective_price > 0 else Decimal('0.00')
+        return price
 
     class Meta(BaseModel.Meta):
         verbose_name = 'Product'
