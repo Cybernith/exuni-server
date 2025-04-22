@@ -29,6 +29,6 @@ urlpatterns = [
     url(r'^comment/(?P<pk>[0-9]+)$', CommentDetailView.as_view(), name='commentDetail'),
 
     url(r'^orderStatusHistory/(?P<order_id>[0-9]+)$', ShopOrderStatusHistoryApiView.as_view(),
-        name='ShopOrderStatusHistory'),
+        name='shopOrderStatusHistory'),
 
 ]

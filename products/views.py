@@ -10,10 +10,11 @@ from django.http import Http404
 from rest_framework.response import Response
 from rest_framework import status
 
-from products.models import Brand, Avail, ProductProperty, Category, Product, ProductGallery
+from products.models import Brand, Avail, ProductProperty, Category, Product, ProductGallery, ProductPriceHistory
 from products.serializers import BrandSerializer, AvailSerializer, ProductPropertySerializer, CategorySerializer, \
     ProductSerializer, ProductGallerySerializer, BrandLogoUpdateSerializer, CategoryPictureUpdateSerializer, \
-    ProductSimpleSerializer, ProductContentDevelopmentSerializer, ProductPictureUpdateSerializer
+    ProductSimpleSerializer, ProductContentDevelopmentSerializer, ProductPictureUpdateSerializer, \
+    ProductPriceHistorySerializer
 
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework import generics
@@ -440,4 +441,17 @@ class AffiliateProductAddBusinessView(APIView):
         business.products.remove(*exclude_products)
         return Response({'msg': 'updated'}, status=status.HTTP_201_CREATED)
 
+
+class ProductPriceHistoryApiView(APIView):
+    permission_classes = (IsAuthenticated)
+
+    def get(self, request, product_id):
+        try:
+            product = Product.objects.get(id=product_id)
+        except Product.DoesNotExist:
+            raise Http404
+
+        query = ProductPriceHistory.objects.filter(prduct=product)
+        serializers = ProductPriceHistorySerializer(query, many=True)
+        return Response(serializers.data, status=status.HTTP_200_OK)
 

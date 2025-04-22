@@ -3,7 +3,8 @@ import os
 from entrance.models import StoreReceiptItem
 from helpers.functions import change_to_num
 from helpers.serializers import SModelSerializer
-from products.models import Brand, Avail, ProductProperty, Category, Product, ProductGallery, ProductInventory
+from products.models import Brand, Avail, ProductProperty, Category, Product, ProductGallery, ProductInventory, \
+    ProductPrice, ProductPriceHistory
 from server.settings import BASE_DIR, SERVER_URL
 from users.serializers import UserSimpleSerializer
 
@@ -224,3 +225,9 @@ class AffiliateReceiveProductsInventorySerializer(serializers.ModelSerializer):
 
     def get_stock(self, obj: Product):
         return ProductInventory.objects.get(product=obj).inventory
+
+
+class ProductPriceHistorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProductPriceHistory
+        fields = ['previous_price', 'new_price', 'changed_at', 'changed_by', 'note']

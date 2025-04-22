@@ -206,6 +206,28 @@ class Product(BaseModel):
             return True
         return False
 
+
+    def change_price(self, new_price, user=None, note=''):
+        current_price_object = getattr(self, 'current_price', None)
+        old_price = current_price_object.price if current_price_object else 0
+        if old_price != new_price:
+            with transaction.atomic():
+                if current_price_object:
+                    current_price_object.price = new_price
+                    current_price_object.save()
+                else:
+                    ProductPrice.objects.create(
+                        product=self,
+                        price=new_price
+                    )
+                ProductPriceHistory.objects.create(
+                    product=self,
+                    previous_price=old_price,
+                    new_price=new_price,
+                    changed_by=user,
+                    note=note
+                )
+
     class Meta(BaseModel.Meta):
         verbose_name = 'Product'
         permission_basename = 'product'
