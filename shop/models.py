@@ -9,6 +9,7 @@ from helpers.models import BaseModel, DECIMAL, EXPLANATION
 import random
 from django_fsm import FSMField, transition
 
+
 class Cart(BaseModel):
     customer = models.ForeignKey('users.User', related_name='cart_items', on_delete=models.PROTECT)
     product = models.ForeignKey('products.Product', related_name='products_in_cart',  on_delete=models.PROTECT)
@@ -102,31 +103,6 @@ class ShipmentAddress(BaseModel):
         return "آدرس {} {}".format(self.city, self.customer.name)
 
 
-class Payment(BaseModel):
-    customer = models.ForeignKey('users.User', related_name='shop_payments', on_delete=models.CASCADE)
-    payment_method = models.CharField(max_length=100)
-    tracking_code = models.CharField(max_length=50)
-    amount = DECIMAL()
-    date_time = models.DateTimeField(blank=True, null=True)
-
-    class Meta(BaseModel.Meta):
-        verbose_name = 'Payment'
-        permission_basename = 'payment'
-        permissions = (
-            ('get.payment', 'مشاهده پرداخت'),
-            ('create.payment', 'تعریف پرداخت'),
-            ('update.payment', 'ویرایش پرداخت'),
-            ('delete.payment', 'حذف پرداخت'),
-
-            ('getOwn.payment', 'مشاهده پرداخت های خود'),
-            ('updateOwn.payment', 'ویرایش پرداخت های خود'),
-            ('deleteOwn.payment', 'حذف پرداخت های خود'),
-        )
-
-    def __str__(self):
-        return "پرداخت {} {}".format(self.tracking_code, self.customer.name)
-
-
 class ShopOrder(BaseModel):
     PENDING = 'pe'
     PAID = 'pa'
@@ -149,8 +125,6 @@ class ShopOrder(BaseModel):
     total_product_quantity = DECIMAL(default=1)
     offer_price = DECIMAL(default=0)
     date_time = models.DateTimeField(blank=True, null=True)
-    is_paid = models.BooleanField(default=False)
-    payment = models.OneToOneField(Payment, related_name='shop_order', on_delete=models.PROTECT, blank=True, null=True)
     is_sent = models.BooleanField(default=False)
     shipment_address = models.ForeignKey(ShipmentAddress, related_name='shop_orders', on_delete=models.PROTECT)
     post_price = DECIMAL(blank=True, null=True)
@@ -290,6 +264,52 @@ class ShopOrderItem(BaseModel):
 
     def __str__(self):
         return "آیتم های سفارش {} {}".format(self.shop_order.exuni_tracking_code, self.shop_order.customer.name)
+
+
+class Payment(models.Model):
+    INITIATED = 'in'
+    PENDING = 'pe'
+    SUCCESS = 'su'
+    FAILED = 'fa'
+    EXPIRED = 'ex'
+
+    STATUS_CHOICES = (
+        (INITIATED, 'شروع شده'),
+        (PENDING, 'در حال انجام'),
+        (SUCCESS, 'موفق'),
+        (FAILED, 'ناموفق'),
+        (EXPIRED, 'منقضی  شده'),
+    )
+
+    order = models.OneToOneField(ShopOrder, related_name='payment', on_delete=models.CASCADE,
+                                 blank=True, null=True, unique=True)
+    customer = models.ForeignKey('users.User', related_name='shop_payments', on_delete=models.CASCADE)
+    status = FSMField(choices=STATUS_CHOICES, default=INITIATED, protected=True)
+    amount = DECIMAL()
+    gateway = models.CharField(max_length=30, blank=True, null=True)
+    reference_id = models.CharField(max_length=100, blank=True, null=True, unique=True)
+    created_at = models.DateTimeField(auto_now=True, blank=True, null=True)
+    paid_at = models.DateTimeField(blank=True, null=True)
+
+    def __str__(self):
+        return "پرداخت {} {}".format(self.reference_id, self.customer.name)
+
+    @transition(field='status', source=INITIATED, target=PENDING)
+    def mark_as_pending(self, user=None):
+        print(f'{user} pending')
+
+    @transition(field='status', source=PENDING, target=SUCCESS)
+    def mark_as_success_payment(self, user=None):
+        # verify transaction from bank api
+        print(f'{user} payment successfully done')
+
+    @transition(field='status', source=PENDING, target=FAILED)
+    def mark_as_failed_payment(self, user=None):
+        print(f'{user} payment failed')
+
+    @transition(field='status', source=PENDING, target=EXPIRED)
+    def mark_as_expired_payment(self, user=None):
+        print(f'{user} payment expired')
 
 
 class Comment(BaseModel):
