@@ -6,7 +6,8 @@ from products.views import BrandApiView, BrandDetailView, AvailApiView, AvailDet
     ProductPropertyDetailView, CategoryApiView, CategoryDetailView, ProductApiView, ProductDetailView, \
     ProductGalleryApiView, ProductGalleryDetailView, GalleryOfProductApiView, BrandLogoUpdateView, \
     CategoryPictureUpdateView, ProductsStoreReceiptsView, ProductSimpleApiView, NoContentProductsView, \
-    ProductContentDevelopmentDetailView, ProductPictureUpdateView, AffiliateProductAddBusinessView
+    ProductContentDevelopmentDetailView, ProductPictureUpdateView, AffiliateProductAddBusinessView, \
+    ProductPriceHistoryApiView
 
 app_name = 'products'
 urlpatterns = [
@@ -49,5 +50,8 @@ urlpatterns = [
     url(r'^productGallery/all$', ProductGalleryListView.as_view(), name='productGalleryListView'),
 
     url(r'^galleryOfProduct/(?P<pk>[0-9]+)$', GalleryOfProductApiView.as_view(), name='galleryOfProductApiView'),
+
+    url(r'^productPriceHistory/(?P<order_id>[0-9]+)$', ProductPriceHistoryApiView.as_view(),
+        name='productPriceHistory'),
 
 ]
