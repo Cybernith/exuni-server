@@ -1,10 +1,13 @@
 import datetime
+import hmac
+import hashlib
 
 from django.db import transaction
 from django.db.models import Q, F
-from django.http import Http404
+from django.http import Http404, HttpResponseForbidden
+from django.shortcuts import get_object_or_404
 from rest_framework.exceptions import ValidationError
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.views import APIView
 
 from rest_framework.response import Response
@@ -13,9 +16,10 @@ from rest_framework import status
 from helpers.auth import BasicObjectPermission
 from helpers.functions import get_current_user
 from products.models import Product
+from server.settings import TRUSTED_GATEWAY_IP, GATEWAY_SECRET_PAYMENT_TOKEN, SECRET_KEY
 from shop.helpers import reduce_inventory
 from shop.models import Cart, WishList, Comparison, ShipmentAddress, LimitedTimeOffer, Rate, Comment, ShopOrder, \
-    ShopOrderItem, ShopOrderStatusHistory
+    ShopOrderItem, ShopOrderStatusHistory, Payment
 from shop.serializers import CartCRUDSerializer, CartRetrieveSerializer, WishListRetrieveSerializer, \
     WishListCRUDSerializer, ComparisonRetrieveSerializer, ComparisonCRUDSerializer, ShipmentAddressCRUDSerializer, \
     ShipmentAddressRetrieveSerializer, LimitedTimeOfferItemsSerializer, LimitedTimeOfferSerializer, RateSerializer, \
@@ -395,3 +399,68 @@ class ShopOrderStatusHistoryApiView(APIView):
         serializers = ShopOrderStatusHistorySerializer(query, many=True)
         return Response(serializers.data, status=status.HTTP_200_OK)
 
+
+class StartPaymentApiView(APIView):
+
+    def post(self, request, order_id):
+        order = get_object_or_404(ShopOrder, id=order_id, customer=request.user)
+
+        if hasattr(order, 'payment'):
+            return Response({'detail': 'this order already have open payment'}, status=status.HTTP_400_BAD_REQUEST)
+
+        gateway_name = 'gateway'
+
+        payment = Payment.objects.create(
+            order=order,
+            customer=request.user,
+            amount=order.total_price,
+            gateway=gateway_name,
+            status=Payment.INITIATED
+        )
+
+        payment.mark_as_pending(user=request.user)
+        gateway_url = f'https://gateway.com/pay?payment_id={payment.id}'
+
+        return Response( {
+            'payment_id': payment.id,
+            'gateway_url': gateway_url
+        })
+
+
+class PaymentCallbackApiView(APIView):
+    permission_classes = [AllowAny]
+
+    @staticmethod
+    def verify_signature(payload, signature, secret):
+        expected = hmac.new(secret.encode(), payload.encode(), hashlib.sha256).hexdigest()
+        return hmac.compare_digest(expected, signature)
+
+    def post(self, request):
+
+        payload = request.body.decode()
+        signature = request.headers.get('X-Gateway-Signature')
+        client_ip = request.META.get('REMOTE_ADDR')
+        gateway_token = request.headers.get('X-Gateway-Token')
+
+        if gateway_token != GATEWAY_SECRET_PAYMENT_TOKEN:
+            return Response({'detail': 'invalid gateway token'}, status=status.HTTP_403_FORBIDDEN)
+
+        if client_ip not in TRUSTED_GATEWAY_IP:
+            return Response({'detail': 'Unauthorized IP'}, status=status.HTTP_403_FORBIDDEN)
+
+        if not self.verify_signature(payload, signature, SECRET_KEY):
+            return Response({'detail': 'invalid gateway signature'}, status=status.HTTP_403_FORBIDDEN)
+
+        payment_id = request.data.get('payment_id')
+        success = request.data.get('success')
+        payment = get_object_or_404(Payment, id=payment_id)
+
+        if success:
+            payment.mark_as_success_payment(user=payment.customer)
+            payment.order.mark_as_paid(user=payment.customer)
+
+            return Response({'detail': 'payment was successfully'}, status=status.HTTP_201_CREATED)
+
+        else:
+            payment.mark_as_failed_payment(user=payment.customer)
+            return Response({'detail': 'transaction failed'}, status=status.HTTP_400_BAD_REQUEST)

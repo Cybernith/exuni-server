@@ -300,6 +300,8 @@ class Payment(models.Model):
 
     @transition(field='status', source=PENDING, target=SUCCESS)
     def mark_as_success_payment(self, user=None):
+        self.paid_at = datetime.datetime.now()
+        self.save()
         # verify transaction from bank api
         print(f'{user} payment successfully done')
 
