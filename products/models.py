@@ -9,7 +9,7 @@ from django.db.models import IntegerField, F, Sum
 
 from entrance.models import StoreReceiptItem
 from helpers.functions import change_to_num
-from helpers.models import BaseModel, DECIMAL
+from helpers.models import BaseModel, DECIMAL, EXPLANATION
 from main.models import Supplier, Currency, Business
 from packing.models import OrderPackageItem
 from shop.models import Rate
@@ -326,3 +326,29 @@ class ProductInventoryHistory(models.Model):
 
     def __str__(self):
         return f"{self.get_action_display()} موجودی {self.inventory.product.name} "
+
+
+class ProductPrice(models.Model):
+    product = models.OneToOneField(Product, related_name='current_price', on_delete=models.CASCADE)
+    price = DECIMAL()
+    last_updated = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return '{} - {}'.format(self.product.name, self.price)
+
+
+class ProductPriceHistory(models.Model):
+    product = models.OneToOneField(Product, related_name='price_history', on_delete=models.CASCADE)
+    previous_price = DECIMAL()
+    new_price = DECIMAL()
+    changed_at = models.DateTimeField(auto_now=True)
+    changed_by = models.ForeignKey('users.User', on_delete=models.SET_NULL, blank=True, null=True)
+    note = EXPLANATION()
+
+    class Meta:
+        ordering = ['-changed_at']
+
+    def __str__(self):
+        return f"تغییر قیمت {self.product.name} از {self.previous_price} به {self.new_price}"
+
+
