@@ -1,6 +1,7 @@
 import datetime
 
-from django.db.models import Q
+from django.db import transaction
+from django.db.models import Q, F
 from django.http import Http404
 from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated
@@ -11,7 +12,10 @@ from rest_framework import status
 
 from helpers.auth import BasicObjectPermission
 from helpers.functions import get_current_user
-from shop.models import Cart, WishList, Comparison, ShipmentAddress, LimitedTimeOffer, Rate, Comment, ShopOrder
+from products.models import Product
+from shop.helpers import reduce_inventory
+from shop.models import Cart, WishList, Comparison, ShipmentAddress, LimitedTimeOffer, Rate, Comment, ShopOrder, \
+    ShopOrderItem
 from shop.serializers import CartCRUDSerializer, CartRetrieveSerializer, WishListRetrieveSerializer, \
     WishListCRUDSerializer, ComparisonRetrieveSerializer, ComparisonCRUDSerializer, ShipmentAddressCRUDSerializer, \
     ShipmentAddressRetrieveSerializer, LimitedTimeOfferItemsSerializer, LimitedTimeOfferSerializer, RateSerializer, \
@@ -327,22 +331,52 @@ class ShopOrderRegistrationView(APIView):
     permission_basename = 'shop_order'
 
     def post(self, request):
-        customer = get_current_user()
-        if not Cart.objects.filter(customer=customer).exists():
-            raise ValidationError('your cart is empty')
         data = request.data
-        shop_order = ShopOrder.objects.create(
-            customer=customer,
-            date_time=datetime.datetime.now(),
-            shipment_address=data['address'],
-        )
-        shop_order.add_cart_to_order()
-        shop_order.set_constants()
-        return Response(
-            {
-                'status': 'initial order registration completed',
-                'exuni_tracking_code': shop_order.exuni_tracking_code
-             },
-            status=status.HTTP_201_CREATED)
+        customer = get_current_user()
+        cart_items = Cart.objects.filter(customer=customer).select_related('product')
+        if not cart_items.exists():
+            return Response({'detail': 'your cart is empty'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            with transaction.atomic():
+
+                #Preventing  race condition
+                product_ids = [item.product.id for item in cart_items]
+                locked_products = Product.objects.filter(id__in=product_ids).select_for_update()
+
+                product_map = {product.id: product for product in locked_products}
+
+                shop_order = ShopOrder.objects.create(
+                    customer=customer,
+                    date_time=datetime.datetime.now(),
+                    shipment_address=data['address'],
+                )
+
+                for item in cart_items:
+                    product = product_map[item.product.id]
+                    if product.inventory < item.quantity:
+                        raise Exception('not enough inventory for {}'.format(product.name))
+
+                    ShopOrderItem.objects.create(
+                        shop_order=shop_order,
+                        product=item.product,
+                        price=item.product.last_price,
+                        product_quantity=item.quantity,
+                    )
+
+                    # Inventory reduction
+                    reduce_inventory(item.product.id, item.quantity)
+
+                cart_items.delete()
+                shop_order.set_constants()
+                return Response(
+                    {
+                        'detail': 'initial order registration completed',
+                        'order_id': shop_order.exuni_tracking_code,
+                        'exuni_tracking_code': shop_order.exuni_tracking_code
+                    }, status=status.HTTP_201_CREATED)
+
+        except Exception as exception:
+            return Response({'detail': str(exception)}, status=status.HTTP_400_BAD_REQUEST)
 
 

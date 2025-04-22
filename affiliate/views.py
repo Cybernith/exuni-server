@@ -162,7 +162,7 @@ class AffiliateFactorPaymentApiView(APIView):
                     quantity=order_item.quantity,
                     amount=order_item.price
                 )
-                ProductInventory.objects.get(product=order_item.product).subtract_from_inventory(order_item.quantity)
+                ProductInventory.objects.get(product=order_item.product).reduce_inventory(order_item.quantity)
 
         factor.update_amounts()
 
