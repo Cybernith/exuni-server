@@ -3,7 +3,7 @@ from django.conf.urls import url
 from shop.views import CurrentUserCartApiView, CartDetailView, CurrentUserWishListApiView, WishListDetailView, \
     CurrentUserComparisonApiView, ComparisonDetailView, CurrentUserShipmentAddressApiView, ShipmentAddressDetailView, \
     CurrentLimitedTimeOfferRetrieveView, ProductRateApiView, ProductRateDetailView, PostCommentApiView, \
-    CommentDetailView
+    CommentDetailView, ShopOrderStatusHistoryApiView
 
 app_name = 'shop'
 urlpatterns = [
@@ -27,5 +27,8 @@ urlpatterns = [
 
     url(r'^postComment$', PostCommentApiView.as_view(), name='postComment'),
     url(r'^comment/(?P<pk>[0-9]+)$', CommentDetailView.as_view(), name='commentDetail'),
+
+    url(r'^orderStatusHistory/(?P<order_id>[0-9]+)$', ShopOrderStatusHistoryApiView.as_view(),
+        name='ShopOrderStatusHistory'),
 
 ]
