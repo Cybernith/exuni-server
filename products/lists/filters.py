@@ -96,7 +96,7 @@ class ProductFilter(filters.FilterSet):
             'profit_percent': BASE_FIELD_FILTERS,
             'tax_percent': BASE_FIELD_FILTERS,
             'supplier': ('exact',),
-            'brand': ('exact',),
+            'brand': ('exact', 'in'),
             'explanation': BASE_FIELD_FILTERS,
             'summary_explanation': BASE_FIELD_FILTERS,
             'how_to_use': BASE_FIELD_FILTERS,
@@ -109,7 +109,7 @@ class ProductFilter(filters.FilterSet):
             'height': BASE_FIELD_FILTERS,
             # avails many to many filter
             # properties many to many filter
-            'category': ('exact',),
+            'category': ('exact', 'in'),
 
         }
 
