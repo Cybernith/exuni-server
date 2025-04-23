@@ -1,6 +1,7 @@
 from django.conf.urls import url
 
 from products.shop.views import CommentCreateView, ShopProductCommentListView, RateUpsertApiView
+from shop.search import GlobalAutoCompleteSearchAPIView
 from shop.views import CurrentUserCartApiView, CartDetailView, CurrentUserWishListApiView, WishListDetailView, \
     CurrentUserComparisonApiView, ComparisonDetailView, CurrentUserShipmentAddressApiView, ShipmentAddressDetailView, \
     CurrentLimitedTimeOfferRetrieveView, ProductRateApiView, ProductRateDetailView, PostCommentApiView, \
@@ -9,6 +10,8 @@ from shop.views import CurrentUserCartApiView, CartDetailView, CurrentUserWishLi
 
 app_name = 'shop'
 urlpatterns = [
+    url(r'^searchAutoCompelete$', GlobalAutoCompleteSearchAPIView.as_view(), name='globalAutoCompleteSearch'),
+
     url(r'^currentUserCart$', CurrentUserCartApiView.as_view(), name='currentUserCart'),
     url(r'^cart/(?P<pk>[0-9]+)$', CartDetailView.as_view(), name='cartDetail'),
 

@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.admindocs',
+    'django.contrib.postgres',
     'location_field.apps.DefaultConfig',
 
     'debug_toolbar',
