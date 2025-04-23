@@ -44,6 +44,7 @@ class ProductPropertyFilter(filters.FilterSet):
         fields = {
             'id': ('exact',),
             'name': BASE_FIELD_FILTERS,
+            'value': BASE_FIELD_FILTERS,
             'explanation': BASE_FIELD_FILTERS,
         }
 

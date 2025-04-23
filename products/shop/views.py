@@ -16,7 +16,7 @@ class ShopProductListView(generics.ListAPIView):
     def get_queryset(self):
         return Product.objects.filter(status=Product.PUBLISHED).select_related(
             'brand', 'category', 'current_price', 'current_inventory', 'products_in_wish_list', 'product_comments'
-        )
+        ).prefetch_related('properties', 'avails')
 
 
 class ShopProductDetailView(generics.RetrieveAPIView):
@@ -27,6 +27,7 @@ class ShopProductDetailView(generics.RetrieveAPIView):
         'current_inventory',
         'products_in_wish_list',
         'product_comments'
+        'gallery'
     ).prefetch_related(
         'properties',
         'avails'
