@@ -86,7 +86,7 @@ class ShopProductDetailSerializers(serializers.ModelSerializer):
     similar_brand_products = serializers.SerializerMethodField()
     offer_display = serializers.ReadOnlyField(source='offer_display')
     in_wish_list_count = serializers.ReadOnlyField(source='in_wish_list_count')
-    comments = serializers.SerializerMethodField()
+    #comments = serializers.SerializerMethodField()
     user_rate = serializers.SerializerMethodField()
     comments_count = serializers.ReadOnlyField(source='comments_count')
 
@@ -118,7 +118,7 @@ class ShopProductDetailSerializers(serializers.ModelSerializer):
             'user_rate',
             'offer_display',
             'in_wish_list_count',
-            'comments',
+            #'comments',
             'comments_count',
             'similar_products',
             'similar_brand_products',
@@ -154,9 +154,9 @@ class ShopProductDetailSerializers(serializers.ModelSerializer):
 
         return ShopSimilarProductsListSerializers(similar_products, many=True).data
 
-    def get_comments(self, obj):
-        comments = obj.product_comments.filter()[:4]
-        return CommentSerializer(comments, many=True).data
+    #def get_comments(self, obj):
+    #    comments = obj.product_comments.filter()[:4]
+    #    return CommentSerializer(comments, many=True).data
 
 
 class ShopCommentSerializer(serializers.ModelSerializer):
