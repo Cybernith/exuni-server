@@ -6,7 +6,7 @@ from dateutil.relativedelta import relativedelta
 from django.core.exceptions import ValidationError
 
 from django.db import models, transaction
-from django.db.models import IntegerField, F, Sum, Q
+from django.db.models import IntegerField, F, Sum, Q, Avg
 
 from entrance.models import StoreReceiptItem
 from helpers.functions import change_to_num
@@ -63,6 +63,7 @@ class Avail(BaseModel):
 
 class ProductProperty(BaseModel):
     name = models.CharField(max_length=150)
+    value = models.CharField(max_length=150, blank=True, null=True)
     explanation = models.CharField(max_length=255, blank=True, null=True)
 
     class Meta(BaseModel.Meta):
@@ -162,8 +163,7 @@ class Product(BaseModel):
 
     @property
     def rate(self):
-        rate_count = Rate.objects.filter(product__id=self.id).count()
-        return Rate.objects.filter(product__id=self.id).aggregate(Sum('level'))['level__sum'] / rate_count
+        return self.products_rates.aggregate(rate=Avg('level'))['rate'] or 0
 
     @property
     def type(self):
