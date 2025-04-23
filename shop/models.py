@@ -364,6 +364,7 @@ class Rate(BaseModel):
     class Meta(BaseModel.Meta):
         verbose_name = 'Rate'
         permission_basename = 'rate'
+        unique_together = ('customer', 'product')
         permissions = (
             ('get.rate', 'مشاهده امتیاز'),
             ('create.rate', 'تعریف امتیاز'),

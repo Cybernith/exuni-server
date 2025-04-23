@@ -3,7 +3,8 @@ from rest_framework import serializers
 
 from products.models import Product
 from products.serializers import ProductGallerySerializer, AvailSerializer, ProductPropertySerializer
-from shop.serializers import CommentRepliesSerializer
+from shop.models import Comment, Rate
+from shop.serializers import CommentRepliesSerializer, CommentSerializer
 
 
 class ShopProductsListSerializers(serializers.ModelSerializer):
@@ -83,9 +84,10 @@ class ShopProductDetailSerializers(serializers.ModelSerializer):
     brand = serializers.SerializerMethodField()
     similar_products = serializers.SerializerMethodField()
     similar_brand_products = serializers.SerializerMethodField()
-    product_comments = CommentRepliesSerializer(many=True, read_only=True)
     offer_display = serializers.ReadOnlyField(source='offer_display')
     in_wish_list_count = serializers.ReadOnlyField(source='in_wish_list_count')
+    comments = serializers.SerializerMethodField()
+    user_rate = serializers.SerializerMethodField()
     comments_count = serializers.ReadOnlyField(source='comments_count')
 
     class Meta:
@@ -113,9 +115,10 @@ class ShopProductDetailSerializers(serializers.ModelSerializer):
             'height',
             'postal_weight',
             'rate',
-            'product_comments',
+            'user_rate',
             'offer_display',
             'in_wish_list_count',
+            'comments',
             'comments_count',
             'similar_products',
             'similar_brand_products',
@@ -123,6 +126,13 @@ class ShopProductDetailSerializers(serializers.ModelSerializer):
 
     def get_image(self, obj):
         return obj.picture.url if obj.picture else None
+
+    def get_user_rate(self, obj):
+        user = self.context['request'].user
+        if user.is_authenticated:
+            rate = Rate.objects.filter(customer=user, product=obj).first()
+            return rate.level if rate else None
+        return None
 
     def get_brand(self, obj):
         return {'id': obj.brand.id, 'name': obj.brand.name, 'logo': obj.brand.logo} if obj.brand else None
@@ -143,4 +153,38 @@ class ShopProductDetailSerializers(serializers.ModelSerializer):
         similar_products = Product.objects.filter(brand=obj.brand).only('id', 'name', 'picture').exclude(id=obj.id)[:10]
 
         return ShopSimilarProductsListSerializers(similar_products, many=True).data
+
+    def get_comments(self, obj):
+        comments = obj.product_comments.filter()[:4]
+        return CommentSerializer(comments, many=True).data
+
+
+class ShopCommentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Comment
+        fields = ['id', 'product', 'shop_order', 'reply', 'text', 'file', 'date_time']
+        read_only_fields = ['id', 'date_time']
+
+    def create(self, validated_data):
+        request = self.context.get('request')
+        validated_data['customer'] = request.user
+        return super().create(validated_data)
+
+
+class ShopProductRateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Rate
+        fields = ['id', 'product', 'level']
+
+    def create(self, validated_data):
+        user = self.context['request'].user
+        product = self.context['product']
+        level = self.context['level']
+
+        rate_object, created = Rate.objects.update_or_create(
+            customer=user,
+            product=product,
+            level=level,
+        )
+        return rate_object
 
