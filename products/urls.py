@@ -3,7 +3,8 @@ from django.conf.urls import url
 from products.lists.views import BrandListView, AvailListView, ProductPropertyListView, ProductGalleryListView, \
     ProductListView, CategoryListView, NoContentProductListView, AffiliateForSaleProductsListView
 from products.shop.views import ShopProductListView, ShopProductDetailView, RelatedProductsApiView, \
-    SimilarBrandProductsApiView
+    SimilarBrandProductsApiView, SimilarAvailProductsApiView, SimilarPropertiesProductsApiView, \
+    SimilarCategoryProductsApiView
 from products.views import BrandApiView, BrandDetailView, AvailApiView, AvailDetailView, ProductPropertyApiView, \
     ProductPropertyDetailView, CategoryApiView, CategoryDetailView, ProductApiView, ProductDetailView, \
     ProductGalleryApiView, ProductGalleryDetailView, GalleryOfProductApiView, BrandLogoUpdateView, \
@@ -58,8 +59,15 @@ urlpatterns = [
 
     url(r'^product/shop$', ShopProductListView.as_view(), name='shopProductList'),
     url(r'^product/shop/detail(?P<id>[0-9]+)$', ShopProductDetailView.as_view(), name='shopProductDetail'),
+
     url(r'^product/(?P<product_id>[0-9]+)/related$', RelatedProductsApiView.as_view(), name='relatedProducts'),
     url(r'^product/(?P<product_id>[0-9]+)/similarBrand$', SimilarBrandProductsApiView.as_view(),
         name='similarBrandProducts'),
+    url(r'^product/(?P<product_id>[0-9]+)/similarAvails$', SimilarAvailProductsApiView.as_view(),
+        name='similarBrandProducts'),
+    url(r'^product/(?P<product_id>[0-9]+)/similarProperties$', SimilarPropertiesProductsApiView.as_view(),
+        name='similarPropertiesProduct'),
+    url(r'^product/(?P<product_id>[0-9]+)/similarCategory$', SimilarCategoryProductsApiView.as_view(),
+        name='similarCategoryProduct'),
 
 ]

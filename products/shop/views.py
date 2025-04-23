@@ -136,3 +136,72 @@ class SimilarBrandProductsApiView(generics.ListAPIView):
 
         cache.set(cache_key, similar_brand_products, 60*10)
         return similar_brand_products
+
+
+class SimilarAvailProductsApiView(generics.ListAPIView):
+    serializer_class = ShopProductsListSerializers
+    pagination_class = RelatedProductPagination
+
+    def get_queryset(self):
+        product_id = self.kwargs.get('product_id')
+        cache_key = f'similar_avail_products_{product_id}'
+        cache_queryset = cache.get(cache_key)
+
+        if cache_queryset:
+            return cache_queryset
+
+        product = get_object_or_404(Product, pk=product_id)
+        similar_avails_products = Product.objects.filter(
+            Q(status=Product.PUBLISHED) & Q(avails__in=product.avails)
+        ).exclude(id=product_id).select_related(
+            'brand', 'category', 'current_price', 'current_inventory', 'products_in_wish_list', 'product_comments'
+        ).prefetch_related('properties', 'avails')
+
+        cache.set(cache_key, similar_avails_products, 60*10)
+        return similar_avails_products
+
+
+class SimilarPropertiesProductsApiView(generics.ListAPIView):
+    serializer_class = ShopProductsListSerializers
+    pagination_class = RelatedProductPagination
+
+    def get_queryset(self):
+        product_id = self.kwargs.get('product_id')
+        cache_key = f'similar_property_products_{product_id}'
+        cache_queryset = cache.get(cache_key)
+
+        if cache_queryset:
+            return cache_queryset
+
+        product = get_object_or_404(Product, pk=product_id)
+        similar_properties_products = Product.objects.filter(
+            Q(status=Product.PUBLISHED) & Q(properties__in=product.properties)
+        ).exclude(id=product_id).select_related(
+            'brand', 'category', 'current_price', 'current_inventory', 'products_in_wish_list', 'product_comments'
+        ).prefetch_related('properties', 'avails')
+
+        cache.set(cache_key, similar_properties_products, 60*10)
+        return similar_properties_products
+
+
+class SimilarCategoryProductsApiView(generics.ListAPIView):
+    serializer_class = ShopProductsListSerializers
+    pagination_class = RelatedProductPagination
+
+    def get_queryset(self):
+        product_id = self.kwargs.get('product_id')
+        cache_key = f'similar_category_products_{product_id}'
+        cache_queryset = cache.get(cache_key)
+
+        if cache_queryset:
+            return cache_queryset
+
+        product = get_object_or_404(Product, pk=product_id)
+        similar_category_products = Product.objects.filter(
+            Q(status=Product.PUBLISHED) & Q(category=product.category)
+        ).exclude(id=product_id).select_related(
+            'brand', 'category', 'current_price', 'current_inventory', 'products_in_wish_list', 'product_comments'
+        ).prefetch_related('properties', 'avails')
+
+        cache.set(cache_key, similar_category_products, 60*10)
+        return similar_category_products
