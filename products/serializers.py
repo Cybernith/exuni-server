@@ -76,7 +76,6 @@ class CategoryPictureUpdateSerializer(SModelSerializer):
 
 
 class ProductGallerySerializer(serializers.ModelSerializer):
-    created_by = UserSimpleSerializer(read_only=True)
 
     class Meta:
         read_only_fields = ('created_at', 'updated_at')

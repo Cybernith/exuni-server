@@ -229,6 +229,13 @@ class Product(BaseModel):
                 )
 
     @property
+    def in_wish_list_count(self):
+        return self.products_in_wish_list.count()
+
+    def comments_count(self):
+        return self.product_comments.count()
+
+    @property
     def current_inventory(self):
         if hasattr(self, 'current_inventory'):
             return self.current_inventory.inventory
@@ -266,7 +273,7 @@ class Product(BaseModel):
         ).exists()
 
     @property
-    def offer_price(self):
+    def offer_amount(self):
         now = datetime.datetime.now()
         offer = LimitedTimeOfferItems.objects.filter(
             Q(product=self) &
@@ -277,6 +284,19 @@ class Product(BaseModel):
         if offer:
             return offer.offer_amount
         return 0
+
+    @property
+    def offer_display(self):
+        now = datetime.datetime.now()
+        offer = LimitedTimeOfferItems.objects.filter(
+            Q(product=self) &
+            Q(limited_time_offer__is_active=True) &
+            Q(limited_time_offer__from_date_time__gte=now) &
+            Q(limited_time_offer__to_date_time__lte=now)
+        ).first()
+        if offer:
+            return offer.offer_display
+        return None
 
     class Meta(BaseModel.Meta):
         verbose_name = 'Product'
