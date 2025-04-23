@@ -472,6 +472,7 @@ class PaymentCallbackApiView(APIView):
 
 
 class StartZarinpalPaymentApiView(APIView):
+    permission_classes = (IsAuthenticated)
 
     def post(self, request, order_id):
         order = get_object_or_404(ShopOrder, id=order_id, customer=request.user)
@@ -533,4 +534,20 @@ class ZarinpalCallbackApiView(APIView):
         else:
             payment.mark_as_failed_payment(user=payment.customer)
             return Response({'detail': 'transaction verify failed'}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class UserProductRateApiView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, product_id):
+        user = get_current_user()
+        try:
+            rate = Rate.objects.get(customer=user, product_id=product_id).level
+        except Rate.DoesNotExist:
+            rate = None
+        return Response(
+            {'product_id': product_id, 'rate': rate},
+            status=status.HTTP_200_OK
+        )
+
 

@@ -231,3 +231,9 @@ class ShopOrderStatusHistorySerializer(serializers.ModelSerializer):
         read_only_fields = ('created_at', 'updated_at')
         model = ShopOrderStatusHistory
         fields = ['previous_status', 'new_status', 'changed_at', 'changed_by', 'note']
+
+
+class CustomerProductRateSerializer(serializers.Serializer):
+    product_id = serializers.IntegerField()
+    rate = serializers.IntegerField(allow_null=True)
+

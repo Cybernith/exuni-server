@@ -1,10 +1,11 @@
 from django.conf.urls import url
 
+from products.shop.views import CommentCreateView, ShopProductCommentListView, RateUpsertApiView
 from shop.views import CurrentUserCartApiView, CartDetailView, CurrentUserWishListApiView, WishListDetailView, \
     CurrentUserComparisonApiView, ComparisonDetailView, CurrentUserShipmentAddressApiView, ShipmentAddressDetailView, \
     CurrentLimitedTimeOfferRetrieveView, ProductRateApiView, ProductRateDetailView, PostCommentApiView, \
     CommentDetailView, ShopOrderStatusHistoryApiView, StartPaymentApiView, PaymentCallbackApiView, \
-    StartZarinpalPaymentApiView, ZarinpalCallbackApiView
+    StartZarinpalPaymentApiView, ZarinpalCallbackApiView, UserProductRateApiView
 
 app_name = 'shop'
 urlpatterns = [
@@ -26,7 +27,8 @@ urlpatterns = [
     url(r'^rate$', ProductRateApiView.as_view(), name='productRate'),
     url(r'^rate/(?P<pk>[0-9]+)$', ProductRateDetailView.as_view(), name='productRateDetail'),
 
-    url(r'^postComment$', PostCommentApiView.as_view(), name='postComment'),
+    #url(r'^postComment$', PostCommentApiView.as_view(), name='postComment'),
+
     url(r'^comment/(?P<pk>[0-9]+)$', CommentDetailView.as_view(), name='commentDetail'),
 
     url(r'^orderStatusHistory/(?P<order_id>[0-9]+)$', ShopOrderStatusHistoryApiView.as_view(),
@@ -37,5 +39,10 @@ urlpatterns = [
 
     url(r'^zarinpalPaymentStart/(?P<order_id>[0-9]+)$', StartZarinpalPaymentApiView.as_view(), name='zarinpal_start'),
     url(r'^zarinpalPaymentCallback$', ZarinpalCallbackApiView.as_view(), name='zarinpal_callback'),
+
+    url(r'^sendComment$', CommentCreateView.as_view(), name='sendComment'),
+    url(r'^sendRate$', RateUpsertApiView.as_view(), name='sendRate'),
+    url(r'^product/(?P<id>[0-9]+)/comments$', ShopProductCommentListView.as_view(), name='shopProductComments'),
+    url(r'^product/(?P<product_id>[0-9]+)/userRate$', UserProductRateApiView.as_view(), name='productUserRate'),
 
 ]
