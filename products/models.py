@@ -229,6 +229,12 @@ class Product(BaseModel):
                 )
 
     @property
+    def current_inventory(self):
+        if hasattr(self, 'current_inventory'):
+            return self.current_inventory.inventory
+        raise ValueError(f"برای کالای {self.name} موجودی ثبت نشده")
+
+    @property
     def final_price(self):
         if hasattr(self, 'current_price'):
             return self.current_price.price
@@ -248,6 +254,29 @@ class Product(BaseModel):
             effective_price = price - offer.offer_amount
             return effective_price if effective_price > 0 else Decimal('0.00')
         return price
+
+    @property
+    def has_offer(self):
+        now = datetime.datetime.now()
+        return LimitedTimeOfferItems.objects.filter(
+            Q(product=self) &
+            Q(limited_time_offer__is_active=True) &
+            Q(limited_time_offer__from_date_time__gte=now) &
+            Q(limited_time_offer__to_date_time__lte=now)
+        ).exists()
+
+    @property
+    def offer_price(self):
+        now = datetime.datetime.now()
+        offer = LimitedTimeOfferItems.objects.filter(
+            Q(product=self) &
+            Q(limited_time_offer__is_active=True) &
+            Q(limited_time_offer__from_date_time__gte=now) &
+            Q(limited_time_offer__to_date_time__lte=now)
+        ).first()
+        if offer:
+            return offer.offer_amount
+        return 0
 
     class Meta(BaseModel.Meta):
         verbose_name = 'Product'
@@ -289,7 +318,7 @@ class ProductGallery(BaseModel):
 
 
 class ProductInventory(models.Model):
-    product = models.OneToOneField(Product, related_name='inventory', on_delete=models.CASCADE)
+    product = models.OneToOneField(Product, related_name='current_inventory', on_delete=models.CASCADE)
     inventory = models.IntegerField(default=0)
     last_updated = models.DateTimeField(auto_now=True)
 
