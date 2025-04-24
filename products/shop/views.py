@@ -11,6 +11,8 @@ from products.shop.serializers import ShopProductsListSerializers, ShopProductDe
     ShopProductRateSerializer
 from shop.models import Comment
 from shop.serializers import CommentRepliesSerializer
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.filters import OrderingFilter
 
 
 class ShopProductListView(generics.ListAPIView):
@@ -97,7 +99,7 @@ class RelatedProductsApiView(generics.ListAPIView):
         properties_ids = product.properties.values_list('id', flat=True)
         avails_ids = product.avails.values_list('id', flat=True)
 
-        related_products = Product.objects.filter(
+        related_products = Product.objects.annotate(view_count=Count('view_logs')).filter(
             Q(category=product.category) |
             Q(avails__id__in=avails_ids) |
             Q(properties__id__in=properties_ids) |
@@ -130,7 +132,7 @@ class SimilarBrandProductsApiView(generics.ListAPIView):
         product = get_object_or_404(Product, pk=product_id)
         similar_brand_products = Product.objects.filter(
             Q(status=Product.PUBLISHED) & Q(brand=product.brand)
-        ).exclude(id=product_id).select_related(
+        ).exclude(id=product_id).annotate(view_count=Count('view_logs')).select_related(
             'brand', 'category', 'current_price', 'current_inventory', 'products_in_wish_list', 'product_comments'
         ).prefetch_related('properties', 'avails')
 
@@ -153,7 +155,7 @@ class SimilarAvailProductsApiView(generics.ListAPIView):
         product = get_object_or_404(Product, pk=product_id)
         similar_avails_products = Product.objects.filter(
             Q(status=Product.PUBLISHED) & Q(avails__in=product.avails)
-        ).exclude(id=product_id).select_related(
+        ).exclude(id=product_id).annotate(view_count=Count('view_logs')).select_related(
             'brand', 'category', 'current_price', 'current_inventory', 'products_in_wish_list', 'product_comments'
         ).prefetch_related('properties', 'avails')
 
@@ -176,7 +178,7 @@ class SimilarPropertiesProductsApiView(generics.ListAPIView):
         product = get_object_or_404(Product, pk=product_id)
         similar_properties_products = Product.objects.filter(
             Q(status=Product.PUBLISHED) & Q(properties__in=product.properties)
-        ).exclude(id=product_id).select_related(
+        ).exclude(id=product_id).annotate(view_count=Count('view_logs')).select_related(
             'brand', 'category', 'current_price', 'current_inventory', 'products_in_wish_list', 'product_comments'
         ).prefetch_related('properties', 'avails')
 
@@ -199,9 +201,29 @@ class SimilarCategoryProductsApiView(generics.ListAPIView):
         product = get_object_or_404(Product, pk=product_id)
         similar_category_products = Product.objects.filter(
             Q(status=Product.PUBLISHED) & Q(category=product.category)
-        ).exclude(id=product_id).select_related(
+        ).exclude(id=product_id).annotate(view_count=Count('view_logs')).select_related(
             'brand', 'category', 'current_price', 'current_inventory', 'products_in_wish_list', 'product_comments'
         ).prefetch_related('properties', 'avails')
 
         cache.set(cache_key, similar_category_products, 60*10)
         return similar_category_products
+
+
+class TopViewedShopProductsAPIView(generics.ListAPIView):
+    serializer_class = ShopProductsListSerializers
+    pagination_class = RelatedProductPagination
+    filter_backends = [DjangoFilterBackend, OrderingFilter]
+    filterset_fields = ['brand', 'category']
+    ordering_fields = ['view_count', 'current_price', 'title']
+    ordering = ['-view_count']
+
+    def get_queryset(self):
+        return (
+            Product.objects
+            .prefetch_related('brand', 'category')
+            .select_related(
+                'brand', 'category', 'current_price', 'current_inventory', 'products_in_wish_list', 'product_comments'
+            )
+            .annotate(view_count=Count('view_logs'))
+            .order_by('-view_count', '-id')
+        )
