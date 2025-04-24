@@ -22,6 +22,7 @@ class ShopProductsListSerializers(serializers.ModelSerializer):
     brand = serializers.SerializerMethodField()
     avails = AvailSerializer(many=True, read_only=True)
     properties = ProductPropertySerializer(many=True, read_only=True)
+    view_count = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = Product
@@ -42,6 +43,7 @@ class ShopProductsListSerializers(serializers.ModelSerializer):
             'in_wish_list_count',
             'avails',
             'properties',
+            'view_count',
         ]
 
     def get_image(self, obj):

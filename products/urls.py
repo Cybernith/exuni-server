@@ -1,10 +1,11 @@
 from django.conf.urls import url
 
+from crm.views import ProductViewSummaryAPIView
 from products.lists.views import BrandListView, AvailListView, ProductPropertyListView, ProductGalleryListView, \
     ProductListView, CategoryListView, NoContentProductListView, AffiliateForSaleProductsListView
 from products.shop.views import ShopProductListView, ShopProductDetailView, RelatedProductsApiView, \
     SimilarBrandProductsApiView, SimilarAvailProductsApiView, SimilarPropertiesProductsApiView, \
-    SimilarCategoryProductsApiView
+    SimilarCategoryProductsApiView, TopViewedShopProductsAPIView
 from products.views import BrandApiView, BrandDetailView, AvailApiView, AvailDetailView, ProductPropertyApiView, \
     ProductPropertyDetailView, CategoryApiView, CategoryDetailView, ProductApiView, ProductDetailView, \
     ProductGalleryApiView, ProductGalleryDetailView, GalleryOfProductApiView, BrandLogoUpdateView, \
@@ -58,7 +59,7 @@ urlpatterns = [
         name='productPriceHistory'),
 
     url(r'^product/shop$', ShopProductListView.as_view(), name='shopProductList'),
-    url(r'^product/shop/detail(?P<id>[0-9]+)$', ShopProductDetailView.as_view(), name='shopProductDetail'),
+    url(r'^product/shop/detail(?P<id>[0-9]+)$', ShopProductDetailView.as_view(), name='topViewedProduct'),
 
     url(r'^product/(?P<product_id>[0-9]+)/related$', RelatedProductsApiView.as_view(), name='relatedProducts'),
     url(r'^product/(?P<product_id>[0-9]+)/similarBrand$', SimilarBrandProductsApiView.as_view(),
@@ -70,4 +71,8 @@ urlpatterns = [
     url(r'^product/(?P<product_id>[0-9]+)/similarCategory$', SimilarCategoryProductsApiView.as_view(),
         name='similarCategoryProduct'),
 
+    url(r'^product/topViewed$', TopViewedShopProductsAPIView.as_view(), name='shopProductList'),
+
+    url(r'^product/(?P<product_id>[0-9]+)/viewSummary$', ProductViewSummaryAPIView.as_view(),
+        name='productViewSummary'),
 ]
