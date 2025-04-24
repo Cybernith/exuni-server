@@ -67,6 +67,7 @@ INSTALLED_APPS = [
     'reports',
     'shop',
     'cms',
+    'crm',
 
 ]
 

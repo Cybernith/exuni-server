@@ -46,6 +46,7 @@ urlpatterns = [
     url(r'^reports/', include('reports.urls')),
     url(r'^shop/', include('shop.urls')),
     url(r'^cms/', include('cms.urls')),
+    url(r'^crm/', include('crm.urls')),
 
     path('admin/', admin.site.urls),
 

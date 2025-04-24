@@ -121,6 +121,15 @@ class BaseModel(models.Model):
         self.save()
 
 
+class TimeStampedModel(models.Model):
+    created_at = models.DateTimeField(auto_now=True, db_index=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        abstract = True
+
+
+
 class LocalIdMixin(models.Model):
     local_id = models.BigIntegerField(null=True, blank=True, default=None)
 
@@ -137,6 +146,8 @@ class LocalIdMixin(models.Model):
                 local_id=Coalesce(Max('local_id'), 0)
             )['local_id'] + 1
         super().save(*args, **kwargs)
+
+
 
 
 class TreeMixin(models.Model):
