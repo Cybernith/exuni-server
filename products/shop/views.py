@@ -23,13 +23,13 @@ class ShopProductListView(generics.ListAPIView):
     pagination_class = LimitOffsetPagination
 
     def get_queryset(self):
-        return Product.objects.filter(status=Product.PUBLISHED).select_related(
+        return Product.objects.filter(status=Product.PUBLISHED).annotate(view_count=Count('views_log')).select_related(
             'brand', 'category', 'current_price', 'current_inventory', 'products_in_wish_list', 'product_comments'
         ).prefetch_related('properties', 'avails')
 
 
 class ShopProductDetailView(generics.RetrieveAPIView):
-    queryset = Product.objects.select_related(
+    queryset = Product.objects.annotate(view_count=Count('views_log')).select_related(
         'brand',
         'category',
         'current_price',
@@ -99,7 +99,7 @@ class RelatedProductsApiView(generics.ListAPIView):
         properties_ids = product.properties.values_list('id', flat=True)
         avails_ids = product.avails.values_list('id', flat=True)
 
-        related_products = Product.objects.annotate(view_count=Count('view_logs')).filter(
+        related_products = Product.objects.annotate(view_count=Count('views_log')).filter(
             Q(category=product.category) |
             Q(avails__id__in=avails_ids) |
             Q(properties__id__in=properties_ids) |
@@ -132,7 +132,7 @@ class SimilarBrandProductsApiView(generics.ListAPIView):
         product = get_object_or_404(Product, pk=product_id)
         similar_brand_products = Product.objects.filter(
             Q(status=Product.PUBLISHED) & Q(brand=product.brand)
-        ).exclude(id=product_id).annotate(view_count=Count('view_logs')).select_related(
+        ).exclude(id=product_id).annotate(view_count=Count('views_log')).select_related(
             'brand', 'category', 'current_price', 'current_inventory', 'products_in_wish_list', 'product_comments'
         ).prefetch_related('properties', 'avails')
 
@@ -155,7 +155,7 @@ class SimilarAvailProductsApiView(generics.ListAPIView):
         product = get_object_or_404(Product, pk=product_id)
         similar_avails_products = Product.objects.filter(
             Q(status=Product.PUBLISHED) & Q(avails__in=product.avails)
-        ).exclude(id=product_id).annotate(view_count=Count('view_logs')).select_related(
+        ).exclude(id=product_id).annotate(view_count=Count('views_log')).select_related(
             'brand', 'category', 'current_price', 'current_inventory', 'products_in_wish_list', 'product_comments'
         ).prefetch_related('properties', 'avails')
 
@@ -178,7 +178,7 @@ class SimilarPropertiesProductsApiView(generics.ListAPIView):
         product = get_object_or_404(Product, pk=product_id)
         similar_properties_products = Product.objects.filter(
             Q(status=Product.PUBLISHED) & Q(properties__in=product.properties)
-        ).exclude(id=product_id).annotate(view_count=Count('view_logs')).select_related(
+        ).exclude(id=product_id).annotate(view_count=Count('views_log')).select_related(
             'brand', 'category', 'current_price', 'current_inventory', 'products_in_wish_list', 'product_comments'
         ).prefetch_related('properties', 'avails')
 
@@ -201,7 +201,7 @@ class SimilarCategoryProductsApiView(generics.ListAPIView):
         product = get_object_or_404(Product, pk=product_id)
         similar_category_products = Product.objects.filter(
             Q(status=Product.PUBLISHED) & Q(category=product.category)
-        ).exclude(id=product_id).annotate(view_count=Count('view_logs')).select_related(
+        ).exclude(id=product_id).annotate(view_count=Count('views_log')).select_related(
             'brand', 'category', 'current_price', 'current_inventory', 'products_in_wish_list', 'product_comments'
         ).prefetch_related('properties', 'avails')
 
@@ -224,6 +224,6 @@ class TopViewedShopProductsAPIView(generics.ListAPIView):
             .select_related(
                 'brand', 'category', 'current_price', 'current_inventory', 'products_in_wish_list', 'product_comments'
             )
-            .annotate(view_count=Count('view_logs'))
+            .annotate(view_count=Count('views_log'))
             .order_by('-view_count', '-id')
         )
