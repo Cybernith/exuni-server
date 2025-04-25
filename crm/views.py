@@ -1,5 +1,6 @@
 import datetime
 
+from django.core.cache import cache
 from django.shortcuts import render, get_object_or_404
 from django.utils.dateparse import parse_date
 from  rest_framework import generics, permissions
@@ -7,7 +8,8 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.generics import ListAPIView
 from rest_framework.permissions import IsAdminUser
 
-from crm.models import ShopProductViewLog
+from crm.functions import save_search_log
+from crm.models import ShopProductViewLog, SearchLog
 from crm.serializer import ShopProductViewLogCreateSerializer
 from helpers.functions import date_to_str
 from products.models import Product
@@ -179,3 +181,15 @@ class UserTopVisitedProductsAPIView(ListAPIView):
         )[:limit]
 
         return queryset
+
+
+class RegisterFinalSearchLogAPIView(APIView):
+
+    def post(self, request):
+        search_value = request.data.get('search_value', '').strip()
+        search_type = request.data.get('search_value', SearchLog.RAW_TEXT).strip()
+        if not search_value:
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        save_search_log(request, query_value=search_value, search_type=search_type)
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
