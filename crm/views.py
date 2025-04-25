@@ -3,6 +3,8 @@ import datetime
 from django.shortcuts import render, get_object_or_404
 from django.utils.dateparse import parse_date
 from  rest_framework import generics, permissions
+from rest_framework.exceptions import ValidationError
+from rest_framework.generics import ListAPIView
 from rest_framework.permissions import IsAdminUser
 
 from crm.models import ShopProductViewLog
@@ -15,6 +17,8 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.db.models import Count, Q
 from django.db.models.functions import TruncMonth
+
+from products.serializers import ProductForLogSerializer
 
 
 class ShopProductViewLogApiView(generics.CreateAPIView):
@@ -148,3 +152,30 @@ class ProductInRangeVisitReportView(APIView):
             'devices': list(device_statistics),
             'daily_visits': list(daily_statistics),
         }, status=status.HTTP_200_OK)
+
+
+class UserTopVisitedProductsAPIView(ListAPIView):
+    permission_classes = [IsAdminUser]
+    serializer_class = ProductForLogSerializer
+
+    def get_queryset(self):
+        try:
+            limit = int(self.request.query_params.get('limit', 10))
+            if limit < 1:
+                raise ValueError
+        except ValueError:
+            raise ValidationError({"limit": "Must be a positive integer."})
+
+        user_id = self.kwargs['user_id']
+        queryset = Product.objects.annotate(
+            user_visits=Count(
+                'views_log',
+                filter=Q(views_log__user_id=user_id)
+            )
+        ).filter(
+            user_visits__gt=0
+        ).order_by(
+            '-user_visits'
+        )[:limit]
+
+        return queryset

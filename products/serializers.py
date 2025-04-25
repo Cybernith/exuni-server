@@ -83,6 +83,14 @@ class ProductGallerySerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class ProductForLogSerializer(serializers.ModelSerializer):
+    created_by = UserSimpleSerializer(read_only=True)
+
+    class Meta:
+        model = Product
+        fields = 'name', 'id'
+
+
 class ProductSimpleSerializer(serializers.ModelSerializer):
     created_by = UserSimpleSerializer(read_only=True)
 
