@@ -25,7 +25,6 @@ class ShopProductViewLogSerializer(serializers.ModelSerializer):
     user_name = serializers.CharField(source='user.name', read_only=True)
     product_name = serializers.CharField(source='product.name', read_only=True)
 
-
     class Meta:
         model = ShopProductViewLog
         fields = '__all__'
