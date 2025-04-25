@@ -4,7 +4,9 @@ from django.shortcuts import get_object_or_404
 from rest_framework import generics
 from rest_framework.pagination import LimitOffsetPagination, PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 
+from crm.functions import save_product_view_log
 from products.models import Product
 from products.shop.filters import ShopProductFilter
 from products.shop.serializers import ShopProductsListSerializers, ShopProductDetailSerializers, ShopCommentSerializer, \
@@ -43,6 +45,12 @@ class ShopProductDetailView(generics.RetrieveAPIView):
     )
     serializer_class = ShopProductDetailSerializers
     lookup_field = 'id'
+
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance)
+        save_product_view_log(request=request, product=instance)
+        return Response(serializer.data)
 
 
 class CommentCreateView(generics.CreateAPIView):
