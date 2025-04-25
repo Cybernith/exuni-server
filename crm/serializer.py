@@ -21,12 +21,6 @@ class ShopProductViewLogCreateSerializer(serializers.ModelSerializer):
 
 
 class ShopProductViewLogSerializer(serializers.ModelSerializer):
-    browser_type = serializers.ReadOnlyField()
-    browser_version = serializers.ReadOnlyField()
-    os_type = serializers.ReadOnlyField()
-    os_version = serializers.ReadOnlyField()
-    device_family = serializers.ReadOnlyField()
-    is_touch_device = serializers.ReadOnlyField()
     device_type = serializers.CharField(source='get_device_type_display', read_only=True)
     user_name = serializers.CharField(source='user.name', read_only=True)
     product_name = serializers.CharField(source='product.name', read_only=True)

@@ -59,7 +59,6 @@ class BaseManager(models.Manager):
         return queryset.none()
 
 
-
 class BaseModel(models.Model):
     created_by = models.ForeignKey('users.User', on_delete=models.PROTECT, null=True, related_name='+', blank=True)
     created_at = models.DateTimeField(null=True, blank=True)
