@@ -118,6 +118,23 @@ class ShopProductViewLog(TimeStampedModel, UserAgentModel):
 
 
 class SearchLog(TimeStampedModel, UserAgentModel):
+
+    PRODUCT = 'product'
+    CATEGORY = 'category'
+    BRAND = 'brand'
+    AVAIL = 'avail'
+    PROPERTY = 'property'
+    RAW_TEXT = 'raw'
+
+    SEARCH_TYPES = (
+        (PRODUCT, 'محصول'),
+        (CATEGORY, 'دسته بندی'),
+        (BRAND, 'برند'),
+        (AVAIL, 'فایده'),
+        (PROPERTY, 'خصوصیت کالا'),
+        (RAW_TEXT, 'متن'),
+    )
+
     user = models.ForeignKey(
         'users.User',
         related_name='search_logs',
@@ -126,6 +143,7 @@ class SearchLog(TimeStampedModel, UserAgentModel):
         on_delete=models.SET_NULL
     )
     query_value = models.CharField(max_length=255)
+    search_type = models.CharField(max_length=8, choices=SEARCH_TYPES, default=RAW_TEXT)
 
     class Meta:
         ordering = ['-created_at']
