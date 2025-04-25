@@ -67,7 +67,7 @@ INSTALLED_APPS = [
     'reports',
     'shop',
     'cms',
-    'crm',
+    'crm.apps.CrmConfig',
 
 ]
 

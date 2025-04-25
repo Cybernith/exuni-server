@@ -28,6 +28,8 @@ class UserAgentModel(models.Model):
     os_version = models.CharField(max_length=100, blank=True, null=True)
     device_family = models.CharField(max_length=100, blank=True, null=True)
     is_touch_device = models.BooleanField(default=True)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    session_key = models.CharField(max_length=40, null=True, blank=True)
 
     @property
     def user_agent_object(self):
@@ -75,6 +77,18 @@ class UserAgentModel(models.Model):
     class Meta:
         abstract = True
 
+    def save(self, *args, **kwargs):
+        if not self.id and self.user_agent:
+            self.device_type = self.get_user_device
+            self.browser_type = self.get_browser_type
+            self.browser_version = self.get_browser_version
+            self.os_type = self.get_os_type
+            self.os_version = self.get_os_version
+            self.device_family = self.get_device_family
+            self.is_touch_device = self.get_is_touch_device
+
+        super().save(*args, **kwargs)
+
 
 class ShopProductViewLog(TimeStampedModel, UserAgentModel):
     product = models.ForeignKey(
@@ -90,7 +104,6 @@ class ShopProductViewLog(TimeStampedModel, UserAgentModel):
         blank=True,
         on_delete=models.SET_NULL
     )
-    ip_address = models.CharField(max_length=45)
     referer = models.URLField(null=True, blank=True)
 
     class Meta:
@@ -103,18 +116,24 @@ class ShopProductViewLog(TimeStampedModel, UserAgentModel):
     def __str__(self):
         return f"view of product {self.product.name} by {self.user.name or 'guest'} at {self.created_at}"
 
-    def save(self, *args, **kwargs):
-        if not self.id:
-            self.device_type = self.get_user_device
-            self.browser_type = self.get_browser_type
-            self.browser_version = self.get_browser_version
-            self.os_type = self.get_os_type
-            self.os_version = self.get_os_version
-            self.device_family = self.get_device_family
-            self.is_touch_device = self.get_is_touch_device
 
-        super().save(*args, **kwargs)
+class SearchLog(TimeStampedModel, UserAgentModel):
+    user = models.ForeignKey(
+        'users.User',
+        related_name='search_logs',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL
+    )
+    query_value = models.CharField(max_length=255)
 
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['query_value']),
+            models.Index(fields=['user', 'created_at'])
+        ]
 
-
+    def __str__(self):
+        return f"{self.user.name or 'guest'} search about ''' {self.query_value} ''' at {self.created_at}"
 
