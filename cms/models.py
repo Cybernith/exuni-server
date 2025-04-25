@@ -141,3 +141,26 @@ class BannerContentItem(BaseModel):
             ('updateOwn.banner_content_item', 'ویرایش آیتم محتوا بنر خود'),
             ('deleteOwn.banner_content_item', 'حذف آیتم محتوا بنر خود'),
         )
+
+
+class ShopHomePageStory(BaseModel):
+    title = models.CharField(max_length=100, blank=True, null=True)
+    description = models.TextField(blank=True, null=True)
+    mobile_image = models.ImageField(upload_to=custom_upload_to)
+    desktop_image = models.ImageField(upload_to=custom_upload_to)
+    video = models.FileField(upload_to=custom_upload_to)
+    link = models.URLField(max_length=100)
+
+    class Meta(BaseModel.Meta):
+        verbose_name = 'ShopHomePageStory'
+        permission_basename = 'shop_home_page_story'
+        permissions = (
+            ('get.shop_home_page_story', 'مشاهده استوری'),
+            ('create.shop_home_page_story', 'تعریف استوری'),
+            ('update.shop_home_page_story', 'ویرایش استوری'),
+            ('delete.shop_home_page_story', 'حذف استوری'),
+
+            ('getOwn.shop_home_page_story', 'مشاهده استوری خود'),
+            ('updateOwn.shop_home_page_story', 'ویرایش استوری خود'),
+            ('deleteOwn.shop_home_page_story', 'حذف استوری خود'),
+        )

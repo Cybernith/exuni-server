@@ -2,15 +2,15 @@ import datetime
 
 from django.db.models import Q
 from django.http import Http404
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.views import APIView
 
 from rest_framework.response import Response
 from rest_framework import status
 
-from cms.models import HeaderElement, PopUpElement, BannerContent, BannerContentItem
+from cms.models import HeaderElement, PopUpElement, BannerContent, BannerContentItem, ShopHomePageStory
 from cms.serializers import HeaderElementSerializer, PopUpElementSerializer, BannerContentSerializer, \
-    BannerContentItemSerializer
+    BannerContentItemSerializer, ShopHomePageStorySerializer
 from helpers.auth import BasicObjectPermission
 
 
@@ -223,4 +223,59 @@ class BannerContentItemDetailView(APIView):
         query.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+
+class ShopHomePageStoryApiView(APIView):
+
+    def get(self, request):
+        now = datetime.datetime.now()
+        query = ShopHomePageStory.objects.filter(Q(to_date_time__lte=now) & Q(from_date_time__gte=now))
+        serializers = ShopHomePageStorySerializer(query, many=True, context={'request': request})
+        return Response(serializers.data, status=status.HTTP_200_OK)
+
+
+class AllShopHomePageStoryApiView(APIView):
+    permission_classes = (IsAuthenticated, BasicObjectPermission)
+    permission_basename = 'shop_home_page_story'
+
+    def get(self, request):
+        query = ShopHomePageStory.objects.all()
+        serializers = ShopHomePageStorySerializer(query, many=True, context={'request': request})
+        return Response(serializers.data, status=status.HTTP_200_OK)
+
+    def post(self, request):
+        data = request.data
+        serializer = ShopHomePageStorySerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ShopHomePageStoryDetailView(APIView):
+    permission_classes = (IsAuthenticated, BasicObjectPermission)
+    permission_basename = 'shop_home_page_story'
+
+    def get_object(self, pk):
+        try:
+            return ShopHomePageStory.objects.get(pk=pk)
+        except ShopHomePageStory.DoesNotExist:
+            raise Http404
+
+    def get(self, request, pk):
+        query = self.get_object(pk)
+        serializers = ShopHomePageStorySerializer(query)
+        return Response(serializers.data, status=status.HTTP_200_OK)
+
+    def put(self, request, pk):
+        query = self.get_object(pk)
+        serializer = ShopHomePageStorySerializer(query, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, pk):
+        query = self.get_object(pk)
+        query.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
