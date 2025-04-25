@@ -11,7 +11,8 @@ from rest_framework import status
 from django.db.models import Count
 from django.db.models.functions import TruncMonth
 
-class ShopProductLogApiView(generics.CreateAPIView):
+
+class ShopProductViewLogApiView(generics.CreateAPIView):
     permission_classes = [permissions.AllowAny]
     serializer_class = ShopProductViewLogCreateSerializer
 
