@@ -17,6 +17,13 @@ class HeaderElement(BaseModel):
     mobile_image = models.ImageField(upload_to=custom_upload_to)
     desktop_image = models.ImageField(upload_to=custom_upload_to)
     link = models.URLField(max_length=100)
+    discount_code = models.ForeignKey(
+        'subscription.DiscountCode',
+        related_name='header_elements',
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True
+    )
 
     class Meta(BaseModel.Meta):
         verbose_name = 'HeaderElement'
@@ -53,6 +60,13 @@ class PopUpElement(BaseModel):
         validators=[MaxValueValidator(60), MinValueValidator(1)]
     )
     link = models.URLField(max_length=100)
+    discount_code = models.ForeignKey(
+        'subscription.DiscountCode',
+        related_name='pop_up_elements',
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True
+    )
 
     class Meta(BaseModel.Meta):
         verbose_name = 'PopUpElement'
@@ -127,6 +141,13 @@ class BannerContentItem(BaseModel):
     mobile_image = models.ImageField(upload_to=custom_upload_to)
     desktop_image = models.ImageField(upload_to=custom_upload_to)
     link = models.URLField(max_length=100)
+    discount_code = models.ForeignKey(
+        'subscription.DiscountCode',
+        related_name='banner_content_item',
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True
+    )
 
     class Meta(BaseModel.Meta):
         verbose_name = 'BannerContentItem'
@@ -150,6 +171,13 @@ class ShopHomePageStory(BaseModel):
     desktop_image = models.ImageField(upload_to=custom_upload_to)
     video = models.FileField(upload_to=custom_upload_to)
     link = models.URLField(max_length=100)
+    discount_code = models.ForeignKey(
+        'subscription.DiscountCode',
+        related_name='shop_home_stories',
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True
+    )
 
     class Meta(BaseModel.Meta):
         verbose_name = 'ShopHomePageStory'
