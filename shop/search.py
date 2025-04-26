@@ -6,9 +6,11 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from products.models import Product, Brand, Category
+from shop.throttles import UserSearchAutoCompleteRateThrottle, AnonSearchAutoCompleteRateThrottle
 
 
 class GlobalAutoCompleteSearchAPIView(APIView):
+    throttle_classes = [UserSearchAutoCompleteRateThrottle, AnonSearchAutoCompleteRateThrottle]
 
     def get(self, request):
         query = request.query_params.get('search_value', '').strip()
