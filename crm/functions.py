@@ -1,5 +1,15 @@
+from datetime import timedelta
+
+from django.db.models import Count, Q
+
 from crm.models import SearchLog, ShopProductViewLog
 from django.core.cache import cache
+import datetime
+import time
+from functools import wraps
+from collections import OrderedDict
+
+from products.models import Product
 
 
 def save_search_log(request, query_value, search_type=SearchLog.RAW_TEXT):
@@ -51,3 +61,88 @@ def save_product_view_log(request, product):
 
     cache.set(cache_key, True, timeout=3600)
 
+
+def get_user_interested(user, max_searches=20, max_visits=20, days=30):
+    now = datetime.datetime.now()
+
+    searches = (SearchLog.objects
+                .filter(user=user, created_at__gte=now - timedelta(days=30))
+                .order_by('-created_at')[:max_searches]).only('query_value')
+    search_keywords = [search.query_value for search in searches]
+
+    visits = (ShopProductViewLog.objects.filter(
+        user=user, created_at__gte=now - timedelta(days)
+    ).values('product').annotate(count=Count('id')).order_by('-count')[:max_visits])
+
+    visited_product_ids = [visit['product'] for visit in visits]
+
+    return search_keywords, visited_product_ids
+
+
+def advanced_ttl_cache(timeout=300, maxsize=1000):
+    cache_data = OrderedDict()
+
+    def decorator(func):
+        @wraps(func)
+        def wrapper(user, *args, **kwargs):
+            user_id = user.id
+            now = time.time()
+
+            expired_keys = []
+            for key, (_, timestamp) in cache_data.items():
+                if now - timestamp > timeout:
+                    expired_keys.append(key)
+            for key in expired_keys:
+                cache_data.pop(key, None)
+
+            if user_id in cache_data:
+                result, timestamp = cache_data[user_id]
+                if now - timestamp < timeout:
+                    cache_data.move_to_end(user_id)
+                    return result
+
+            result = func(user, *args, **kwargs)
+            cache_data[user_id] = (result, now)
+            cache_data.move_to_end(user_id)
+
+            if len(cache_data) > maxsize:
+                cache_data.popitem(last=False)
+
+            return result
+        return wrapper
+    return decorator
+
+
+@advanced_ttl_cache(timeout=300, maxsize=5000)
+def get_recommended_products(user, limit=20):
+    search_keywords, most_viewed_products_ids = get_user_interested(user)
+
+    query = Q()
+    for keyword in search_keywords:
+        query |= Q(name__icontains=keyword) | Q(brand__name__icontains=keyword) | Q(category__name__icontains=keyword)
+
+    related_products_by_search = Product.objects.filter(query).select_related(
+        'brand', 'category').only('id', 'name', 'brand_name', 'category__name')
+
+    most_viewed_products = Product.objects.filter(
+        id__in=most_viewed_products_ids
+    ).select_related('brand', 'category').only('id', 'name', 'brand_name', 'category__name')
+
+    all_products = (related_products_by_search | most_viewed_products).distinct()
+
+    products_with_score = []
+    for product in all_products:
+        score = 0
+        if any(keyword.lower() in product.name.lower() for keyword in search_keywords):
+            score += 10
+        if product.brand and any(keyword.lower() in product.brand.name.lower() for keyword in search_keywords):
+            score += 8
+        if product.category and any(keyword.lower() in product.category.name.lower() for keyword in search_keywords):
+            score += 6
+        if product.id in most_viewed_products_ids:
+            score += 5
+        products_with_score.append((product, score))
+
+    products_with_score.sort(key=lambda x: x[1], reverse=True)
+
+    return [product for product, score in products_with_score][:limit]
