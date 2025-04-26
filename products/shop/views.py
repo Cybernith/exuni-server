@@ -1,7 +1,7 @@
 from django.core.cache import cache
 from django.db.models import Q, Count, F
 from django.shortcuts import get_object_or_404
-from rest_framework import generics
+from rest_framework import generics, status
 from rest_framework.pagination import LimitOffsetPagination, PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -259,4 +259,4 @@ class CategoryTreeView(APIView):
 
         tree = build_tree()
 
-        return Response(tree)
+        return Response(tree, status=status.HTTP_200_OK)
