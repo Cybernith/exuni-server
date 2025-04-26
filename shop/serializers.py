@@ -237,3 +237,21 @@ class CustomerProductRateSerializer(serializers.Serializer):
     product_id = serializers.IntegerField()
     rate = serializers.IntegerField(allow_null=True)
 
+
+class CartInputSerializer(serializers.Serializer):
+    product_id = serializers.IntegerField()
+    quantity = serializers.IntegerField(default=1)
+
+
+class WishlistInputSerializer(serializers.Serializer):
+    product_id = serializers.IntegerField()
+
+
+class CompareItemInputSerializer(serializers.Serializer):
+    product_id = serializers.IntegerField()
+
+
+class SyncAllDataSerializer(serializers.Serializer):
+    cart_items = CartInputSerializer(many=True, required=False)
+    wishlist_items = WishlistInputSerializer(many=True, required=False)
+    comparison_items = CompareItemInputSerializer(many=True, required=False)

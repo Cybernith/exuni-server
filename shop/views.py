@@ -27,7 +27,9 @@ from shop.models import Cart, WishList, Comparison, ShipmentAddress, LimitedTime
 from shop.serializers import CartCRUDSerializer, CartRetrieveSerializer, WishListRetrieveSerializer, \
     WishListCRUDSerializer, ComparisonRetrieveSerializer, ComparisonCRUDSerializer, ShipmentAddressCRUDSerializer, \
     ShipmentAddressRetrieveSerializer, LimitedTimeOfferItemsSerializer, LimitedTimeOfferSerializer, RateSerializer, \
-    RateRetrieveSerializer, PostCommentSerializer, CommentSerializer, ShopOrderStatusHistorySerializer
+    RateRetrieveSerializer, PostCommentSerializer, CommentSerializer, ShopOrderStatusHistorySerializer, \
+    SyncAllDataSerializer, CartInputSerializer, WishlistInputSerializer, CompareItemInputSerializer
+from shop.throttles import SyncAllDataThrottle
 from shop.zarinpal import ZarinpalGateway
 
 
@@ -82,6 +84,56 @@ class CartDetailView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
+class CartSyncView(APIView):
+    permission_classes = [IsAuthenticated]
+    throttle_classes = [SyncAllDataThrottle]
+
+    @transaction.atomic
+    def post(self, request, *args, **kwargs):
+        user = request.user
+        serializer = CartInputSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        validated_data = serializer.validated_data
+        cart_items = validated_data.get('cart_items', [])
+
+        if not cart_items:
+            return Response({"detail": "No items provided."}, status=status.HTTP_400_BAD_REQUEST)
+
+        cart_items_product_ids = [item['product_id'] for item in cart_items]
+        products = Product.objects.filter(id__in=cart_items_product_ids).only('id')
+        existing_cart_items = Cart.objects.filter(
+            customer=user, product_id__in=cart_items_product_ids
+        ).select_related('product')
+
+        existing_cart_map = {item.product_id: item for item in existing_cart_items}
+        items_to_create = []
+        items_to_update = []
+
+        for item in cart_items:
+            product_id = item['product_id']
+            quantity = item.get('quantity', 1)
+
+            if product_id not in [product.id for product in products]:
+                continue
+
+            if product_id in existing_cart_map:
+                cart_item = existing_cart_map[product_id]
+                cart_item.quantity += quantity
+                items_to_update.append(cart_item)
+            else:
+                items_to_create.append(
+                    Cart(customer=user, product_id=product_id, quantity=quantity)
+                )
+
+        if items_to_create:
+            Cart.objects.bulk_create(items_to_create, batch_size=100)
+
+        if items_to_update:
+            Cart.objects.bulk_update(items_to_update, ['quantity'], batch_size=100)
+
+        return Response({"detail": "Cart synced successfully."}, status=status.HTTP_200_OK)
+
+
 class CurrentUserWishListApiView(APIView):
     permission_classes = (IsAuthenticated, BasicObjectPermission)
     permission_basename = 'wish_list'
@@ -133,6 +185,46 @@ class WishListDetailView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
+class WishlistSyncView(APIView):
+    permission_classes = [IsAuthenticated]
+    throttle_classes = [SyncAllDataThrottle]
+
+    @transaction.atomic
+    def post(self, request, *args, **kwargs):
+        user = request.user
+        serializer = WishlistInputSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        validated_data = serializer.validated_data
+        items = validated_data.get('wishlist_items', [])
+
+        if not items:
+            return Response({"detail": "No items provided."}, status=status.HTTP_400_BAD_REQUEST)
+
+        product_ids = [item['product_id'] for item in items]
+        products = Product.objects.filter(id__in=product_ids).only('id')
+
+        existing_wishlist_items = WishList.objects.filter(customer=user, product_id__in=product_ids)
+        existing_wishlist_map = {item.product_id: item for item in existing_wishlist_items}
+
+        items_to_create = []
+
+        for item in items:
+            product_id = item['product_id']
+
+            if product_id not in [p.id for p in products]:
+                continue
+
+            if product_id not in existing_wishlist_map:
+                items_to_create.append(
+                    WishList(customer=user, product_id=product_id)
+                )
+
+        if items_to_create:
+            WishList.objects.bulk_create(items_to_create, batch_size=100)
+
+        return Response({"detail": "Wishlist synced successfully."}, status=status.HTTP_200_OK)
+
+
 class CurrentUserComparisonApiView(APIView):
     permission_classes = (IsAuthenticated, BasicObjectPermission)
     permission_basename = 'comparison'
@@ -182,6 +274,47 @@ class ComparisonDetailView(APIView):
         query = self.get_object(pk)
         query.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class ComparisonSyncView(APIView):
+    permission_classes = [IsAuthenticated]
+    throttle_classes = [SyncAllDataThrottle]
+
+    @transaction.atomic
+    def post(self, request, *args, **kwargs):
+        user = request.user
+        serializer = CompareItemInputSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        validated_data = serializer.validated_data
+
+        items = validated_data.get('comparison_items', [])
+
+        if not items:
+            return Response({"detail": "No items provided"}, status=status.HTTP_400_BAD_REQUEST)
+
+        product_ids = [item['product_id'] for item in items]
+        products = Product.objects.filter(id__in=product_ids).only('id')
+
+        existing_comparison_items = Comparison.objects.filter(customer=user, product_id__in=product_ids)
+        existing_comparison_map = {item.product_id: item for item in existing_comparison_items}
+
+        items_to_create = []
+
+        for item in items:
+            product_id = item['product_id']
+
+            if product_id not in [p.id for p in products]:
+                continue
+
+            if product_id not in existing_comparison_map:
+                items_to_create.append(
+                    Comparison(customer=user, product_id=product_id)
+                )
+
+        if items_to_create:
+            Comparison.objects.bulk_create(items_to_create, batch_size=100)
+
+        return Response({"detail": "Comparison synced successfully."}, status=status.HTTP_200_OK)
 
 
 class CurrentUserShipmentAddressApiView(APIView):
@@ -551,3 +684,85 @@ class UserProductRateApiView(APIView):
         )
 
 
+class SyncAllDataView(APIView):
+    permission_classes = [IsAuthenticated]
+    throttle_classes = [SyncAllDataThrottle]
+
+    @transaction.atomic
+    def post(self, request, *args, **kwargs):
+        user = request.user
+
+        serializer = SyncAllDataSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        validated_data = serializer.validated_data
+
+        wishlist_items = validated_data.get('wishlist_items', [])
+        compare_items = validated_data.get('compare_items', [])
+        cart_items = validated_data.get('cart_items', [])
+
+        cart_items_product_ids = [item['product_id'] for item in cart_items]
+        products = Product.objects.filter(id__in=cart_items_product_ids).only('id')
+        existing_cart_items = Cart.objects.filter(
+            customer=user, product_id__in=cart_items_product_ids
+        )
+
+        existing_cart_map = {item.product_id: item for item in existing_cart_items}
+        cart_items_to_create = []
+        cart_items_to_update = []
+        for item in cart_items:
+            product_id = item['product_id']
+            quantity = item.get('quantity', 1)
+
+            if product_id not in [product.id for product in products]:
+                continue
+
+            if product_id in existing_cart_map:
+                cart_item = existing_cart_map[product_id]
+                cart_item.quantity += quantity
+                cart_items_to_update.append(cart_item)
+            else:
+                cart_items_to_create.append(
+                    Cart(customer=user, product_id=product_id, quantity=quantity)
+                )
+
+        if cart_items_to_create:
+            Cart.objects.bulk_create(cart_items_to_create, batch_size=100)
+
+        if cart_items_to_update:
+            Cart.objects.bulk_update(cart_items_to_update, ['quantity'], batch_size=100)
+
+        product_ids = set()
+        for group in (wishlist_items, compare_items):
+            product_ids.update(item['product_id'] for item in group)
+
+        products = Product.objects.filter(id__in=product_ids).only('id')
+
+        existing_wishlist = WishList.objects.filter(user=user, product_id__in=product_ids)
+        existing_compare = Comparison.objects.filter(user=user, product_id__in=product_ids)
+
+        existing_wishlist_map = {item.product_id: item for item in existing_wishlist}
+        existing_compare_map = {item.product_id: item for item in existing_compare}
+
+        wishlist_to_create = []
+        compare_to_create = []
+
+        for item in wishlist_items:
+            pid = item['product_id']
+            if pid in [p.id for p in products] and pid not in existing_wishlist_map:
+                wishlist_to_create.append(
+                    WishList(user=user, product_id=pid)
+                )
+
+        for item in compare_items:
+            pid = item['product_id']
+            if pid in [p.id for p in products] and pid not in existing_compare_map:
+                compare_to_create.append(
+                    Comparison(user=user, product_id=pid)
+                )
+
+        if wishlist_to_create:
+            WishList.objects.bulk_create(wishlist_to_create, batch_size=100)
+        if compare_to_create:
+            Comparison.objects.bulk_create(compare_to_create, batch_size=100)
+
+        return Response({"detail": "All data synced successfully."}, status=status.HTTP_200_OK)

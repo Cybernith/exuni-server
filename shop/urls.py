@@ -6,20 +6,26 @@ from shop.views import CurrentUserCartApiView, CartDetailView, CurrentUserWishLi
     CurrentUserComparisonApiView, ComparisonDetailView, CurrentUserShipmentAddressApiView, ShipmentAddressDetailView, \
     CurrentLimitedTimeOfferRetrieveView, ProductRateApiView, ProductRateDetailView, PostCommentApiView, \
     CommentDetailView, ShopOrderStatusHistoryApiView, StartPaymentApiView, PaymentCallbackApiView, \
-    StartZarinpalPaymentApiView, ZarinpalCallbackApiView, UserProductRateApiView
+    StartZarinpalPaymentApiView, ZarinpalCallbackApiView, UserProductRateApiView, CartSyncView, WishlistSyncView, \
+    ComparisonSyncView, SyncAllDataView
 
 app_name = 'shop'
 urlpatterns = [
     url(r'^searchAutoCompelete$', GlobalAutoCompleteSearchAPIView.as_view(), name='globalAutoCompleteSearch'),
 
     url(r'^currentUserCart$', CurrentUserCartApiView.as_view(), name='currentUserCart'),
+    url(r'^cartSync$', CartSyncView.as_view(), name='cartSync'),
     url(r'^cart/(?P<pk>[0-9]+)$', CartDetailView.as_view(), name='cartDetail'),
 
     url(r'^currentUserWishList$', CurrentUserWishListApiView.as_view(), name='currentUserWishList'),
+    url(r'^wishlistSync$', WishlistSyncView.as_view(), name='wishlistSync'),
     url(r'^wishList/(?P<pk>[0-9]+)$', WishListDetailView.as_view(), name='wishListDetail'),
 
     url(r'^currentUserComparison$', CurrentUserComparisonApiView.as_view(), name='currentUserComparison'),
+    url(r'^comparisonSync$', ComparisonSyncView.as_view(), name='comparisonSync'),
     url(r'^comparison/(?P<pk>[0-9]+)$', ComparisonDetailView.as_view(), name='comparisonDetail'),
+
+    url(r'^syncUserAllData$', SyncAllDataView.as_view(), name='syncUserAllData'),
 
     url(r'^currentUserShipmentAddress$', CurrentUserShipmentAddressApiView.as_view(),
         name='currentUserShipmentAddress'),
