@@ -78,6 +78,7 @@ urlpatterns = [
 
     url(r'^userRecommendation$', RecommendedProductsAPIView.as_view(),
         name='userRecommendation'),
+
     url(r'^categoryTree$', CategoryTreeView.as_view(),
         name='categoryTree'),
 ]

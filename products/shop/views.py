@@ -239,24 +239,32 @@ class TopViewedShopProductsAPIView(generics.ListAPIView):
 
 
 class CategoryTreeView(APIView):
+    CACHE_KEY = 'category_tree_data'
+    CACHE_TIMEOUT = 60 * 60 * 6
+
     def get(self, request):
-        categories = Category.objects.all().only('id', 'name', 'parent_id')
+        tree = cache.get(self.CACHE_KEY)
 
-        category_map = {}
-        for cat in categories:
-            category_map.setdefault(cat.parent_id, []).append({
-                'id': cat.id,
-                'name': cat.name,
-                'children': []
-            })
+        if tree is None:
+            categories = Category.objects.all().only('id', 'name', 'parent_id').select_related('parent')
 
-        def build_tree(parent_id=None):
-            nodes = []
-            for cat in category_map.get(parent_id, []):
-                cat['children'] = build_tree(cat['id'])
-                nodes.append(cat)
-            return nodes
+            category_map = {}
+            for category in categories:
+                category_map.setdefault(category.parent_id, []).append({
+                    'id': category.id,
+                    'name': category.name,
+                    'children': []
+                })
 
-        tree = build_tree()
+            def build_tree(parent_id=None):
+                nodes = []
+                for current_category in category_map.get(parent_id, []):
+                    current_category['children'] = build_tree(current_category['id'])
+                    nodes.append(current_category)
+                return nodes
+
+            tree = build_tree()
+
+            cache.set(self.CACHE_KEY, tree, self.CACHE_TIMEOUT)
 
         return Response(tree, status=status.HTTP_200_OK)

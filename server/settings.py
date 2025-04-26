@@ -59,7 +59,7 @@ INSTALLED_APPS = [
     'users',
     'home',
     'main',
-    'products',
+    'products.apps.ProductsConfig',
     'entrance',
     'affiliate',
     'subscription',
