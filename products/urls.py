@@ -1,6 +1,6 @@
 from django.conf.urls import url
 
-from crm.views import ProductViewSummaryAPIView
+from crm.views import ProductViewSummaryAPIView, RecommendedProductsAPIView
 from products.lists.views import BrandListView, AvailListView, ProductPropertyListView, ProductGalleryListView, \
     ProductListView, CategoryListView, NoContentProductListView, AffiliateForSaleProductsListView
 from products.shop.views import ShopProductListView, ShopProductDetailView, RelatedProductsApiView, \
@@ -75,4 +75,7 @@ urlpatterns = [
 
     url(r'^product/(?P<product_id>[0-9]+)/viewSummary$', ProductViewSummaryAPIView.as_view(),
         name='productViewSummary'),
+
+    url(r'^userRecommendation$', RecommendedProductsAPIView.as_view(),
+        name='userRecommendation'),
 ]

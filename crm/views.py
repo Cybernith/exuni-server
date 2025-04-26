@@ -6,9 +6,9 @@ from django.utils.dateparse import parse_date
 from  rest_framework import generics, permissions
 from rest_framework.exceptions import ValidationError
 from rest_framework.generics import ListAPIView
-from rest_framework.permissions import IsAdminUser
+from rest_framework.permissions import IsAdminUser, IsAuthenticated
 
-from crm.functions import save_search_log
+from crm.functions import save_search_log, get_recommended_products
 from crm.models import ShopProductViewLog, SearchLog
 from crm.serializer import ShopProductViewLogCreateSerializer
 from helpers.functions import date_to_str
@@ -21,6 +21,7 @@ from django.db.models import Count, Q
 from django.db.models.functions import TruncMonth
 
 from products.serializers import ProductForLogSerializer
+from products.shop.serializers import ShopProductsListSerializers
 
 
 class ShopProductViewLogApiView(generics.CreateAPIView):
@@ -193,3 +194,12 @@ class RegisterFinalSearchLogAPIView(APIView):
         save_search_log(request, query_value=search_value, search_type=search_type)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class RecommendedProductsAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        products = get_recommended_products(request.user)
+        serializer = ShopProductsListSerializers(products, many=True)
+        return Response(serializer.data)
