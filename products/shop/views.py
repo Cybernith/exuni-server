@@ -5,9 +5,10 @@ from rest_framework import generics
 from rest_framework.pagination import LimitOffsetPagination, PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from crm.functions import save_product_view_log
-from products.models import Product
+from products.models import Product, Category
 from products.shop.filters import ShopProductFilter
 from products.shop.serializers import ShopProductsListSerializers, ShopProductDetailSerializers, ShopCommentSerializer, \
     ShopProductRateSerializer
@@ -235,3 +236,27 @@ class TopViewedShopProductsAPIView(generics.ListAPIView):
             .annotate(view_count=Count('views_log'))
             .order_by('-view_count', '-id')
         )
+
+
+class CategoryTreeView(APIView):
+    def get(self, request):
+        categories = Category.objects.all().only('id', 'name', 'parent_id')
+
+        category_map = {}
+        for cat in categories:
+            category_map.setdefault(cat.parent_id, []).append({
+                'id': cat.id,
+                'name': cat.name,
+                'children': []
+            })
+
+        def build_tree(parent_id=None):
+            nodes = []
+            for cat in category_map.get(parent_id, []):
+                cat['children'] = build_tree(cat['id'])
+                nodes.append(cat)
+            return nodes
+
+        tree = build_tree()
+
+        return Response(tree)

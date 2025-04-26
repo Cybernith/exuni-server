@@ -5,7 +5,7 @@ from products.lists.views import BrandListView, AvailListView, ProductPropertyLi
     ProductListView, CategoryListView, NoContentProductListView, AffiliateForSaleProductsListView
 from products.shop.views import ShopProductListView, ShopProductDetailView, RelatedProductsApiView, \
     SimilarBrandProductsApiView, SimilarAvailProductsApiView, SimilarPropertiesProductsApiView, \
-    SimilarCategoryProductsApiView, TopViewedShopProductsAPIView
+    SimilarCategoryProductsApiView, TopViewedShopProductsAPIView, CategoryTreeView
 from products.views import BrandApiView, BrandDetailView, AvailApiView, AvailDetailView, ProductPropertyApiView, \
     ProductPropertyDetailView, CategoryApiView, CategoryDetailView, ProductApiView, ProductDetailView, \
     ProductGalleryApiView, ProductGalleryDetailView, GalleryOfProductApiView, BrandLogoUpdateView, \
@@ -78,4 +78,6 @@ urlpatterns = [
 
     url(r'^userRecommendation$', RecommendedProductsAPIView.as_view(),
         name='userRecommendation'),
+    url(r'^categoryTree$', CategoryTreeView.as_view(),
+        name='categoryTree'),
 ]
