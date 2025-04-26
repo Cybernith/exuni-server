@@ -12,6 +12,8 @@ from products.models import Product, Category
 from products.shop.filters import ShopProductFilter
 from products.shop.serializers import ShopProductsListSerializers, ShopProductDetailSerializers, ShopCommentSerializer, \
     ShopProductRateSerializer
+from products.trottles import UserProductDetailRateThrottle, AnonProductDetailRateThrottle, AnonProductListRateThrottle, \
+    UserProductListRateThrottle, CreateCommentRateThrottle, RateUpsertRateThrottle, CategoryTreeRateThrottle
 from shop.models import Comment
 from shop.serializers import CommentRepliesSerializer
 from django_filters.rest_framework import DjangoFilterBackend
@@ -21,6 +23,7 @@ from rest_framework.filters import OrderingFilter
 class ShopProductListView(generics.ListAPIView):
 
     serializer_class = ShopProductsListSerializers
+    throttle_classes = [UserProductListRateThrottle, AnonProductListRateThrottle]
     filterset_class = ShopProductFilter
     ordering_fields = '__all__'
     pagination_class = LimitOffsetPagination
@@ -32,6 +35,10 @@ class ShopProductListView(generics.ListAPIView):
 
 
 class ShopProductDetailView(generics.RetrieveAPIView):
+    serializer_class = ShopProductDetailSerializers
+    throttle_classes = [UserProductDetailRateThrottle, AnonProductDetailRateThrottle]
+    lookup_field = 'id'
+
     queryset = Product.objects.annotate(view_count=Count('views_log')).select_related(
         'brand',
         'category',
@@ -44,8 +51,6 @@ class ShopProductDetailView(generics.RetrieveAPIView):
         'properties',
         'avails'
     )
-    serializer_class = ShopProductDetailSerializers
-    lookup_field = 'id'
 
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -57,6 +62,8 @@ class ShopProductDetailView(generics.RetrieveAPIView):
 class CommentCreateView(generics.CreateAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = ShopCommentSerializer
+    throttle_classes = [CreateCommentRateThrottle]
+
     queryset = Comment.objects.all()
 
 
@@ -79,6 +86,7 @@ class ShopProductCommentListView(generics.ListAPIView):
 
 class RateUpsertApiView(generics.CreateAPIView):
     permission_classes = [IsAuthenticated]
+    throttle_classes = [RateUpsertRateThrottle]
     serializer_class = ShopProductRateSerializer
 
 
@@ -90,6 +98,7 @@ class RelatedProductPagination(PageNumberPagination):
 
 class RelatedProductsApiView(generics.ListAPIView):
     serializer_class = ShopProductsListSerializers
+    throttle_classes = [UserProductListRateThrottle, AnonProductListRateThrottle]
     pagination_class = RelatedProductPagination
 
     def get_queryset(self):
@@ -128,6 +137,7 @@ class RelatedProductsApiView(generics.ListAPIView):
 
 class SimilarBrandProductsApiView(generics.ListAPIView):
     serializer_class = ShopProductsListSerializers
+    throttle_classes = [UserProductListRateThrottle, AnonProductListRateThrottle]
     pagination_class = RelatedProductPagination
 
     def get_queryset(self):
@@ -151,6 +161,7 @@ class SimilarBrandProductsApiView(generics.ListAPIView):
 
 class SimilarAvailProductsApiView(generics.ListAPIView):
     serializer_class = ShopProductsListSerializers
+    throttle_classes = [UserProductListRateThrottle, AnonProductListRateThrottle]
     pagination_class = RelatedProductPagination
 
     def get_queryset(self):
@@ -174,6 +185,7 @@ class SimilarAvailProductsApiView(generics.ListAPIView):
 
 class SimilarPropertiesProductsApiView(generics.ListAPIView):
     serializer_class = ShopProductsListSerializers
+    throttle_classes = [UserProductListRateThrottle, AnonProductListRateThrottle]
     pagination_class = RelatedProductPagination
 
     def get_queryset(self):
@@ -197,6 +209,7 @@ class SimilarPropertiesProductsApiView(generics.ListAPIView):
 
 class SimilarCategoryProductsApiView(generics.ListAPIView):
     serializer_class = ShopProductsListSerializers
+    throttle_classes = [UserProductListRateThrottle, AnonProductListRateThrottle]
     pagination_class = RelatedProductPagination
 
     def get_queryset(self):
@@ -220,6 +233,7 @@ class SimilarCategoryProductsApiView(generics.ListAPIView):
 
 class TopViewedShopProductsAPIView(generics.ListAPIView):
     serializer_class = ShopProductsListSerializers
+    throttle_classes = [UserProductListRateThrottle, AnonProductListRateThrottle]
     pagination_class = RelatedProductPagination
     filter_backends = [DjangoFilterBackend, OrderingFilter]
     filterset_fields = ['brand', 'category']
@@ -239,6 +253,7 @@ class TopViewedShopProductsAPIView(generics.ListAPIView):
 
 
 class CategoryTreeView(APIView):
+    throttle_classes = [CategoryTreeRateThrottle]
     CACHE_KEY = 'category_tree_data'
     CACHE_TIMEOUT = 60 * 60 * 6
 

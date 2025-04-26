@@ -29,13 +29,14 @@ from shop.serializers import CartCRUDSerializer, CartRetrieveSerializer, WishLis
     ShipmentAddressRetrieveSerializer, LimitedTimeOfferItemsSerializer, LimitedTimeOfferSerializer, RateSerializer, \
     RateRetrieveSerializer, PostCommentSerializer, CommentSerializer, ShopOrderStatusHistorySerializer, \
     SyncAllDataSerializer, CartInputSerializer, WishlistInputSerializer, CompareItemInputSerializer
-from shop.throttles import SyncAllDataThrottle
+from shop.throttles import SyncAllDataThrottle, AddToCardRateThrottle, PaymentRateThrottle, AddToWishListRateThrottle, \
+    AddToComparisonRateThrottle, ShopOrderRateThrottle
 from shop.zarinpal import ZarinpalGateway
 
 
 class CurrentUserCartApiView(APIView):
-    permission_classes = (IsAuthenticated, BasicObjectPermission)
-    permission_basename = 'cart'
+    permission_classes = IsAuthenticated
+    throttle_classes = [AddToCardRateThrottle]
 
     def get(self, request):
         customer = get_current_user()
@@ -135,8 +136,8 @@ class CartSyncView(APIView):
 
 
 class CurrentUserWishListApiView(APIView):
-    permission_classes = (IsAuthenticated, BasicObjectPermission)
-    permission_basename = 'wish_list'
+    permission_classes = IsAuthenticated
+    throttle_classes = [AddToWishListRateThrottle]
 
     def get(self, request):
         customer = get_current_user()
@@ -226,8 +227,8 @@ class WishlistSyncView(APIView):
 
 
 class CurrentUserComparisonApiView(APIView):
-    permission_classes = (IsAuthenticated, BasicObjectPermission)
-    permission_basename = 'comparison'
+    permission_classes = IsAuthenticated
+    throttle_classes = [AddToComparisonRateThrottle]
 
     def get(self, request):
         customer = get_current_user()
@@ -469,8 +470,8 @@ class CommentDetailView(APIView):
 
 
 class ShopOrderRegistrationView(APIView):
-    permission_classes = (IsAuthenticated, BasicObjectPermission)
-    permission_basename = 'shop_order'
+    permission_classes = IsAuthenticated
+    throttle_classes = [ShopOrderRateThrottle]
 
     def post(self, request):
         data = request.data
@@ -539,6 +540,7 @@ class ShopOrderStatusHistoryApiView(APIView):
 
 
 class StartPaymentApiView(APIView):
+    throttle_classes = [PaymentRateThrottle]
 
     def post(self, request, order_id):
         order = get_object_or_404(ShopOrder, id=order_id, customer=request.user)
@@ -605,7 +607,8 @@ class PaymentCallbackApiView(APIView):
 
 
 class StartZarinpalPaymentApiView(APIView):
-    permission_classes = (IsAuthenticated)
+    permission_classes = IsAuthenticated
+    throttle_classes = [PaymentRateThrottle]
 
     def post(self, request, order_id):
         order = get_object_or_404(ShopOrder, id=order_id, customer=request.user)

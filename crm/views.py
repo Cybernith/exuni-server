@@ -11,6 +11,7 @@ from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from crm.functions import save_search_log, get_recommended_products
 from crm.models import ShopProductViewLog, SearchLog
 from crm.serializer import ShopProductViewLogCreateSerializer
+from crm.throttles import UserFinalSearchLogRateThrottle, AnonFinalSearchLogRateThrottle
 from helpers.functions import date_to_str
 from products.models import Product
 
@@ -185,6 +186,7 @@ class UserTopVisitedProductsAPIView(ListAPIView):
 
 
 class RegisterFinalSearchLogAPIView(APIView):
+    throttle_classes = [UserFinalSearchLogRateThrottle, AnonFinalSearchLogRateThrottle]
 
     def post(self, request):
         search_value = request.data.get('search_value', '').strip()
