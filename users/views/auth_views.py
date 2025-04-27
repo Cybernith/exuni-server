@@ -6,9 +6,6 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from axes.attempts import is_already_locked
-
-from helpers.functions import get_lockout_remaining_time
 
 
 class SecretKeyView(APIView):
@@ -61,13 +58,6 @@ class ObtainAuthTokenView(ObtainAuthToken):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.validated_data['user']
-
-        if user.username and is_already_locked(request, credentials={'username': user.username}):
-            message = f" اکانت شما به دلیل تلاش‌های ناموفق قفل شده است. لطفاً بعد از {get_lockout_remaining_time(user.username)} دوباره امتحان کنید"
-            return Response(
-                {'detail': message},
-                status=status.HTTP_423_LOCKED
-            )
 
         if user.secret_key:
             code = request.data.get('code', None)
