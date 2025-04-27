@@ -349,7 +349,7 @@ class ProductInventory(models.Model):
     def reduce_inventory(self, val, user=None):
         with transaction.atomic():
             if self.inventory < val:
-                raise ValidationError('موجودی کالا کافی نیست')
+                raise ValidationError(f"موجودی محصول {self.product.name} کافی نیست.")
             previous_quantity = self.inventory
             self.inventory -= val
             self.save()
@@ -428,9 +428,53 @@ class ProductPrice(models.Model):
     def __str__(self):
         return '{} - {}'.format(self.product.name, self.price)
 
+    def reduce_price(self, val, user=None, note=''):
+        with transaction.atomic():
+            now = datetime.datetime.now()
+            previous_price = self.price
+            new_price = previous_price - val
+            self.last_updated = now
+            self.save()
+
+            ProductPriceHistory.objects.create(
+                product=self.product,
+                action=ProductPriceHistory.DECREASE,
+                previous_price=previous_price,
+                new_price=new_price,
+                changed_by=user,
+                changed_at=now,
+                note=note
+            )
+
+    def increase_price(self, val, user=None, note=''):
+        with transaction.atomic():
+            now = datetime.datetime.now()
+            previous_price = self.price
+            new_price = previous_price + val
+            self.last_updated = now
+            self.save()
+
+            ProductPriceHistory.objects.create(
+                product=self.product,
+                action=ProductPriceHistory.INCREASE,
+                previous_price=previous_price,
+                new_price=new_price,
+                changed_by=user,
+                changed_at=now,
+                note=note
+            )
+
 
 class ProductPriceHistory(models.Model):
+    INCREASE = 'i'
+    DECREASE = 'd'
+
+    ACTION_CHOICES = (
+        (INCREASE, 'افزایش'),
+        (DECREASE, 'کاهش'),
+    )
     product = models.OneToOneField(Product, related_name='price_history', on_delete=models.CASCADE)
+    action = models.CharField(max_length=1, choices=ACTION_CHOICES)
     previous_price = DECIMAL()
     new_price = DECIMAL()
     changed_at = models.DateTimeField(auto_now=True)
