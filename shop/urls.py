@@ -7,7 +7,7 @@ from shop.views import CurrentUserCartApiView, CartDetailView, CurrentUserWishLi
     CurrentLimitedTimeOfferRetrieveView, ProductRateApiView, ProductRateDetailView, PostCommentApiView, \
     CommentDetailView, ShopOrderStatusHistoryApiView, StartPaymentApiView, PaymentCallbackApiView, \
     StartZarinpalPaymentApiView, ZarinpalCallbackApiView, UserProductRateApiView, CartSyncView, WishlistSyncView, \
-    ComparisonSyncView, SyncAllDataView, CreateOrderFromCartView
+    ComparisonSyncView, SyncAllDataView, ShopOrderRegistrationView, CustomerOrdersDetailView
 
 app_name = 'shop'
 urlpatterns = [
@@ -54,5 +54,6 @@ urlpatterns = [
     url(r'^product/(?P<id>[0-9]+)/comments$', ShopProductCommentListView.as_view(), name='shopProductComments'),
     url(r'^product/(?P<product_id>[0-9]+)/userRate$', UserProductRateApiView.as_view(), name='productUserRate'),
 
-    url(r'^createOrder$', CreateOrderFromCartView.as_view(), name='createOrder'),
+    url(r'^createOrder$', ShopOrderRegistrationView.as_view(), name='createOrder'),
+    url(r'^customerOrders/(?P<pk>[0-9]+)$', CustomerOrdersDetailView.as_view(), name='customerOrders'),
 ]
