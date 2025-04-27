@@ -28,7 +28,7 @@ from shop.serializers import CartCRUDSerializer, CartRetrieveSerializer, WishLis
     WishListCRUDSerializer, ComparisonRetrieveSerializer, ComparisonCRUDSerializer, ShipmentAddressCRUDSerializer, \
     ShipmentAddressRetrieveSerializer, LimitedTimeOfferItemsSerializer, LimitedTimeOfferSerializer, RateSerializer, \
     RateRetrieveSerializer, PostCommentSerializer, CommentSerializer, ShopOrderStatusHistorySerializer, \
-    SyncAllDataSerializer, CartInputSerializer, WishlistInputSerializer, CompareItemInputSerializer
+    SyncAllDataSerializer, CartInputSerializer, WishlistInputSerializer, CompareItemInputSerializer, ShopOrderSerializer
 from shop.throttles import SyncAllDataThrottle, AddToCardRateThrottle, PaymentRateThrottle, AddToWishListRateThrottle, \
     AddToComparisonRateThrottle, ShopOrderRateThrottle
 from shop.zarinpal import ZarinpalGateway
@@ -523,6 +523,16 @@ class ShopOrderRegistrationView(APIView):
             return Response({'detail': str(exception)}, status=status.HTTP_400_BAD_REQUEST)
 
 
+class CustomerOrdersDetailView(APIView):
+    permission_classes = (IsAuthenticated, BasicObjectPermission)
+    permission_basename = 'shop_order'
+
+    def get(self, request, pk):
+        orders = ShopOrder.objects.filter(customer_id=pk)
+        serializers = ShopOrderSerializer(orders, many=True)
+        return Response(serializers.data, status=status.HTTP_200_OK)
+
+
 class ShopOrderStatusHistoryApiView(APIView):
     permission_classes = (IsAuthenticated)
 
@@ -769,46 +779,3 @@ class SyncAllDataView(APIView):
             Comparison.objects.bulk_create(compare_to_create, batch_size=100)
 
         return Response({"detail": "All data synced successfully."}, status=status.HTTP_200_OK)
-
-
-class CreateOrderFromCartView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    @transaction.atomic
-    def post(self, request):
-        user = request.user
-        cart_items = Cart.objects.select_related(
-            'product',
-            'product__current_inventory',
-            'product__current_price'
-        ).filter(customer=user)
-
-        if not cart_items.exists():
-            return Response({"detail": "سبد خرید خالی است."}, status=status.HTTP_400_BAD_REQUEST)
-
-        for item in cart_items:
-            if item.product.current_inventory.inventory < item.quantity:
-                return Response({"detail": f"موجودی محصول {item.product.name} کافی نیست."},
-                                status=status.HTTP_400_BAD_REQUEST)
-
-        total_price = sum([item.product.current_price.price * item.quantity for item in cart_items])
-
-        order = ShopOrder.objects.create(customer=user, total_price=total_price)
-
-        order_items = [
-            ShopOrderItem(
-                order=order,
-                product=item.product,
-                quantity=item.quantity,
-                price=item.product.current_price.price
-            )
-            for item in cart_items
-        ]
-        ShopOrderItem.objects.bulk_create(order_items)
-
-        for item in cart_items:
-            item.product.current_inventory.reduce_inventory(item.quantity)
-        cart_items.delete()
-
-        return Response({"detail": "سفارش شما با موفقیت ثبت شد.", "order_id": order.exuni_tracking_code},
-                        status=status.HTTP_201_CREATED)

@@ -150,9 +150,19 @@ class ShopOrderItemSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class ShopOrderStatusHistorySerializer(serializers.ModelSerializer):
+    new_status_display = serializers.CharField(source='get_new_status_display', read_only=True)
+
+    class Meta:
+        read_only_fields = ('created_at', 'updated_at')
+        model = ShopOrderStatusHistory
+        fields = '__all__'
+
+
 class ShopOrderSerializer(serializers.ModelSerializer):
     customer = UserSimpleSerializer(read_only=True)
     items = ShopOrderItemSerializer(many=True, read_only=True)
+    history = ShopOrderStatusHistorySerializer(many=True, read_only=True)
 
     class Meta:
         read_only_fields = ('created_at', 'updated_at')

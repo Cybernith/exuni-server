@@ -474,7 +474,7 @@ class ProductPriceHistory(models.Model):
         (DECREASE, 'کاهش'),
     )
     product = models.OneToOneField(Product, related_name='price_history', on_delete=models.CASCADE)
-    action = models.CharField(max_length=1, choices=ACTION_CHOICES)
+    action = models.CharField(max_length=1, choices=ACTION_CHOICES, default=INCREASE)
     previous_price = DECIMAL()
     new_price = DECIMAL()
     changed_at = models.DateTimeField(auto_now=True)
