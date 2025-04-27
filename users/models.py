@@ -1,5 +1,7 @@
 import datetime
 import random
+import secrets
+
 from django.core.validators import RegexValidator
 from datetime import timedelta
 from django.contrib.auth.models import AbstractUser, Permission, UserManager
@@ -256,7 +258,7 @@ class PhoneVerification(BaseModel):
 
     @staticmethod
     def send_verification_code(username, phone):
-        verify_code = random.randint(1000, 9999)
+        verify_code = ''.join(str(secrets.randbelow(10)) for _ in range(6))
         if username and not phone:
             try:
                 user = User.objects.get(username=username)
