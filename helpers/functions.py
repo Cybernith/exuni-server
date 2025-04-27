@@ -2,13 +2,23 @@ import datetime
 import functools
 from decimal import Decimal
 from typing import Type
-
+from axes.models import AccessAttempt
+from django.utils.timezone import now
 import jdatetime
 from django.db.models.base import Model
 from django.db.models.query_utils import Q
 
 from server.settings import TESTING, DATE_FORMAT, DATETIME_FORMAT, TIME_FORMAT
 
+
+def get_lockout_remaining_time(username):
+    attempts = AccessAttempt.objects.filter(username=username, failures_since_start__gte=5)
+    if not attempts.exists():
+        return None
+    last_attempt = attempts.latest('attempt_time')
+    expire_time = last_attempt.attempt_time + datetime.timedelta(hours=1)
+    remaining = expire_time - now()
+    return remaining
 
 def get_current_user():
     from helpers.middlewares.modify_request_middleware import ModifyRequestMiddleware
