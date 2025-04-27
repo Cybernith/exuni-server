@@ -533,6 +533,16 @@ class CustomerOrdersDetailView(APIView):
         return Response(serializers.data, status=status.HTTP_200_OK)
 
 
+class ClearCustomerCartView(APIView):
+    permission_classes = (IsAuthenticated, BasicObjectPermission)
+    permission_basename = 'cart'
+
+    def delete(self, request, pk):
+        carts = Cart.objects.filter(customer_id=pk)
+        carts.delete()
+        return Response({'detail': 'your cart has been cleared'}, status=status.HTTP_204_NO_CONTENT)
+
+
 class ShopOrderStatusHistoryApiView(APIView):
     permission_classes = (IsAuthenticated)
 

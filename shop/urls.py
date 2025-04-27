@@ -7,7 +7,7 @@ from shop.views import CurrentUserCartApiView, CartDetailView, CurrentUserWishLi
     CurrentLimitedTimeOfferRetrieveView, ProductRateApiView, ProductRateDetailView, PostCommentApiView, \
     CommentDetailView, ShopOrderStatusHistoryApiView, StartPaymentApiView, PaymentCallbackApiView, \
     StartZarinpalPaymentApiView, ZarinpalCallbackApiView, UserProductRateApiView, CartSyncView, WishlistSyncView, \
-    ComparisonSyncView, SyncAllDataView, ShopOrderRegistrationView, CustomerOrdersDetailView
+    ComparisonSyncView, SyncAllDataView, ShopOrderRegistrationView, CustomerOrdersDetailView, ClearCustomerCartView
 
 app_name = 'shop'
 urlpatterns = [
@@ -16,6 +16,7 @@ urlpatterns = [
     url(r'^currentUserCart$', CurrentUserCartApiView.as_view(), name='currentUserCart'),
     url(r'^cartSync$', CartSyncView.as_view(), name='cartSync'),
     url(r'^cart/(?P<pk>[0-9]+)$', CartDetailView.as_view(), name='cartDetail'),
+    url(r'^clearCard/(?P<pk>[0-9]+)$', ClearCustomerCartView.as_view(), name='clearCustomerCart'),
 
     url(r'^currentUserWishList$', CurrentUserWishListApiView.as_view(), name='currentUserWishList'),
     url(r'^wishlistSync$', WishlistSyncView.as_view(), name='wishlistSync'),
