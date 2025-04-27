@@ -16,6 +16,4 @@ class Sms:
 
 if __name__ == '__main__':
     text = ""
-    print(
-        Sms.send('09307468674', text)
-    )
+    print(text)
