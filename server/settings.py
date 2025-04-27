@@ -55,6 +55,7 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'django_extensions',
     'colorfield',
+    'axes',
 
     'users',
     'home',
@@ -104,6 +105,7 @@ MIDDLEWARE = [
     'helpers.middlewares.check_financial_year_middleware.CheckFinancialYearMiddleware',
 
     'debug_toolbar.middleware.DebugToolbarMiddleware',
+    'axes.middleware.AxesMiddleware',
 
 ]
 
@@ -291,3 +293,10 @@ DATETIME_FORMAT = "{} {}".format(DATE_FORMAT, TIME_FORMAT)
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 4096
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+AXES_FAILURE_LIMIT = 5
+AXES_COOLOFF_TIME = datetime.timedelta(hours=1)
+AXES_ONLY_USER_FAILURES = True
+AXES_RESET_ON_SUCCESS = True
+AXES_LOCK_OUT_BY_COMBINATION_USER_AND_IP = True
+AXES_LOCKOUT_TEMPLATE = None
