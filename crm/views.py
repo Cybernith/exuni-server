@@ -9,10 +9,11 @@ from rest_framework.generics import ListAPIView
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
 
 from crm.functions import save_search_log, get_recommended_products
-from crm.models import ShopProductViewLog, SearchLog, Notification
-from crm.serializer import ShopProductViewLogCreateSerializer, NotificationCreateSerializer
+from crm.models import ShopProductViewLog, SearchLog, Notification, UserNotification
+from crm.serializer import ShopProductViewLogCreateSerializer, NotificationCreateSerializer, \
+    UserNotificationRetrieveSerializer
 from crm.throttles import UserFinalSearchLogRateThrottle, AnonFinalSearchLogRateThrottle
-from helpers.functions import date_to_str
+from helpers.functions import date_to_str, get_current_user
 from products.models import Product
 
 from rest_framework.views import APIView
@@ -274,3 +275,20 @@ class CreateNotificationAPIView(APIView):
 
             return Response({'detail': f"{len(notification)} notifications created."}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class UserCurrentNotificationsAPIView(APIView):
+    permission_classes = IsAuthenticated
+
+    def get_objects(self):
+        return UserNotification.objects.filter(
+            Q(user=get_current_user()) &
+            Q(notification__send_datetime__lte=datetime.datetime.now())
+        )
+
+    def get(self, request, pk):
+        query = self.get_objects()
+        query.update(notification_status=UserNotification.NOT_READ)
+
+        serializers = UserNotificationRetrieveSerializer(query, many=True)
+        return Response(serializers.data, status=status.HTTP_200_OK)
