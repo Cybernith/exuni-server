@@ -97,6 +97,14 @@ class ShopProductViewLog(TimeStampedModel, UserAgentModel):
         on_delete=models.CASCADE,
         db_index=True
     )
+    category = models.ForeignKey(
+        'products.Category',
+        related_name='views_log',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        db_index=True
+    )
     user = models.ForeignKey(
         'users.User',
         related_name='product_views',
@@ -145,6 +153,36 @@ class SearchLog(TimeStampedModel, UserAgentModel):
     query_value = models.CharField(max_length=255)
     search_type = models.CharField(max_length=8, choices=SEARCH_TYPES, default=RAW_TEXT)
 
+    product = models.ForeignKey(
+        'products.Product',
+        related_name='searches_log',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+    )
+    category = models.ForeignKey(
+        'products.Category',
+        related_name='searches_log',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+
+    )
+    avail = models.ForeignKey(
+        'products.Avail',
+        related_name='searches_log',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+    )
+    property = models.ForeignKey(
+        'products.ProductProperty',
+        related_name='searches_log',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+    )
+
     class Meta:
         ordering = ['-created_at']
         indexes = [
@@ -155,3 +193,65 @@ class SearchLog(TimeStampedModel, UserAgentModel):
     def __str__(self):
         return f"{self.user.name or 'guest'} search about ''' {self.query_value} ''' at {self.created_at}"
 
+
+class Notification(models.Model):
+    SEND_BY_SYSTEM = 'ss'
+    SEND_BY_ADMIN = 'sa'
+
+    TYPES = (
+        (SEND_BY_SYSTEM, 'ارسال شده توسط سامانه'),
+        (SEND_BY_ADMIN, 'ارسال شده توسط ادمین')
+    )
+
+    type = models.CharField(max_length=2, choices=TYPES, default=SEND_BY_SYSTEM)
+
+    send_datetime = models.DateTimeField(blank=True, null=True)
+    notification_title = models.CharField(max_length=255, blank=True, null=True)
+    notification_explanation = models.TextField(blank=True, null=True)
+    notification_link = models.CharField(max_length=255, blank=True, null=True)
+    is_sent = models.BooleanField(default=False)
+
+    send_sms = models.BooleanField(default=False)
+    sms_text = models.CharField(max_length=500, blank=True, null=True)
+
+    receivers = models.ManyToManyField('users.User', related_name='user_in_notification')
+
+    product = models.ForeignKey(
+        'products.Product',
+        related_name='offer_notifications',
+        on_delete=models.CASCADE,
+        db_index=True
+    )
+
+    def __str__(self):
+        return "{} ({})".format(self.notification_title, self.id)
+
+    def create_user_notifications(self):
+        for receiver in self.receivers.all():
+            self.userNotifications.create(
+                user=receiver,
+                status=UserNotification.NOT_READ,
+            )
+        self.is_sent = True
+        self.save()
+
+
+class UserNotification(models.Model):
+    PENDING = 'p'
+    READ = 'r'
+    NOT_READ = 'ur'
+
+    STATUSES = (
+        (PENDING, 'در انتظار ارسال'),
+        (READ, 'خوانده شده'),
+        (NOT_READ, 'خوانده نشده')
+    )
+
+    notification = models.ForeignKey(Notification, on_delete=models.CASCADE, related_name='crmUserNotifications')
+    user = models.ForeignKey('users.User', on_delete=models.CASCADE, related_name='crmNotifications')
+
+    notification_status = models.CharField(choices=STATUSES, max_length=2, blank=True, null=True)
+    sms_status = models.CharField(choices=STATUSES, max_length=2, blank=True, null=True)
+
+    def __str__(self):
+        return "{} -> {} ({})".format(self.notification, self.user, self.id)

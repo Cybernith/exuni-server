@@ -2,7 +2,7 @@ from django.conf.urls import url
 
 from crm.list.views import ShopProductViewLogReportListView
 from crm.views import ShopProductViewLogApiView, ProductVisitReportView, ProductInRangeVisitReportView, \
-    UserTopVisitedProductsAPIView, RegisterFinalSearchLogAPIView
+    UserTopVisitedProductsAPIView, RegisterFinalSearchLogAPIView, CreateNotificationAPIView
 
 app_name = 'crm'
 urlpatterns = [
@@ -17,4 +17,6 @@ urlpatterns = [
         name='userTopVisitedProducts'),
     url(r'^registerFinalSearchLog$', RegisterFinalSearchLogAPIView.as_view(),
         name='registerFinalSearchLog'),
+    url(r'^createNotification$', CreateNotificationAPIView.as_view(),
+        name='createNotification'),
 ]

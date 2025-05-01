@@ -9,8 +9,8 @@ from rest_framework.generics import ListAPIView
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
 
 from crm.functions import save_search_log, get_recommended_products
-from crm.models import ShopProductViewLog, SearchLog
-from crm.serializer import ShopProductViewLogCreateSerializer
+from crm.models import ShopProductViewLog, SearchLog, Notification
+from crm.serializer import ShopProductViewLogCreateSerializer, NotificationCreateSerializer
 from crm.throttles import UserFinalSearchLogRateThrottle, AnonFinalSearchLogRateThrottle
 from helpers.functions import date_to_str
 from products.models import Product
@@ -18,11 +18,13 @@ from products.models import Product
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from django.db.models import Count, Q
+from django.db.models import Count, Q, OuterRef, Exists
 from django.db.models.functions import TruncMonth
 
 from products.serializers import ProductForLogSerializer
 from products.shop.serializers import ShopProductsListSerializers
+from shop.models import ShopOrderItem, ShopOrder
+from users.models import User
 
 
 class ShopProductViewLogApiView(generics.CreateAPIView):
@@ -205,3 +207,70 @@ class RecommendedProductsAPIView(APIView):
         products = get_recommended_products(request.user)
         serializer = ShopProductsListSerializers(products, many=True)
         return Response(serializer.data)
+
+
+class CreateNotificationAPIView(APIView):
+    def post(self, request):
+        serializer = NotificationCreateSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer_data = serializer.data
+            users = User.objects.all()
+            filter_parameter = serializer_data['exclude']
+            if serializer_data['seen_product']:
+                users = users.annotate(
+                    is_seened=Exists(
+                        ShopProductViewLog.objects.filter(
+                            Q(user=OuterRef('pk')) & Q(product=serializer_data['seen_product']))
+                    )).filter(is_seened=filter_parameter)
+            if serializer_data['seen_category']:
+                users = users.annotate(
+                    is_seened=Exists(
+                        ShopProductViewLog.objects.filter(
+                            Q(user=OuterRef('pk')) & Q(category=serializer_data['seen_category']))
+                    )).filter(is_seened=filter_parameter)
+            if serializer_data['searched_about']:
+                users = users.annotate(
+                    is_searched=Exists(
+                        SearchLog.objects.filter(
+                            Q(user=OuterRef('pk')) & Q(query_value=serializer_data['searched_about']))
+                    )).filter(is_searched=filter_parameter)
+            if serializer_data['purchased_product']:
+                users = users.annotate(
+                    is_purchased=Exists(
+                        ShopOrderItem.objects.filter(
+                            Q(shop_order__customer=OuterRef('pk')) &
+                            Q(shop_order__status=ShopOrder.DELIVERED) &
+                            Q(product=serializer_data['purchased_product']))
+                    )).filter(is_purchased=filter_parameter)
+            if serializer_data['more_than_amount']:
+                users = users.annotate(
+                    is_more_than_amount=Exists(
+                        ShopOrder.objects.filter(
+                            Q(customer=OuterRef('pk')) &
+                            Q(status=ShopOrder.DELIVERED) &
+                            Q(total_price__gte=serializer_data['more_than_amount']))
+                    )).filter(is_more_than_amount=filter_parameter)
+            send_datetime = serializer_data['send_datetime'] if serializer_data['send_datetime'] else None
+            if serializer_data['send_sms']:
+                notification = Notification.objects.create(
+                    type=Notification.SEND_BY_ADMIN,
+                    send_sms=True,
+                    sms_text=serializer_data['sms_text'],
+                    send_datetime=send_datetime,
+                    receivers=users
+                )
+            else:
+                notification = Notification.objects.create(
+                    send_datetime=send_datetime,
+                    type=Notification.SEND_BY_ADMIN,
+                    send_sms=False,
+                    notification_title=serializer_data['notification_title'],
+                    notification_explanation=serializer_data['notification_explanation'],
+                    notification_link=serializer_data['notification_link'],
+                    product__id=serializer_data['product'],
+                    receivers=users
+                )
+            notification.create_user_notifications()
+
+            return Response({'detail': f"{len(notification)} notifications created."}, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
