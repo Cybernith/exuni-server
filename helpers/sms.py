@@ -4,7 +4,7 @@ class Sms:
 
     @staticmethod
     def send(phone, message):
-        sms_ir = SmsIr("m8ctbveeWwbcHyqsa8FEleAmZdGrynRoaumdTsc8pbimmH1r0dOfZL4wUay1ogP9")
+        sms_ir = SmsIr("HGJzMQfePOpaAuZZQ7qIN9yzxDpyfLFaamqkT78kshXxPevZ")
         response = sms_ir.send_sms(
             number=phone,
             message=message,

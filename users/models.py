@@ -283,12 +283,12 @@ class PhoneVerification(BaseModel):
             else:
                 phone_verification = PhoneVerification.objects.filter(phone=phone, code=code).earliest()
         except PhoneVerification.DoesNotExist:
-            raise ValidationError("کد تایید اشتباه است")
+            raise ValidationError("کد تایید اکسونی اشتباه است")
 
         if not phone_verification.is_expired:
             return code
         elif raise_exception:
-            raise ValidationError("کد تایید شما منقضی شده است")
+            raise ValidationError("کد تایید شما در اکسونی منقضی شده است")
 
         return None
 
