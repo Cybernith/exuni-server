@@ -1,8 +1,9 @@
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 
-from crm.models import ShopProductViewLog
+from crm.models import ShopProductViewLog, UserNotification, Notification
 from products.models import Product
+from products.shop.serializers import ShopProductsListSerializers
 from users.models import User
 
 
@@ -75,3 +76,18 @@ class NotificationCreateSerializer(serializers.Serializer):
             raise serializers.ValidationError("شناسه‌ دسته بندی بازدید شده نامعتبر است.")
         return value
 
+
+class NotificationRetrieveSerializer(serializers.ModelSerializer):
+    product = ShopProductsListSerializers(read_only=True)
+
+    class Meta:
+        model = Notification
+        field = ['id', 'send_datetime', 'notification_title', 'notification_explanation', 'notification_link', 'product']
+
+
+class UserNotificationRetrieveSerializer(serializers.ModelSerializer):
+    notification = NotificationRetrieveSerializer(read_only=True)
+
+    class Meta:
+        model = UserNotification
+        field = ['id', 'notification', 'sms_status']
