@@ -3,6 +3,7 @@ from django.db import models
 from helpers.models import TimeStampedModel
 
 from user_agents import parse as user_agent_parse
+from helpers.sms import Sms
 
 
 class UserAgentModel(models.Model):
@@ -238,6 +239,7 @@ class Notification(models.Model):
 
 class UserNotification(models.Model):
     PENDING = 'p'
+    SENT = 's'
     READ = 'r'
     NOT_READ = 'ur'
 
@@ -245,6 +247,11 @@ class UserNotification(models.Model):
         (PENDING, 'در انتظار ارسال'),
         (READ, 'خوانده شده'),
         (NOT_READ, 'خوانده نشده')
+    )
+
+    SMS_STATUSES = (
+        (PENDING, 'در انتظار ارسال'),
+        (SENT, 'ارسال شده'),
     )
 
     notification = models.ForeignKey(Notification, on_delete=models.CASCADE, related_name='crmUserNotifications')
@@ -255,3 +262,11 @@ class UserNotification(models.Model):
 
     def __str__(self):
         return "{} -> {} ({})".format(self.notification, self.user, self.id)
+
+    def send_sms(self):
+        Sms.send(phone=self.user.mobile_number, message=self.notification.sms_text)
+        self.sms_status = self.SENT
+        self.save()
+
+
+
