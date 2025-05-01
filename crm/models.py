@@ -236,6 +236,11 @@ class Notification(models.Model):
         self.is_sent = True
         self.save()
 
+    def send_bulk_sms(self):
+        phones = [user.mobile_number for user in self.receivers.all()]
+        Sms.bulk_send(phones=phones, message=self.sms_text)
+        self.crmUserNotifications.update(sms_status=UserNotification.SENT)
+
 
 class UserNotification(models.Model):
     PENDING = 'p'

@@ -8,7 +8,18 @@ class Sms:
         response = sms_ir.send_sms(
             number=phone,
             message=message,
-            linenumber=3000264543
+            linenumber=30002108001289
+        )
+
+        return response
+
+    @staticmethod
+    def bulk_send(phones, message):
+        sms_ir = SmsIr("HGJzMQfePOpaAuZZQ7qIN9yzxDpyfLFaamqkT78kshXxPevZ")
+        response = sms_ir.send_bulk_sms(
+            number=phones,
+            message=message,
+            linenumber=30002108001289
         )
 
         return response
