@@ -22,6 +22,14 @@ class BrandSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class BrandShopListSerializer(serializers.ModelSerializer):
+    logo = serializers.ImageField(read_only=True)
+
+    class Meta:
+        model = Brand
+        fields = ('id', 'name', 'logo')
+
+
 class BrandLogoUpdateSerializer(SModelSerializer):
     logo = serializers.ImageField(required=False)
 

@@ -1,7 +1,7 @@
 from django.db.models import Q
 
 from helpers.filters import BASE_FIELD_FILTERS
-from products.models import Product
+from products.models import Product, Brand
 from django_filters import rest_framework as filters
 import django_filters
 
@@ -51,3 +51,13 @@ class ShopProductFilter(filters.FilterSet):
                 return queryset.none()
 
             return queryset.filter(perperties__id__in=ids)
+
+
+class BrandShopListFilter(filters.FilterSet):
+
+    class Meta:
+        model = Brand
+        fields = {
+            'id': ('exact',),
+            'name': BASE_FIELD_FILTERS,
+        }
