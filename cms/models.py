@@ -1,6 +1,7 @@
 from django.db import models
 from django.core.validators import MaxValueValidator, MinValueValidator
 
+from cms.managers import CMSCustomManager
 from helpers.functions import datetime_to_str
 from helpers.models import BaseModel
 
@@ -9,9 +10,16 @@ def custom_upload_to(instance, filename):
     return 'images/{filename}'.format(filename=filename)
 
 
-class HeaderElement(BaseModel):
-    from_date_time = models.DateTimeField()
-    to_date_time = models.DateTimeField()
+class DateTimeRangeModel(models.Model):
+    from_date_time = models.DateTimeField(blank=True, null=True)
+    to_date_time = models.DateTimeField(blank=True, null=True)
+    objects = CMSCustomManager()
+
+    class Meta:
+        abstract = True
+
+
+class HeaderElement(BaseModel, DateTimeRangeModel):
     title = models.CharField(max_length=100)
     description = models.TextField(blank=True, null=True)
     mobile_image = models.ImageField(upload_to=custom_upload_to)
@@ -45,9 +53,7 @@ class HeaderElement(BaseModel):
         )
 
 
-class PopUpElement(BaseModel):
-    from_date_time = models.DateTimeField()
-    to_date_time = models.DateTimeField()
+class PopUpElement(BaseModel, DateTimeRangeModel):
     title = models.CharField(max_length=100, blank=True, null=True)
     description = models.TextField(blank=True, null=True)
     has_button = models.BooleanField(default=False)
@@ -88,7 +94,7 @@ class PopUpElement(BaseModel):
         )
 
 
-class BannerContent(BaseModel):
+class BannerContent(BaseModel, DateTimeRangeModel):
     ONE = 1
     TWO = 2
     THREE = 3
@@ -103,8 +109,6 @@ class BannerContent(BaseModel):
         (FIVE, 'بنر پنج'),
     )
 
-    from_date_time = models.DateTimeField()
-    to_date_time = models.DateTimeField()
     title = models.CharField(max_length=100, blank=True, null=True)
     auto_scroll_seconds = models.IntegerField(
         default=5,
@@ -164,7 +168,7 @@ class BannerContentItem(BaseModel):
         )
 
 
-class ShopHomePageStory(BaseModel):
+class ShopHomePageStory(BaseModel, DateTimeRangeModel):
     title = models.CharField(max_length=100, blank=True, null=True)
     description = models.TextField(blank=True, null=True)
     mobile_image = models.ImageField(upload_to=custom_upload_to)

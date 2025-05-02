@@ -172,7 +172,9 @@ def date_to_jalali(value: datetime.date):
 
 
 def datetime_to_str(value: datetime.datetime):
-    return jdatetime.datetime.fromgregorian(datetime=value).strftime(DATETIME_FORMAT)
+    if value:
+        return jdatetime.datetime.fromgregorian(datetime=value).strftime(DATETIME_FORMAT)
+    return ' '
 
 
 def sanad_exp(*args):

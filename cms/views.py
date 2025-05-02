@@ -1,6 +1,3 @@
-import datetime
-
-from django.db.models import Q
 from django.http import Http404
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.views import APIView
@@ -15,10 +12,10 @@ from helpers.auth import BasicObjectPermission
 
 
 class HeaderElementApiView(APIView):
+    permission_classes = AllowAny
 
     def get(self, request):
-        now = datetime.datetime.now()
-        query = HeaderElement.objects.filter(Q(to_date_time__lte=now) & Q(from_date_time__gte=now))
+        query = HeaderElement.objects.current_by_datetime()
         serializers = HeaderElementSerializer(query, many=True, context={'request': request})
         return Response(serializers.data, status=status.HTTP_200_OK)
 
@@ -71,10 +68,10 @@ class HeaderElementDetailView(APIView):
 
 
 class PopUpElementApiView(APIView):
+    permission_classes = AllowAny
 
     def get(self, request):
-        now = datetime.datetime.now()
-        query = PopUpElement.objects.filter(Q(to_date_time__lte=now) & Q(from_date_time__gte=now))
+        query = PopUpElement.objects.current_by_datetime()
         serializers = PopUpElementSerializer(query, many=True, context={'request': request})
         return Response(serializers.data, status=status.HTTP_200_OK)
 
@@ -127,10 +124,10 @@ class PopUpElementDetailView(APIView):
 
 
 class BannerContentApiView(APIView):
+    permission_classes = AllowAny
 
     def get(self, request):
-        now = datetime.datetime.now()
-        query = BannerContent.objects.filter(Q(to_date_time__lte=now) & Q(from_date_time__gte=now))
+        query = BannerContent.objects.current_by_datetime()
         serializers = BannerContentSerializer(query, many=True, context={'request': request})
         return Response(serializers.data, status=status.HTTP_200_OK)
 
@@ -225,10 +222,10 @@ class BannerContentItemDetailView(APIView):
 
 
 class ShopHomePageStoryApiView(APIView):
+    permission_classes = AllowAny
 
     def get(self, request):
-        now = datetime.datetime.now()
-        query = ShopHomePageStory.objects.filter(Q(to_date_time__lte=now) & Q(from_date_time__gte=now))
+        query = ShopHomePageStory.objects.current_by_datetime()
         serializers = ShopHomePageStorySerializer(query, many=True, context={'request': request})
         return Response(serializers.data, status=status.HTTP_200_OK)
 
