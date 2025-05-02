@@ -67,6 +67,7 @@ INSTALLED_APPS = [
     'reports',
     'shop',
     'cms',
+    'ai',
     'crm.apps.CrmConfig',
 
 ]
@@ -289,3 +290,8 @@ DATETIME_FORMAT = "{} {}".format(DATE_FORMAT, TIME_FORMAT)
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 4096
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+OPENAI_API_KEY = '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'
+
+SMS_IR_API_KEY = 'HGJzMQfePOpaAuZZQ7qIN9yzxDpyfLFaamqkT78kshXxPevZ'
+SMS_IR_LINE_NUMBER = 30002108001289
