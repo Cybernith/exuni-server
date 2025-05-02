@@ -3,13 +3,14 @@ from django.db.models import Q, Count, F
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, status
 from rest_framework.pagination import LimitOffsetPagination, PageNumberPagination
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from crm.functions import save_product_view_log
-from products.models import Product, Category
-from products.shop.filters import ShopProductFilter
+from products.models import Product, Category, Brand
+from products.serializers import BrandShopListSerializer
+from products.shop.filters import ShopProductFilter, BrandShopListFilter
 from products.shop.serializers import ShopProductsListSerializers, ShopProductDetailSerializers, ShopCommentSerializer, \
     ShopProductRateSerializer
 from products.trottles import UserProductDetailRateThrottle, AnonProductDetailRateThrottle, AnonProductListRateThrottle, \
@@ -283,3 +284,15 @@ class CategoryTreeView(APIView):
             cache.set(self.CACHE_KEY, tree, self.CACHE_TIMEOUT)
 
         return Response(tree, status=status.HTTP_200_OK)
+
+
+class BrandShopListView(generics.ListAPIView):
+    permission_classes = (AllowAny)
+
+    serializer_class = BrandShopListSerializer
+    filterset_class = BrandShopListFilter
+    ordering_fields = '__all__'
+    pagination_class = LimitOffsetPagination
+
+    def get_queryset(self):
+        return Brand.objects.all()
