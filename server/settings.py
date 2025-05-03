@@ -69,6 +69,7 @@ INSTALLED_APPS = [
     'cms',
     'ai',
     'crm.apps.CrmConfig',
+    'financial_management',
 
 ]
 
