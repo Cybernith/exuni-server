@@ -80,5 +80,4 @@ class WalletTransferService:
             sender_wallet.save()
             receiver_wallet.save()
 
-
             return transaction

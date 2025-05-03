@@ -83,8 +83,9 @@ class BankAccount(models.Model):
 class AuditAction(models.TextChoices):
     TOP_UP_REQUESTED = "wallet_top_up_requested", "Top-up Requested"
     TOP_UP_SUCCESS = "wallet_top_up_success", "Top-up Success"
+    WITHDRAW_REQUESTED = "wallet_withdraw_wallet_request", "Wallet Withdrawal Requested"
+    WITHDRAW_SUCCESS = "wallet_withdraw_wallet__success", "Wallet Withdraw Success"
     TRANSFER = "wallet_transfer", "Wallet Transfer"
-    WITHDRAW = "wallet_withdrawal", "Wallet Withdrawal"
     PAYMENT_ORDER = "wallet_payment_order", "Payment for Order"
     INVESTMENT = "wallet_investment", "Investment Made"
     BALANCE_UPDATED = "wallet_balance_updated", "Balance Updated"
