@@ -1,5 +1,10 @@
+import datetime
+
 from django.core.exceptions import ValidationError
 from django.db import models
+from django_fsm import FSMField, transition
+
+from helpers.models import DECIMAL
 
 
 class Wallet(models.Model):
@@ -49,6 +54,7 @@ class Transaction(models.Model):
     description = models.TextField(blank=True, null=True)
     metadata = models.JSONField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    transaction_for = models.CharField(max_length=10, choices=TRANSACTION_STATUS, default='PENDING')
 
 
 class WalletLedger(models.Model):
@@ -109,3 +115,73 @@ class FinancialAuditLog(models.Model):
     user_agent = models.CharField(max_length=256)
     extra_info = models.JSONField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
+
+
+class Payment(models.Model):
+    INITIATED = 'in'
+    PENDING = 'pe'
+    SUCCESS = 'su'
+    FAILED = 'fa'
+    EXPIRED = 'ex'
+
+    STATUS_CHOICES = (
+        (INITIATED, 'شروع شده'),
+        (PENDING, 'در حال انجام'),
+        (SUCCESS, 'موفق'),
+        (FAILED, 'ناموفق'),
+        (EXPIRED, 'منقضی  شده'),
+    )
+
+    FOR_SHOP_ORDER = 'fso'
+    FOR_AFFILIATE_ORDERS = 'fao'
+    FOR_TOP_UP_WALLET = 'ftw'
+
+    PAYMENT_TYPE_CHOICES = (
+        (FOR_SHOP_ORDER, 'سفارش فروشگاه'),
+        (FOR_AFFILIATE_ORDERS, 'سفارش های افیلیت'),
+        (FOR_TOP_UP_WALLET, 'شارژ ولت'),
+    )
+    type = models.CharField(choices=PAYMENT_TYPE_CHOICES, default=FOR_SHOP_ORDER, max_length=3)
+
+    shop_order = models.OneToOneField('shop.ShopOrder', related_name='bank_payment', on_delete=models.CASCADE,
+                                      blank=True, null=True, unique=True)
+
+    user = models.ForeignKey('users.User', related_name='bank_payment', on_delete=models.CASCADE)
+    business = models.ForeignKey('main.Business', related_name='bank_payment', on_delete=models.CASCADE, null=True)
+
+    status = FSMField(choices=STATUS_CHOICES, default=INITIATED, protected=True)
+    amount = DECIMAL()
+    gateway = models.CharField(max_length=30, blank=True, null=True)
+    reference_id = models.CharField(max_length=100, blank=True, null=True, unique=True)
+    created_at = models.DateTimeField(auto_now=True, blank=True, null=True)
+    paid_at = models.DateTimeField(blank=True, null=True)
+
+    def __str__(self):
+        return "پرداخت {} {}".format(self.reference_id, self.user.name)
+
+    @transition(field='status', source=INITIATED, target=PENDING)
+    def mark_as_pending(self, user=None):
+        print(f'{user} pending')
+
+    @transition(field='status', source=PENDING, target=SUCCESS)
+    def mark_as_success_payment(self, user=None):
+        self.paid_at = datetime.datetime.now()
+        self.save()
+        # verify transaction from bank api
+        print(f'{user} payment successfully done')
+
+    @transition(field='status', source=PENDING, target=FAILED)
+    def mark_as_failed_payment(self, user=None):
+        print(f'{user} payment failed')
+
+    @transition(field='status', source=PENDING, target=EXPIRED)
+    def mark_as_expired_payment(self, user=None):
+        print(f'{user} payment expired')
+
+
+class AffiliateOrderPayment(models.Model):
+    payment = models.ForeignKey(Payment, on_delete=models.CASCADE, related_name='affiliate_orders')
+    order = models.ForeignKey('affiliate.AffiliateFactor', on_delete=models.CASCADE, related_name='payment')
+
+    class Meta:
+        unique_together = ('payment', 'order')
