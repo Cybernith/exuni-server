@@ -2,7 +2,7 @@ from rest_framework import serializers
 
 from products.serializers import ProductSerializer
 from shop.models import Cart, WishList, Comparison, Comment, Rate, LimitedTimeOffer, LimitedTimeOfferItems, \
-    ShipmentAddress, Payment, ShopOrder, ShopOrderItem, ShopOrderStatusHistory
+    ShipmentAddress,  ShopOrder, ShopOrderItem, ShopOrderStatusHistory
 from users.models import User
 from users.serializers import UserSimpleSerializer
 
@@ -130,15 +130,6 @@ class ShipmentAddressRetrieveSerializer(serializers.ModelSerializer):
     class Meta:
         read_only_fields = ('created_at', 'updated_at')
         model = ShipmentAddress
-        fields = '__all__'
-
-
-class PaymentSerializer(serializers.ModelSerializer):
-    customer = UserSimpleSerializer(read_only=True)
-
-    class Meta:
-        read_only_fields = ('created_at', 'updated_at')
-        model = Payment
         fields = '__all__'
 
 
