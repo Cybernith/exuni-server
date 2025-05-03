@@ -48,6 +48,7 @@ urlpatterns = [
     url(r'^cms/', include('cms.urls')),
     url(r'^crm/', include('crm.urls')),
     url(r'^aiApi/', include('ai.urls')),
+    url(r'^finance/', include('financial_management.urls')),
 
     path('admin/', admin.site.urls),
 
