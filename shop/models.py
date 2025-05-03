@@ -266,54 +266,6 @@ class ShopOrderItem(BaseModel):
         return "آیتم های سفارش {} {}".format(self.shop_order.exuni_tracking_code, self.shop_order.customer.name)
 
 
-class Payment(models.Model):
-    INITIATED = 'in'
-    PENDING = 'pe'
-    SUCCESS = 'su'
-    FAILED = 'fa'
-    EXPIRED = 'ex'
-
-    STATUS_CHOICES = (
-        (INITIATED, 'شروع شده'),
-        (PENDING, 'در حال انجام'),
-        (SUCCESS, 'موفق'),
-        (FAILED, 'ناموفق'),
-        (EXPIRED, 'منقضی  شده'),
-    )
-
-    order = models.OneToOneField(ShopOrder, related_name='payment', on_delete=models.CASCADE,
-                                 blank=True, null=True, unique=True)
-    customer = models.ForeignKey('users.User', related_name='shop_payments', on_delete=models.CASCADE)
-    status = FSMField(choices=STATUS_CHOICES, default=INITIATED, protected=True)
-    amount = DECIMAL()
-    gateway = models.CharField(max_length=30, blank=True, null=True)
-    reference_id = models.CharField(max_length=100, blank=True, null=True, unique=True)
-    created_at = models.DateTimeField(auto_now=True, blank=True, null=True)
-    paid_at = models.DateTimeField(blank=True, null=True)
-
-    def __str__(self):
-        return "پرداخت {} {}".format(self.reference_id, self.customer.name)
-
-    @transition(field='status', source=INITIATED, target=PENDING)
-    def mark_as_pending(self, user=None):
-        print(f'{user} pending')
-
-    @transition(field='status', source=PENDING, target=SUCCESS)
-    def mark_as_success_payment(self, user=None):
-        self.paid_at = datetime.datetime.now()
-        self.save()
-        # verify transaction from bank api
-        print(f'{user} payment successfully done')
-
-    @transition(field='status', source=PENDING, target=FAILED)
-    def mark_as_failed_payment(self, user=None):
-        print(f'{user} payment failed')
-
-    @transition(field='status', source=PENDING, target=EXPIRED)
-    def mark_as_expired_payment(self, user=None):
-        print(f'{user} payment expired')
-
-
 class Comment(BaseModel):
     customer = models.ForeignKey('users.User', related_name='comments', on_delete=models.CASCADE)
     product = models.ForeignKey('products.Product', related_name='product_comments',  on_delete=models.CASCADE,
