@@ -119,9 +119,9 @@ class ShopOrder(BaseModel):
         (DELIVERED, 'تحویل شده'),
         (CANCELLED, 'لغو شده'),
     )
-    status = FSMField(choices=STATUS_CHOICES, default=PENDING, protected=True)
+    status = FSMField(choices=STATUS_CHOICES, default=PENDING, protected=False)
     customer = models.ForeignKey('users.User', related_name='shop_order', on_delete=models.PROTECT)
-    total_price = DECIMAL()
+    total_price = DECIMAL(default=0)
     total_product_quantity = DECIMAL(default=1)
     offer_price = DECIMAL(default=0)
     date_time = models.DateTimeField(blank=True, null=True)
@@ -209,10 +209,10 @@ class ShopOrder(BaseModel):
 
     @property
     def create_exuni_tracking_code(self):
-        create_exuni_tracking_code = random.randint(1000000000, 9999999999)
-        while ShopOrder.objects.filter(product_id=create_exuni_tracking_code).exists():
-            create_exuni_tracking_code = random.randint(1000000000, 9999999999)
-        return str(create_exuni_tracking_code)
+        exuni_tracking_code = random.randint(1000000000, 9999999999)
+        while ShopOrder.objects.filter(exuni_tracking_code=exuni_tracking_code).exists():
+            exuni_tracking_code = random.randint(1000000000, 9999999999)
+        return str(exuni_tracking_code)
 
     def __str__(self):
         return "سفارش {} {}".format(self.exuni_tracking_code, self.customer.name)

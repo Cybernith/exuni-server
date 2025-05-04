@@ -299,12 +299,12 @@ class Product(BaseModel):
         return None
 
     def set_first_inventory(self):
-        inventory = ProductInventory.objects.get_or_create(product=self, inventory=0)
+        inventory = ProductInventory.objects.create(product=self, inventory=0)
         if self.first_inventory > 0:
             inventory.increase_inventory(val=self.first_inventory, first_inventory=True)
 
     def set_first_price(self):
-        price = ProductPrice.objects.get_or_create(product=self, price=0)
+        price = ProductPrice.objects.create(product=self, price=0)
         if self.price > 0:
             price.increase_price(val=self.price)
 
@@ -328,11 +328,14 @@ class Product(BaseModel):
         )
 
     def save(self, *args, **kwargs):
+        first_register = not self.id
         if not self.product_id:
             self.product_id = self.new_id
+        super().save(*args, **kwargs)
+        if first_register:
             self.set_first_inventory()
             self.set_first_price()
-        super().save(*args, **kwargs)
+
 
 
 class ProductGallery(BaseModel):
@@ -404,7 +407,7 @@ class ProductInventory(models.Model):
 
 
     def __str__(self):
-        return '{} - {}'.format(self.product.name, self.inventory)
+        return '{} موجودی {}'.format(self.product.name, self.inventory)
 
     #def set_product_inventory(self):
     #    self.inventory = self.product.first_inventory
@@ -452,7 +455,7 @@ class ProductPrice(models.Model):
     last_updated = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return '{} - {}'.format(self.product.name, self.price)
+        return '{} قیمت {}'.format(self.product.name, self.price)
 
     def reduce_price(self, val, user=None, note=''):
         with transaction.atomic():
@@ -460,6 +463,7 @@ class ProductPrice(models.Model):
             previous_price = self.price
             new_price = previous_price - val
             self.last_updated = now
+            self.price = new_price
             self.save()
 
             ProductPriceHistory.objects.create(
@@ -478,6 +482,7 @@ class ProductPrice(models.Model):
             previous_price = self.price
             new_price = previous_price + val
             self.last_updated = now
+            self.price = new_price
             self.save()
 
             ProductPriceHistory.objects.create(
