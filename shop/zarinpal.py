@@ -2,12 +2,14 @@ from urllib.parse import urljoin
 
 import requests
 
-from server.configs import ZARINPAL_MERCHANT_ID, GATEWAY_BASE_URL
+from server.configs import ZARINPAL_MERCHANT_ID, GATEWAY_BASE_URL, GATEWAY_START_PAY_URL
 
 
 class ZarinpalGateway:
     GATEWAY_BASE_URL = GATEWAY_BASE_URL
+    GATEWAY_BASE_URL = GATEWAY_BASE_URL
     MERCHANT_ID = ZARINPAL_MERCHANT_ID
+    GATEWAY_START_PAY_URL = GATEWAY_START_PAY_URL
 
     def __init__(self, amount, description, callback_url, payment_id=None, email=None, mobile=None):
         self.amount = amount
@@ -34,15 +36,16 @@ class ZarinpalGateway:
 
         response = requests.post(f"{self.GATEWAY_BASE_URL}/request.json", json=data)
         res_data = response.json()
-        if res_data.get('data') and res_data['data'].get('code') == 100 and \
-                res_data['data']['authority'].startswith('A'):
+
+        if res_data['data'] and res_data['data']['code'] == 100 and \
+                res_data['data']['authority'].startswith('S'):
             authority = res_data['data']['authority']
             return {
                 'authority': authority,
-                'payment_url': f"{self.GATEWAY_BASE_URL}/{authority}"
+                'payment_url': f"{self.GATEWAY_START_PAY_URL}/{authority}"
             }
         else:
-            error_message = str(res_data.get('errors'))
+            error_message = str(res_data['error'])
             Exception(f"zarinpal payment request failed: {error_message}")
 
     def verify_payment(self, authority):
