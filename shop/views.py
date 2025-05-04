@@ -21,7 +21,8 @@ from financial_management.models import Payment
 from helpers.auth import BasicObjectPermission
 from helpers.functions import get_current_user
 from products.models import Product
-from server.settings import TRUSTED_GATEWAY_IP, GATEWAY_SECRET_PAYMENT_TOKEN, SECRET_KEY
+from server.configs import TRUSTED_GATEWAY_IP, GATEWAY_SECRET_PAYMENT_TOKEN
+from server.settings import SECRET_KEY
 from shop.helpers import reduce_inventory
 from shop.models import Cart, WishList, Comparison, ShipmentAddress, LimitedTimeOffer, Rate, Comment, ShopOrder, \
     ShopOrderItem, ShopOrderStatusHistory

@@ -2,26 +2,29 @@ from urllib.parse import urljoin
 
 import requests
 
-from server.settings import ZARINPAL_MERCHANT_ID
+from server.configs import ZARINPAL_MERCHANT_ID, GATEWAY_BASE_URL
 
 
 class ZarinpalGateway:
-    GATEWAY_BASE_URL = 'https://api.zarinpal.com/pg/v4/payment'
+    GATEWAY_BASE_URL = GATEWAY_BASE_URL
     MERCHANT_ID = ZARINPAL_MERCHANT_ID
 
-    def __init__(self, amount, description, callback_url, email=None, mobile=None):
+    def __init__(self, amount, description, callback_url, payment_id=None, email=None, mobile=None):
         self.amount = amount
         self.description = description
         self.callback_url = callback_url
         self.email = email
         self.mobile = mobile
+        self.payment_id = payment_id
 
     def request_payment(self):
         data = {
             'merchant_id': self.MERCHANT_ID,
             'amount': self.amount,
+            'currency': 'IRR',
             'callback_url': self.callback_url,
             'description': self.description,
+            'order_id': self.payment_id,
         }
         if self.email:
             data['metadata'] = {'email': self.email}
@@ -31,11 +34,12 @@ class ZarinpalGateway:
 
         response = requests.post(f"{self.GATEWAY_BASE_URL}/request.json", json=data)
         res_data = response.json()
-        if res_data.get('data') and res_data['data'].get('code') == 100:
+        if res_data.get('data') and res_data['data'].get('code') == 100 and \
+                res_data['data']['authority'].startswith('A'):
             authority = res_data['data']['authority']
             return {
                 'authority': authority,
-                'payment_url': f"https://api.zarinpal.com/pg/StartPay/{authority}"
+                'payment_url': f"{self.GATEWAY_BASE_URL}/{authority}"
             }
         else:
             error_message = str(res_data.get('errors'))
