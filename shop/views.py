@@ -22,7 +22,7 @@ from helpers.auth import BasicObjectPermission
 from helpers.functions import get_current_user
 from products.models import Product
 from server.configs import TRUSTED_GATEWAY_IP, GATEWAY_SECRET_PAYMENT_TOKEN
-from server.settings import SECRET_KEY
+from server.settings import SECRET_KEY, SERVER_URL
 from shop.helpers import reduce_inventory
 from shop.models import Cart, WishList, Comparison, ShipmentAddress, LimitedTimeOffer, Rate, Comment, ShopOrder, \
     ShopOrderItem, ShopOrderStatusHistory
@@ -37,7 +37,7 @@ from shop.zarinpal import ZarinpalGateway
 
 
 class CurrentUserCartApiView(APIView):
-    permission_classes = IsAuthenticated
+    permission_classes = [IsAuthenticated]
     throttle_classes = [AddToCardRateThrottle]
 
     def get(self, request):
@@ -138,7 +138,7 @@ class CartSyncView(APIView):
 
 
 class CurrentUserWishListApiView(APIView):
-    permission_classes = IsAuthenticated
+    permission_classes = [IsAuthenticated]
     throttle_classes = [AddToWishListRateThrottle]
 
     def get(self, request):
@@ -229,7 +229,7 @@ class WishlistSyncView(APIView):
 
 
 class CurrentUserComparisonApiView(APIView):
-    permission_classes = IsAuthenticated
+    permission_classes = [IsAuthenticated]
     throttle_classes = [AddToComparisonRateThrottle]
 
     def get(self, request):
@@ -472,7 +472,7 @@ class CommentDetailView(APIView):
 
 
 class ShopOrderRegistrationView(APIView):
-    permission_classes = IsAuthenticated
+    permission_classes = [IsAuthenticated]
     throttle_classes = [ShopOrderRateThrottle]
 
     def post(self, request):
@@ -629,30 +629,29 @@ class PaymentCallbackApiView(APIView):
 
 
 class StartZarinpalPaymentApiView(APIView):
-    permission_classes = IsAuthenticated
+    permission_classes = [IsAuthenticated]
     throttle_classes = [PaymentRateThrottle]
 
     def post(self, request, order_id):
         order = get_object_or_404(ShopOrder, id=order_id, customer=request.user)
 
-        if hasattr(order, 'payment'):
+        if hasattr(order, 'bank_payment'):
             return Response({'detail': 'this order already have open payment'}, status=status.HTTP_400_BAD_REQUEST)
 
         payment = Payment.objects.create(
-            order=order,
-            customer=request.user,
+            shop_order=order,
+            user=request.user,
             amount=order.total_price,
             gateway='zarinpal',
             status=Payment.INITIATED
         )
 
         payment.mark_as_pending(user=request.user)
-        relative_url = reverse('zarinpal_callback')
-
+        callback_url = SERVER_URL + reverse('shop:zarinpal_callback')
         gateway = ZarinpalGateway(
             amount=order.total_price,
             description=f'پرداخت سفارش {order.id}',
-            callback_url=urljoin(request.build_absolute_url('/'), relative_url)
+            callback_url=callback_url
         )
 
         try:
@@ -662,6 +661,7 @@ class StartZarinpalPaymentApiView(APIView):
             return Response({'payment_url': result['payment_url']})
 
         except Exception as exception:
+            payment.delete()
             return Response({'detail': str(exception)}, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -669,13 +669,13 @@ class ZarinpalCallbackApiView(APIView):
 
     def get(self, request):
         authority = request.query_params.get('Authority')
-        status = request.query_params.get('Status')
+        callback_status = request.query_params.get('Status')
 
-        if status != 'OK':
+        if callback_status != 'OK':
             return Response({'detail': 'payment failed'}, status=status.HTTP_400_BAD_REQUEST)
 
         payment = get_object_or_404(Payment, reference_id=authority)
-        order = payment.order
+        order = payment.shop_order
 
         gateway = ZarinpalGateway(
             amount=payment.amount,
@@ -685,12 +685,12 @@ class ZarinpalCallbackApiView(APIView):
 
         result = gateway.verify_payment(authority)
         if result.get('data') and result['data'].get('code') == 100:
-            payment.mark_as_success_payment(user=payment.customer)
-            order.mark_as_paid(user=payment.customer)
+            payment.mark_as_success_payment(user=payment.user)
+            order.mark_as_paid(user=payment.user)
             return Response({'detail': 'payment verify was successfully', 'ref_id': result['data']['ref_id']},
                             status=status.HTTP_200_OK)
         else:
-            payment.mark_as_failed_payment(user=payment.customer)
+            payment.mark_as_failed_payment(user=payment.user)
             return Response({'detail': 'transaction verify failed'}, status=status.HTTP_400_BAD_REQUEST)
 
 

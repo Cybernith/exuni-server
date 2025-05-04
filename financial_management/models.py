@@ -149,7 +149,7 @@ class Payment(models.Model):
     user = models.ForeignKey('users.User', related_name='bank_payment', on_delete=models.CASCADE)
     business = models.ForeignKey('main.Business', related_name='bank_payment', on_delete=models.CASCADE, null=True)
 
-    status = FSMField(choices=STATUS_CHOICES, default=INITIATED, protected=True)
+    status = FSMField(choices=STATUS_CHOICES, default=INITIATED, protected=False)
     amount = DECIMAL()
     gateway = models.CharField(max_length=30, blank=True, null=True)
     reference_id = models.CharField(max_length=100, blank=True, null=True, unique=True)
@@ -162,20 +162,27 @@ class Payment(models.Model):
     @transition(field='status', source=INITIATED, target=PENDING)
     def mark_as_pending(self, user=None):
         print(f'{user} pending')
+        self.status = self.PENDING
+        self.save()
 
     @transition(field='status', source=PENDING, target=SUCCESS)
     def mark_as_success_payment(self, user=None):
         self.paid_at = datetime.datetime.now()
+        self.status = self.SUCCESS
         self.save()
         # verify transaction from bank api
         print(f'{user} payment successfully done')
 
     @transition(field='status', source=PENDING, target=FAILED)
     def mark_as_failed_payment(self, user=None):
+        self.status = self.FAILED
+        self.save()
         print(f'{user} payment failed')
 
     @transition(field='status', source=PENDING, target=EXPIRED)
     def mark_as_expired_payment(self, user=None):
+        self.status = self.EXPIRED
+        self.save()
         print(f'{user} payment expired')
 
 

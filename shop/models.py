@@ -157,6 +157,8 @@ class ShopOrder(BaseModel):
             changed_by=user,
             note=f" order {self.id} mark as paid"
         )
+        self.status = self.PAID
+        self.save()
 
     @transition(field='status', source=PAID, target=PROCESSING)
     def process_order(self, user=None):
@@ -167,6 +169,8 @@ class ShopOrder(BaseModel):
             changed_by=user,
             note=f" order {self.id} moved to processing"
         )
+        self.status = self.PROCESSING
+        self.save()
 
     @transition(field='status', source=PROCESSING, target=SHIPPED)
     def ship_order(self, user=None):
@@ -177,6 +181,8 @@ class ShopOrder(BaseModel):
             changed_by=user,
             note=f" order {self.id} shipped"
         )
+        self.status = self.SHIPPED
+        self.save()
 
     @transition(field='status', source=SHIPPED, target=DELIVERED)
     def deliver_order(self, user=None):
@@ -187,6 +193,8 @@ class ShopOrder(BaseModel):
             changed_by=user,
             note=f" order {self.id} delivered"
         )
+        self.status = self.DELIVERED
+        self.save()
 
     @transition(field='status', source='*', target=CANCELLED)
     def cancel_order(self, user=None):
@@ -197,6 +205,8 @@ class ShopOrder(BaseModel):
             changed_by=user,
             note=f" order {self.id} canceled"
         )
+        self.status = self.CANCELLED
+        self.save()
 
     def set_constants(self):
         items = self.items.all().annotate(
