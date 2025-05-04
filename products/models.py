@@ -298,6 +298,16 @@ class Product(BaseModel):
             return offer.offer_display
         return None
 
+    def set_first_inventory(self):
+        inventory = ProductInventory.objects.get_or_create(product=self, inventory=0)
+        if self.first_inventory > 0:
+            inventory.increase_inventory(val=self.first_inventory, first_inventory=True)
+
+    def set_first_price(self):
+        price = ProductPrice.objects.get_or_create(product=self, price=0)
+        if self.price > 0:
+            price.increase_price(val=self.price)
+
     class Meta(BaseModel.Meta):
         verbose_name = 'Product'
         permission_basename = 'product'
@@ -312,9 +322,16 @@ class Product(BaseModel):
             ('deleteOwn.product', 'حذف محصول خود'),
         )
 
+    def __str__(self):
+        return "نام {} کد {}".format(
+            self.name, self.sixteen_digit_code
+        )
+
     def save(self, *args, **kwargs):
         if not self.product_id:
             self.product_id = self.new_id
+            self.set_first_inventory()
+            self.set_first_price()
         super().save(*args, **kwargs)
 
 
@@ -347,6 +364,9 @@ class ProductInventory(models.Model):
         self.save()
 
     def reduce_inventory(self, val, user=None):
+        if not val > 0:
+            raise ValidationError('reduce value most be positive number')
+
         with transaction.atomic():
             if self.inventory < val:
                 raise ValidationError(f"موجودی محصول {self.product.name} کافی نیست.")
@@ -363,20 +383,25 @@ class ProductInventory(models.Model):
                 changed_by=user
             )
 
-    def increase_inventory(self, val, user=None):
-        with transaction.atomic():
-            previous_quantity = self.inventory
-            self.inventory += val
-            self.save()
+    def increase_inventory(self, val, user=None, first_inventory=False):
+        if not val > 0:
+            raise ValidationError('increase value most be positive number')
+        else:
+            with transaction.atomic():
+                previous_quantity = self.inventory
+                self.inventory += val
+                self.save()
 
-            ProductInventoryHistory.objects.create(
-                inventory=self,
-                action=ProductInventoryHistory.INCREASE,
-                amount=val,
-                previous_quantity=previous_quantity,
-                new_quantity=self.inventory,
-                changed_by=user
-            )
+                ProductInventoryHistory.objects.create(
+                    inventory=self,
+                    action=ProductInventoryHistory.INCREASE,
+                    amount=val,
+                    previous_quantity=previous_quantity,
+                    new_quantity=self.inventory,
+                    first_inventory=first_inventory,
+                    changed_by=user
+                )
+
 
     def __str__(self):
         return '{} - {}'.format(self.product.name, self.inventory)
@@ -415,6 +440,7 @@ class ProductInventoryHistory(models.Model):
     new_quantity = models.IntegerField()
     timestamp = models.DateTimeField(auto_now=True)
     changed_by = models.ForeignKey('users.User', on_delete=models.SET_NULL, blank=True, null=True)
+    first_inventory = models.BooleanField(default=False)
 
     def __str__(self):
         return f"{self.get_action_display()} موجودی {self.inventory.product.name} "
