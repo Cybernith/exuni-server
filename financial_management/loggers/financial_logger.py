@@ -10,6 +10,7 @@ class FinancialLogger:
         action,
         severity=AuditSeverity.INFO,
         transaction=None,
+        payment=None,
         ip_address=None,
         user_agent=None,
         extra_info=None,
@@ -18,6 +19,7 @@ class FinancialLogger:
         FinancialAuditLog.objects.create(
             user=user,
             transaction=transaction,
+            payment=payment,
             action=action,
             severity=severity,
             ip_address=ip_address or "0.0.0.0",

@@ -5,7 +5,8 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from financial_management.models import Payment
+from financial_management.loggers.financial_logger import FinancialLogger
+from financial_management.models import Payment, AuditAction, AuditSeverity
 from financial_management.zarinpal import ZarinpalGateway
 from server.gateway_configs import TRUSTED_GATEWAY_IP, GATEWAY_SECRET_PAYMENT_TOKEN
 from server.settings import SERVER_URL, SECRET_KEY
@@ -75,12 +76,31 @@ class ZarinpalCallbackApiView(APIView):
         result = gateway.verify_payment(authority)
         if result.get('data') and result['data'].get('code') == 100:
             payment.mark_as_success_payment(user=payment.user)
+            FinancialLogger.log(
+                user=payment.user,
+                action=AuditAction.PAYMENT_ORDER,
+                severity=AuditSeverity.INFO,
+                payment=payment,
+                ip_address=self.kwargs.get("ip"),
+                user_agent=self.kwargs.get("agent"),
+                extra_info={"amount": str(payment.amount)}
+            )
             order.mark_as_paid(user=payment.user)
             return Response({'detail': 'payment verify was successfully', 'ref_id': result['data']['ref_id']},
                             status=status.HTTP_200_OK)
         else:
             payment.mark_as_failed_payment(user=payment.user)
-            return Response({'detail': 'transaction verify failed'}, status=status.HTTP_400_BAD_REQUEST)
+            FinancialLogger.log(
+                user=payment.user,
+                action=AuditAction.PAYMENT_FAILED,
+                severity=AuditSeverity.INFO,
+                payment=payment,
+                ip_address=self.kwargs.get("ip"),
+                user_agent=self.kwargs.get("agent"),
+                extra_info={"amount": str(payment.amount)}
+            )
+
+            return Response({'detail': 'payment verify failed'}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class StartPaymentApiView(APIView):

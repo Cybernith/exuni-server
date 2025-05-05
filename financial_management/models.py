@@ -86,37 +86,6 @@ class BankAccount(models.Model):
             raise ValidationError("حداقل یکی از فیلدهای 'کاربر' یا 'کسب و کار' باید مقدار داشته باشد.")
 
 
-class AuditAction(models.TextChoices):
-    TOP_UP_REQUESTED = "wallet_top_up_requested", "Top-up Requested"
-    TOP_UP_SUCCESS = "wallet_top_up_success", "Top-up Success"
-    WITHDRAW_REQUESTED = "wallet_withdraw_wallet_request", "Wallet Withdrawal Requested"
-    WITHDRAW_SUCCESS = "wallet_withdraw_wallet__success", "Wallet Withdraw Success"
-    TRANSFER = "wallet_transfer", "Wallet Transfer"
-    PAYMENT_ORDER = "wallet_payment_order", "Payment for Order"
-    INVESTMENT = "wallet_investment", "Investment Made"
-    BALANCE_UPDATED = "wallet_balance_updated", "Balance Updated"
-    TRANSACTION_FAILED = "transaction_failed", "Transaction Failed"
-    MANUAL_ADJUSTMENT = "admin_manual_adjustment", "Manual Adjustment"
-
-
-class AuditSeverity(models.TextChoices):
-    INFO = "info", "Info"
-    WARNING = "warning", "Warning"
-    CRITICAL = "critical", "Critical"
-
-
-class FinancialAuditLog(models.Model):
-    user = models.ForeignKey('users.User', on_delete=models.SET_NULL, null=True, related_name='pay_logs')
-    receiver = models.ForeignKey('users.User', on_delete=models.SET_NULL, null=True, related_name='receive_logs')
-    transaction = models.ForeignKey(Transaction, on_delete=models.SET_NULL, null=True, blank=True)
-    action = models.CharField(max_length=50, choices=AuditAction.choices)
-    severity = models.CharField(max_length=10, choices=AuditSeverity.choices, default=AuditSeverity.INFO)
-    ip_address = models.GenericIPAddressField()
-    user_agent = models.CharField(max_length=256)
-    extra_info = models.JSONField(blank=True, null=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-
 class Payment(models.Model):
     INITIATED = 'in'
     PENDING = 'pe'
@@ -192,3 +161,36 @@ class AffiliateOrderPayment(models.Model):
 
     class Meta:
         unique_together = ('payment', 'order')
+
+
+class AuditAction(models.TextChoices):
+    TOP_UP_REQUESTED = "wallet_top_up_requested", "Top-up Requested"
+    TOP_UP_SUCCESS = "wallet_top_up_success", "Top-up Success"
+    WITHDRAW_REQUESTED = "wallet_withdraw_wallet_request", "Wallet Withdrawal Requested"
+    WITHDRAW_SUCCESS = "wallet_withdraw_wallet__success", "Wallet Withdraw Success"
+    TRANSFER = "wallet_transfer", "Wallet Transfer"
+    PAYMENT_ORDER = "payment_order", "Payment for Order"
+    INVESTMENT = "wallet_investment", "Investment Made"
+    BALANCE_UPDATED = "wallet_balance_updated", "Balance Updated"
+    TRANSACTION_FAILED = "transaction_failed", "Transaction Failed"
+    PAYMENT_FAILED = "payment_failed", "Payment Failed"
+    MANUAL_ADJUSTMENT = "admin_manual_adjustment", "Manual Adjustment"
+
+
+class AuditSeverity(models.TextChoices):
+    INFO = "info", "Info"
+    WARNING = "warning", "Warning"
+    CRITICAL = "critical", "Critical"
+
+
+class FinancialAuditLog(models.Model):
+    user = models.ForeignKey('users.User', on_delete=models.SET_NULL, null=True, related_name='pay_logs')
+    receiver = models.ForeignKey('users.User', on_delete=models.SET_NULL, null=True, related_name='receive_logs')
+    transaction = models.ForeignKey(Transaction, on_delete=models.SET_NULL, null=True, blank=True)
+    payment = models.ForeignKey(Payment, on_delete=models.SET_NULL, null=True, blank=True)
+    action = models.CharField(max_length=50, choices=AuditAction.choices)
+    severity = models.CharField(max_length=10, choices=AuditSeverity.choices, default=AuditSeverity.INFO)
+    ip_address = models.GenericIPAddressField()
+    user_agent = models.CharField(max_length=256)
+    extra_info = models.JSONField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
