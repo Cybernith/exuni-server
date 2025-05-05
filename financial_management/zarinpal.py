@@ -1,8 +1,6 @@
-from urllib.parse import urljoin
-
 import requests
 
-from server.configs import ZARINPAL_MERCHANT_ID, GATEWAY_BASE_URL, GATEWAY_START_PAY_URL
+from server.gateway_configs import ZARINPAL_MERCHANT_ID, GATEWAY_BASE_URL, GATEWAY_START_PAY_URL
 
 
 class ZarinpalGateway:

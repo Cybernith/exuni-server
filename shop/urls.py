@@ -5,8 +5,8 @@ from shop.search import GlobalAutoCompleteSearchAPIView
 from shop.views import CurrentUserCartApiView, CartDetailView, CurrentUserWishListApiView, WishListDetailView, \
     CurrentUserComparisonApiView, ComparisonDetailView, CurrentUserShipmentAddressApiView, ShipmentAddressDetailView, \
     CurrentLimitedTimeOfferRetrieveView, ProductRateApiView, ProductRateDetailView, PostCommentApiView, \
-    CommentDetailView, ShopOrderStatusHistoryApiView, StartPaymentApiView, PaymentCallbackApiView, \
-    StartZarinpalPaymentApiView, ZarinpalCallbackApiView, UserProductRateApiView, CartSyncView, WishlistSyncView, \
+    CommentDetailView, ShopOrderStatusHistoryApiView,\
+    UserProductRateApiView, CartSyncView, WishlistSyncView, \
     ComparisonSyncView, SyncAllDataView, ShopOrderRegistrationView, CustomerOrdersDetailView, ClearCustomerCartView
 
 app_name = 'shop'
@@ -43,13 +43,6 @@ urlpatterns = [
 
     url(r'^orderStatusHistory/(?P<order_id>[0-9]+)$', ShopOrderStatusHistoryApiView.as_view(),
         name='shopOrderStatusHistory'),
-
-    url(r'^paymentStart/(?P<order_id>[0-9]+)$', StartPaymentApiView.as_view(), name='startPayment'),
-    url(r'^paymentCallback$', PaymentCallbackApiView.as_view(), name='paymentCallback'),
-
-    url(r'^zarinpalPaymentStart/(?P<order_id>[0-9]+)$', StartZarinpalPaymentApiView.as_view(), name='zarinpal_start'),
-    url(r'^zarinpalPaymentCallback$', ZarinpalCallbackApiView.as_view(), name='zarinpal_callback'),
-
     url(r'^sendComment$', CommentCreateView.as_view(), name='sendComment'),
     url(r'^sendRate$', RateUpsertApiView.as_view(), name='sendRate'),
     url(r'^product/(?P<id>[0-9]+)/comments$', ShopProductCommentListView.as_view(), name='shopProductComments'),
