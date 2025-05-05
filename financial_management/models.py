@@ -33,7 +33,6 @@ class Transaction(models.Model):
         (TOP_UP, 'شارژ ولت'),
         (WITHDRAW, 'برداشت'),
         (TRANSFER, 'انتقال'),
-        (PAYMENT, 'پرداخت'),
         (INVESTMENT, 'سرمایه گذاری'),
     )
 
