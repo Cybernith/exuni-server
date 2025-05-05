@@ -83,21 +83,20 @@ class ZarinpalCallbackApiView(APIView):
             return Response({'detail': 'transaction verify failed'}, status=status.HTTP_400_BAD_REQUEST)
 
 
-
 class StartPaymentApiView(APIView):
     throttle_classes = [PaymentRateThrottle]
 
     def post(self, request, order_id):
         order = get_object_or_404(ShopOrder, id=order_id, customer=request.user)
 
-        if hasattr(order, 'payment'):
+        if hasattr(order, 'bank_payment'):
             return Response({'detail': 'this order already have open payment'}, status=status.HTTP_400_BAD_REQUEST)
 
         gateway_name = 'gateway'
 
         payment = Payment.objects.create(
-            order=order,
-            customer=request.user,
+            shop_order=order,
+            user=request.user,
             amount=order.total_price,
             gateway=gateway_name,
             status=Payment.INITIATED
