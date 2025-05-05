@@ -1,0 +1,9 @@
+GATEWAY_DEVELOPMENT_MODE = False
+TRUSTED_GATEWAY_IP = ['185.21.1.13']
+GATEWAY_SECRET_PAYMENT_TOKEN = 'GATEWAY_SECRET_PAYMENT_TOKEN'
+ZARINPAL_SIGNATURE = 'GATEWAY_SECRET_PAYMENT_TOKEN'
+ZARINPAL_MERCHANT_ID = '7ad16dcf-0cd3-45e0-81c1-65cc674f91a4'
+GATEWAY_BASE_URL = 'https://payment.zarinpal.com/pg/v4/payment'
+GATEWAY_START_PAY_URL = 'https://payment.zarinpal.com/pg/StartPay'
+GATEWAY_DEVELOPMENT_URL = 'https://sandbox.zarinpal.com/pg/v4/payment'
+GATEWAY_DEVELOPMENT_START_PAY_URL = 'https://sandbox.zarinpal.com/pg/StartPay'

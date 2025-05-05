@@ -25,9 +25,5 @@ class AddToComparisonRateThrottle(UserRateThrottle):
     rate = '30/min'
 
 
-class PaymentRateThrottle(UserRateThrottle):
-    rate = '10/hour'
-
-
 class ShopOrderRateThrottle(UserRateThrottle):
     rate = '6/hour'
