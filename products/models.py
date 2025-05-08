@@ -110,6 +110,18 @@ class Product(BaseModel):
         (UNDER_REVIEW, 'در حال بررسی'),
     )
 
+    SIMPLE = 's'
+    VARIABLE = 'v'
+    VARIATION = 'a'
+
+    TYPES = (
+        (SIMPLE, 'بدون متغیر'),
+        (VARIABLE, 'دارای متغیر'),
+        (VARIATION, 'متغیر'),
+    )
+
+    product_type = models.CharField(max_length=1, default=SIMPLE)
+    variation_of = models.ForeignKey('self', on_delete=models.PROTECT, related_name='variations', blank=True, null=True)
     product_id = models.CharField(max_length=150, unique=True,
                                   error_messages={'unique': "کالا با این شناسه از قبل در اکسونی ثبت شده"})
 
