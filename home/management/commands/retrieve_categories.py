@@ -7,7 +7,7 @@ from products.models import Category
 
 
 class Command(BaseCommand):
-    help = 'insert moadian wares'
+    help = 'retrieve categories'
 
     def handle(self, *args, **options):
         Category.objects.all().delete()

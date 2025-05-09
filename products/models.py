@@ -21,6 +21,8 @@ def custom_upload_to(instance, filename):
 
 
 class Brand(BaseModel):
+    unique_code = models.IntegerField(unique=True, null=True)
+    slug = models.CharField(max_length=150, blank=True, null=True)
     name = models.CharField(max_length=150, unique=True)
     logo = models.ImageField(upload_to=custom_upload_to, null=True, blank=True, default=None)
     is_domestic = models.BooleanField(default=True)
@@ -40,6 +42,9 @@ class Brand(BaseModel):
             ('updateOwn.brand', 'ویرایش برند خود'),
             ('deleteOwn.brand', 'حذف برند خود'),
         )
+
+    def __str__(self):
+        return self.name
 
 
 class Avail(BaseModel):
@@ -62,6 +67,7 @@ class Avail(BaseModel):
 
 
 class ProductProperty(BaseModel):
+    unique_code = models.IntegerField(unique=True, null=True)
     name = models.CharField(max_length=150)
     slug = models.CharField(max_length=150, blank=True, null=True)
     explanation = models.CharField(max_length=255, blank=True, null=True)
@@ -80,10 +86,15 @@ class ProductProperty(BaseModel):
             ('deleteOwn.product_property', 'حذف خصوصیت کالا خود'),
         )
 
+    def __str__(self):
+        return self.name
+
+
 
 class ProductPropertyTerm(BaseModel):
     product_property = models.ForeignKey(ProductProperty, related_name='terms',
                                          on_delete=models.CASCADE, blank=True, null=True)
+    unique_code = models.IntegerField(unique=True, null=True)
     name = models.CharField(max_length=150, blank=True, null=True)
     slug = models.CharField(max_length=150, blank=True, null=True)
     explanation = models.CharField(max_length=255, blank=True, null=True)
@@ -101,6 +112,9 @@ class ProductPropertyTerm(BaseModel):
             ('updateOwn.product_property_term', 'ویرایش آیتم خصوصیت کالا خود'),
             ('deleteOwn.product_property_term', 'حذف آیتم خصوصیت کالا خود'),
         )
+
+    def __str__(self):
+        return self.product_property.name + ' >  ' + self.name
 
 
 class Category(BaseModel):
@@ -380,6 +394,46 @@ class Product(BaseModel):
         if first_register:
             self.set_first_inventory()
             self.set_first_price()
+
+
+class ProductAttribute(BaseModel):
+    product = models.ForeignKey(Product, related_name='attributes', on_delete=models.CASCADE)
+    product_property = models.ForeignKey(ProductProperty, related_name='property_attributes', on_delete=models.CASCADE)
+    name = models.CharField(max_length=150)
+    explanation = models.CharField(max_length=255, blank=True, null=True)
+
+    class Meta(BaseModel.Meta):
+        verbose_name = 'ProductAttribute'
+        permission_basename = 'product_attribute'
+        permissions = (
+            ('get.product_attribute', 'مشاهده ویژگی کالا'),
+            ('create.product_attribute', 'تعریف ویژگی کالا'),
+            ('update.product_attribute', 'ویرایش ویژگی کالا'),
+            ('delete.product_attribute', 'حذف ویژگی کالا'),
+
+            ('getOwn.product_attribute', 'مشاهده ویژگی کالا خود'),
+            ('updateOwn.product_attribute', 'ویرایش ویژگی کالا خود'),
+            ('deleteOwn.product_attribute', 'حذف ویژگی کالا خود'),
+        )
+
+
+class ProductAttributeTerm(BaseModel):
+    product_attribute = models.ForeignKey(ProductAttribute, related_name='terms', on_delete=models.CASCADE)
+    terms = models.ManyToManyField(ProductPropertyTerm, related_name='attribute_in_products')
+
+    class Meta(BaseModel.Meta):
+        verbose_name = 'ProductAttributeTerm'
+        permission_basename = 'product_attribute_term'
+        permissions = (
+            ('get.product_attribute_term', 'مشاهده آیتم ویژگی کالا'),
+            ('create.product_attribute_term', 'تعریف آیتم ویژگی کالا'),
+            ('update.product_attribute_term', 'ویرایش آیتم ویژگی کالا'),
+            ('delete.product_attribute_term', 'حذف آیتم ویژگی کالا'),
+
+            ('getOwn.product_attribute_term', 'مشاهده آیتم ویژگی کالا خود'),
+            ('updateOwn.product_attribute_term', 'ویرایش آیتم ویژگی کالا خود'),
+            ('deleteOwn.product_attribute_term', 'حذف آیتم ویژگی کالا خود'),
+        )
 
 
 class ProductGallery(BaseModel):

@@ -363,3 +363,4 @@ def change_to_num(val):
         return round(val)
     else:
         return 0
+
