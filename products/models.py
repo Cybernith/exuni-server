@@ -63,7 +63,7 @@ class Avail(BaseModel):
 
 class ProductProperty(BaseModel):
     name = models.CharField(max_length=150)
-    value = models.CharField(max_length=150, blank=True, null=True)
+    slug = models.CharField(max_length=150, blank=True, null=True)
     explanation = models.CharField(max_length=255, blank=True, null=True)
 
     class Meta(BaseModel.Meta):
@@ -78,6 +78,28 @@ class ProductProperty(BaseModel):
             ('getOwn.product_property', 'مشاهده خصوصیت کالا خود'),
             ('updateOwn.product_property', 'ویرایش خصوصیت کالا خود'),
             ('deleteOwn.product_property', 'حذف خصوصیت کالا خود'),
+        )
+
+
+class ProductPropertyTerm(BaseModel):
+    product_property = models.ForeignKey(ProductProperty, related_name='terms',
+                                         on_delete=models.CASCADE, blank=True, null=True)
+    name = models.CharField(max_length=150, blank=True, null=True)
+    slug = models.CharField(max_length=150, blank=True, null=True)
+    explanation = models.CharField(max_length=255, blank=True, null=True)
+
+    class Meta(BaseModel.Meta):
+        verbose_name = 'ProductPropertyTerm'
+        permission_basename = 'product_property_term'
+        permissions = (
+            ('get.product_property_term', 'مشاهده آیتم خصوصیت کالا'),
+            ('create.product_property_term', 'تعریف آیتم خصوصیت کالا'),
+            ('update.product_property_term', 'ویرایش آیتم خصوصیت کالا'),
+            ('delete.product_property_term', 'حذف آیتم خصوصیت کالا'),
+
+            ('getOwn.product_property_term', 'مشاهده آیتم خصوصیت کالا خود'),
+            ('updateOwn.product_property_term', 'ویرایش آیتم خصوصیت کالا خود'),
+            ('deleteOwn.product_property_term', 'حذف آیتم خصوصیت کالا خود'),
         )
 
 
