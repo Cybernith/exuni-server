@@ -1,14 +1,22 @@
 from django.contrib import admin
 
 from products.models import Brand, Avail, ProductProperty, Category, Product, ProductGallery, ProductInventory, \
-    ProductPrice, ProductPriceHistory, ProductInventoryHistory
+    ProductPrice, ProductPriceHistory, ProductInventoryHistory, ProductPropertyTerm, ProductAttribute, \
+    ProductAttributeTerm
 
-admin.site.register(Brand)
 admin.site.register(Avail)
 admin.site.register(ProductProperty)
+admin.site.register(ProductPropertyTerm)
+admin.site.register(ProductAttribute)
+admin.site.register(ProductAttributeTerm)
 admin.site.register(Category)
 admin.site.register(Product)
 admin.site.register(ProductGallery)
+
+
+@admin.register(Brand)
+class BrandAdmin(admin.ModelAdmin):
+    search_fields = ['name']
 
 
 @admin.register(ProductPrice)
