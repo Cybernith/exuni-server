@@ -82,7 +82,10 @@ class ProductProperty(BaseModel):
 
 
 class Category(BaseModel):
-    name = models.CharField(max_length=150)
+    slug = models.SlugField(max_length=255)
+    unique_code = models.IntegerField(unique=True)
+    parent_unique_code = models.IntegerField(blank=True, null=True)
+    name = models.CharField(max_length=255)
     parent = models.ForeignKey('self', on_delete=models.PROTECT, related_name='children', blank=True, null=True)
     picture = models.ImageField(upload_to=custom_upload_to, null=True, blank=True, default=None)
 
@@ -99,6 +102,14 @@ class Category(BaseModel):
             ('updateOwn.category', 'ویرایش دسته بندی خود'),
             ('deleteOwn.category', 'حذف دسته بندی خود'),
         )
+
+    def __str__(self):
+        names = [self.name]
+        parent = self.parent
+        while parent:
+            names.append(parent.name)
+            parent = parent.parent
+        return " > ".join(reversed(names))
 
 
 class Product(BaseModel):
@@ -166,7 +177,7 @@ class Product(BaseModel):
     avails = models.ManyToManyField(Avail, related_name="products_with_this_avail", blank=True)
     properties = models.ManyToManyField(ProductProperty, related_name="products_with_this_properties", blank=True)
 
-    category = models.ForeignKey(Category, related_name='products', on_delete=models.SET_NULL, blank=True, null=True)
+    category = models.ManyToManyField(Category, related_name='products')
     barcode = models.CharField(max_length=150, blank=True, null=True)
 
     @property
@@ -347,7 +358,6 @@ class Product(BaseModel):
         if first_register:
             self.set_first_inventory()
             self.set_first_price()
-
 
 
 class ProductGallery(BaseModel):
