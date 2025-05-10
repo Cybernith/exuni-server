@@ -18,7 +18,6 @@ def save_product_picture_from_url(product_id, image_url):
         current_product = Product.objects.get(id=product_id)
         file_name = image_url.split('/')[-1]
         current_product.picture.save(file_name, ContentFile(response.content), save=True)
-        # print(f'picture added to {current_product.name}')
         return current_product.picture
 
 
@@ -31,11 +30,10 @@ def add_product_picture_gallery_from_url(product_id, image_urls):
             gallery = ProductGallery.objects.create(product=product)
             file_name = image_url.split('/')[-1]
             gallery.picture.save(file_name, ContentFile(response.content), save=True)
-            # print(f'{counter} picture added to {product.name} gallery')
-            # counter += 1
+
 
 class Command(BaseCommand):
-    help = 'retrieve properties'
+    help = 'retrieve and create products'
 
     def handle(self, *args, **options):
         Product.objects.filter(product_type=Product.VARIATION).delete()
