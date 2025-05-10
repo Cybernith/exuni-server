@@ -169,6 +169,14 @@ class Product(BaseModel):
         (VARIATION, 'متغیر'),
     )
 
+    PERCENT = 'percent'
+    AMOUNT = 'amount'
+
+    PROFIT_TYPES = (
+        (PERCENT, 'سود درصدی'),
+        (AMOUNT, 'سود مبلغی'),
+    )
+    status = models.CharField(max_length=7, choices=STATUSES, default=PENDING)
     product_type = models.CharField(max_length=9, choices=TYPES, default=SIMPLE)
     variation_of = models.ForeignKey('self', on_delete=models.PROTECT, related_name='variations', blank=True, null=True)
     product_id = models.CharField(max_length=255, unique=True,
@@ -185,15 +193,22 @@ class Product(BaseModel):
     first_texture_picture = models.ImageField(upload_to=custom_upload_to, null=True, blank=True, default=None)
     second_texture_picture = models.ImageField(upload_to=custom_upload_to, null=True, blank=True, default=None)
 
-    first_inventory = models.IntegerField(default=0)
+    first_inventory = models.IntegerField(default=0, null=True, blank=True)
     shelf_code = models.CharField(max_length=20, null=True, blank=True)
     min_inventory = models.IntegerField(default=0)
 
-    price = DECIMAL()
-    sale_price = DECIMAL()
+    price = DECIMAL(null=True, blank=True)
+    sale_price = DECIMAL(null=True, blank=True)
+    regular_price = DECIMAL(null=True, blank=True)
+    currency_price = DECIMAL(null=True, blank=True)
+
     shipping_cost = DECIMAL()
     currency = models.ForeignKey(Currency, on_delete=models.SET_NULL, related_name='products', blank=True, null=True)
-    profit_percent = DECIMAL()
+
+    profit_type = models.CharField(choices=PROFIT_TYPES, default=PERCENT, max_length=10)
+    profit_margin = DECIMAL(null=True, blank=True)
+
+    taxable = models.BooleanField(default=True)
     tax_percent = DECIMAL()
 
     supplier = models.ForeignKey(Supplier, on_delete=models.SET_NULL, related_name='products', blank=True, null=True)
@@ -205,8 +220,6 @@ class Product(BaseModel):
 
     product_date = models.DateField(blank=True, null=True)
     expired_date = models.DateField(blank=True, null=True)
-
-    status = models.CharField(max_length=7, choices=STATUSES, default=PENDING)
 
     postal_weight = DECIMAL()
     length = models.IntegerField(blank=True, null=True)
@@ -362,12 +375,12 @@ class Product(BaseModel):
 
     def set_first_inventory(self):
         inventory = ProductInventory.objects.create(product=self, inventory=0)
-        if self.first_inventory > 0:
+        if self.first_inventory:
             inventory.increase_inventory(val=self.first_inventory, first_inventory=True)
 
     def set_first_price(self):
         price = ProductPrice.objects.create(product=self, price=0)
-        if self.price > 0:
+        if self.price:
             price.increase_price(val=self.price)
 
     class Meta(BaseModel.Meta):
@@ -391,8 +404,8 @@ class Product(BaseModel):
 
     def save(self, *args, **kwargs):
         first_register = not self.id
-        if not self.product_id:
-            self.product_id = self.new_id
+        # if not self.product_id:
+        #     self.product_id = self.new_id
         super().save(*args, **kwargs)
         if first_register:
             self.set_first_inventory()
@@ -456,6 +469,8 @@ class ProductGallery(BaseModel):
             ('updateOwn.product_gallery', 'ویرایش گالری محصول خود'),
             ('deleteOwn.product_gallery', 'حذف گالری محصول خود'),
         )
+    def __str__(self):
+        return self.product.name + ' تصویر '
 
 
 class ProductInventory(models.Model):

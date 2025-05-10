@@ -1,5 +1,6 @@
 from django.db import models
 
+from helpers.functions import add_separator
 from helpers.models import BaseModel, DECIMAL
 from colorfield.fields import ColorField
 import os
@@ -89,16 +90,17 @@ class Store(BaseModel):
 
 
 class Currency(BaseModel):
+    unique_code = models.IntegerField(unique=True, blank=True, null=True)
     name = models.CharField(max_length=150)
-    exchange_rate_to_toman = models.IntegerField(default=1)
+    exchange_rate_to_toman = DECIMAL(default=1)
 
-    def exchange_to_rial(self, amount):
+    def exchange_to_toman(self, amount):
         if amount:
             return amount * self.exchange_rate_to_toman
         else:
             return 0
 
-    def exchange_rial_to_currency(self, amount):
+    def exchange_toman_to_currency(self, amount):
         if amount:
             return amount / self.exchange_rate_to_toman
         else:
@@ -117,6 +119,9 @@ class Currency(BaseModel):
             ('updateOwn.currency', 'ویرایش ارز خود'),
             ('deleteOwn.currency', 'حذف ارز خود'),
         )
+
+    def __str__(self):
+        return f'{self.name} >  {add_separator(self.exchange_rate_to_toman)} تومان '
 
 
 class Supplier(BaseModel):
