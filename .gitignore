@@ -9,6 +9,7 @@ media/*/
 *.json
 backups/refresh_balance
 backups/refresh_inventory
+order_users.json
 
 # Editor directories and files
 .idea/

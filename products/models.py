@@ -179,6 +179,8 @@ class Product(BaseModel):
     status = models.CharField(max_length=7, choices=STATUSES, default=PENDING)
     product_type = models.CharField(max_length=9, choices=TYPES, default=SIMPLE)
     variation_of = models.ForeignKey('self', on_delete=models.PROTECT, related_name='variations', blank=True, null=True)
+    variation_title = models.CharField(max_length=150, blank=True, null=True)
+
     product_id = models.CharField(max_length=255, unique=True,
                                   error_messages={'unique': "کالا با این شناسه از قبل در اکسونی ثبت شده"})
     slug = models.SlugField(max_length=255, blank=True, null=True)
@@ -398,9 +400,18 @@ class Product(BaseModel):
         )
 
     def __str__(self):
-        return "نام {} کد {}".format(
-            self.name, self.sixteen_digit_code
-        )
+        if self.product_type == self.SIMPLE:
+            return "نام {} کد {}".format(
+                self.name, self.sixteen_digit_code
+            )
+        elif self.product_type == self.VARIABLE:
+            return "نام {} دارای متغیر".format(
+                self.name
+            )
+        else:
+            return "نام  {} {} {} کد {}".format(
+                self.variation_of.name, self.variation_title, self.name, self.sixteen_digit_code
+            )
 
     def save(self, *args, **kwargs):
         first_register = not self.id
@@ -432,6 +443,11 @@ class ProductAttribute(BaseModel):
             ('deleteOwn.product_attribute', 'حذف ویژگی کالا خود'),
         )
 
+    def __str__(self):
+        return "محصول {} > {}".format(
+            self.product.name, self.product_property.name
+        )
+
 
 class ProductAttributeTerm(BaseModel):
     product_attribute = models.ForeignKey(ProductAttribute, related_name='terms', on_delete=models.CASCADE)
@@ -449,6 +465,15 @@ class ProductAttributeTerm(BaseModel):
             ('getOwn.product_attribute_term', 'مشاهده آیتم ویژگی کالا خود'),
             ('updateOwn.product_attribute_term', 'ویرایش آیتم ویژگی کالا خود'),
             ('deleteOwn.product_attribute_term', 'حذف آیتم ویژگی کالا خود'),
+        )
+
+    def __str__(self):
+        terms = ''
+        for term in self.terms.all():
+            terms += term.name
+            terms += ' | '
+        return "محصول {} > {} > {}".format(
+            self.product_attribute.product.name, self.product_attribute.product_property.name, terms
         )
 
 

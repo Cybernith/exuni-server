@@ -18,21 +18,21 @@ def save_product_picture_from_url(product_id, image_url):
         current_product = Product.objects.get(id=product_id)
         file_name = image_url.split('/')[-1]
         current_product.picture.save(file_name, ContentFile(response.content), save=True)
-        print(f'picture added to {current_product.name}')
+        # print(f'picture added to {current_product.name}')
         return current_product.picture
 
 
 def add_product_picture_gallery_from_url(product_id, image_urls):
     for image_url in image_urls:
         response = requests.get(image_url)
-        counter = 1
+        # counter = 1
         if response.status_code == 200:
             product = Product.objects.get(id=product_id)
             gallery = ProductGallery.objects.create(product=product)
             file_name = image_url.split('/')[-1]
             gallery.picture.save(file_name, ContentFile(response.content), save=True)
-            print(f'{counter} picture added to {product.name} gallery')
-            counter += 1
+            # print(f'{counter} picture added to {product.name} gallery')
+            # counter += 1
 
 class Command(BaseCommand):
     help = 'retrieve properties'
@@ -51,7 +51,8 @@ class Command(BaseCommand):
         page = 1
         response_len = 20
         while response_len == 20:
-            products = [wcapi.get("products/101014", params={"per_page": 20, 'page': page}).json()]
+            products = wcapi.get("products", params={"per_page": 20, 'page': page}).json()
+            counter = 1
             for product in products:
                 if product['type'] == 'simple':
                     new_product = Product.objects.create(
@@ -82,32 +83,33 @@ class Command(BaseCommand):
                     attributes = product['attributes']
                     meta_datas = product['meta_data']
 
-                    product_attributes = [item for item in attributes if item["name"] not in ['برند', 'رنگ', 'ساخت کشور']]
+                    product_attributes = [item for item in attributes if item["id"] not in [0, 1, 2]]
 
-                    brand_name = next((attribute for attribute in attributes if attribute["name"] == "برند"), None)
+                    brand_name = next((attribute for attribute in attributes if attribute["id"] == 1), None)
 
-                    made_in = next((attribute for attribute in attributes if attribute["name"] == "ساخت کشور"), None)
+                    made_in = next((attribute for attribute in attributes if attribute["id"] == 2), None)
 
                     currency = next((meta_data for meta_data in meta_datas if
                                      meta_data["key"] == "_mnswmc_currency_ids"), None)
 
                     profit_margin = next((meta_data for meta_data in meta_datas if
-                                          meta_data["key"] == "_mnswmc_profit_margin"), 0)
+                                          meta_data["key"] == "_mnswmc_profit_margin"), None)
 
                     currency_price = next((meta_data for meta_data in meta_datas if
-                                          meta_data["key"] == "_mnswmc_regular_price"), 0)
-                    if currency:
+                                          meta_data["key"] == "_mnswmc_regular_price"), None)
+                    if currency and currency['value'] != '[]':
                         currency_code = currency['value'].translate({ord(i): None for i in '[]'})
                         new_product.currency = Currency.objects.get(unique_code=int(currency_code))
 
-                    if brand_name:
+                    if brand_name and brand_name['options'][0]:
                         new_product_brand = Brand.objects.get(name=brand_name['options'][0])
                         new_product.brand = new_product_brand
                         new_product_brand.made_in = made_in['options'][0]
 
-
-                    new_product.profit_margin = float(profit_margin['value']) if profit_margin['value'] else None
-                    new_product.currency_price = float(currency_price['value']) if currency_price['value'] else None
+                    if profit_margin:
+                        new_product.profit_margin = float(profit_margin['value']) if profit_margin['value'] else None
+                    if currency_price:
+                        new_product.currency_price = float(currency_price['value']) if currency_price['value'] else None
                     new_product.save()
 
                     for product_attribute in product_attributes:
@@ -153,9 +155,12 @@ class Command(BaseCommand):
                     attributes = product['attributes']
                     meta_datas = product['meta_data']
 
-                    product_attributes = [item for item in attributes if item["name"] not in ['برند', 'رنگ', 'ساخت کشور']]
+                    product_attributes = [item for item in attributes if item["id"] not in [0, 1, 2]]
 
                     brand_name = next((attribute for attribute in attributes if attribute["name"] == "برند"), None)
+
+                    variation_title = next((attribute['name'] for attribute in attributes if attribute["id"] == 0), None)
+                    new_product.variation_title = variation_title
 
                     made_in = next((attribute for attribute in attributes if attribute["name"] == "ساخت کشور"), None)
 
@@ -167,11 +172,16 @@ class Command(BaseCommand):
                     currency_price = next((meta_data for meta_data in meta_datas if
                                           meta_data["key"] == "_mnswmc_regular_price"), 0)
 
-                    if currency:
+                    if currency and currency['value'] != '[]':
                         currency_code = currency['value'].translate({ord(i): None for i in '[]'})
+                        print(currency_code)
+                        print(currency_code)
+                        print(currency_code)
+                        print(currency_code)
+                        print(currency_code)
                         new_product.currency = Currency.objects.get(unique_code=int(currency_code))
 
-                    if brand_name:
+                    if brand_name and brand_name['options'][0]:
                         new_product_brand = Brand.objects.get(name=brand_name['options'][0])
                         new_product.brand = new_product_brand
                         new_product_brand.made_in = made_in['options'][0]
@@ -184,7 +194,7 @@ class Command(BaseCommand):
                     for product_attribute in product_attributes:
                         product_property = ProductProperty.objects.get(unique_code=product_attribute['id'])
                         new_product_attribute = ProductAttribute.objects.create(
-                            product=new_variation,
+                            product=new_product,
                             product_property=product_property
                         )
                         new_product_attribute_term = ProductAttributeTerm.objects.create(
@@ -197,9 +207,11 @@ class Command(BaseCommand):
 
                     variations = wcapi.get(f"products/{product['id']}/variations",
                                            params={"per_page": 50, 'page': 1}).json()
+                    variation_counter = 1
                     for variation in variations:
                         new_variation = Product.objects.create(
                                 variation_of=new_product,
+                                variation_title=new_product.variation_title,
                                 product_type=Product.VARIATION,
                                 product_id=variation['id'],
                                 status=variation['status'],
@@ -213,43 +225,49 @@ class Command(BaseCommand):
                         pic = save_product_picture_from_url(new_variation.id, variation['image']['src'])
                         new_variation.picture = pic
 
-                        attributes = variation['attributes']
                         meta_datas = variation['meta_data']
 
-                        product_attributes = [item for item in attributes if
-                                              item["name"] not in ['برند', 'رنگ', 'ساخت کشور']]
-
                         currency = next((meta_data for meta_data in meta_datas if
-                                         meta_data["key"] == "_mnswmc_currency_ids"), None)
+                                         meta_data["key"] == "_mnswmc_currency_id"), None)
 
                         profit_margin = next((meta_data for meta_data in meta_datas if
-                                              meta_data["key"] == "_mnswmc_profit_margin"), 0)
+                                              meta_data["key"] == "_mnswmc_profit_margin"), None)
                         currency_price = next((meta_data for meta_data in meta_datas if
-                                               meta_data["key"] == "_mnswmc_regular_price"), 0)
-                        if currency:
+                                               meta_data["key"] == "_mnswmc_regular_price"), None)
+                        if currency and currency['value'] != '':
                             currency_code = currency['value'].translate({ord(i): None for i in '[]'})
                             new_variation.currency = Currency.objects.get(unique_code=int(currency_code))
 
-                        new_variation.profit_margin = float(profit_margin['value']) if profit_margin['value'] else 0
-                        new_variation.currency_price = float(currency_price['value']) if currency_price['value'] else 0
+                        if profit_margin:
+                            new_variation.profit_margin = float(profit_margin['value']) if profit_margin['value'] else 0
+                        if currency_price:
+                            new_variation.currency_price = float(currency_price['value']) if currency_price['value'] else 0
+                        new_variation.save()
+                        print(f'{variation_counter} variation product added')
+                        variation_counter += 1
 
-                        for product_attribute in product_attributes:
-                            product_property = ProductProperty.objects.get(unique_code=product_attribute['id'])
-                            new_product_attribute = ProductAttribute.objects.create(
-                                product=new_variation,
-                                product_property=product_property
-                            )
-                            new_product_attribute_term = ProductAttributeTerm.objects.create(
-                                product_attribute=new_product_attribute
-                            )
-                            for term in product_attribute['options']:
-                                new_product_attribute_term.terms.add(
-                                    ProductPropertyTerm.objects.get(name=term)
-                                )
+                print(f'{counter} product added')
+                counter += 1
+                        #attributes = variation['attributes']
+                        #product_attributes = [item for item in attributes if item["id"] not in [0, 1, 2]]
+
+                        # for product_attribute in product_attributes:
+                        #     product_property = ProductProperty.objects.get(unique_code=product_attribute['id'])
+                        #     new_product_attribute = ProductAttribute.objects.create(
+                        #         product=new_variation,
+                        #         product_property=product_property
+                        #     )
+                        #     new_product_attribute_term = ProductAttributeTerm.objects.create(
+                        #         product_attribute=new_product_attribute
+                        #     )
+                        #     for term in product_attribute['options']:
+                        #         new_product_attribute_term.terms.add(
+                        #             ProductPropertyTerm.objects.get(name=term)
+                        #         )
 
             print(f'{20 * page} product retrieved')
             page += 1
-            response_len = len(products)
+            response_len = 0
 
 
 
