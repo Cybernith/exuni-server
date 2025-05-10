@@ -94,7 +94,7 @@ class ProductFilter(filters.FilterSet):
             'price': BASE_FIELD_FILTERS,
             'shipping_cost': BASE_FIELD_FILTERS,
             'currency': ('exact',),
-            'profit_percent': BASE_FIELD_FILTERS,
+            'profit_margin': BASE_FIELD_FILTERS,
             'tax_percent': BASE_FIELD_FILTERS,
             'supplier': ('exact',),
             'brand': ('exact', 'in'),
