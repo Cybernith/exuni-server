@@ -22,7 +22,7 @@ class Command(BaseCommand):
             wp_api=True,
             timeout=30
         )
-        page = 25662
+        page = 28803
         response_len = 2
         while response_len == 2:
             response = wcapi.get("orders", params={"per_page": 2, 'page': page}).json()
@@ -39,7 +39,7 @@ class Command(BaseCommand):
                     'city': user['billing']['city'],
                     'email': user['billing']['email'],
                 }
-                file_name = 'order_users.json'
+                file_name = 'order_customer.json'
                 with open(file_name, 'r', encoding='utf-8') as file:
                     data = json.load(file)
                 data.append(user_data)

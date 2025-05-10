@@ -48,11 +48,11 @@ class Command(BaseCommand):
             wp_api=True,
             timeout=120
         )
-        page = 1
+        page = 20
         response_len = 20
         while response_len == 20:
             products = wcapi.get("products", params={"per_page": 20, 'page': page}).json()
-            counter = 1
+            counter = (page - 1) * 20
             for product in products:
                 if product['type'] == 'simple':
                     new_product = Product.objects.create(
@@ -174,11 +174,6 @@ class Command(BaseCommand):
 
                     if currency and currency['value'] != '[]':
                         currency_code = currency['value'].translate({ord(i): None for i in '[]'})
-                        print(currency_code)
-                        print(currency_code)
-                        print(currency_code)
-                        print(currency_code)
-                        print(currency_code)
                         new_product.currency = Currency.objects.get(unique_code=int(currency_code))
 
                     if brand_name and brand_name['options'][0]:
@@ -267,7 +262,7 @@ class Command(BaseCommand):
 
             print(f'{20 * page} product retrieved')
             page += 1
-            response_len = 0
+            response_len = len(products)
 
 
 
