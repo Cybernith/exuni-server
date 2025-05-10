@@ -48,11 +48,10 @@ class Command(BaseCommand):
             wp_api=True,
             timeout=120
         )
-        page = 20
+        page = 1
         response_len = 20
         while response_len == 20:
             products = wcapi.get("products", params={"per_page": 20, 'page': page}).json()
-            counter = (page - 1) * 20
             for product in products:
                 if product['type'] == 'simple':
                     new_product = Product.objects.create(
@@ -202,7 +201,6 @@ class Command(BaseCommand):
 
                     variations = wcapi.get(f"products/{product['id']}/variations",
                                            params={"per_page": 50, 'page': 1}).json()
-                    variation_counter = 1
                     for variation in variations:
                         new_variation = Product.objects.create(
                                 variation_of=new_product,
@@ -238,11 +236,7 @@ class Command(BaseCommand):
                         if currency_price:
                             new_variation.currency_price = float(currency_price['value']) if currency_price['value'] else 0
                         new_variation.save()
-                        print(f'{variation_counter} variation product added')
-                        variation_counter += 1
 
-                print(f'{counter} product added')
-                counter += 1
                         #attributes = variation['attributes']
                         #product_attributes = [item for item in attributes if item["id"] not in [0, 1, 2]]
 
