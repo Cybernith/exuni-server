@@ -148,12 +148,6 @@ class User(AbstractUser, BaseModel):
     username = models.CharField(
         max_length=150,
         unique=True,
-        validators=[
-            RegexValidator(
-                regex='^[a-zA-Z0-9]+$',
-                message='نام کاربری باید از حدوف و اعداد انگلیسی تشکیل شود'
-            )
-        ],
         error_messages={
             'unique': "این نام کاربری از قبل در اکسونی ثبت شده"
         },
@@ -162,7 +156,7 @@ class User(AbstractUser, BaseModel):
     national_code = models.CharField(max_length=15, blank=True, null=True)
     first_name = models.CharField(max_length=30, blank=True, null=True)
     last_name = models.CharField(max_length=150, blank=True, null=True)
-    mobile_number = models.CharField(max_length=11, blank=True, null=True, unique=True)
+    mobile_number = models.CharField(max_length=20, blank=True, null=True, unique=True)
     profile_picture = models.ImageField(upload_to=custom_upload_to, null=True, blank=True, default=None)
     cover_picture = models.ImageField(upload_to=custom_upload_to, null=True, blank=True, default=None)
     bank_account_name = models.CharField(max_length=10, choices=BANK_NAMES, blank=True, null=True)
@@ -170,7 +164,9 @@ class User(AbstractUser, BaseModel):
     bank_card_number = models.CharField(max_length=50, blank=True, null=True)
     bank_sheba_number = models.CharField(max_length=50, blank=True, null=True)
     location = PlainLocationField(based_fields=['city'], zoom=7, blank=True, null=True)
+    email = models.CharField(max_length=30, blank=True, null=True)
     city = models.CharField(max_length=30, blank=True, null=True)
+    state = models.CharField(max_length=30, blank=True, null=True)
     address = models.CharField(max_length=255, blank=True, null=True)
     about_us = models.CharField(max_length=255, blank=True, null=True)
     user_type = models.CharField(max_length=6, choices=USER_TYPES, default=CUSTOMER)

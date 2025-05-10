@@ -13,7 +13,6 @@ from django.core.files.base import ContentFile
 
 def save_brand_logo_from_url(brand_id, image_url):
     response = requests.get(image_url)
-    print(response)
     if response.status_code == 200:
         brand = Brand.objects.get(id=brand_id)
         file_name = image_url.split('/')[-1]
