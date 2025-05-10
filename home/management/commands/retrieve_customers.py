@@ -8,7 +8,7 @@ import json
 
 
 class Command(BaseCommand):
-    help = 'retrieve properties'
+    help = 'retrieve customers'
 
     def handle(self, *args, **options):
         User.objects.filter(user_type=User.CUSTOMER).delete()

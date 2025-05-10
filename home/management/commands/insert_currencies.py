@@ -4,7 +4,7 @@ from main.models import Currency
 
 
 class Command(BaseCommand):
-    help = 'insert_currencies'
+    help = 'insert currencies'
     currencies = [
         {
             'name': 'یوان چین',
