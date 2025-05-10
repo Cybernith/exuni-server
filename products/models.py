@@ -90,7 +90,6 @@ class ProductProperty(BaseModel):
         return self.name
 
 
-
 class ProductPropertyTerm(BaseModel):
     product_property = models.ForeignKey(ProductProperty, related_name='terms',
                                          on_delete=models.CASCADE, blank=True, null=True)
@@ -149,17 +148,20 @@ class Category(BaseModel):
 
 
 class Product(BaseModel):
-    PUBLISHED = 'p'
-    UNDER_REVIEW = 'u'
+    PENDING = 'pending'
+    DRAFT = 'draft'
+    PUBLISHED = 'publish'
 
     STATUSES = (
+        (PENDING, 'در انتظار'),
+        (DRAFT, 'پیش‌نویس'),
         (PUBLISHED, 'منتشر شده'),
-        (UNDER_REVIEW, 'در حال بررسی'),
+
     )
 
-    SIMPLE = 's'
-    VARIABLE = 'v'
-    VARIATION = 'a'
+    SIMPLE = 'simple'
+    VARIABLE = 'variable'
+    VARIATION = 'variation'
 
     TYPES = (
         (SIMPLE, 'بدون متغیر'),
@@ -167,10 +169,11 @@ class Product(BaseModel):
         (VARIATION, 'متغیر'),
     )
 
-    product_type = models.CharField(max_length=1, default=SIMPLE)
+    product_type = models.CharField(max_length=9, choices=TYPES, default=SIMPLE)
     variation_of = models.ForeignKey('self', on_delete=models.PROTECT, related_name='variations', blank=True, null=True)
-    product_id = models.CharField(max_length=150, unique=True,
+    product_id = models.CharField(max_length=255, unique=True,
                                   error_messages={'unique': "کالا با این شناسه از قبل در اکسونی ثبت شده"})
+    slug = models.SlugField(max_length=255, blank=True, null=True)
 
     sixteen_digit_code = models.CharField(max_length=16, blank=True, null=True)
 
@@ -203,7 +206,7 @@ class Product(BaseModel):
     product_date = models.DateField(blank=True, null=True)
     expired_date = models.DateField(blank=True, null=True)
 
-    status = models.CharField(max_length=1, choices=STATUSES, default=UNDER_REVIEW)
+    status = models.CharField(max_length=7, choices=STATUSES, default=PENDING)
 
     postal_weight = DECIMAL()
     length = models.IntegerField(blank=True, null=True)
