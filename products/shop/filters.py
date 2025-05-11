@@ -54,13 +54,21 @@ class ShopProductFilter(filters.FilterSet):
 
 
 class ShopProductSimpleFilter(filters.FilterSet):
+    min_price = django_filters.NumberFilter(field_name='price', lookup_expr='gte')
+    max_price = django_filters.NumberFilter(field_name='price', lookup_expr='lte')
+    min_inventory = django_filters.NumberFilter(field_name='current_inventory__inventory', lookup_expr='gte')
+    max_inventory = django_filters.NumberFilter(field_name='current_inventory__inventory', lookup_expr='lte')
+    category_in = filters.BaseInFilter(
+        field_name='category__id',
+        lookup_expr='in'
+    )
 
     class Meta:
         model = Product
         fields = {
             'id': ('exact',),
             'name': BASE_FIELD_FILTERS,
-
+            'brand': ('exact',),
         }
 
 

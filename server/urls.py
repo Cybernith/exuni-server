@@ -47,7 +47,6 @@ urlpatterns = [
     url(r'^shop/', include('shop.urls')),
     url(r'^cms/', include('cms.urls')),
     url(r'^crm/', include('crm.urls')),
-    url(r'^aiApi/', include('ai.urls')),
     url(r'^finance/', include('financial_management.urls')),
     url(r'^api/', include('shop.shop_api_urls')),
 

@@ -60,7 +60,7 @@ class ShopProductsListSerializers(serializers.ModelSerializer):
 class ShopProductVariationsSerializers(serializers.ModelSerializer):
     image = serializers.SerializerMethodField()
     offer_percentage = serializers.SerializerMethodField()
-    calculate_current_inventory = serializers.ReadOnlyField()
+    get_current_inventory = serializers.ReadOnlyField()
 
     class Meta:
         model = Product
@@ -68,7 +68,7 @@ class ShopProductVariationsSerializers(serializers.ModelSerializer):
             'id',
             'name',
             'variation_title',
-            'calculate_current_inventory',
+            'get_current_inventory',
             'regular_price',
             'price',
             'image',
@@ -91,7 +91,7 @@ class ShopProductsSimpleListSerializers(serializers.ModelSerializer):
     is_in_user_wish_list = serializers.SerializerMethodField()
     is_in_user_comparison = serializers.SerializerMethodField()
     offer_percentage = serializers.SerializerMethodField()
-    calculate_current_inventory = serializers.ReadOnlyField()
+    get_current_inventory = serializers.ReadOnlyField()
     variations = ShopProductVariationsSerializers(read_only=True, many=True)
 
     class Meta:
@@ -107,7 +107,7 @@ class ShopProductsSimpleListSerializers(serializers.ModelSerializer):
             'offer_percentage',
             'is_in_user_wish_list',
             'is_in_user_comparison',
-            'calculate_current_inventory',
+            'get_current_inventory',
             'variations',
         ]
 
