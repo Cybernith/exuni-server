@@ -27,3 +27,11 @@ class AddToComparisonRateThrottle(UserRateThrottle):
 
 class ShopOrderRateThrottle(UserRateThrottle):
     rate = '6/hour'
+
+
+class ToggleWishListBtnRateThrottle(UserRateThrottle):
+    rate = '10/min'
+
+
+class ToggleComparisonBtnRateThrottle(UserRateThrottle):
+    rate = '10/min'
