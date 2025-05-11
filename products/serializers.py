@@ -23,11 +23,14 @@ class BrandSerializer(serializers.ModelSerializer):
 
 
 class BrandShopListSerializer(serializers.ModelSerializer):
-    logo = serializers.ImageField(read_only=True)
+    logo_url = serializers.SerializerMethodField()
 
     class Meta:
         model = Brand
-        fields = ('id', 'name', 'logo')
+        fields = ('id', 'name', 'logo_url')
+
+    def get_logo_url(self, obj):
+        return obj.logo.url if obj.logo else None
 
 
 class BrandLogoUpdateSerializer(SModelSerializer):
