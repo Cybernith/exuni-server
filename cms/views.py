@@ -8,11 +8,12 @@ from rest_framework import status
 from cms.models import HeaderElement, PopUpElement, BannerContent, BannerContentItem, ShopHomePageStory
 from cms.serializers import HeaderElementSerializer, PopUpElementSerializer, BannerContentSerializer, \
     BannerContentItemSerializer, ShopHomePageStorySerializer
+from cms.trottles import CMSUserRateThrottle, CMSAnonRateThrottle
 from helpers.auth import BasicObjectPermission
 
 
 class HeaderElementApiView(APIView):
-    permission_classes = AllowAny
+    throttle_classes = [CMSUserRateThrottle, CMSAnonRateThrottle]
 
     def get(self, request):
         query = HeaderElement.objects.current_by_datetime()
@@ -68,7 +69,7 @@ class HeaderElementDetailView(APIView):
 
 
 class PopUpElementApiView(APIView):
-    permission_classes = AllowAny
+    throttle_classes = [CMSUserRateThrottle, CMSAnonRateThrottle]
 
     def get(self, request):
         query = PopUpElement.objects.current_by_datetime()
@@ -124,7 +125,7 @@ class PopUpElementDetailView(APIView):
 
 
 class BannerContentApiView(APIView):
-    permission_classes = AllowAny
+    throttle_classes = [CMSUserRateThrottle, CMSAnonRateThrottle]
 
     def get(self, request):
         query = BannerContent.objects.current_by_datetime()
@@ -222,7 +223,7 @@ class BannerContentItemDetailView(APIView):
 
 
 class ShopHomePageStoryApiView(APIView):
-    permission_classes = AllowAny
+    throttle_classes = [CMSUserRateThrottle, CMSAnonRateThrottle]
 
     def get(self, request):
         query = ShopHomePageStory.objects.current_by_datetime()

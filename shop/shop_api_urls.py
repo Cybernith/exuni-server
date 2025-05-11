@@ -1,5 +1,6 @@
 from django.conf.urls import url
 
+from cms.views import HeaderElementApiView, PopUpElementApiView, BannerContentApiView, ShopHomePageStoryApiView
 from products.shop.views import ShopProductSimpleListView, BrandShopListView, CategoryTreeView, RootCategoryListView
 from shop.views import ToggleWishListBTNView, ToggleComparisonListBTNView, CurrentUserCartApiView, CartSyncView, \
     CartDetailView, ClearCustomerCartView, CurrentUserWishListApiView, WishListDetailView, WishlistSyncView, \
@@ -35,5 +36,12 @@ urlpatterns = [
 
     url(r'^currentUserShipmentAddress$', CurrentUserShipmentAddressApiView.as_view(), name='syncUserAllData'),
     url(r'^shipmentAddress/(?P<pk>[0-9]+)$', ShipmentAddressDetailView.as_view(), name='shipmentAddress'),
+
+
+    # content management system
+    url(r'^currentHeaderElement$', HeaderElementApiView.as_view(), name='currentHeaderElement'),
+    url(r'^currentPopUpElement$', PopUpElementApiView.as_view(), name='currentPopUpElement'),
+    url(r'^currentBannerContent$', BannerContentApiView.as_view(), name='currentBannerContent'),
+    url(r'^currentShopHomePageStory$', ShopHomePageStoryApiView.as_view(), name='currentShopHomePageStory'),
 
 ]
