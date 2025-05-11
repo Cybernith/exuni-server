@@ -8,13 +8,15 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from crm.functions import save_product_view_log
+from products.lists.filters import RootCategoryFilter
 from products.models import Product, Category, Brand
-from products.serializers import BrandShopListSerializer
+from products.serializers import BrandShopListSerializer, CategorySerializer
 from products.shop.filters import ShopProductFilter, BrandShopListFilter, ShopProductSimpleFilter
 from products.shop.serializers import ShopProductsListSerializers, ShopProductDetailSerializers, ShopCommentSerializer, \
-    ShopProductRateSerializer, ShopProductsSimpleListSerializers
+    ShopProductRateSerializer, ShopProductsSimpleListSerializers, RootCategorySerializer
 from products.trottles import UserProductDetailRateThrottle, AnonProductDetailRateThrottle, AnonProductListRateThrottle, \
-    UserProductListRateThrottle, CreateCommentRateThrottle, RateUpsertRateThrottle, CategoryTreeThrottle, BrandThrottle
+    UserProductListRateThrottle, CreateCommentRateThrottle, RateUpsertRateThrottle, CategoryTreeThrottle, BrandThrottle, \
+    RootCategoryThrottle
 from shop.models import Comment
 from shop.serializers import CommentRepliesSerializer
 from django_filters.rest_framework import DjangoFilterBackend
@@ -263,6 +265,26 @@ class TopViewedShopProductsAPIView(generics.ListAPIView):
             .annotate(view_count=Count('views_log'))
             .order_by('-view_count', '-id')
         )
+
+
+class RootCategoryListView(generics.ListAPIView):
+    throttle_classes = [RootCategoryThrottle]
+    CACHE_KEY = 'root_category_data'
+    CACHE_TIMEOUT = 60 * 60 * 6
+
+    serializer_class = RootCategorySerializer
+    filterset_class = RootCategoryFilter
+    ordering_fields = '__all__'
+    pagination_class = LimitOffsetPagination
+
+    def get_queryset(self):
+        categories = cache.get(self.CACHE_KEY)
+
+        if not categories:
+            categories = Category.objects.filter(parent=None)
+            cache.set(self.CACHE_KEY, categories, self.CACHE_TIMEOUT)
+
+        return categories
 
 
 class CategoryTreeView(APIView):

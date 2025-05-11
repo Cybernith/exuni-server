@@ -70,6 +70,16 @@ class CategoryFilter(filters.FilterSet):
         }
 
 
+class RootCategoryFilter(filters.FilterSet):
+
+    class Meta:
+        model = Category
+        fields = {
+            'id': ('exact',),
+            'name': BASE_FIELD_FILTERS,
+        }
+
+
 class ProductGalleryFilter(filters.FilterSet):
 
     class Meta:

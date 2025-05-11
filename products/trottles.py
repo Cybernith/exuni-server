@@ -33,6 +33,9 @@ class RateUpsertRateThrottle(UserRateThrottle):
 class CategoryTreeThrottle(UserRateThrottle):
     rate = '60/hour'
 
+class RootCategoryThrottle(UserRateThrottle):
+    rate = '60/hour'
+
 class BrandThrottle(UserRateThrottle):
     rate = '60/hour'
 
