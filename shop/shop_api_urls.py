@@ -1,7 +1,9 @@
 from django.conf.urls import url
 
 from cms.views import HeaderElementApiView, PopUpElementApiView, BannerContentApiView, ShopHomePageStoryApiView
-from products.shop.views import ShopProductSimpleListView, BrandShopListView, CategoryTreeView, RootCategoryListView
+from products.shop.views import ShopProductSimpleListView, BrandShopListView, CategoryTreeView, RootCategoryListView, \
+    ShopProductWithCommentsListView
+from shop.search import GlobalAutoCompleteSearchAPIView
 from shop.views import ToggleWishListBTNView, ToggleComparisonListBTNView, CurrentUserCartApiView, CartSyncView, \
     CartDetailView, ClearCustomerCartView, CurrentUserWishListApiView, WishListDetailView, WishlistSyncView, \
     CurrentUserComparisonApiView, ComparisonSyncView, ComparisonDetailView, SyncAllDataView, \
@@ -43,5 +45,9 @@ urlpatterns = [
     url(r'^currentPopUpElement$', PopUpElementApiView.as_view(), name='currentPopUpElement'),
     url(r'^currentBannerContent$', BannerContentApiView.as_view(), name='currentBannerContent'),
     url(r'^currentShopHomePageStory$', ShopHomePageStoryApiView.as_view(), name='currentShopHomePageStory'),
+
+    url(r'^searchAutoCompelete$', GlobalAutoCompleteSearchAPIView.as_view(), name='globalAutoCompleteSearch'),
+
+    url(r'^productsWithComments$', ShopProductWithCommentsListView.as_view(), name='productsWithComments'),
 
 ]

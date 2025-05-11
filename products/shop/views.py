@@ -13,7 +13,8 @@ from products.models import Product, Category, Brand
 from products.serializers import BrandShopListSerializer, CategorySerializer
 from products.shop.filters import ShopProductFilter, BrandShopListFilter, ShopProductSimpleFilter
 from products.shop.serializers import ShopProductsListSerializers, ShopProductDetailSerializers, ShopCommentSerializer, \
-    ShopProductRateSerializer, ShopProductsSimpleListSerializers, RootCategorySerializer
+    ShopProductRateSerializer, ShopProductsSimpleListSerializers, RootCategorySerializer, \
+    ShopProductsWithCommentsListSerializers
 from products.trottles import UserProductDetailRateThrottle, AnonProductDetailRateThrottle, AnonProductListRateThrottle, \
     UserProductListRateThrottle, CreateCommentRateThrottle, RateUpsertRateThrottle, CategoryTreeThrottle, BrandThrottle, \
     RootCategoryThrottle
@@ -47,6 +48,20 @@ class ShopProductSimpleListView(generics.ListAPIView):
 
     def get_queryset(self):
         return Product.objects.filter(status=Product.PUBLISHED, product_type__in=[Product.VARIABLE, Product.SIMPLE])
+
+
+class ShopProductWithCommentsListView(generics.ListAPIView):
+
+    serializer_class = ShopProductsWithCommentsListSerializers
+    throttle_classes = [UserProductListRateThrottle, AnonProductListRateThrottle]
+    filterset_class = ShopProductSimpleFilter
+    ordering_fields = '__all__'
+    pagination_class = LimitOffsetPagination
+
+    def get_queryset(self):
+        return Product.objects.filter(
+            status=Product.PUBLISHED, product_type__in=[Product.VARIABLE, Product.SIMPLE]
+        ).prefetch_related('product_comments')
 
 
 class ShopProductDetailView(generics.RetrieveAPIView):
