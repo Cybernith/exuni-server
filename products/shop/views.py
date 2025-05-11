@@ -14,7 +14,7 @@ from products.shop.filters import ShopProductFilter, BrandShopListFilter, ShopPr
 from products.shop.serializers import ShopProductsListSerializers, ShopProductDetailSerializers, ShopCommentSerializer, \
     ShopProductRateSerializer, ShopProductsSimpleListSerializers
 from products.trottles import UserProductDetailRateThrottle, AnonProductDetailRateThrottle, AnonProductListRateThrottle, \
-    UserProductListRateThrottle, CreateCommentRateThrottle, RateUpsertRateThrottle, CategoryTreeRateThrottle
+    UserProductListRateThrottle, CreateCommentRateThrottle, RateUpsertRateThrottle, CategoryTreeThrottle, BrandThrottle
 from shop.models import Comment
 from shop.serializers import CommentRepliesSerializer
 from django_filters.rest_framework import DjangoFilterBackend
@@ -266,14 +266,14 @@ class TopViewedShopProductsAPIView(generics.ListAPIView):
 
 
 class CategoryTreeView(APIView):
-    throttle_classes = [CategoryTreeRateThrottle]
+    throttle_classes = [CategoryTreeThrottle]
     CACHE_KEY = 'category_tree_data'
     CACHE_TIMEOUT = 60 * 60 * 6
 
     def get(self, request):
         tree = cache.get(self.CACHE_KEY)
 
-        if tree is None:
+        if not tree:
             categories = Category.objects.all().only('id', 'name', 'parent_id').select_related('parent')
 
             category_map = {}
@@ -299,6 +299,9 @@ class CategoryTreeView(APIView):
 
 
 class BrandShopListView(generics.ListAPIView):
+    throttle_classes = [BrandThrottle]
+    CACHE_KEY = 'brands_data'
+    CACHE_TIMEOUT = 60 * 60 * 6
 
     serializer_class = BrandShopListSerializer
     filterset_class = BrandShopListFilter
@@ -306,4 +309,10 @@ class BrandShopListView(generics.ListAPIView):
     pagination_class = LimitOffsetPagination
 
     def get_queryset(self):
-        return Brand.objects.all()
+        brands = cache.get(self.CACHE_KEY)
+
+        if not brands:
+            brands = Brand.objects.all()
+            cache.set(self.CACHE_KEY, brands, self.CACHE_TIMEOUT)
+
+        return brands
