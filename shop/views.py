@@ -52,19 +52,14 @@ class CurrentUserCartApiView(APIView):
 
 
 class CartDetailView(APIView):
-    permission_classes = (IsAuthenticated, BasicObjectPermission)
-    permission_basename = 'cart'
+    permission_classes = (IsAuthenticated)
+    throttle_classes = [AddToCardRateThrottle]
 
     def get_object(self, pk):
         try:
             return Cart.objects.get(pk=pk)
         except Cart.DoesNotExist:
             raise Http404
-
-    def get(self, request, pk):
-        query = self.get_object(pk)
-        serializers = CartRetrieveSerializer(query)
-        return Response(serializers.data, status=status.HTTP_200_OK)
 
     def put(self, request, pk):
         query = self.get_object(pk)
@@ -88,7 +83,7 @@ class CartSyncView(APIView):
 
     @transaction.atomic
     def post(self, request, *args, **kwargs):
-        user = request.user
+        user = get_current_user()
         serializer = CartInputSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         validated_data = serializer.validated_data
@@ -142,15 +137,6 @@ class CurrentUserWishListApiView(APIView):
         serializers = WishListRetrieveSerializer(query, many=True, context={'request': request})
         return Response(serializers.data, status=status.HTTP_200_OK)
 
-    def post(self, request):
-        data = request.data
-        data['customer'] = get_current_user().id
-        serializer = WishListCRUDSerializer(data=data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
 
 class WishListDetailView(APIView):
     permission_classes = (IsAuthenticated, BasicObjectPermission)
@@ -161,11 +147,6 @@ class WishListDetailView(APIView):
             return WishList.objects.get(pk=pk)
         except WishList.DoesNotExist:
             raise Http404
-
-    def get(self, request, pk):
-        query = self.get_object(pk)
-        serializers = WishListRetrieveSerializer(query)
-        return Response(serializers.data, status=status.HTTP_200_OK)
 
     def put(self, request, pk):
         query = self.get_object(pk)
@@ -223,6 +204,16 @@ class WishlistSyncView(APIView):
         return Response({"detail": "Wishlist synced successfully."}, status=status.HTTP_200_OK)
 
 
+class ClearCustomerWishListView(APIView):
+    permission_classes = (IsAuthenticated)
+    throttle_classes = [AddToWishListRateThrottle]
+
+    def delete(self, request):
+        wish_list = WishList.objects.filter(customer_id=get_current_user())
+        wish_list.delete()
+        return Response({'detail': 'your wish list has been cleared'}, status=status.HTTP_204_NO_CONTENT)
+
+
 class CurrentUserComparisonApiView(APIView):
     permission_classes = [IsAuthenticated]
     throttle_classes = [AddToComparisonRateThrottle]
@@ -232,15 +223,6 @@ class CurrentUserComparisonApiView(APIView):
         query = Comparison.objects.filter(customer=customer)
         serializers = ComparisonRetrieveSerializer(query, many=True, context={'request': request})
         return Response(serializers.data, status=status.HTTP_200_OK)
-
-    def post(self, request):
-        data = request.data
-        data['customer'] = get_current_user().id
-        serializer = ComparisonCRUDSerializer(data=data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class ComparisonDetailView(APIView):
@@ -280,7 +262,7 @@ class ComparisonSyncView(APIView):
 
     @transaction.atomic
     def post(self, request, *args, **kwargs):
-        user = request.user
+        user = get_current_user()
         serializer = CompareItemInputSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         validated_data = serializer.validated_data
@@ -313,6 +295,16 @@ class ComparisonSyncView(APIView):
             Comparison.objects.bulk_create(items_to_create, batch_size=100)
 
         return Response({"detail": "Comparison synced successfully."}, status=status.HTTP_200_OK)
+
+
+class ClearCustomerComparisonView(APIView):
+    permission_classes = (IsAuthenticated)
+    throttle_classes = [AddToComparisonRateThrottle]
+
+    def delete(self, request):
+        comparison = Comparison.objects.filter(customer_id=get_current_user())
+        comparison.delete()
+        return Response({'detail': 'your comparisons has been cleared'}, status=status.HTTP_204_NO_CONTENT)
 
 
 class CurrentUserShipmentAddressApiView(APIView):
@@ -531,11 +523,11 @@ class CustomerOrdersDetailView(APIView):
 
 
 class ClearCustomerCartView(APIView):
-    permission_classes = (IsAuthenticated, BasicObjectPermission)
-    permission_basename = 'cart'
+    permission_classes = (IsAuthenticated)
+    throttle_classes = [AddToCardRateThrottle]
 
-    def delete(self, request, pk):
-        carts = Cart.objects.filter(customer_id=pk)
+    def delete(self, request):
+        carts = Cart.objects.filter(customer_id=get_current_user())
         carts.delete()
         return Response({'detail': 'your cart has been cleared'}, status=status.HTTP_204_NO_CONTENT)
 
@@ -577,7 +569,7 @@ class SyncAllDataView(APIView):
 
     @transaction.atomic
     def post(self, request, *args, **kwargs):
-        user = request.user
+        user = get_current_user()
 
         serializer = SyncAllDataSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
