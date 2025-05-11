@@ -57,7 +57,11 @@ class CartDetailView(APIView):
 
     def get_object(self, pk):
         try:
-            return Cart.objects.get(pk=pk)
+            query = Cart.objects.get(pk=pk)
+            if query.customer != get_current_user():
+                raise PermissionError('dont have permission to retrieve this cart')
+
+            return query
         except Cart.DoesNotExist:
             raise Http404
 
@@ -308,8 +312,7 @@ class ClearCustomerComparisonView(APIView):
 
 
 class CurrentUserShipmentAddressApiView(APIView):
-    permission_classes = (IsAuthenticated, BasicObjectPermission)
-    permission_basename = 'shipment_address'
+    permission_classes = (IsAuthenticated)
 
     def get(self, request):
         customer = get_current_user()
@@ -328,12 +331,14 @@ class CurrentUserShipmentAddressApiView(APIView):
 
 
 class ShipmentAddressDetailView(APIView):
-    permission_classes = (IsAuthenticated, BasicObjectPermission)
-    permission_basename = 'shipment_address'
+    permission_classes = (IsAuthenticated)
 
     def get_object(self, pk):
         try:
-            return ShipmentAddress.objects.get(pk=pk)
+            query = ShipmentAddress.objects.get(pk=pk)
+            if query.customer != get_current_user():
+                raise PermissionError('dont have permission to retrieve this address')
+            return query
         except ShipmentAddress.DoesNotExist:
             raise Http404
 
