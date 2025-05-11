@@ -2,7 +2,7 @@ from django.db.models import Q
 from rest_framework import serializers
 
 from helpers.functions import get_current_user
-from products.models import Product, ProductGallery
+from products.models import Product, ProductGallery, Category
 from products.serializers import ProductGallerySerializer, AvailSerializer, ProductPropertySerializer
 from shop.models import Comment, Rate, WishList, Comparison
 from shop.serializers import CommentRepliesSerializer, CommentSerializer
@@ -274,3 +274,13 @@ class ShopProductRateSerializer(serializers.ModelSerializer):
         )
         return rate_object
 
+
+class RootCategorySerializer(serializers.ModelSerializer):
+    picture_url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Category
+        fields = ['id', 'name', 'picture_url']
+
+    def get_picture_url(self, obj):
+        return obj.picture.url if obj.picture else None
