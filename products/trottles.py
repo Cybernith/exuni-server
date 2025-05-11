@@ -30,7 +30,10 @@ class RateUpsertRateThrottle(UserRateThrottle):
     rate = '10/hour'
 
 
-class CategoryTreeRateThrottle(UserRateThrottle):
+class CategoryTreeThrottle(UserRateThrottle):
+    rate = '60/hour'
+
+class BrandThrottle(UserRateThrottle):
     rate = '60/hour'
 
 
