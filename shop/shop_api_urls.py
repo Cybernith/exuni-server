@@ -4,7 +4,7 @@ from products.shop.views import ShopProductSimpleListView, BrandShopListView, Ca
 from shop.views import ToggleWishListBTNView, ToggleComparisonListBTNView, CurrentUserCartApiView, CartSyncView, \
     CartDetailView, ClearCustomerCartView, CurrentUserWishListApiView, WishListDetailView, WishlistSyncView, \
     CurrentUserComparisonApiView, ComparisonSyncView, ComparisonDetailView, SyncAllDataView, \
-    ClearCustomerComparisonView, ClearCustomerWishListView
+    ClearCustomerComparisonView, ClearCustomerWishListView, CurrentUserShipmentAddressApiView, ShipmentAddressDetailView
 
 urlpatterns = [
     # limit - offset - ordering - topRated -> boolean - top viewd -> booleand
@@ -32,5 +32,8 @@ urlpatterns = [
     url(r'^clearComparison$', ClearCustomerComparisonView.as_view(), name='clearCustomerComparison'),
 
     url(r'^syncUserAllData$', SyncAllDataView.as_view(), name='syncUserAllData'),
+
+    url(r'^currentUserShipmentAddress$', CurrentUserShipmentAddressApiView.as_view(), name='syncUserAllData'),
+    url(r'^shipmentAddress/(?P<pk>[0-9]+)$', ShipmentAddressDetailView.as_view(), name='shipmentAddress'),
 
 ]

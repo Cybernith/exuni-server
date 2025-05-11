@@ -9,6 +9,7 @@ from helpers.models import BaseModel, DECIMAL, EXPLANATION
 import random
 from django_fsm import FSMField, transition
 
+from location_field.models.plain import PlainLocationField
 
 class Cart(BaseModel):
     customer = models.ForeignKey('users.User', related_name='cart_items', on_delete=models.PROTECT)
@@ -82,11 +83,15 @@ class Comparison(BaseModel):
 
 class ShipmentAddress(BaseModel):
     customer = models.ForeignKey('users.User', related_name='shipment_address', on_delete=models.CASCADE)
+    address_title = models.CharField(max_length=255, blank=True, null=True)
+    location = PlainLocationField(based_fields=['city'], zoom=7, blank=True, null=True)
     country = models.CharField(max_length=100, default='ایران')
     state = models.CharField(max_length=100)
     city = models.CharField(max_length=100)
-    zip_code = models.CharField(max_length=10)
     address = models.CharField(max_length=255)
+    house_number = models.CharField(max_length=255, blank=True, null=True)
+    house_unit = models.CharField(max_length=255, blank=True, null=True)
+    zip_code = models.CharField(max_length=10)
 
     class Meta(BaseModel.Meta):
         verbose_name = 'ShipmentAddress'
