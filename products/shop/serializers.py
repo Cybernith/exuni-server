@@ -141,6 +141,62 @@ class ShopProductsSimpleListSerializers(serializers.ModelSerializer):
         return None
 
 
+class ShopProductsWithCommentsListSerializers(serializers.ModelSerializer):
+    image = serializers.SerializerMethodField()
+    second_image = serializers.SerializerMethodField()
+    is_in_user_wish_list = serializers.SerializerMethodField()
+    is_in_user_comparison = serializers.SerializerMethodField()
+    offer_percentage = serializers.SerializerMethodField()
+    get_current_inventory = serializers.ReadOnlyField()
+    comments = CommentSerializer(source='confirmed_comments', read_only=True, many=True)
+
+    class Meta:
+        model = Product
+        fields = [
+            'id',
+            'product_type',
+            'name',
+            'image',
+            'second_image',
+            'regular_price',
+            'price',
+            'offer_percentage',
+            'is_in_user_wish_list',
+            'is_in_user_comparison',
+            'get_current_inventory',
+            'comments',
+        ]
+
+    def get_image(self, obj):
+        return obj.picture.url if obj.picture else None
+
+    def get_second_image(self, obj):
+        if ProductGallery.objects.filter(product=obj).exists():
+            first_picture_of_gallery = ProductGallery.objects.filter(product=obj).first()
+            return first_picture_of_gallery.picture.url if first_picture_of_gallery.picture else None
+        return None
+
+    def get_is_in_user_wish_list(self, obj):
+        user = get_current_user()
+        if user:
+            return WishList.objects.filter(customer=user, product=obj).exists()
+        else:
+            return False
+
+    def get_is_in_user_comparison(self, obj):
+        user = get_current_user()
+        if user:
+            return Comparison.objects.filter(customer=user, product=obj).exists()
+        else:
+            return False
+
+    def get_offer_percentage(self, obj):
+        if obj.regular_price and obj.price:
+            offer_percentage = round(((obj.regular_price - obj.price) / obj.regular_price) * 100)
+            return f'{offer_percentage}%'
+        return None
+
+
 class ShopSimilarProductsListSerializers(serializers.ModelSerializer):
     image = serializers.SerializerMethodField()
 

@@ -243,6 +243,10 @@ class Product(BaseModel):
     barcode = models.CharField(max_length=150, blank=True, null=True)
 
     @property
+    def confirmed_comments(self):
+        return self.product_comments.filter(reply__isnull=True, confirmed=True)
+
+    @property
     def last_price(self):
         return self.price
 

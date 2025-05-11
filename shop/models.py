@@ -291,7 +291,7 @@ class Comment(BaseModel):
     shop_order = models.ForeignKey(ShopOrder, related_name='comments',  on_delete=models.CASCADE,
                                    blank=True, null=True)
     date_time = models.DateTimeField(blank=True, null=True)
-    reply = models.ForeignKey('self', related_name='replies',  on_delete=models.CASCADE)
+    reply = models.ForeignKey('self', related_name='replies',  on_delete=models.CASCADE, null=True, blank=True)
     text = models.TextField()
     file = models.FileField(blank=True, null=True)
 
