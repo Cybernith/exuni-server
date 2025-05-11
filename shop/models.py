@@ -40,6 +40,7 @@ class WishList(BaseModel):
     class Meta(BaseModel.Meta):
         verbose_name = 'WishList'
         permission_basename = 'wish_list'
+        unique_together = ('customer', 'product')
         permissions = (
             ('get.wish_list', 'مشاهده آیتم علاقه مندی ها'),
             ('create.wish_list', 'تعریف آیتم علاقه مندی ها'),
@@ -62,6 +63,8 @@ class Comparison(BaseModel):
     class Meta(BaseModel.Meta):
         verbose_name = 'Comparison'
         permission_basename = 'comparison'
+        unique_together = ('customer', 'product')
+
         permissions = (
             ('get.comparison', 'مشاهده آیتم های مقایسه'),
             ('create.comparison', 'تعریف آیتم های مقایسه'),

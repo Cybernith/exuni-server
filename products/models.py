@@ -313,7 +313,7 @@ class Product(BaseModel):
         return self.product_comments.count()
 
     @property
-    def current_inventory(self):
+    def calculate_current_inventory(self):
         if hasattr(self, 'current_inventory'):
             return self.current_inventory.inventory
         raise ValueError(f"برای کالای {self.name} موجودی ثبت نشده")
