@@ -299,7 +299,6 @@ class CategoryTreeView(APIView):
 
 
 class BrandShopListView(generics.ListAPIView):
-    permission_classes = (AllowAny)
 
     serializer_class = BrandShopListSerializer
     filterset_class = BrandShopListFilter

@@ -138,6 +138,14 @@ class Category(BaseModel):
             ('deleteOwn.category', 'حذف دسته بندی خود'),
         )
 
+    def get_all_descendants(self):
+        descendants = []
+        children = Category.objects.filter(parent=self)
+        for child in children:
+            descendants.append(child)
+            descendants.extend(child.get_all_descendants())  # Recursive call to fetch all nested children
+        return descendants
+
     def __str__(self):
         names = [self.name]
         parent = self.parent
