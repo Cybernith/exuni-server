@@ -53,6 +53,17 @@ class ShopProductFilter(filters.FilterSet):
             return queryset.filter(perperties__id__in=ids)
 
 
+class ShopProductSimpleFilter(filters.FilterSet):
+
+    class Meta:
+        model = Product
+        fields = {
+            'id': ('exact',),
+            'name': BASE_FIELD_FILTERS,
+
+        }
+
+
 class BrandShopListFilter(filters.FilterSet):
 
     class Meta:

@@ -22,7 +22,7 @@ class Command(BaseCommand):
             wp_api=True,
             timeout=30
         )
-        page = 28803
+        page = 36775
         response_len = 2
         while response_len == 2:
             response = wcapi.get("orders", params={"per_page": 2, 'page': page}).json()

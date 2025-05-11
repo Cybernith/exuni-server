@@ -10,9 +10,9 @@ from rest_framework.views import APIView
 from crm.functions import save_product_view_log
 from products.models import Product, Category, Brand
 from products.serializers import BrandShopListSerializer
-from products.shop.filters import ShopProductFilter, BrandShopListFilter
+from products.shop.filters import ShopProductFilter, BrandShopListFilter, ShopProductSimpleFilter
 from products.shop.serializers import ShopProductsListSerializers, ShopProductDetailSerializers, ShopCommentSerializer, \
-    ShopProductRateSerializer
+    ShopProductRateSerializer, ShopProductsSimpleListSerializers
 from products.trottles import UserProductDetailRateThrottle, AnonProductDetailRateThrottle, AnonProductListRateThrottle, \
     UserProductListRateThrottle, CreateCommentRateThrottle, RateUpsertRateThrottle, CategoryTreeRateThrottle
 from shop.models import Comment
@@ -33,6 +33,18 @@ class ShopProductListView(generics.ListAPIView):
         return Product.objects.filter(status=Product.PUBLISHED).annotate(view_count=Count('views_log')).select_related(
             'brand', 'category', 'current_price', 'current_inventory', 'products_in_wish_list', 'product_comments'
         ).prefetch_related('properties', 'avails')
+
+
+class ShopProductSimpleListView(generics.ListAPIView):
+
+    serializer_class = ShopProductsSimpleListSerializers
+    throttle_classes = [UserProductListRateThrottle, AnonProductListRateThrottle]
+    filterset_class = ShopProductSimpleFilter
+    ordering_fields = '__all__'
+    pagination_class = LimitOffsetPagination
+
+    def get_queryset(self):
+        return Product.objects.filter(status=Product.PUBLISHED, product_type__in=[Product.VARIABLE, Product.SIMPLE])
 
 
 class ShopProductDetailView(generics.RetrieveAPIView):

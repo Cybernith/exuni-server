@@ -1,9 +1,10 @@
 from django.db.models import Q
 from rest_framework import serializers
 
-from products.models import Product
+from helpers.functions import get_current_user
+from products.models import Product, ProductGallery
 from products.serializers import ProductGallerySerializer, AvailSerializer, ProductPropertySerializer
-from shop.models import Comment, Rate
+from shop.models import Comment, Rate, WishList, Comparison
 from shop.serializers import CommentRepliesSerializer, CommentSerializer
 
 
@@ -54,6 +55,90 @@ class ShopProductsListSerializers(serializers.ModelSerializer):
 
     def get_category(self, obj):
         return {'id': obj.category.id, 'name': obj.category.name} if obj.category else None
+
+
+class ShopProductVariationsSerializers(serializers.ModelSerializer):
+    image = serializers.SerializerMethodField()
+    offer_percentage = serializers.SerializerMethodField()
+    calculate_current_inventory = serializers.ReadOnlyField()
+
+    class Meta:
+        model = Product
+        fields = [
+            'id',
+            'name',
+            'variation_title',
+            'calculate_current_inventory',
+            'regular_price',
+            'price',
+            'image',
+            'offer_percentage',
+        ]
+
+    def get_image(self, obj):
+        return obj.picture.url if obj.picture else None
+
+    def get_offer_percentage(self, obj):
+        if obj.regular_price and obj.price:
+            offer_percentage = round(((obj.regular_price - obj.price) / obj.regular_price) * 100)
+            return f'{offer_percentage}%'
+        return None
+
+
+class ShopProductsSimpleListSerializers(serializers.ModelSerializer):
+    image = serializers.SerializerMethodField()
+    second_image = serializers.SerializerMethodField()
+    is_in_user_wish_list = serializers.SerializerMethodField()
+    is_in_user_comparison = serializers.SerializerMethodField()
+    offer_percentage = serializers.SerializerMethodField()
+    calculate_current_inventory = serializers.ReadOnlyField()
+    variations = ShopProductVariationsSerializers(read_only=True, many=True)
+
+    class Meta:
+        model = Product
+        fields = [
+            'id',
+            'product_type',
+            'name',
+            'image',
+            'second_image',
+            'regular_price',
+            'price',
+            'offer_percentage',
+            'is_in_user_wish_list',
+            'is_in_user_comparison',
+            'calculate_current_inventory',
+            'variations',
+        ]
+
+    def get_image(self, obj):
+        return obj.picture.url if obj.picture else None
+
+    def get_second_image(self, obj):
+        if ProductGallery.objects.filter(product=obj).exists():
+            first_picture_of_gallery = ProductGallery.objects.filter(product=obj).first()
+            return first_picture_of_gallery.picture.url if first_picture_of_gallery.picture else None
+        return None
+
+    def get_is_in_user_wish_list(self, obj):
+        user = get_current_user()
+        if user:
+            return WishList.objects.filter(customer=user, product=obj).exists()
+        else:
+            return False
+
+    def get_is_in_user_comparison(self, obj):
+        user = get_current_user()
+        if user:
+            return Comparison.objects.filter(customer=user, product=obj).exists()
+        else:
+            return False
+
+    def get_offer_percentage(self, obj):
+        if obj.regular_price and obj.price:
+            offer_percentage = round(((obj.regular_price - obj.price) / obj.regular_price) * 100)
+            return f'{offer_percentage}%'
+        return None
 
 
 class ShopSimilarProductsListSerializers(serializers.ModelSerializer):
