@@ -1,4 +1,5 @@
-from django.db.models import Q
+from django.db.models import Q, Count, Avg, Value, FloatField
+from django.db.models.functions import Coalesce
 
 from helpers.filters import BASE_FIELD_FILTERS
 from products.models import Product, Brand, Category
@@ -64,6 +65,18 @@ def category_tree_filter(queryset, name, value):
     return queryset.filter(category__in=categories)
 
 
+def top_viewed_filter(queryset, name, value):
+    order_by = '-view_count' if value else 'view_count'
+    return queryset.annotate(view_count=Count('views_log')).order_by(order_by, '-id')
+
+
+def top_rated_filter(queryset, name, value):
+    order_by = '-avg_rate' if value else 'avg_rate'
+    return queryset.annotate(avg_rate=Coalesce(
+        Avg('products_rates__level'), Value(0.0), output_field=FloatField())
+    ).order_by(order_by)
+
+
 class ShopProductSimpleFilter(filters.FilterSet):
     min_price = django_filters.NumberFilter(field_name='price', lookup_expr='gte')
     max_price = django_filters.NumberFilter(field_name='price', lookup_expr='lte')
@@ -78,6 +91,8 @@ class ShopProductSimpleFilter(filters.FilterSet):
         lookup_expr='in'
     )
     category_tree = filters.CharFilter(method=category_tree_filter)
+    top_viewed = filters.BooleanFilter(method=top_viewed_filter)
+    top_rated = filters.BooleanFilter(method=top_rated_filter)
 
 
     class Meta:
