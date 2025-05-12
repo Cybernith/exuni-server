@@ -292,7 +292,7 @@ class Comment(BaseModel):
                                    blank=True, null=True)
     date_time = models.DateTimeField(blank=True, null=True)
     reply = models.ForeignKey('self', related_name='replies',  on_delete=models.CASCADE, null=True, blank=True)
-    text = models.TextField()
+    text = models.TextField(db_index=True)
     file = models.FileField(blank=True, null=True)
 
     confirmed = models.BooleanField(default=False)
