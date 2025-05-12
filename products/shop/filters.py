@@ -1,3 +1,4 @@
+from django.contrib.postgres.search import TrigramSimilarity
 from django.db.models import Q, Count, Avg, Value, FloatField
 from django.db.models.functions import Coalesce
 
@@ -77,11 +78,40 @@ def top_rated_filter(queryset, name, value):
     ).order_by(order_by)
 
 
+def product_comments_global_search(queryset, name, value):
+    return queryset.prefetch_related('product_comments').annotate(
+        similarity=TrigramSimilarity('product_comments__text', value)
+    ).pre.filter(Q(similarity__gt=0.3) | Q(name__contains=value)).distinct().order_by('-similarity')
+
+
 class ShopProductSimpleFilter(filters.FilterSet):
     min_price = django_filters.NumberFilter(field_name='price', lookup_expr='gte')
     max_price = django_filters.NumberFilter(field_name='price', lookup_expr='lte')
     min_inventory = django_filters.NumberFilter(field_name='current_inventory__inventory', lookup_expr='gte')
     max_inventory = django_filters.NumberFilter(field_name='current_inventory__inventory', lookup_expr='lte')
+    brand_in = filters.BaseInFilter(
+        field_name='brand__id',
+        lookup_expr='in'
+    )
+    category_in = filters.BaseInFilter(
+        field_name='category__id',
+        lookup_expr='in'
+    )
+    category_tree = filters.CharFilter(method=category_tree_filter)
+    top_viewed = filters.BooleanFilter(method=top_viewed_filter)
+    top_rated = filters.BooleanFilter(method=top_rated_filter)
+    global_search = filters.CharFilter(method=product_comments_global_search)
+
+    class Meta:
+        model = Product
+        fields = {
+            'id': ('exact',),
+            'name': BASE_FIELD_FILTERS,
+            'brand': ('exact',),
+        }
+
+
+class ShopProductWithCommentsFilter(filters.FilterSet):
     brand_in = filters.BaseInFilter(
         field_name='brand__id',
         lookup_expr='in'

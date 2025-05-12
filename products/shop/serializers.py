@@ -148,6 +148,7 @@ class ShopProductsWithCommentsListSerializers(serializers.ModelSerializer):
     is_in_user_comparison = serializers.SerializerMethodField()
     offer_percentage = serializers.SerializerMethodField()
     get_current_inventory = serializers.ReadOnlyField()
+    search_comments = serializers.SerializerMethodField()
     comments = CommentSerializer(source='confirmed_comments', read_only=True, many=True)
 
     class Meta:
@@ -165,6 +166,7 @@ class ShopProductsWithCommentsListSerializers(serializers.ModelSerializer):
             'is_in_user_comparison',
             'get_current_inventory',
             'comments',
+            'search_comments',
         ]
 
     def get_image(self, obj):
@@ -195,6 +197,16 @@ class ShopProductsWithCommentsListSerializers(serializers.ModelSerializer):
             offer_percentage = round(((obj.regular_price - obj.price) / obj.regular_price) * 100)
             return f'{offer_percentage}%'
         return None
+
+    def get_search_comments(self, obj):
+        request = self.context.get('request')
+        comment_text = request.query_params.get('global_search', None)
+
+        if comment_text:
+            filtered_comments = obj.comments.filter(text__icontains=comment_text)
+        else:
+            filtered_comments = obj.comments.all()
+        return CommentSerializer(filtered_comments, read_only=True, many=True).data
 
 
 class ShopSimilarProductsListSerializers(serializers.ModelSerializer):
