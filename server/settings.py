@@ -55,7 +55,7 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'django_extensions',
     'colorfield',
-
+    'drf_spectacular',
     'users',
     'home',
     'main',
@@ -173,6 +173,8 @@ USE_L10N = True
 # https://docs.djangoproject.com/en/2.0/howto/static-files/
 
 REST_FRAMEWORK = {
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+
     'EXCEPTION_HANDLER': 'helpers.exception_handlers.custom_exception_handler',
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.AllowAny',
@@ -197,6 +199,15 @@ REST_FRAMEWORK = {
     ]
 }
 
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'Exuni Store API',
+    'DESCRIPTION': 'اسکیما فقط برای APIهای بخش فروشگاه',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    'PREPROCESSING_HOOKS': [
+        'server.schema_hooks.filter_store_endpoints',
+    ],
+}
 STATIC_ROOT = os.path.join(BASE_DIR, "static/")
 STATIC_URL = '/static/'
 

@@ -17,6 +17,7 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path
 from django.conf.urls import url, include
+from rest_framework.permissions import AllowAny
 
 from rest_framework.schemas import get_schema_view
 from rest_framework_swagger.renderers import SwaggerUIRenderer, OpenAPIRenderer
@@ -24,7 +25,7 @@ from rest_framework_swagger.renderers import SwaggerUIRenderer, OpenAPIRenderer
 from helpers.views.TestApiView import TestApiView
 from users.views.auth_views import ObtainAuthTokenView
 from server import settings
-
+from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 ...
 
 # Create our schema's view w/ the get_schema_view() helper method. Pass in the proper Renderers for swagger
@@ -52,7 +53,9 @@ urlpatterns = [
 
     path('admin/', admin.site.urls),
 
-
+    path('schema/shop/', SpectacularAPIView.as_view(permission_classes=[AllowAny]), name='schema-shop'),
+    path('schema/shop/swagger/', SpectacularSwaggerView.as_view(url_name='schema-shop', permission_classes=[AllowAny]),
+         name='swagger-ui-shop'),
 
 ]
 

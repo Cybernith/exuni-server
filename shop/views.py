@@ -52,7 +52,7 @@ class CurrentUserCartApiView(APIView):
 
 
 class CartDetailView(APIView):
-    permission_classes = (IsAuthenticated)
+    permission_classes = [IsAuthenticated]
     throttle_classes = [AddToCardRateThrottle]
 
     def get_object(self, pk):
@@ -143,7 +143,7 @@ class CurrentUserWishListApiView(APIView):
 
 
 class WishListDetailView(APIView):
-    permission_classes = (IsAuthenticated, BasicObjectPermission)
+    permission_classes = [IsAuthenticated]
     permission_basename = 'wish_list'
 
     def get_object(self, pk):
@@ -209,7 +209,7 @@ class WishlistSyncView(APIView):
 
 
 class ClearCustomerWishListView(APIView):
-    permission_classes = (IsAuthenticated)
+    permission_classes = [IsAuthenticated]
     throttle_classes = [AddToWishListRateThrottle]
 
     def delete(self, request):
@@ -230,7 +230,7 @@ class CurrentUserComparisonApiView(APIView):
 
 
 class ComparisonDetailView(APIView):
-    permission_classes = (IsAuthenticated, BasicObjectPermission)
+    permission_classes = [IsAuthenticated, BasicObjectPermission]
     permission_basename = 'comparison'
 
     def get_object(self, pk):
@@ -302,7 +302,7 @@ class ComparisonSyncView(APIView):
 
 
 class ClearCustomerComparisonView(APIView):
-    permission_classes = (IsAuthenticated)
+    permission_classes = [IsAuthenticated]
     throttle_classes = [AddToComparisonRateThrottle]
 
     def delete(self, request):
@@ -312,7 +312,7 @@ class ClearCustomerComparisonView(APIView):
 
 
 class CurrentUserShipmentAddressApiView(APIView):
-    permission_classes = (IsAuthenticated)
+    permission_classes = [IsAuthenticated]
 
     def get(self, request):
         customer = get_current_user()
@@ -331,7 +331,8 @@ class CurrentUserShipmentAddressApiView(APIView):
 
 
 class ShipmentAddressDetailView(APIView):
-    permission_classes = (IsAuthenticated)
+    permission_classes = [IsAuthenticated]
+
 
     def get_object(self, pk):
         try:
@@ -528,7 +529,7 @@ class CustomerOrdersDetailView(APIView):
 
 
 class ClearCustomerCartView(APIView):
-    permission_classes = (IsAuthenticated)
+    permission_classes = [IsAuthenticated]
     throttle_classes = [AddToCardRateThrottle]
 
     def delete(self, request):
