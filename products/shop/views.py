@@ -336,6 +336,7 @@ class CategoryTreeView(APIView):
 
 
 class BrandShopListView(generics.ListAPIView):
+    permission_classes = [AllowAny]
     throttle_classes = [BrandThrottle]
     CACHE_KEY = 'brands_data'
     CACHE_TIMEOUT = 60 * 60 * 6
