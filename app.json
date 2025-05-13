@@ -1,0 +1,16 @@
+{
+  "formation": {
+    "web": {
+      "quantity": 1,
+      "size": "1x"
+    },
+    "collectstatic": {
+      "quantity": 1,
+      "size": "1x"
+    },
+    "migrate": {
+      "quantity": 1,
+      "size": "1x"
+    }
+  }
+}

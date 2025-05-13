@@ -233,57 +233,42 @@ INTERNAL_IPS = [
 # }
 
 LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'handlers': {
-        'console': {
-            'level': 'INFO',
-            'class': 'logging.StreamHandler',
-        },
-        'file': {
-            'level': 'DEBUG',
-            'class': 'logging.FileHandler',
-            'filename': '{}/debug.log'.format(BASE_DIR),
-        },
-        'inventory': {
-            'level': 'DEBUG',
-            'class': 'logging.FileHandler',
-            'filename': '{}/inventory.log'.format(BASE_DIR),
-        },
-        'tmp_file': {
-            'level': 'DEBUG',
-            'class': 'logging.FileHandler',
-            'filename': '{}/debug-tmp.log'.format(BASE_DIR),
-        },
-        'bale': {
-            'class': 'bale_handler.TelegramHandler',
-            'token': '6585755eb40e4ab91d3545b2e05dd742a197d34f',
-            'chat_id': '1213037233'
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "telegram": {
+            "format": "%(levelname)s \\| %(asctime)s \\| %(name)s\n%(message)s",
+            "datefmt": "%Y-%m-%d %H:%M:%S",
         },
     },
-    'loggers': {
-        'django': {
-            'handlers': ['file', 'console'],
-            'level': 'INFO',
-            'propagate': True,
+    "handlers": {
+        "console": {
+            "level": "ERROR",
+            "class": "logging.StreamHandler",
         },
-        'inventory': {
-            'handlers': ['inventory'],
-            'level': 'DEBUG',
-            'propagate': True,
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["console"],
+            "level": "ERROR",
+            "propagate": True,
         },
-        'tmp': {
-            'handlers': ['tmp_file'],
-            'level': 'DEBUG',
-            'propagate': True,
-        },
-        'django.request': {
-            'handlers': ['bale'],
-            'level': 'ERROR',
-            'propagate': True,
-        }
     },
 }
+
+TELEGRAM_BOT_TOKEN = ''
+TELEGRAM_REPORT_CHANNEL_ID = ''
+
+if not DEBUG:
+    LOGGING["handlers"]["telegram"] = {
+        "level": "ERROR",
+        "class": "server.logs.SyncTelegramLoggingHandler",
+        "bot_token": TELEGRAM_BOT_TOKEN,
+        "chat_id": TELEGRAM_REPORT_CHANNEL_ID,
+        "formatter": "telegram",
+    }
+
+    LOGGING["loggers"]["django"]["handlers"].append("telegram")
 
 RECAPTCHA_PRIVATE_KEY = '6Lda3sYaAAAAANqk8giZj98V7vKmB-FRGWp0PNE7'
 
@@ -305,3 +290,4 @@ SMS_IR_LINE_NUMBER = 30002108001289
 
 WC_C_KEY = 'ck_0751fb1e2273e7c62b8772960e4561ac6cd30a3b'
 WC_C_SECRET = 'cs_ed6d33ede59c8a138097c4ae3cac91d2c3363604'
+
