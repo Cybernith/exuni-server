@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
+from products.models import Product
 from products.serializers import ProductSerializer
-from products.shop.serializers import ShopProductsSimpleListSerializers
 from shop.models import Cart, WishList, Comparison, Comment, Rate, LimitedTimeOffer, LimitedTimeOfferItems, \
     ShipmentAddress,  ShopOrder, ShopOrderItem, ShopOrderStatusHistory
 from users.models import User
@@ -259,8 +259,24 @@ class SyncAllDataSerializer(serializers.Serializer):
     comparison_items = CompareItemInputSerializer(many=True, required=False)
 
 
+class OrderProductsSimpleListSerializers(serializers.ModelSerializer):
+    image = serializers.SerializerMethodField()
+    offer_percentage = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Product
+        fields = [
+            'id',
+            'name',
+            'image',
+        ]
+
+    def get_image(self, obj):
+        return obj.picture.url if obj.picture else None
+
+
 class CustomerShopOrderItemSimpleSerializer(serializers.ModelSerializer):
-    product = ShopProductsSimpleListSerializers(read_only=True)
+    product = OrderProductsSimpleListSerializers(read_only=True)
 
     class Meta:
         model = ShopOrderItem
