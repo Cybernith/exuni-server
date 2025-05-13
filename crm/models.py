@@ -204,10 +204,31 @@ class Notification(models.Model):
         (SEND_BY_ADMIN, 'ارسال شده توسط ادمین')
     )
 
-    type = models.CharField(max_length=2, choices=TYPES, default=SEND_BY_SYSTEM)
+    ACTIVITIES = 'ac'
+    ORDERS = 'or'
+    OFFERS = 'of'
+
+    SORTS = (
+        (ACTIVITIES, 'فعالیت ها'),
+        (ORDERS, 'سفارش ها'),
+        (OFFERS, 'تخفیف ها')
+    )
+
+    type = models.CharField(max_length=2, choices=TYPES, default=ACTIVITIES)
+    sort = models.CharField(max_length=2, choices=SORTS, default=SEND_BY_SYSTEM)
+
+    product = models.ForeignKey('products.Product', related_name='notifications',
+                                on_delete=models.CASCADE, blank=True, null=True)
+    order = models.ForeignKey('shop.ShopOrder', related_name='notifications',
+                              on_delete=models.CASCADE, blank=True, null=True)
+    order_item = models.ForeignKey('shop.ShopOrderItem', related_name='notifications',
+                                   on_delete=models.CASCADE, blank=True, null=True)
+
+    # discount
 
     send_datetime = models.DateTimeField(blank=True, null=True)
     notification_title = models.CharField(max_length=255, blank=True, null=True)
+    notification_btn_title = models.CharField(max_length=255, blank=True, null=True)
     notification_explanation = models.TextField(blank=True, null=True)
     notification_link = models.CharField(max_length=255, blank=True, null=True)
     is_sent = models.BooleanField(default=False)

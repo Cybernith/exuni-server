@@ -289,6 +289,7 @@ class UserRateSerializer(serializers.ModelSerializer):
         model = Rate
         fields = ['id', 'level']
 
+
 class UserCommentProductsSimpleListSerializers(serializers.ModelSerializer):
     image = serializers.SerializerMethodField()
     comments = serializers.SerializerMethodField()
