@@ -20,7 +20,8 @@ from products.trottles import UserProductDetailRateThrottle, AnonProductDetailRa
     UserProductListRateThrottle, CreateCommentRateThrottle, RateUpsertRateThrottle, CategoryTreeThrottle, BrandThrottle, \
     RootCategoryThrottle
 from shop.models import Comment
-from shop.serializers import CommentRepliesSerializer
+from shop.serializers import CommentRepliesSerializer, OrderProductsSimpleListSerializers, \
+    UserCommentProductsSimpleListSerializers
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import OrderingFilter
 
@@ -370,10 +371,20 @@ class CurrentUserRelatedProductViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class PendingReviewProductsView(viewsets.ReadOnlyModelViewSet):
-    serializer_class = ShopProductsListSerializers
+    serializer_class = OrderProductsSimpleListSerializers
 
     def get_queryset(self):
         user = get_current_user()
-        return Product.objects.filter(hop_order_items__shop_order__customer=user).exclude(
+        return Product.objects.filter(shop_order_items__shop_order__customer=user).exclude(
             product_comments__customer=user
         ).distinct()
+
+
+class UserProductsWithCommentView(viewsets.ReadOnlyModelViewSet):
+    serializer_class = UserCommentProductsSimpleListSerializers
+
+    def get_queryset(self):
+        user = get_current_user()
+        return Product.objects.filter(Q(shop_order_items__shop_order__customer=user) &
+                                      Q(product_comments__customer=user)
+                                      ).distinct()

@@ -3,7 +3,7 @@ from django.conf.urls import url
 from cms.views import HeaderElementApiView, PopUpElementApiView, BannerContentApiView, ShopHomePageStoryApiView
 from products.shop.views import ShopProductSimpleListView, BrandShopListView, CategoryTreeView, RootCategoryListView, \
     ShopProductWithCommentsListView, CurrentUserHasOrderProductViewSet, CurrentUserRelatedProductViewSet, \
-    PendingReviewProductsView
+    PendingReviewProductsView, UserProductsWithCommentView
 from shop.search import GlobalAutoCompleteSearchAPIView
 from shop.views import ToggleWishListBTNView, ToggleComparisonListBTNView, CurrentUserCartApiView, CartSyncView, \
     CartDetailView, ClearCustomerCartView, CurrentUserWishListApiView, WishListDetailView, WishlistSyncView, \
@@ -54,13 +54,16 @@ urlpatterns = [
 
     url(r'^currentUserOrders$', UserOrdersListView.as_view(), name='userOrders'),
 
-    url(r'^currentUserHasOrderProducts$', CurrentUserHasOrderProductViewSet.as_view(),
+    url(r'^currentUserHasOrderProducts$', CurrentUserHasOrderProductViewSet.as_view({'get': 'list'}),
         name='currentUserHasOrderProducts'),
 
-    url(r'^currentUserRelatedProduct$', CurrentUserRelatedProductViewSet.as_view(),
+    url(r'^currentUserRelatedProduct$', CurrentUserRelatedProductViewSet.as_view({'get': 'list'}),
         name='currentUserRelatedProduct'),
 
-    url(r'^pendingReviewProducts$', PendingReviewProductsView.as_view(),
+    url(r'^pendingReviewProducts$', PendingReviewProductsView.as_view({'get': 'list'}),
         name='pendingReviewProducts'),
+
+    url(r'^userProductsWithComment$', UserProductsWithCommentView.as_view({'get': 'list'}),
+        name='userProductsWithComment'),
 
 ]
