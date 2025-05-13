@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
 from products.serializers import ProductSerializer
+from products.shop.serializers import ShopProductsSimpleListSerializers
 from shop.models import Cart, WishList, Comparison, Comment, Rate, LimitedTimeOffer, LimitedTimeOfferItems, \
     ShipmentAddress,  ShopOrder, ShopOrderItem, ShopOrderStatusHistory
 from users.models import User
@@ -256,3 +257,24 @@ class SyncAllDataSerializer(serializers.Serializer):
     cart_items = CartInputSerializer(many=True, required=False)
     wishlist_items = WishlistInputSerializer(many=True, required=False)
     comparison_items = CompareItemInputSerializer(many=True, required=False)
+
+
+class CustomerShopOrderItemSimpleSerializer(serializers.ModelSerializer):
+    product = ShopProductsSimpleListSerializers(read_only=True)
+
+    class Meta:
+        model = ShopOrderItem
+        fields = ('id', 'product', 'price', 'product_quantity')
+
+
+class CustomerShopOrderSimpleSerializer(serializers.ModelSerializer):
+    status = serializers.CharField(source='get_status_display', read_only=True)
+    customer = UserSimpleSerializer(read_only=True)
+    shipment_address = ShipmentAddressRetrieveSerializer(read_only=True)
+    history = ShopOrderStatusHistorySerializer(many=True, read_only=True)
+    items = CustomerShopOrderItemSimpleSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = ShopOrder
+        fields = '__al__'
+
