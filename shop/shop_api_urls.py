@@ -1,6 +1,7 @@
 from django.conf.urls import url
 
 from cms.views import HeaderElementApiView, PopUpElementApiView, BannerContentApiView, ShopHomePageStoryApiView
+from crm.views import UserCurrentNotificationsAPIView, UserCurrentNotificationsBySortAPIView
 from products.shop.views import ShopProductSimpleListView, BrandShopListView, CategoryTreeView, RootCategoryListView, \
     ShopProductWithCommentsListView, CurrentUserHasOrderProductViewSet, CurrentUserRelatedProductViewSet, \
     PendingReviewProductsView, UserProductsWithCommentView
@@ -53,6 +54,7 @@ urlpatterns = [
     url(r'^productsWithComments$', ShopProductWithCommentsListView.as_view(), name='productsWithComments'),
 
     url(r'^currentUserOrders$', UserOrdersListView.as_view(), name='userOrders'),
+    url(r'^currentUserOrders$', UserOrdersListView.as_view(), name='userOrders'),
 
     url(r'^currentUserHasOrderProducts$', CurrentUserHasOrderProductViewSet.as_view({'get': 'list'}),
         name='currentUserHasOrderProducts'),
@@ -65,5 +67,11 @@ urlpatterns = [
 
     url(r'^userProductsWithComment$', UserProductsWithCommentView.as_view({'get': 'list'}),
         name='userProductsWithComment'),
+
+    url(r'^retrieveNotification$', UserCurrentNotificationsAPIView.as_view(),
+        name='retrieveNotification'),
+
+    url(r'^retrieveNotificationBySort$', UserCurrentNotificationsBySortAPIView.as_view(),
+        name='retrieveNotificationBySort'),
 
 ]
