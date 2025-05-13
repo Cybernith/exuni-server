@@ -10,6 +10,8 @@ from products.models import Brand
 import requests
 from django.core.files.base import ContentFile
 
+from server.settings import WC_C_KEY, WC_C_SECRET
+
 
 def save_brand_logo_from_url(brand_id, image_url):
     response = requests.get(image_url)
@@ -26,8 +28,8 @@ class Command(BaseCommand):
         Brand.objects.all().delete()
         wcapi = API(
             url="https://exuni.ir",
-            consumer_key="ck_7df59e4d651a9449c675f453ea627481f13a4690",
-            consumer_secret="cs_c1a783a3d1bbe9b3d552119fa174dc84824f5c64",
+            consumer_key=WC_C_KEY,
+            consumer_secret=WC_C_SECRET,
             version="wc/v3",
             wp_api=True
         )

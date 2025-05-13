@@ -4,6 +4,7 @@ from django.db.models import F
 from woocommerce import API
 
 from products.models import Category
+from server.settings import WC_C_KEY, WC_C_SECRET
 
 
 class Command(BaseCommand):
@@ -13,8 +14,8 @@ class Command(BaseCommand):
         Category.objects.all().delete()
         wcapi = API(
             url="https://exuni.ir",
-            consumer_key="ck_7df59e4d651a9449c675f453ea627481f13a4690",
-            consumer_secret="cs_c1a783a3d1bbe9b3d552119fa174dc84824f5c64",
+            consumer_key=WC_C_KEY,
+            consumer_secret=WC_C_SECRET,
             version="wc/v3",
             wp_api=True
         )
