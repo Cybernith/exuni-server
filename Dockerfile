@@ -31,6 +31,6 @@ RUN pip install -r requirements.txt
 
 # Copy project
 COPY . .
-COPY .env .
+#COPY .env .
 # COPY ./start.sh .
 # COPY./celery.sh .
