@@ -1,5 +1,6 @@
 from rest_framework import serializers
 
+from helpers.functions import get_current_user
 from products.models import Product
 from products.serializers import ProductSerializer
 from shop.models import Cart, WishList, Comparison, Comment, Rate, LimitedTimeOffer, LimitedTimeOfferItems, \
@@ -273,6 +274,33 @@ class OrderProductsSimpleListSerializers(serializers.ModelSerializer):
 
     def get_image(self, obj):
         return obj.picture.url if obj.picture else None
+
+
+class UserCommentCommentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Comment
+        fields = ['id', 'text', 'file', 'date_time']
+        read_only_fields = ['id', 'date_time']
+
+
+class UserCommentProductsSimpleListSerializers(serializers.ModelSerializer):
+    image = serializers.SerializerMethodField()
+    user_comments = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Product
+        fields = [
+            'id',
+            'name',
+            'image',
+            'product_comments',
+        ]
+
+    def get_image(self, obj):
+        return obj.picture.url if obj.picture else None
+
+    def get_user_comments(self, obj):
+        return UserCommentCommentSerializer(obj.product_comments.filter(customer=get_current_user()), many=True).data
 
 
 class CustomerShopOrderItemSimpleSerializer(serializers.ModelSerializer):
