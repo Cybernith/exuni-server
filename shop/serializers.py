@@ -283,9 +283,16 @@ class UserCommentCommentSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'date_time']
 
 
+class UserRateSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Rate
+        fields = ['id', 'level']
+
 class UserCommentProductsSimpleListSerializers(serializers.ModelSerializer):
     image = serializers.SerializerMethodField()
-    user_comments = serializers.SerializerMethodField()
+    comments = serializers.SerializerMethodField()
+    products_rates = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
@@ -293,14 +300,17 @@ class UserCommentProductsSimpleListSerializers(serializers.ModelSerializer):
             'id',
             'name',
             'image',
-            'product_comments',
+            'comments',
         ]
 
     def get_image(self, obj):
         return obj.picture.url if obj.picture else None
 
-    def get_user_comments(self, obj):
+    def get_comments(self, obj):
         return UserCommentCommentSerializer(obj.product_comments.filter(customer=get_current_user()), many=True).data
+
+    def get_user_rate(self, obj):
+        return UserRateSerializer(obj.rates.filter(customer=get_current_user()), many=True).data
 
 
 class CustomerShopOrderItemSimpleSerializer(serializers.ModelSerializer):
