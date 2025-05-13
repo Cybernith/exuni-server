@@ -238,13 +238,6 @@ class Notification(models.Model):
 
     receivers = models.ManyToManyField('users.User', related_name='user_in_notification')
 
-    product = models.ForeignKey(
-        'products.Product',
-        related_name='offer_notifications',
-        on_delete=models.CASCADE,
-        db_index=True
-    )
-
     def __str__(self):
         return "{} ({})".format(self.notification_title, self.id)
 
