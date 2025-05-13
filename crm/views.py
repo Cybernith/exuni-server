@@ -278,7 +278,7 @@ class CreateNotificationAPIView(APIView):
 
 
 class UserCurrentNotificationsAPIView(APIView):
-    permission_classes = IsAuthenticated
+    permission_classes = [IsAuthenticated]
 
     def get_objects(self):
         return UserNotification.objects.filter(
@@ -292,3 +292,51 @@ class UserCurrentNotificationsAPIView(APIView):
 
         serializers = UserNotificationRetrieveSerializer(query, many=True)
         return Response(serializers.data, status=status.HTTP_200_OK)
+
+
+class UserCurrentNotificationsBySortAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get_objects(self):
+        return UserNotification.objects.filter(
+            Q(user=get_current_user()) &
+            Q(notification__send_datetime__lte=datetime.datetime.now())
+        ).select_related('notificcation')
+
+    def get_activities_objects(self):
+        return self.get_objects().filter(
+            Q(notification__sort=Notification.ACTIVITIES) &
+            Q(user=get_current_user()) &
+            Q(notification__send_datetime__lte=datetime.datetime.now())
+        )
+
+    def get_offer_objects(self):
+        return self.get_objects().filter(
+            Q(notification__sort=Notification.OFFERS) &
+            Q(user=get_current_user()) &
+            Q(notification__send_datetime__lte=datetime.datetime.now())
+        )
+
+    def get_order_objects(self):
+        return self.get_objects().filter(
+            Q(notification__sort=Notification.ORDERS) &
+            Q(user=get_current_user()) &
+            Q(notification__send_datetime__lte=datetime.datetime.now())
+        )
+
+    def get(self, request):
+        activities_objects = self.get_activities_objects()
+        activities_objects.update(notification_status=UserNotification.NOT_READ)
+        offer_objects = self.get_offer_objects()
+        offer_objects.update(notification_status=UserNotification.NOT_READ)
+        order_objects = self.get_order_objects()
+        order_objects.update(notification_status=UserNotification.NOT_READ)
+
+        return Response(
+            {
+                'activities': UserNotificationRetrieveSerializer(activities_objects, many=True),
+                'offer': UserNotificationRetrieveSerializer(activities_objects, many=True),
+                'order': UserNotificationRetrieveSerializer(activities_objects, many=True),
+            }, status=status.HTTP_200_OK)
+
+
