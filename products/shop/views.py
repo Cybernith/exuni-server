@@ -1,13 +1,14 @@
 from django.core.cache import cache
 from django.db.models import Q, Count, F
 from django.shortcuts import get_object_or_404
-from rest_framework import generics, status
+from rest_framework import generics, status, viewsets
 from rest_framework.pagination import LimitOffsetPagination, PageNumberPagination
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from crm.functions import save_product_view_log
+from helpers.functions import get_current_user
 from products.lists.filters import RootCategoryFilter
 from products.models import Product, Category, Brand
 from products.serializers import BrandShopListSerializer, CategorySerializer
@@ -354,3 +355,11 @@ class BrandShopListView(generics.ListAPIView):
             cache.set(self.CACHE_KEY, brands, self.CACHE_TIMEOUT)
 
         return brands
+
+
+class CurrentUserHasOrderProductViewSet(viewsets.ReadOnlyModelViewSet):
+    serializer_class = ShopProductsListSerializers
+
+    def get_queryset(self):
+        user = get_current_user()
+        return Product.objects.filter(shop_order_items__shop_order__customer=user).distinct()
