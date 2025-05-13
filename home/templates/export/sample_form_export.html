@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% load export_verifiers %}
+
+{% block body %}
+    <body
+            {% if print_document %}
+                onload="setTimeout(print, 500);"
+            {% endif %}
+    >
+    <div class="container-fluid rtl">
+
+
+                {% include 'export/factor_header.html' with right_header_template=right_header_template user_name=user_name  form=form %}
+
+                {% include form_content_template with forms=forms %}
+
+                {% show_verifiers verifier_form_name user %}
+    </div>
+    </body>
+{% endblock %}

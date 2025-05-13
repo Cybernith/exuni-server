@@ -19,16 +19,11 @@ options.DEFAULT_NAMES = options.DEFAULT_NAMES + ('backward_financial_year', 'per
 
 class BaseManager(models.Manager):
 
-    def hasAccess(self, method, permission_basename=None, use_financial_year=True, financial_year=None, use_company=True, company=None):
+    def hasAccess(self, method, permission_basename=None):
         user = get_current_user()
 
         if not user:
             return super().get_queryset()
-
-        if hasattr(self.model, 'financial_year') and use_financial_year:
-            queryset = self.inFinancialYear(financial_year)
-        elif hasattr(self.model, 'company') and use_company:
-            queryset = self.inCompany(company)
         else:
             queryset = super().get_queryset()
 
@@ -57,7 +52,6 @@ class BaseManager(models.Manager):
                 return queryset.filter(created_by=user)
 
         return queryset.none()
-
 
 
 class BaseModel(models.Model):
@@ -121,6 +115,15 @@ class BaseModel(models.Model):
         self.save()
 
 
+class TimeStampedModel(models.Model):
+    created_at = models.DateTimeField(auto_now=True, db_index=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        abstract = True
+
+
+
 class LocalIdMixin(models.Model):
     local_id = models.BigIntegerField(null=True, blank=True, default=None)
 
@@ -137,6 +140,8 @@ class LocalIdMixin(models.Model):
                 local_id=Coalesce(Max('local_id'), 0)
             )['local_id'] + 1
         super().save(*args, **kwargs)
+
+
 
 
 class TreeMixin(models.Model):

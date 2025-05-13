@@ -1,0 +1,145 @@
+{% load report_filters %}
+
+
+<div class="row">
+    <table class="table-head" style="margin-top: -1px">
+        <tbody>
+        <tr>
+            <td>
+                <span style="font-size: x-small;" class="font-weight-bold"> شماره فاکتور : </span>
+                <span style="font-size: x-small;"> {{ forms.id }} </span>
+            </td>
+            <td>
+                <span style="font-size: x-small;" class="font-weight-bold"> خریدار : </span>
+                <span style="font-size: x-small;"> {{ forms.created_by.name }} </span>
+            </td>
+            <td>
+                <span style="font-size: x-small" class="font-weight-bold"> تاریخ  : </span>
+                <span style="font-size: x-small"> {{ forms.created_at | jDate }} </span>
+            </td>
+
+        </tr>
+        </tbody>
+    </table>
+
+</div>
+
+
+<div class="row">
+    <table class="table table-bordered table-striped" style="margin-top: -1px">
+        <thead>
+        <tr>
+            <th class="text-center" width="20">
+                <span style="font-size: xx-small;">ردیف</span>
+            </th>
+            <th class="text-center">
+                <span style="font-size: x-small">نوع</span>
+            </th>
+            <th class="text-center">
+                <span style="font-size: x-small">عنوان</span>
+            </th>
+            <th class="text-center">
+                <span style="font-size: x-small">مبلغ</span>
+            </th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for item in forms.items.all %}
+            <tr>
+                <td class="text-center" width="20">
+                    <span style="font-size: xx-small">{{ forloop.counter }}</span>
+                </td>
+                <td class="text-center">
+                        <span style="font-size: x-small">
+                            {{ item.get_type_display }}
+                        </span>
+                </td>
+                <td class="text-center">
+                    <span style="font-size: x-small">
+                        {{ item.affiliate_factor.title  | default:'-' }}
+                    </span>
+                </td>
+                <td class="text-center">
+                        <span style="font-size: x-small">
+                            {{ item.amount | money }}
+                        </span>
+                </td>
+            </tr>
+        {% endfor %}
+        <tr>
+            <td colspan="2" rowspan="5"></td>
+            <td class="text-center">
+                <span style="font-size: x-small; font-weight: bold">
+                    جمع
+                </span>
+            </td>
+            <td class="text-center">
+                <span style="font-size: x-small">
+                    {{ forms.amount | money }}
+                </span>
+            </td>
+
+        </tr>
+        <tr>
+            <td class="text-center">
+                <span style="font-size: x-small; font-weight: bold">
+                    مبلغ تخفیف
+                </span>
+            </td>
+            <td class="text-center">
+                <span style="font-size: x-small">
+                    {{ forms.discount_amount | money }}
+                </span>
+            </td>
+
+        </tr>
+        <tr>
+            <td class="text-center">
+                <span style="font-size: x-small; font-weight: bold">
+                    مبلغ پس از تخفیف
+                </span>
+            </td>
+            <td class="text-center">
+                <span style="font-size: x-small">
+                    {{ forms.after_discount_amount | money }}
+                </span>
+            </td>
+
+        </tr>
+        <tr>
+            <td class="text-center">
+                <span style="font-size: x-small; font-weight: bold">
+                    مالیات ارزش افزوده
+                </span>
+            </td>
+            <td class="text-center">
+                <span style="font-size: x-small">
+                    {{ forms.value_added_tax | money }}
+                </span>
+            </td>
+
+        </tr>
+        <tr>
+            <td class="text-center">
+                <span style="font-size: x-small; font-weight: bold">
+                    مبلغ نهایی
+                </span>
+            </td>
+            <td class="text-center">
+                <span style="font-size: x-small">
+                    {{ forms.final_amount | money }}
+                </span>
+            </td>
+
+        </tr>
+        </tbody>
+    </table>
+</div>
+
+
+<style>
+    table.table-head {
+        width: 100%;
+        border: 1px solid black;
+    }
+</style>

@@ -1,0 +1,13 @@
+from django.conf.urls import url
+
+from financial_management.views import StartZarinpalPaymentApiView, ZarinpalCallbackApiView, StartPaymentApiView, \
+    PaymentCallbackApiView
+
+app_name = 'financial_management'
+urlpatterns = [
+    url(r'^zarinpalPaymentStart/(?P<order_id>[0-9]+)$', StartZarinpalPaymentApiView.as_view(), name='zarinpal_start'),
+    url(r'^zarinpalPaymentCallback$', ZarinpalCallbackApiView.as_view(), name='zarinpal_callback'),
+    url(r'^paymentStart/(?P<order_id>[0-9]+)$', StartPaymentApiView.as_view(), name='startPayment'),
+    url(r'^paymentCallback$', PaymentCallbackApiView.as_view(), name='paymentCallback'),
+
+]

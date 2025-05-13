@@ -1,31 +1,41 @@
 import datetime
 from dateutil.relativedelta import relativedelta
+from django.core.exceptions import ValidationError
 
 from django.db import models
 
 from helpers.models import BaseModel, DECIMAL, EXPLANATION
 from main.models import Supplier, Currency, Store
-from products.models import Product
-from users.models import custom_upload_to, User
+
 
 def excel_upload_to(instance, filename):
     return 'files/{filename}'.format(filename=filename)
 
 
+def custom_upload_to(instance, filename):
+    return 'images/{filename}'.format(filename=filename)
+
+
 class EntrancePackage(BaseModel):
-    manager = models.ForeignKey(User, related_name="entrance_packages",
+    manager = models.ForeignKey('users.User', related_name="entrance_packages",
                                 on_delete=models.SET_NULL, blank=True, null=True)
     name = models.CharField(max_length=150)
+    factor_number = models.CharField(max_length=150, blank=True, null=True)
     registration_date = models.DateField(blank=True, null=True)
     registration_time = models.TimeField(blank=True, null=True)
     supplier = models.ForeignKey(Supplier, related_name="entrance_packages",
                                  on_delete=models.SET_NULL, blank=True, null=True)
     store = models.ForeignKey(Store, related_name="entrance_packages",
                               on_delete=models.SET_NULL, blank=True, null=True)
+    currency = models.ForeignKey(Currency, related_name="entrance_packages",
+                              on_delete=models.PROTECT, blank=True, null=True)
     is_received = models.BooleanField(default=False)
     is_verified = models.BooleanField(default=False)
     explanation = EXPLANATION()
     entrance_file = models.FileField(upload_to=excel_upload_to, blank=True, null=True)
+
+    is_inserted = models.BooleanField(default=False)
+    with_offer = models.BooleanField(default=False)
 
     class Meta(BaseModel.Meta):
         verbose_name = 'EntrancePackage'
@@ -41,45 +51,56 @@ class EntrancePackage(BaseModel):
             ('deleteOwn.entrance_package', 'حذف پکیج ورودی خود'),
         )
 
+    @property
+    def remain_items(self):
+        return []
 
-class EntrancePackageFileColumn(BaseModel):
-    PRODUCT_CODE = 'c'
-    PRODUCT_NAME = 'n'
-    PRODUCT_PRICE = 'p'
-    PRODUCT_QUANTITY = 'q'
-    PRODUCT_BOX_QUANTITY = 'b'
-
-    KEYS = (
-        (PRODUCT_PRICE, 'مبلغ محصول'),
-        (PRODUCT_NAME, 'نام محصول'),
-        (PRODUCT_CODE, 'کد محصول'),
-        (PRODUCT_QUANTITY, 'تعداد محصول'),
-        (PRODUCT_BOX_QUANTITY, 'تعداد کارتون محصول'),
-    )
-
-    entrance_package = models.ForeignKey(EntrancePackage, related_name="file_columns", on_delete=models.CASCADE)
-    key = models.CharField(max_length=1, choices=KEYS)
-    column_number = models.IntegerField()
-
-
+    @property
+    def inserted_to_store(self):
+        return False
 
 
 class EntrancePackageItem(BaseModel):
-    entrance_packages = models.ForeignKey(EntrancePackage, related_name="items",
-                                          on_delete=models.SET_NULL, blank=True, null=True)
-    product = models.ForeignKey(Product, related_name="entrance_package_items",
+    WITH_AMOUNT = 'a'
+    WITH_PERCENTAGE = 'p'
+
+    TYPES = (
+        (WITH_AMOUNT, 'مبلغ'),
+        (WITH_PERCENTAGE, 'درصد'),
+    )
+
+    entrance_package = models.ForeignKey(EntrancePackage, related_name="items",
+                                          on_delete=models.CASCADE, blank=True, null=True)
+
+    product = models.ForeignKey('products.Product', related_name="entrance_package_items",
                                 on_delete=models.SET_NULL, blank=True, null=True)
+
     product_code = models.CharField(max_length=150, null=True, blank=True)
-    default_picture = models.ImageField(upload_to=custom_upload_to, null=True, blank=True, default=None)
     default_name = models.CharField(max_length=150)
-    product_in_box_count = models.IntegerField(default=0)
-    box_count = models.IntegerField(default=0)
+
+    default_picture = models.ImageField(upload_to=custom_upload_to, null=True, blank=True, default=None)
+    number_of_products_per_box = models.IntegerField(default=0)
+    number_of_box = models.IntegerField(default=1)
     default_price = DECIMAL()
+    price_sum = DECIMAL()
+
+    sixteen_digit_code = models.CharField(max_length=16, blank=True, null=True)
+    barcode = models.CharField(max_length=100, blank=True, null=True)
+
+    in_case_of_sale_type = models.CharField(max_length=2, choices=TYPES, default=WITH_AMOUNT)
+    price_in_case_of_sale = DECIMAL(default=0)
     currency = models.ForeignKey(Currency, related_name="entrance_package_items", on_delete=models.SET_NULL,
                                  blank=True, null=True)
+
+    discount = DECIMAL(default=0)
+    discount_type = models.CharField(max_length=2, choices=TYPES, default=WITH_AMOUNT)
+
     margin_profit_percent = DECIMAL()
     content_production_count = models.IntegerField(default=0)
+    failure_count = models.IntegerField(default=0)
     explanation = EXPLANATION()
+
+    initial_registration = models.BooleanField(default=False)
 
     class Meta(BaseModel.Meta):
         verbose_name = 'EntrancePackageItem'
@@ -96,15 +117,106 @@ class EntrancePackageItem(BaseModel):
         )
 
     @property
-    def product_count(self):
-        return self.box_count * self.product_in_box_count
+    def in_case_of_sale(self):
+        if self.in_case_of_sale_type == self.WITH_AMOUNT:
+            return self.net_purchase_price + self.price_in_case_of_sale
+        else:
+            return self.net_purchase_price + (self.net_purchase_price * self.price_in_case_of_sale / 100)
+
+    @property
+    def final_price_after_discount(self):
+        if self.discount_type == self.WITH_AMOUNT:
+            return self.in_case_of_sale - self.discount
+        else:
+            return self.in_case_of_sale + (self.in_case_of_sale * self.discount / 100)
+
+    @property
+    def number_of_products(self):
+        return self.number_of_box * self.number_of_products_per_box
+
+    @property
+    def net_purchase_price(self):
+        if self.default_price:
+            return self.default_price
+        elif self.price_sum and self.number_of_products:
+            return round(self.price_sum / self.number_of_products)
+        else:
+            return 0
+
+    def save(self, *args, **kwargs):
+        if self.initial_registration:
+            if not self.default_name and not self.product_code:
+                raise ValidationError('برای ثبت ردیف پکیج ها باید کد یا نام کالا داشته باشند')
+
+            if self.price_sum:
+                self.default_price = float(self.price_sum) / float(self.number_of_products)
+            else:
+                self.price_sum = float(self.number_of_products) * float(self.default_price)
+
+            #else:
+            #    if self.default_name and Product.objects.filter(name=self.default_name).exists():
+            #        self.product = Product.objects.filter(name=self.default_name).first()
+            #    elif self.product_code and Product.objects.filter(product_id=self.product_code).exists():
+            #        self.product = Product.objects.get(product_id=self.product_code)
+            #    else:
+            #        product = Product.objects.create(name=self.default_name)
+            #        product.price = self.net_purchase_price
+            #        if self.product_code:
+            #            product.product_id = self.product_code
+            #        if self.default_picture:
+            #            product.picture = self.default_picture
+            #        product.save()
+            #        self.product = product
+
+
+            #if self.in_case_of_sale_type and self.price_in_case_of_sale:
+            #    self.product.sale_price = self.final_price_after_discount
+
+            if self.entrance_package.with_offer and self.entrance_package.items.filter(product=self.product).exists():
+                for item in self.entrance_package.items.filter(product=self.product):
+                    self.number_of_products_per_box += item.number_of_products_per_box
+                    self.price_sum += item.price_sum
+                    item.delete()
+
+        super().save(*args, **kwargs)
+
+
+class EntrancePackageFileColumn(BaseModel):
+    PRODUCT_CODE = 'pc'
+    PRODUCT_NAME = 'pn'
+    PRODUCT_PRICE = 'pp'
+    NUMBER_OF_BOXES = 'nb'
+    NUMBER_OF_PRODUCTS_PER_BOX = 'pb'
+    SIXTEEN_DIGIT_CODE = 'sd'
+    PRICE_IN_CASE_OF_SALE = 'ic'
+    BARCODE = 'ba'
+    IMAGE = 'im'
+    PRICE_SUM = 'ps'
+
+    KEYS = (
+        (PRODUCT_PRICE, 'مبلغ محصول'),
+        (PRODUCT_NAME, 'نام محصول'),
+        (PRODUCT_CODE, 'کد محصول'),
+        (NUMBER_OF_BOXES, 'تعداد کارتون'),
+        (NUMBER_OF_PRODUCTS_PER_BOX, 'تعداد محصول در کارتون'),
+        (SIXTEEN_DIGIT_CODE, 'کد 16 رقمی'),
+        (PRICE_IN_CASE_OF_SALE, 'قیمت در صورت فروش'),
+        (BARCODE, 'بارکد'),
+        (IMAGE, 'تصویر'),
+        (PRICE_SUM, 'مبلغ کل'),
+    )
+
+    entrance_package = models.ForeignKey(EntrancePackage, related_name="file_columns", on_delete=models.CASCADE)
+    key = models.CharField(max_length=2, choices=KEYS)
+    column_number = models.IntegerField()
+    in_case_of_sale_type = models.CharField(max_length=2, choices=EntrancePackageItem.TYPES, blank=True, null=True)
 
 
 class StoreReceipt(BaseModel):
-    storekeeper = models.ForeignKey(User, related_name="store_receipt", on_delete=models.SET_NULL,
+    storekeeper = models.ForeignKey('users.User', related_name="store_receipt", on_delete=models.SET_NULL,
                                     blank=True, null=True)
-    entrance_packages = models.ForeignKey(EntrancePackage, related_name="store_receipt",
-                                          on_delete=models.SET_NULL, blank=True, null=True)
+    supplier = models.ForeignKey(Supplier, related_name="store_receipt",
+                                 blank=True, null=True, on_delete=models.SET_NULL)
     name = models.CharField(max_length=150)
     driver_name = models.CharField(max_length=255, blank=True, null=True)
     enter_date = models.DateField(blank=True, null=True)
@@ -141,12 +253,12 @@ class StoreReceiptItem(BaseModel):
     )
     type = models.CharField(max_length=1, choices=TYPES, default=BOX)
 
-    store_receipt = models.ForeignKey(StoreReceipt, related_name="items", on_delete=models.SET_NULL,
+    store_receipt = models.ForeignKey(StoreReceipt, related_name="items", on_delete=models.CASCADE,
                                       blank=True, null=True)
-    product = models.ForeignKey(Product, related_name="store_receipt_items",
+    product = models.ForeignKey('products.Product', related_name="store_receipt_items",
                                 on_delete=models.SET_NULL, blank=True, null=True)
-    product_in_box_count = models.IntegerField(default=0)
-    box_count = models.IntegerField(default=0)
+    number_of_products_per_box = models.IntegerField(default=0)
+    number_of_box = models.IntegerField(default=1)
 
     product_code = models.CharField(max_length=150, null=True, blank=True)
 
@@ -163,9 +275,12 @@ class StoreReceiptItem(BaseModel):
 
     default_name = models.CharField(max_length=150)
     default_price = DECIMAL()
+    barcode = models.CharField(max_length=150, blank=True, null=True)
     currency = models.ForeignKey(Currency, related_name="store_receipt_items", on_delete=models.SET_NULL,
                                  blank=True, null=True)
     explanation = EXPLANATION()
+    failure_count = models.IntegerField(default=0)
+    sale_price = DECIMAL()
 
     class Meta(BaseModel.Meta):
         verbose_name = 'StoreReceiptItem'
@@ -184,6 +299,6 @@ class StoreReceiptItem(BaseModel):
     @property
     def product_count(self):
         if self.type == self.BOX:
-            return self.box_count * self.product_in_box_count
+            return self.number_of_box * self.number_of_products_per_box
         else:
-            return self.box_count
+            return self.number_of_products_per_box

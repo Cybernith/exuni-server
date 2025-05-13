@@ -1,10 +1,14 @@
 from django.db import models
 
+from helpers.functions import add_separator
 from helpers.models import BaseModel, DECIMAL
-from users.models import custom_upload_to, User
 from colorfield.fields import ColorField
 import os
 import binascii
+
+def custom_upload_to(instance, filename):
+    return 'images/{filename}'.format(filename=filename)
+
 
 class Business(BaseModel):
     ONLINE_MARKET = 'om'
@@ -20,7 +24,7 @@ class Business(BaseModel):
     name = models.CharField(max_length=150)
     domain_address = models.CharField(max_length=150, blank=True, null=True)
     logo = models.ImageField(upload_to=custom_upload_to, null=True, blank=True, default=None)
-    api_token = models.CharField(max_length=150, blank=True, null=True)
+    api_token = models.CharField(max_length=150, blank=True, null=True, unique=True)
     primary_business_color = ColorField(default='#FF8700')
     secondary_business_color = ColorField(default='#002357')
     theme_business_color = ColorField(default='#dae3ed')
@@ -29,9 +33,11 @@ class Business(BaseModel):
     about_us = models.CharField(max_length=255, blank=True, null=True)
     address = models.CharField(max_length=255, blank=True, null=True)
     business_type = models.CharField(max_length=2, choices=BUSINESS_TYPES, default=ONLINE_MARKET)
-    admin = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='business', blank=True, null=True)
+    admin = models.ForeignKey('users.User', on_delete=models.SET_NULL, related_name='business', blank=True, null=True)
     phone = models.CharField(max_length=11, blank=True, null=True)
 
+    customers = models.ManyToManyField('users.User', related_name='businesses_customer')
+    products = models.ManyToManyField('products.Product', related_name='businesses')
 
     @property
     def new_api_token(self):
@@ -65,7 +71,7 @@ class Store(BaseModel):
 
     name = models.CharField(max_length=150)
     address = models.CharField(max_length=255, blank=True, null=True)
-    storekeeper = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='stores', blank=True, null=True)
+    storekeeper = models.ForeignKey('users.User', on_delete=models.SET_NULL, related_name='stores', blank=True, null=True)
     is_central = models.BooleanField(default=False)
 
     class Meta(BaseModel.Meta):
@@ -84,16 +90,17 @@ class Store(BaseModel):
 
 
 class Currency(BaseModel):
+    unique_code = models.IntegerField(unique=True, blank=True, null=True)
     name = models.CharField(max_length=150)
-    exchange_rate_to_toman = models.IntegerField(default=1)
+    exchange_rate_to_toman = DECIMAL(default=1)
 
-    def exchange_to_rial(self, amount):
+    def exchange_to_toman(self, amount):
         if amount:
             return amount * self.exchange_rate_to_toman
         else:
             return 0
 
-    def exchange_rial_to_currency(self, amount):
+    def exchange_toman_to_currency(self, amount):
         if amount:
             return amount / self.exchange_rate_to_toman
         else:
@@ -113,6 +120,9 @@ class Currency(BaseModel):
             ('deleteOwn.currency', 'حذف ارز خود'),
         )
 
+    def __str__(self):
+        return f'{self.name} >  {add_separator(self.exchange_rate_to_toman)} تومان '
+
 
 class Supplier(BaseModel):
     name = models.CharField(max_length=150)
@@ -121,7 +131,7 @@ class Supplier(BaseModel):
     bank_sheba_number = models.CharField(max_length=50, blank=True, null=True)
     address = models.CharField(max_length=255, blank=True, null=True)
     phone = models.CharField(max_length=11, blank=True, null=True)
-    admin = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='supplies', blank=True, null=True)
+    admin = models.ForeignKey('users.User', on_delete=models.SET_NULL, related_name='supplies', blank=True, null=True)
 
     class Meta(BaseModel.Meta):
         verbose_name = 'Supplier'

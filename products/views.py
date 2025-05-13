@@ -1,4 +1,8 @@
 from rest_framework.permissions import IsAuthenticated
+
+from affiliate.views import get_business_from_request
+from entrance.models import StoreReceiptItem
+from entrance.serializers import StoreReceiptItemSerializer
 from helpers.auth import BasicObjectPermission
 from rest_framework.views import APIView
 from django.http import Http404
@@ -6,14 +10,17 @@ from django.http import Http404
 from rest_framework.response import Response
 from rest_framework import status
 
-from products.models import Brand, Avail, ProductProperty, Category, Product, ProductGallery
+from products.models import Brand, Avail, ProductProperty, Category, Product, ProductGallery, ProductPriceHistory
 from products.serializers import BrandSerializer, AvailSerializer, ProductPropertySerializer, CategorySerializer, \
-    ProductSerializer, ProductGallerySerializer, BrandLogoUpdateSerializer, CategoryPictureUpdateSerializer
+    ProductSerializer, ProductGallerySerializer, BrandLogoUpdateSerializer, CategoryPictureUpdateSerializer, \
+    ProductSimpleSerializer, ProductContentDevelopmentSerializer, ProductPictureUpdateSerializer, \
+    ProductPriceHistorySerializer
 
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework import generics
 from helpers.models import manage_files
-from django.db.models import QuerySet
+from django.db.models import QuerySet, Q
+
 
 class BrandApiView(APIView):
     permission_classes = (IsAuthenticated, BasicObjectPermission)
@@ -50,6 +57,7 @@ class BrandDetailView(APIView):
 
     def put(self, request, pk):
         query = self.get_object(pk)
+        request.data['logo'] = None
         serializer = BrandSerializer(query, data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -231,6 +239,16 @@ class CategoryPictureUpdateView(generics.UpdateAPIView):
         serializer.save()
 
 
+class ProductSimpleApiView(APIView):
+    permission_classes = (IsAuthenticated, BasicObjectPermission)
+    permission_basename = 'product'
+
+    def get(self, request):
+        query = Product.objects.all()
+        serializers = ProductSimpleSerializer(query, many=True, context={'request': request})
+        return Response(serializers.data, status=status.HTTP_200_OK)
+
+
 class ProductApiView(APIView):
     permission_classes = (IsAuthenticated, BasicObjectPermission)
     permission_basename = 'product'
@@ -338,5 +356,102 @@ class GalleryOfProductApiView(APIView):
     def get(self, request, pk):
         query = self.get_objects(pk)
         serializers = ProductGallerySerializer(query, many=True)
+        return Response(serializers.data, status=status.HTTP_200_OK)
+
+
+class ProductsStoreReceiptsView(APIView):
+    permission_classes = (IsAuthenticated, BasicObjectPermission)
+    permission_basename = 'store_receipt'
+
+    def get_object(self, pk):
+        return StoreReceiptItem.objects.filter(product_id=pk)
+
+    def get(self, request, pk):
+        query = self.get_object(pk)
+        serializers = StoreReceiptItemSerializer(query, many=True)
+        return Response(serializers.data, status=status.HTTP_200_OK)
+
+
+class NoContentProductsView(APIView):
+    permission_classes = (IsAuthenticated, BasicObjectPermission)
+    permission_basename = 'product'
+
+    def get_object(self, pk):
+        return Product.objects.filter(
+            Q(picture__isnull=True) |
+            Q(explanation__isnull=True) |
+            Q(summary_explanation__isnull=True) |
+            Q(how_to_use__isnull=True)
+        )
+
+    def get(self, request, pk):
+        query = self.get_object(pk)
+        serializers = ProductSerializer(query, many=True)
+        return Response(serializers.data, status=status.HTTP_200_OK)
+
+
+class ProductContentDevelopmentDetailView(APIView):
+    permission_classes = (IsAuthenticated, BasicObjectPermission)
+    permission_basename = 'product'
+
+    def get_object(self, pk):
+        try:
+            return Product.objects.get(pk=pk)
+        except Product.DoesNotExist:
+            raise Http404
+
+    def get(self, request, pk):
+        query = self.get_object(pk)
+        serializers = ProductContentDevelopmentSerializer(query)
+        return Response(serializers.data, status=status.HTTP_200_OK)
+
+    def put(self, request, pk):
+        query = self.get_object(pk)
+        serializer = ProductContentDevelopmentSerializer(query, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ProductPictureUpdateView(generics.UpdateAPIView):
+    permission_classes = (IsAuthenticated,)
+    permission_basename = 'product'
+    serializer_class = ProductPictureUpdateSerializer
+    parser_classes = (MultiPartParser, FormParser)
+
+    def get_queryset(self) -> QuerySet:
+        return Product.objects.filter(id=self.request.data['id'])
+
+    def perform_update(self, serializer: BrandLogoUpdateSerializer) -> None:
+        manage_files(serializer.instance, self.request.data, ['picture'])
+        serializer.save()
+
+
+class AffiliateProductAddBusinessView(APIView):
+    permission_classes = (IsAuthenticated, BasicObjectPermission)
+    permission_basename = 'product'
+
+    def put(self, request):
+        data = request.data
+        business = get_business_from_request(self.request)
+        business_products = Product.objects.filter(id__in=data)
+        business.products.add(*business_products)
+        exclude_products = Product.objects.exclude(id__in=data)
+        business.products.remove(*exclude_products)
+        return Response({'msg': 'updated'}, status=status.HTTP_201_CREATED)
+
+
+class ProductPriceHistoryApiView(APIView):
+    permission_classes = (IsAuthenticated)
+
+    def get(self, request, product_id):
+        try:
+            product = Product.objects.get(id=product_id)
+        except Product.DoesNotExist:
+            raise Http404
+
+        query = ProductPriceHistory.objects.filter(prduct=product)
+        serializers = ProductPriceHistorySerializer(query, many=True)
         return Response(serializers.data, status=status.HTTP_200_OK)
 

@@ -2,7 +2,7 @@ import datetime
 import functools
 from decimal import Decimal
 from typing import Type
-
+from django.utils.timezone import now
 import jdatetime
 from django.db.models.base import Model
 from django.db.models.query_utils import Q
@@ -172,7 +172,9 @@ def date_to_jalali(value: datetime.date):
 
 
 def datetime_to_str(value: datetime.datetime):
-    return jdatetime.datetime.fromgregorian(datetime=value).strftime(DATETIME_FORMAT)
+    if value:
+        return jdatetime.datetime.fromgregorian(datetime=value).strftime(DATETIME_FORMAT)
+    return ' '
 
 
 def sanad_exp(*args):
@@ -353,4 +355,12 @@ def get_financial_year_months(to_now=True):
         return response
     else:
         return results
+
+
+
+def change_to_num(val):
+    if val:
+        return round(val)
+    else:
+        return 0
 

@@ -7,6 +7,8 @@ from rest_framework.authtoken.models import Token
 
 from helpers.functions import get_current_user
 from helpers.serializers import SModelSerializer
+from main.models import Business
+from subscription.serializers import WalletSerializer
 from users.models import Role, User, City, UserNotification, Notification
 
 
@@ -56,7 +58,7 @@ class UserSimpleSerializer(SModelSerializer):
     class Meta:
         model = get_user_model()
         fields = ('id', 'first_name', 'last_name',  'username', 'mobile_number', 'name',
-                  'profile_picture', 'cover_picture')
+                  'profile_picture', 'cover_picture', 'address', 'postal_code')
 
 
 class UserListSerializer(SModelSerializer):
@@ -64,6 +66,7 @@ class UserListSerializer(SModelSerializer):
     has_two_factor_authentication = serializers.SerializerMethodField()
     unread_notifications_count = serializers.SerializerMethodField()
     pop_up_notifications = serializers.SerializerMethodField()
+    business_token = serializers.SerializerMethodField()
     profile_picture = serializers.ImageField(read_only=True)
 
     def get_pop_up_notifications(self, obj: User):
@@ -82,13 +85,24 @@ class UserListSerializer(SModelSerializer):
     def get_has_two_factor_authentication(self, obj: User):
         return obj.secret_key is not None
 
+    def get_business_token(self, obj: User):
+        if obj.user_type == User.BUSINESS_OWNER and Business.objects.filter(admin=obj).exists():
+            return Business.objects.get(admin=obj).api_token
+        else:
+            return ''
+
+
     class Meta:
         model = get_user_model()
-        exclude = ('password', 'secret_key')
+        exclude = ('password', 'secret_key', '_wallet')
 
 
 class UserRetrieveSerializer(UserListSerializer):
     profile_picture = serializers.ImageField(read_only=True)
+    wallet = serializers.SerializerMethodField()
+
+    def get_wallet(self, obj: User):
+        return WalletSerializer(obj.get_wallet()).data
 
     class Meta(UserListSerializer.Meta):
         pass

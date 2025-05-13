@@ -19,6 +19,7 @@ import sys
 from server.configs import Databases, RequestLogs
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+SERVER_URL = 'http://127.0.0.1:7000'
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/2.0/howto/deployment/checklist/
@@ -39,6 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.admindocs',
+    'django.contrib.postgres',
     'location_field.apps.DefaultConfig',
 
     'debug_toolbar',
@@ -46,18 +48,27 @@ INSTALLED_APPS = [
     'rest_framework',
     'corsheaders',
     'django_filters',
+    'django_fsm',
     'import_export',
     'wkhtmltopdf',
     'rest_framework_swagger',
     'rest_framework.authtoken',
     'django_extensions',
     'colorfield',
-
+    'drf_spectacular',
     'users',
     'home',
     'main',
-    'products',
+    'products.apps.ProductsConfig',
     'entrance',
+    'affiliate',
+    'subscription',
+    'packing',
+    'reports',
+    'shop',
+    'cms',
+    'crm.apps.CrmConfig',
+    'financial_management',
 
 ]
 
@@ -162,6 +173,8 @@ USE_L10N = True
 # https://docs.djangoproject.com/en/2.0/howto/static-files/
 
 REST_FRAMEWORK = {
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+
     'EXCEPTION_HANDLER': 'helpers.exception_handlers.custom_exception_handler',
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.AllowAny',
@@ -186,6 +199,15 @@ REST_FRAMEWORK = {
     ]
 }
 
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'Exuni Store API',
+    'DESCRIPTION': 'اسکیما فقط برای APIهای بخش فروشگاه',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    'PREPROCESSING_HOOKS': [
+        'server.schema_hooks.filter_store_endpoints',
+    ],
+}
 STATIC_ROOT = os.path.join(BASE_DIR, "static/")
 STATIC_URL = '/static/'
 
@@ -211,57 +233,42 @@ INTERNAL_IPS = [
 # }
 
 LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'handlers': {
-        'console': {
-            'level': 'INFO',
-            'class': 'logging.StreamHandler',
-        },
-        'file': {
-            'level': 'DEBUG',
-            'class': 'logging.FileHandler',
-            'filename': '{}/debug.log'.format(BASE_DIR),
-        },
-        'inventory': {
-            'level': 'DEBUG',
-            'class': 'logging.FileHandler',
-            'filename': '{}/inventory.log'.format(BASE_DIR),
-        },
-        'tmp_file': {
-            'level': 'DEBUG',
-            'class': 'logging.FileHandler',
-            'filename': '{}/debug-tmp.log'.format(BASE_DIR),
-        },
-        'bale': {
-            'class': 'bale_handler.TelegramHandler',
-            'token': '6585755eb40e4ab91d3545b2e05dd742a197d34f',
-            'chat_id': '1213037233'
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "telegram": {
+            "format": "%(levelname)s \\| %(asctime)s \\| %(name)s\n%(message)s",
+            "datefmt": "%Y-%m-%d %H:%M:%S",
         },
     },
-    'loggers': {
-        'django': {
-            'handlers': ['file', 'console'],
-            'level': 'INFO',
-            'propagate': True,
+    "handlers": {
+        "console": {
+            "level": "ERROR",
+            "class": "logging.StreamHandler",
         },
-        'inventory': {
-            'handlers': ['inventory'],
-            'level': 'DEBUG',
-            'propagate': True,
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["console"],
+            "level": "ERROR",
+            "propagate": True,
         },
-        'tmp': {
-            'handlers': ['tmp_file'],
-            'level': 'DEBUG',
-            'propagate': True,
-        },
-        'django.request': {
-            'handlers': ['bale'],
-            'level': 'ERROR',
-            'propagate': True,
-        }
     },
 }
+
+TELEGRAM_BOT_TOKEN = ''
+TELEGRAM_REPORT_CHANNEL_ID = ''
+
+if not DEBUG:
+    LOGGING["handlers"]["telegram"] = {
+        "level": "ERROR",
+        "class": "server.logs.SyncTelegramLoggingHandler",
+        "bot_token": TELEGRAM_BOT_TOKEN,
+        "chat_id": TELEGRAM_REPORT_CHANNEL_ID,
+        "formatter": "telegram",
+    }
+
+    LOGGING["loggers"]["django"]["handlers"].append("telegram")
 
 RECAPTCHA_PRIVATE_KEY = '6Lda3sYaAAAAANqk8giZj98V7vKmB-FRGWp0PNE7'
 
@@ -274,3 +281,13 @@ DATETIME_FORMAT = "{} {}".format(DATE_FORMAT, TIME_FORMAT)
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 4096
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+OPENAI_API_KEY = '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'
+
+SMS_IR_API_KEY = 'HGJzMQfePOpaAuZZQ7qIN9yzxDpyfLFaamqkT78kshXxPevZ'
+SMS_IR_LINE_NUMBER = 30002108001289
+
+
+WC_C_KEY = 'ck_0751fb1e2273e7c62b8772960e4561ac6cd30a3b'
+WC_C_SECRET = 'cs_ed6d33ede59c8a138097c4ae3cac91d2c3363604'
+

@@ -1,5 +1,7 @@
 import datetime
 import random
+import secrets
+
 from django.core.validators import RegexValidator
 from datetime import timedelta
 from django.contrib.auth.models import AbstractUser, Permission, UserManager
@@ -10,6 +12,7 @@ from rest_framework.exceptions import ValidationError, PermissionDenied
 from helpers.models import BaseModel, BaseManager
 from helpers.sms import Sms
 from location_field.models.plain import PlainLocationField
+from subscription.models import Wallet
 
 class Role(BaseModel):
     name = models.CharField(max_length=255)
@@ -145,12 +148,6 @@ class User(AbstractUser, BaseModel):
     username = models.CharField(
         max_length=150,
         unique=True,
-        validators=[
-            RegexValidator(
-                regex='^[a-zA-Z0-9]+$',
-                message='نام کاربری باید از حدوف و اعداد انگلیسی تشکیل شود'
-            )
-        ],
         error_messages={
             'unique': "این نام کاربری از قبل در اکسونی ثبت شده"
         },
@@ -159,7 +156,7 @@ class User(AbstractUser, BaseModel):
     national_code = models.CharField(max_length=15, blank=True, null=True)
     first_name = models.CharField(max_length=30, blank=True, null=True)
     last_name = models.CharField(max_length=150, blank=True, null=True)
-    mobile_number = models.CharField(max_length=11, blank=True, null=True)
+    mobile_number = models.CharField(max_length=20, blank=True, null=True, unique=True)
     profile_picture = models.ImageField(upload_to=custom_upload_to, null=True, blank=True, default=None)
     cover_picture = models.ImageField(upload_to=custom_upload_to, null=True, blank=True, default=None)
     bank_account_name = models.CharField(max_length=10, choices=BANK_NAMES, blank=True, null=True)
@@ -167,13 +164,29 @@ class User(AbstractUser, BaseModel):
     bank_card_number = models.CharField(max_length=50, blank=True, null=True)
     bank_sheba_number = models.CharField(max_length=50, blank=True, null=True)
     location = PlainLocationField(based_fields=['city'], zoom=7, blank=True, null=True)
+    email = models.CharField(max_length=30, blank=True, null=True)
     city = models.CharField(max_length=30, blank=True, null=True)
+    state = models.CharField(max_length=30, blank=True, null=True)
     address = models.CharField(max_length=255, blank=True, null=True)
     about_us = models.CharField(max_length=255, blank=True, null=True)
     user_type = models.CharField(max_length=6, choices=USER_TYPES, default=CUSTOMER)
-
+    postal_code = models.CharField(max_length=10, blank=True, null=True)
     roles = models.ManyToManyField(Role, related_name='users', blank=True)
     secret_key = models.CharField(max_length=32, null=True, blank=True, default=None)
+    _wallet = models.ForeignKey(Wallet, on_delete=models.PROTECT, null=True, blank=True)
+
+
+    def get_wallet(self):
+        if self._wallet:
+            return self._wallet
+
+        wallet = Wallet()
+        wallet.save()
+
+        self._wallet = wallet
+        self.save()
+
+        return wallet
 
     @property
     def name(self):
@@ -241,7 +254,7 @@ class PhoneVerification(BaseModel):
 
     @staticmethod
     def send_verification_code(username, phone):
-        verify_code = random.randint(1000, 9999)
+        verify_code = ''.join(str(secrets.randbelow(10)) for _ in range(6))
         if username and not phone:
             try:
                 user = User.objects.get(username=username)
@@ -266,12 +279,12 @@ class PhoneVerification(BaseModel):
             else:
                 phone_verification = PhoneVerification.objects.filter(phone=phone, code=code).earliest()
         except PhoneVerification.DoesNotExist:
-            raise ValidationError("کد تایید اشتباه است")
+            raise ValidationError("کد تایید اکسونی اشتباه است")
 
         if not phone_verification.is_expired:
             return code
         elif raise_exception:
-            raise ValidationError("کد تایید شما منقضی شده است")
+            raise ValidationError("کد تایید شما در اکسونی منقضی شده است")
 
         return None
 

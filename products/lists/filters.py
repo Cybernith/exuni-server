@@ -1,3 +1,4 @@
+from django.db.models import Q
 from django_filters import rest_framework as filters
 
 from helpers.filters import BASE_FIELD_FILTERS
@@ -43,6 +44,7 @@ class ProductPropertyFilter(filters.FilterSet):
         fields = {
             'id': ('exact',),
             'name': BASE_FIELD_FILTERS,
+            'slug': BASE_FIELD_FILTERS,
             'explanation': BASE_FIELD_FILTERS,
         }
 
@@ -64,6 +66,16 @@ class CategoryFilter(filters.FilterSet):
         fields = {
             'id': ('exact',),
             'parent': ('exact',),
+            'name': BASE_FIELD_FILTERS,
+        }
+
+
+class RootCategoryFilter(filters.FilterSet):
+
+    class Meta:
+        model = Category
+        fields = {
+            'id': ('exact',),
             'name': BASE_FIELD_FILTERS,
         }
 
@@ -92,10 +104,10 @@ class ProductFilter(filters.FilterSet):
             'price': BASE_FIELD_FILTERS,
             'shipping_cost': BASE_FIELD_FILTERS,
             'currency': ('exact',),
-            'profit_percent': BASE_FIELD_FILTERS,
+            'profit_margin': BASE_FIELD_FILTERS,
             'tax_percent': BASE_FIELD_FILTERS,
             'supplier': ('exact',),
-            'brand': ('exact',),
+            'brand': ('exact', 'in'),
             'explanation': BASE_FIELD_FILTERS,
             'summary_explanation': BASE_FIELD_FILTERS,
             'how_to_use': BASE_FIELD_FILTERS,
@@ -108,6 +120,47 @@ class ProductFilter(filters.FilterSet):
             'height': BASE_FIELD_FILTERS,
             # avails many to many filter
             # properties many to many filter
-            'category': ('exact',),
+            'category': ('exact', 'in'),
 
+        }
+
+def has_picture_filter(queryset, name, value):
+    if value == 'true':
+        return queryset.exclude(Q(picture=None) | Q(picture=''))
+    else:
+        return queryset.filter(Q(picture=None) | Q(picture=''))
+
+def has_explanation_filter(queryset, name, value):
+    if value == 'true':
+        return queryset.exclude(Q(explanation=None) | Q(explanation=''))
+    else:
+        return queryset.filter(Q(explanation=None) | Q(explanation=''))
+
+
+def has_summary_explanation_filter(queryset, name, value):
+    if value == 'true':
+        return queryset.exclude(Q(summary_explanation=None) | Q(summary_explanation=''))
+    else:
+        return queryset.filter(Q(summary_explanation=None) | Q(summary_explanation=''))
+
+
+def has_how_to_use_filter(queryset, name, value):
+    if value == 'true':
+        return queryset.exclude(Q(how_to_use=None) | Q(how_to_use=''))
+    else:
+        return queryset.filter(Q(how_to_use=None) | Q(how_to_use=''))
+
+
+class NoContentProductFilter(filters.FilterSet):
+    has_picture = filters.CharFilter(method=has_picture_filter)
+    has_explanation = filters.CharFilter(method=has_explanation_filter)
+    has_summary_explanation = filters.CharFilter(method=has_summary_explanation_filter)
+    has_how_to_use = filters.CharFilter(method=has_how_to_use_filter)
+
+    class Meta:
+        model = Product
+        fields = {
+            'id': ('exact',),
+            'name': BASE_FIELD_FILTERS,
+            'barcode': BASE_FIELD_FILTERS,
         }

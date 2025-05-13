@@ -15,6 +15,8 @@ from users.serializers import UserListSerializer, UserCreateSerializer, UserUpda
      UserRetrieveSerializer, CurrentUserNotificationSerializer
 from rest_framework.parsers import MultiPartParser, FormParser
 
+from users.throttles import UserCreateRateThrottle, UserUpdateRateThrottle
+
 
 class CurrentUserApiView(APIView):
     permission_classes = (IsAuthenticated,)
@@ -43,6 +45,7 @@ class UserListView(generics.ListAPIView):
 
 class UserCreateView(generics.CreateAPIView):
     serializer_class = UserCreateSerializer
+    throttle_classes = [UserCreateRateThrottle]
 
     def get_queryset(self) -> QuerySet:
         return User.objects.all()
@@ -53,6 +56,8 @@ class UserUpdateView(generics.UpdateAPIView):
     permission_basename = 'user'
     serializer_class = UserUpdateSerializer
     parser_classes = (MultiPartParser, FormParser)
+    throttle_classes = [UserUpdateRateThrottle]
+
 
     def get_queryset(self) -> QuerySet:
         return User.objects.filter(pk=self.request.user.id)

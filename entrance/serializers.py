@@ -7,6 +7,10 @@ from users.serializers import UserSimpleSerializer
 
 
 class EntrancePackageItemSerializer(SModelSerializer):
+    net_purchase_price = serializers.ReadOnlyField()
+    in_case_of_sale = serializers.ReadOnlyField()
+    final_price_after_discount = serializers.ReadOnlyField()
+
     class Meta:
         model = EntrancePackageItem
         fields = '__all__'
@@ -19,11 +23,18 @@ class EntrancePackageItemSerializer(SModelSerializer):
 
 
 class EntrancePackageItemListRetrieveSerializer(EntrancePackageItemSerializer):
+    net_purchase_price = serializers.ReadOnlyField()
+    in_case_of_sale = serializers.ReadOnlyField()
+    final_price_after_discount = serializers.ReadOnlyField()
+
     class Meta(EntrancePackageItemSerializer.Meta):
         pass
 
 
 class EntrancePackageSerializer(SModelSerializer):
+    remain_item = serializers.JSONField(source='remain_items', read_only=True)
+    items = EntrancePackageItemSerializer(read_only=True, many=True)
+
     class Meta:
         model = EntrancePackage
         fields = '__all__'
@@ -36,6 +47,7 @@ class EntrancePackageSerializer(SModelSerializer):
 
 
 class EntrancePackageRetrieveSerializer(EntrancePackageSerializer):
+    remain_item = serializers.JSONField(source='remain_items', read_only=True)
     items = EntrancePackageItemListRetrieveSerializer(read_only=True, many=True)
     supplier = SupplierSerializer(read_only=True, many=True)
     store = StoreSerializer(read_only=True, many=True)
@@ -47,7 +59,11 @@ class EntrancePackageRetrieveSerializer(EntrancePackageSerializer):
 
 
 class EntrancePackageListSerializer(SModelSerializer):
+    remain_item = serializers.JSONField(source='remain_items', read_only=True)
     created_by = UserSimpleSerializer(many=False)
+    supplier_name = serializers.CharField(source='supplier.name', read_only=True)
+    store_name = serializers.CharField(source='store.name', read_only=True)
+    items = EntrancePackageItemListRetrieveSerializer(read_only=True, many=True)
 
     class Meta:
         model = EntrancePackage
@@ -55,7 +71,19 @@ class EntrancePackageListSerializer(SModelSerializer):
         read_only_fields = ('created_at', 'updated_at')
 
 
+class StoreReceiptSimpleSerializer(SModelSerializer):
+    store_name = serializers.CharField(source='store.name', read_only=True)
+    supplier_name = serializers.CharField(source='supplier.name', read_only=True)
+
+    class Meta:
+        model = StoreReceipt
+        fields = '__all__'
+        read_only_fields = ('created_at', 'updated_at')
+
+
 class StoreReceiptItemSerializer(SModelSerializer):
+    store_receipt = StoreReceiptSimpleSerializer(read_only=True)
+
     class Meta:
         model = StoreReceiptItem
         fields = '__all__'
@@ -73,6 +101,9 @@ class StoreReceiptItemListRetrieveSerializer(StoreReceiptItemSerializer):
 
 
 class StoreReceiptSerializer(SModelSerializer):
+    items = StoreReceiptItemListRetrieveSerializer(read_only=True, many=True)
+    store_name = serializers.CharField(source='store.name', read_only=True)
+
     class Meta:
         model = StoreReceipt
         fields = '__all__'
@@ -97,6 +128,7 @@ class StoreReceiptRetrieveSerializer(StoreReceiptSerializer):
 
 class StoreReceiptListSerializer(SModelSerializer):
     created_by = UserSimpleSerializer(many=False)
+    items = StoreReceiptItemListRetrieveSerializer(read_only=True, many=True)
 
     class Meta:
         model = StoreReceipt
