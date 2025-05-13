@@ -2,7 +2,8 @@ from django.conf.urls import url
 
 from cms.views import HeaderElementApiView, PopUpElementApiView, BannerContentApiView, ShopHomePageStoryApiView
 from products.shop.views import ShopProductSimpleListView, BrandShopListView, CategoryTreeView, RootCategoryListView, \
-    ShopProductWithCommentsListView, CurrentUserHasOrderProductViewSet
+    ShopProductWithCommentsListView, CurrentUserHasOrderProductViewSet, CurrentUserRelatedProductViewSet, \
+    PendingReviewProductsView
 from shop.search import GlobalAutoCompleteSearchAPIView
 from shop.views import ToggleWishListBTNView, ToggleComparisonListBTNView, CurrentUserCartApiView, CartSyncView, \
     CartDetailView, ClearCustomerCartView, CurrentUserWishListApiView, WishListDetailView, WishlistSyncView, \
@@ -55,5 +56,11 @@ urlpatterns = [
 
     url(r'^currentUserHasOrderProducts$', CurrentUserHasOrderProductViewSet.as_view(),
         name='currentUserHasOrderProducts'),
+
+    url(r'^currentUserRelatedProduct$', CurrentUserRelatedProductViewSet.as_view(),
+        name='currentUserRelatedProduct'),
+
+    url(r'^pendingReviewProducts$', PendingReviewProductsView.as_view(),
+        name='pendingReviewProducts'),
 
 ]

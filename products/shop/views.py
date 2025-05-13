@@ -26,7 +26,6 @@ from rest_framework.filters import OrderingFilter
 
 
 class ShopProductListView(generics.ListAPIView):
-
     serializer_class = ShopProductsListSerializers
     throttle_classes = [UserProductListRateThrottle, AnonProductListRateThrottle]
     filterset_class = ShopProductFilter
@@ -40,7 +39,6 @@ class ShopProductListView(generics.ListAPIView):
 
 
 class ShopProductSimpleListView(generics.ListAPIView):
-
     serializer_class = ShopProductsSimpleListSerializers
     throttle_classes = [UserProductListRateThrottle, AnonProductListRateThrottle]
     filterset_class = ShopProductSimpleFilter
@@ -52,7 +50,6 @@ class ShopProductSimpleListView(generics.ListAPIView):
 
 
 class ShopProductWithCommentsListView(generics.ListAPIView):
-
     serializer_class = ShopProductsWithCommentsListSerializers
     throttle_classes = [UserProductListRateThrottle, AnonProductListRateThrottle]
     filterset_class = ShopProductSimpleFilter
@@ -162,7 +159,7 @@ class RelatedProductsApiView(generics.ListAPIView):
         ).prefetch_related(
             'properties', 'avails'
         )
-        cache.set(cache_key, related_products, 60*10)
+        cache.set(cache_key, related_products, 60 * 10)
         return related_products
 
 
@@ -186,7 +183,7 @@ class SimilarBrandProductsApiView(generics.ListAPIView):
             'brand', 'category', 'current_price', 'current_inventory', 'products_in_wish_list', 'product_comments'
         ).prefetch_related('properties', 'avails')
 
-        cache.set(cache_key, similar_brand_products, 60*10)
+        cache.set(cache_key, similar_brand_products, 60 * 10)
         return similar_brand_products
 
 
@@ -210,7 +207,7 @@ class SimilarAvailProductsApiView(generics.ListAPIView):
             'brand', 'category', 'current_price', 'current_inventory', 'products_in_wish_list', 'product_comments'
         ).prefetch_related('properties', 'avails')
 
-        cache.set(cache_key, similar_avails_products, 60*10)
+        cache.set(cache_key, similar_avails_products, 60 * 10)
         return similar_avails_products
 
 
@@ -234,7 +231,7 @@ class SimilarPropertiesProductsApiView(generics.ListAPIView):
             'brand', 'category', 'current_price', 'current_inventory', 'products_in_wish_list', 'product_comments'
         ).prefetch_related('properties', 'avails')
 
-        cache.set(cache_key, similar_properties_products, 60*10)
+        cache.set(cache_key, similar_properties_products, 60 * 10)
         return similar_properties_products
 
 
@@ -258,7 +255,7 @@ class SimilarCategoryProductsApiView(generics.ListAPIView):
             'brand', 'category', 'current_price', 'current_inventory', 'products_in_wish_list', 'product_comments'
         ).prefetch_related('properties', 'avails')
 
-        cache.set(cache_key, similar_category_products, 60*10)
+        cache.set(cache_key, similar_category_products, 60 * 10)
         return similar_category_products
 
 
@@ -274,12 +271,12 @@ class TopViewedShopProductsAPIView(generics.ListAPIView):
     def get_queryset(self):
         return (
             Product.objects
-            .prefetch_related('brand', 'category')
-            .select_related(
+                .prefetch_related('brand', 'category')
+                .select_related(
                 'brand', 'category', 'current_price', 'current_inventory', 'products_in_wish_list', 'product_comments'
             )
-            .annotate(view_count=Count('views_log'))
-            .order_by('-view_count', '-id')
+                .annotate(view_count=Count('views_log'))
+                .order_by('-view_count', '-id')
         )
 
 
@@ -363,3 +360,20 @@ class CurrentUserHasOrderProductViewSet(viewsets.ReadOnlyModelViewSet):
     def get_queryset(self):
         user = get_current_user()
         return Product.objects.filter(shop_order_items__shop_order__customer=user).distinct()
+
+
+class CurrentUserRelatedProductViewSet(viewsets.ReadOnlyModelViewSet):
+    serializer_class = ShopProductsListSerializers
+
+    def get_queryset(self):
+        return Product.objects.all().order_by('-created_by')
+
+
+class PendingReviewProductsView(viewsets.ReadOnlyModelViewSet):
+    serializer_class = ShopProductsListSerializers
+
+    def get_queryset(self):
+        user = get_current_user()
+        return Product.objects.filter(hop_order_items__shop_order__customer=user).exclude(
+            product_comments__customer=user
+        ).distinct()
