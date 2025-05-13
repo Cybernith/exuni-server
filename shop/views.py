@@ -9,15 +9,17 @@ from django.http import Http404, HttpResponseForbidden
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from rest_framework.exceptions import ValidationError
+from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.views import APIView
 
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework import status, generics
 
 from helpers.auth import BasicObjectPermission
 from helpers.functions import get_current_user
 from products.models import Product
+from shop.filters import ShopOrderFilter
 from shop.helpers import reduce_inventory
 from shop.models import Cart, WishList, Comparison, ShipmentAddress, LimitedTimeOffer, Rate, Comment, ShopOrder, \
     ShopOrderItem, ShopOrderStatusHistory
@@ -25,9 +27,11 @@ from shop.serializers import CartCRUDSerializer, CartRetrieveSerializer, WishLis
     WishListCRUDSerializer, ComparisonRetrieveSerializer, ComparisonCRUDSerializer, ShipmentAddressCRUDSerializer, \
     ShipmentAddressRetrieveSerializer, LimitedTimeOfferItemsSerializer, LimitedTimeOfferSerializer, RateSerializer, \
     RateRetrieveSerializer, PostCommentSerializer, CommentSerializer, ShopOrderStatusHistorySerializer, \
-    SyncAllDataSerializer, CartInputSerializer, WishlistInputSerializer, CompareItemInputSerializer, ShopOrderSerializer
+    SyncAllDataSerializer, CartInputSerializer, WishlistInputSerializer, CompareItemInputSerializer, \
+    ShopOrderSerializer, CustomerShopOrderSimpleSerializer
 from shop.throttles import SyncAllDataThrottle, AddToCardRateThrottle, AddToWishListRateThrottle, \
-    AddToComparisonRateThrottle, ShopOrderRateThrottle, ToggleWishListBtnRateThrottle, ToggleComparisonBtnRateThrottle
+    AddToComparisonRateThrottle, ShopOrderRateThrottle, ToggleWishListBtnRateThrottle, ToggleComparisonBtnRateThrottle, \
+    OrderRetrieveThrottle
 from users.models import User
 
 
@@ -539,7 +543,7 @@ class ClearCustomerCartView(APIView):
 
 
 class ShopOrderStatusHistoryApiView(APIView):
-    permission_classes = (IsAuthenticated)
+    permission_classes = [IsAuthenticated]
 
     def get_objects(self, pk, customer):
         try:
@@ -705,5 +709,15 @@ class ToggleComparisonListBTNView(APIView):
             return Response({'detail': 'product added to comparisons'}, status=status.HTTP_204_NO_CONTENT)
 
 
+class UserOrdersListView(generics.ListAPIView):
 
+    serializer_class = CustomerShopOrderSimpleSerializer
+    throttle_classes = OrderRetrieveThrottle
+    filterset_class = ShopOrderFilter
+    ordering_fields = '__all__'
+    pagination_class = LimitOffsetPagination
 
+    def get_queryset(self):
+        return ShopOrder.objects.filter(
+            customer=get_current_user()
+        ).prefetch_related('history', 'items')

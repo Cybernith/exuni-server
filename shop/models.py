@@ -117,15 +117,17 @@ class ShopOrder(BaseModel):
     PROCESSING = 'pr'
     SHIPPED = 'sh'
     DELIVERED = 'de'
+    RETURNS = 're'
     CANCELLED = 'ca'
 
     STATUS_CHOICES = (
         (PENDING, 'در انتظار پرداخت'),
-        (PAID, 'پرداخت شده'),
-        (PROCESSING, 'درحال آماده سازی'),
+        (PAID, 'جاری'),
+        (PROCESSING, 'درحال بسته بندی'),
         (SHIPPED, 'ارسال شده'),
         (DELIVERED, 'تحویل شده'),
         (CANCELLED, 'لغو شده'),
+        (RETURNS, 'مرجوعی'),
     )
     status = FSMField(choices=STATUS_CHOICES, default=PENDING, protected=False)
     customer = models.ForeignKey('users.User', related_name='shop_order', on_delete=models.PROTECT)

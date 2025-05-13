@@ -35,3 +35,7 @@ class ToggleWishListBtnRateThrottle(UserRateThrottle):
 
 class ToggleComparisonBtnRateThrottle(UserRateThrottle):
     rate = '10/min'
+
+
+class OrderRetrieveThrottle(UserRateThrottle):
+    rate = '10/min'

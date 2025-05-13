@@ -7,7 +7,8 @@ from shop.search import GlobalAutoCompleteSearchAPIView
 from shop.views import ToggleWishListBTNView, ToggleComparisonListBTNView, CurrentUserCartApiView, CartSyncView, \
     CartDetailView, ClearCustomerCartView, CurrentUserWishListApiView, WishListDetailView, WishlistSyncView, \
     CurrentUserComparisonApiView, ComparisonSyncView, ComparisonDetailView, SyncAllDataView, \
-    ClearCustomerComparisonView, ClearCustomerWishListView, CurrentUserShipmentAddressApiView, ShipmentAddressDetailView
+    ClearCustomerComparisonView, ClearCustomerWishListView, CurrentUserShipmentAddressApiView, \
+    ShipmentAddressDetailView, UserOrdersListView
 
 urlpatterns = [
     # limit - offset - ordering - topRated -> boolean - top viewd -> booleand
@@ -49,5 +50,7 @@ urlpatterns = [
     url(r'^searchAutoCompelete$', GlobalAutoCompleteSearchAPIView.as_view(), name='globalAutoCompleteSearch'),
 
     url(r'^productsWithComments$', ShopProductWithCommentsListView.as_view(), name='productsWithComments'),
+
+    url(r'^currentUserOrders$', UserOrdersListView.as_view(), name='userOrders'),
 
 ]
