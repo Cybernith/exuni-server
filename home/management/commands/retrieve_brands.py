@@ -1,3 +1,5 @@
+import datetime
+
 from django.core.management import BaseCommand
 from django.db import transaction
 from django.db.models import F
@@ -36,7 +38,12 @@ class Command(BaseCommand):
         page = 1
         response_len = 100
         while response_len == 100:
-            response = wcapi.get("products/attributes/1/terms", params={"per_page": 100, 'page': page}).json()
+            print(datetime.datetime.now())
+            print(datetime.datetime.now())
+            print(datetime.datetime.now())
+            print(datetime.datetime.now())
+            print(datetime.datetime.now())
+            response = wcapi.get("products/attributes/1/terms", params={"per_page": 100, 'page': page})
             for brand in response:
                 Brand.objects.create(
                     unique_code=brand['id'],
