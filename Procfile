@@ -1,3 +1,3 @@
 migrate: python manage.py migrate --no-input
-web: python -m gunicorn server.wsgi:application --host 0.0.0.0 --port 5000 --workers 8 --timeout-keep-alive 60
+web: gunicorn server.wsgi:application --bind 0.0.0.0:5000 --workers 8 --timeout 60 --keep-alive 60
 collectstatic : python manage.py collectstatic --no-input
