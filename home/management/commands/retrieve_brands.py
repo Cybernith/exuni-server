@@ -41,7 +41,7 @@ class Command(BaseCommand):
             response = wcapi.get("products/attributes/1/terms", params={"per_page": 100, 'page': page})
             for brand in response:
                 Brand.objects.create(
-                    unique_code=brand['id'],
+                    unique_code=int(brand['id']),
                     name=brand['name'],
                     slug=brand['slug'],
                 )
