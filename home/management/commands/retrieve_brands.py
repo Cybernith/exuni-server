@@ -50,8 +50,9 @@ class Command(BaseCommand):
         print(response)
         for b in response:
             print(b)
+            print('----------------------------')
             brand = Brand.objects.filter(slug=b['slug'])
-            if brand:
+            if brand and b['image']:
                 save_brand_logo_from_url(brand_id=brand.first().id, image_url=b['image']['src'])
 
 
