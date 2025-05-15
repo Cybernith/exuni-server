@@ -12,6 +12,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         ProductProperty.objects.all().delete()
+        ProductPropertyTerm.objects.all().delete()
         wcapi = API(
             url="https://exuni.ir",
             consumer_key=WC_C_KEY,
