@@ -5,7 +5,7 @@ Databases = {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'NAME': 'exuni_db',
         'USER': 'postgres',
-        'PASSWORD': '58936bf3904894e2a72ff75395401376',
+        'PASSWORD': '3bac126a292bf85ba4248a2d59a258a8',
         'HOST': 'dokku-postgres-exuni-db',
         'PORT': '5432',
         'ATOMIC_REQUESTS': True,
@@ -17,7 +17,7 @@ Databases = {
 }
 
 client = MongoClient(
-    'mongodb://exuni-mongo-db:3b30316f2b64e75b2d4d02ca767bb13c@dokku-mongo-exuni-mongo-db:27017/exuni_mongo_db'
+    'mongodb://exuni-mongo-db:59a98e7b7269f9242021c5615163f586@dokku-mongo-exuni-mongo-db:27017/exuni_mongo_db'
 )
 
 db_handle = client['sobhan_logs']
@@ -27,4 +27,3 @@ PEC = {
     'PIN_CODE': "123456",
     'TERMINAL': ""
 }
-

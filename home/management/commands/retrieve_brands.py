@@ -38,11 +38,6 @@ class Command(BaseCommand):
         page = 1
         response_len = 100
         while response_len == 100:
-            print(datetime.datetime.now())
-            print(datetime.datetime.now())
-            print(datetime.datetime.now())
-            print(datetime.datetime.now())
-            print(datetime.datetime.now())
             response = wcapi.get("products/attributes/1/terms", params={"per_page": 100, 'page': page})
             for brand in response:
                 Brand.objects.create(
@@ -56,9 +51,8 @@ class Command(BaseCommand):
         response = wcapi.get("products/brands").json()
         print(response)
         for b in response:
-            print(b)
             brand = Brand.objects.filter(slug=b['slug'])
-            if brand:
+            if brand and b['image']:
                 save_brand_logo_from_url(brand_id=brand.first().id, image_url=b['image']['src'])
 
 
