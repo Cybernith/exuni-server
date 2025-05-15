@@ -40,6 +40,8 @@ class Command(BaseCommand):
         while response_len == 100:
             response = wcapi.get("products/attributes/1/terms", params={"per_page": 100, 'page': page})
             for brand in response:
+                print(brand)
+                print(brand['id'])
                 Brand.objects.create(
                     unique_code=int(brand['id']),
                     name=brand['name'],
