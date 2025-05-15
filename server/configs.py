@@ -17,7 +17,7 @@ Databases = {
 }
 
 client = MongoClient(
-    'mongodb://exuni-mongo-db:58936bf3904894e2a72ff75395401376@dokku-mongo-exuni-mongo-db:27017/exuni_mongo_db'
+    'mongodb://exuni-mongo-db:3b30316f2b64e75b2d4d02ca767bb13c@dokku-mongo-exuni-mongo-db:27017/exuni_mongo_db'
 )
 
 db_handle = client['sobhan_logs']
