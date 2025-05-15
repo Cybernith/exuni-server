@@ -211,6 +211,7 @@ class Command(BaseCommand):
                             sale_price=float(variation['sale_price']) if variation['sale_price'] else None,
                             first_inventory=int(variation['stock_quantity']) if variation['stock_quantity'] else None,
                     )
+                    print('added')
                     pic = save_product_picture_from_url(new_variation.id, variation['image']['src'])
                     new_variation.picture = pic
 
