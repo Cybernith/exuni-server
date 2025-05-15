@@ -6,6 +6,7 @@ from woocommerce import API
 from main.models import Currency
 from products.models import Product, ProductGallery, Category, Brand, ProductProperty, ProductAttribute, \
     ProductAttributeTerm, ProductPropertyTerm
+from server.settings import WC_C_SECRET, WC_C_KEY
 from users.models import User
 import json
 import requests
@@ -38,6 +39,14 @@ class Command(BaseCommand):
         Product.objects.all().delete()
         with open('products.json', 'r', encoding='utf-8') as file:
             products = json.load(file)
+
+        wcapi = API(
+            url="https://exuni.ir",
+            consumer_key=WC_C_KEY,
+            consumer_secret=WC_C_SECRET,
+            version="wc/v3",
+            wp_api=True
+        )
 
         for product in products:
             if product['type'] == 'simple':
