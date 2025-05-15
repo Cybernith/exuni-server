@@ -38,18 +38,18 @@ class Command(BaseCommand):
         page = 1
         response_len = 100
         while response_len == 100:
-            response = wcapi.get("products/attributes/1/terms", params={"per_page": 100, 'page': page})
+            response = wcapi.get("products/attributes/1/terms", params={"per_page": 100, 'page': page}).json()
             for brand in response:
-                print(brand)
-                print(brand['id'])
                 Brand.objects.create(
-                    unique_code=int(brand['id']),
+                    unique_code=brand['id'],
                     name=brand['name'],
                     slug=brand['slug'],
                 )
             page += 1
+            response_len = len(response)
 
         response = wcapi.get("products/brands").json()
+        print(response)
         for b in response:
             brand = Brand.objects.filter(slug=b['slug'])
             if brand and b['image']:
