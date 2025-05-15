@@ -46,10 +46,8 @@ class Command(BaseCommand):
                     slug=brand['slug'],
                 )
             page += 1
-            response_len = len(response)
 
         response = wcapi.get("products/brands").json()
-        print(response)
         for b in response:
             brand = Brand.objects.filter(slug=b['slug'])
             if brand and b['image']:
