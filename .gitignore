@@ -10,7 +10,6 @@ backups/refresh_balance
 backups/refresh_inventory
 order_users.json
 order_customer.json
-products.json
 # Editor directories and files
 .idea/
 .vscode
