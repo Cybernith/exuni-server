@@ -293,7 +293,8 @@ class ShopProductDetailSerializers(serializers.ModelSerializer):
         return None
 
     def get_brand(self, obj):
-        return {'id': obj.brand.id, 'name': obj.brand.name, 'logo': obj.brand.logo} if obj.brand else None
+        return {'id': obj.brand.id, 'name': obj.brand.name, 'logo': obj.brand.logo.url if obj.brand.logo  else None}\
+            if obj.brand else None
 
     def get_category(self, obj):
         categories = []
