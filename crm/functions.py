@@ -53,7 +53,7 @@ def save_product_view_log(request, product):
 
     ShopProductViewLog.objects.create(
         user_agent=request.META.get("HTTP_USER_AGENT", ""),
-        user=request.get_current_user() or None,
+        user=get_current_user() or None,
         product=product,
         ip_address=request.META.get("REMOTE_ADDR", ""),
         session_key=request.session.session_key,
