@@ -127,7 +127,7 @@ def get_recommended_products(user, limit=20):
 
     most_viewed_products = Product.objects.filter(
         id__in=most_viewed_products_ids
-    ).select_related('brand', 'category').only('id', 'name', 'brand_name', 'category__name')
+    ).select_related('brand', 'category').only('id', 'name', 'brand__name', 'category__name')
 
     all_products = (related_products_by_search | most_viewed_products).distinct()
 

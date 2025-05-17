@@ -662,22 +662,21 @@ class ToggleWishListBTNView(APIView):
     throttle_classes = [ToggleWishListBtnRateThrottle]
 
     def post(self, request):
-        user = get_current_user()
         data = request.data
         product = get_object_or_404(
             Product,
             pk=data.get('product_id')
         )
         if WishList.objects.filter(
-            customer=user,
+            customer=request.user,
             product=product
         ).exists():
-            WishList.objects.get(Q(customer=user) & Q(product=product)).delete()
+            WishList.objects.get(Q(customer=request.user) & Q(product=product)).delete()
             return Response({'detail': 'product deleted from wish list'}, status=status.HTTP_201_CREATED)
 
         else:
             WishList.objects.create(
-                customer=user,
+                customer=request.user,
                 product=product
             )
             return Response({'detail': 'product added to wish list'}, status=status.HTTP_204_NO_CONTENT)
@@ -695,15 +694,15 @@ class ToggleComparisonListBTNView(APIView):
             pk=data.get('product_id')
         )
         if Comparison.objects.filter(
-            customer=user,
+            customer=request.user,
             product=product
         ).exists():
-            Comparison.objects.get(Q(customer=user) & Q(product=product)).delete()
+            Comparison.objects.get(Q(customer=request.user) & Q(product=product)).delete()
             return Response({'detail': 'product deleted from comparisons'}, status=status.HTTP_201_CREATED)
 
         else:
             Comparison.objects.create(
-                customer=user,
+                customer=request.user,
                 product=product
             )
             return Response({'detail': 'product added to comparisons'}, status=status.HTTP_204_NO_CONTENT)
