@@ -227,13 +227,13 @@ class ShopSimilarProductsListSerializers(serializers.ModelSerializer):
 
 
 class ShopProductDetailSerializers(serializers.ModelSerializer):
-    final_price = serializers.ReadOnlyField(source='final_price')
-    rate = serializers.ReadOnlyField(source='rate')
-    effective_price = serializers.ReadOnlyField(source='effective_price')
-    has_offer = serializers.ReadOnlyField(source='has_offer')
-    offer_amount = serializers.ReadOnlyField(source='offer_amount')
-    current_inventory = serializers.ReadOnlyField(source='current_inventory')
-    gallery = ProductGallerySerializer(read_only=True)
+    final_price = serializers.ReadOnlyField()
+    rate = serializers.ReadOnlyField()
+    effective_price = serializers.ReadOnlyField()
+    has_offer = serializers.ReadOnlyField()
+    offer_amount = serializers.ReadOnlyField()
+    current_inventory = serializers.ReadOnlyField()
+    gallery = ProductGallerySerializer(many=True, read_only=True)
     avails = AvailSerializer(many=True, read_only=True)
     properties = ProductPropertySerializer(many=True, read_only=True)
     image = serializers.SerializerMethodField()
@@ -243,7 +243,7 @@ class ShopProductDetailSerializers(serializers.ModelSerializer):
     #similar_brand_products = serializers.SerializerMethodField()
     offer_display = serializers.ReadOnlyField(source='offer_display')
     in_wish_list_count = serializers.ReadOnlyField(source='in_wish_list_count')
-    #comments = serializers.SerializerMethodField()
+    comments = serializers.SerializerMethodField()
     user_rate = serializers.SerializerMethodField()
     comments_count = serializers.ReadOnlyField(source='comments_count')
 
@@ -275,7 +275,7 @@ class ShopProductDetailSerializers(serializers.ModelSerializer):
             'user_rate',
             'offer_display',
             'in_wish_list_count',
-            #'comments',
+            'comments',
             'comments_count',
             #'similar_products',
             #'similar_brand_products',
@@ -310,9 +310,9 @@ class ShopProductDetailSerializers(serializers.ModelSerializer):
     #
     #    return ShopSimilarProductsListSerializers(similar_products, many=True).data
 
-    #def get_comments(self, obj):
-    #    comments = obj.product_comments.filter()[:4]
-    #    return CommentSerializer(comments, many=True).data
+    def get_comments(self, obj):
+        comments = obj.product_comments.filter()[:4]
+        return CommentSerializer(comments, many=True).data
 
 
 class ShopCommentSerializer(serializers.ModelSerializer):
