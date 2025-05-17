@@ -25,24 +25,25 @@ class Command(BaseCommand):
         response = wcapi.get("products/attributes", params={"per_page": 100, 'page': 1}).json()
         for prop in response:
             if not prop['id'] in [1, 2]:
-                product_prop = ProductProperty.objects.create(
-                    unique_code=prop['id'],
-                    name=prop['name'],
-                    slug=prop['slug'],
-                )
-                page = 1
-                response_len = 100
-                while response_len == 100:
-                    terms = wcapi.get(f"products/attributes/{prop['id']}/terms", params={"per_page": 100, 'page': page}).json()
-                    for term in terms:
-                        ProductPropertyTerm.objects.create(
-                            product_property=product_prop,
-                            unique_code=term['id'],
-                            name=term['name'],
-                            slug=term['slug'],
-                        )
-                    page += 1
-                    response_len = len(terms)
+                if not ProductProperty.objects.filter(unique_code=prop['id']).exists():
+                    product_prop = ProductProperty.objects.create(
+                        unique_code=prop['id'],
+                        name=prop['name'],
+                        slug=prop['slug'],
+                    )
+                    page = 1
+                    response_len = 100
+                    while response_len == 100:
+                        terms = wcapi.get(f"products/attributes/{prop['id']}/terms", params={"per_page": 100, 'page': page}).json()
+                        for term in terms:
+                            ProductPropertyTerm.objects.create(
+                                product_property=product_prop,
+                                unique_code=term['id'],
+                                name=term['name'],
+                                slug=term['slug'],
+                            )
+                        page += 1
+                        response_len = len(terms)
 
 
 
