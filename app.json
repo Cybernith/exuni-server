@@ -1,3 +1,5 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:2677fc0047629cd54c2d8d31156d7189c8c1232de77b2b9dd402311c7a087a82
-size 158
+{
+  "version https": "//git-lfs.github.com/spec/v1",
+  "oid sha256": "2677fc0047629cd54c2d8d31156d7189c8c1232de77b2b9dd402311c7a087a82",
+  "size https": 158
+}
