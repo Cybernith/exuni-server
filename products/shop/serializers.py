@@ -233,7 +233,7 @@ class ShopProductDetailSerializers(serializers.ModelSerializer):
     effective_price = serializers.ReadOnlyField()
     has_offer = serializers.ReadOnlyField()
     offer_amount = serializers.ReadOnlyField()
-    current_inventory = serializers.ReadOnlyField()
+    calculate_current_inventory = serializers.ReadOnlyField()
     gallery = ProductGallerySerializer(many=True, read_only=True)
     avails = AvailSerializer(many=True, read_only=True)
     properties = ProductPropertySerializer(many=True, read_only=True)
@@ -258,7 +258,7 @@ class ShopProductDetailSerializers(serializers.ModelSerializer):
             'effective_price',
             'has_offer',
             'offer_amount',
-            'current_inventory',
+            'calculate_current_inventory',
             'image',
             'category',
             'brand',
