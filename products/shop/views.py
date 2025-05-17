@@ -68,18 +68,7 @@ class ShopProductDetailView(generics.RetrieveAPIView):
     throttle_classes = [UserProductDetailRateThrottle, AnonProductDetailRateThrottle]
     lookup_field = 'id'
 
-    queryset = Product.objects.annotate(view_count=Count('views_log')).prefetch_related(
-        'properties',
-        'avails'
-        'products_in_wish_list',
-        'product_comments'
-        'gallery'
-        'brand',
-        'category',
-        'current_price',
-        'current_inventory',
-
-    )
+    queryset = Product.objects.annotate(view_count=Count('views_log'))
 
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()

@@ -242,11 +242,11 @@ class ShopProductDetailSerializers(serializers.ModelSerializer):
     brand = serializers.SerializerMethodField()
     #similar_products = serializers.SerializerMethodField()
     #similar_brand_products = serializers.SerializerMethodField()
-    offer_display = serializers.ReadOnlyField(source='offer_display')
-    in_wish_list_count = serializers.ReadOnlyField(source='in_wish_list_count')
+    offer_display = serializers.ReadOnlyField()
+    in_wish_list_count = serializers.ReadOnlyField()
     comments = serializers.SerializerMethodField()
     user_rate = serializers.SerializerMethodField()
-    comments_count = serializers.ReadOnlyField(source='comments_count')
+    comments_count = serializers.ReadOnlyField()
 
     class Meta:
         model = Product

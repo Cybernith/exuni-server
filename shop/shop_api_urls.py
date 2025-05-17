@@ -12,7 +12,8 @@ from shop.views import ToggleWishListBTNView, ToggleComparisonListBTNView, Curre
     CurrentUserComparisonApiView, ComparisonSyncView, ComparisonDetailView, SyncAllDataView, \
     ClearCustomerComparisonView, ClearCustomerWishListView, CurrentUserShipmentAddressApiView, \
     ShipmentAddressDetailView, UserOrdersListView
-from users.views.usersView import CheckVerificationAndLogin, SendVerificationCodeView, UserUpdateView, ChangePhoneView
+from users.views.usersView import CheckVerificationAndLogin, SendVerificationCodeView, UserUpdateView, ChangePhoneView, \
+    CurrentUserApiView
 
 urlpatterns = [
     # limit - offset - ordering - topRated -> boolean - top viewd -> booleand
@@ -20,6 +21,7 @@ urlpatterns = [
     url(r'^sendVerificationCode$', SendVerificationCodeView.as_view()),
     url(r'^userUpdate/(?P<pk>[0-9]+)$', UserUpdateView.as_view(), name='update-user'),
     url(r'^changePhoneByVerificationCode$', ChangePhoneView.as_view()),
+    url(r'^currentUser/$', CurrentUserApiView.as_view(), name='current-user'),
 
     url(r'^products$', ShopProductSimpleListView.as_view(), name='shopProductSimpleList'),
     url(r'^productDetail/(?P<id>[0-9]+)$', ShopProductDetailView.as_view(), name='ProductDetail'),
