@@ -296,7 +296,12 @@ class ShopProductDetailSerializers(serializers.ModelSerializer):
         return {'id': obj.brand.id, 'name': obj.brand.name, 'logo': obj.brand.logo} if obj.brand else None
 
     def get_category(self, obj):
-        return {'id': obj.category.id, 'name': obj.category.name} if obj.category else None
+        categories = []
+        for category in obj.category:
+            categories.append(
+                {'id': category.id, 'name': category.name}
+            )
+        return categories
 
     #def get_similar_products(self, obj):
     #    similar_products = Product.objects.filter(
@@ -312,7 +317,7 @@ class ShopProductDetailSerializers(serializers.ModelSerializer):
     #    return ShopSimilarProductsListSerializers(similar_products, many=True).data
 
     def get_comments(self, obj):
-        comments = obj.product_comments.filter()[:4]
+        comments = obj.product_comments.filter()
         return CommentSerializer(comments, many=True).data
 
 
