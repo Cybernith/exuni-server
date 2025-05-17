@@ -111,7 +111,7 @@ class Command(BaseCommand):
                     new_product.save()
 
                     for product_attribute in product_attributes:
-                        product_property = ProductProperty.objects.get(unique_code=product_attribute['id'])
+                        product_property = ProductProperty.objects.filter(unique_code=product_attribute['id']).first()
                         new_product_attribute = ProductAttribute.objects.create(
                             product=new_product,
                             product_property=product_property
