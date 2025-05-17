@@ -13,7 +13,6 @@ class Sms:
             message=message,
             linenumber=SMS_IR_LINE_NUMBER
         )
-
         return response
 
     @staticmethod
