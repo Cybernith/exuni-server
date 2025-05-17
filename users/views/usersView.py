@@ -129,21 +129,21 @@ class ChangePhoneView(APIView, RecaptchaView):
     throttle_scope = 'verification_code'
 
     def post(self, request):
-        self.verify_recaptcha()
+        #self.verify_recaptcha()
 
         data = request.data
-        username = data['username']
+        phone = data['phone']
         verification_code = data.get('verificationCode')
         new_phone = data.get('new_phone')
-        verification_code = PhoneVerification.check_verification_code(username=None, phone=new_phone,
+        verification_code = PhoneVerification.check_verification_code(phone=new_phone,
                                                                       code=verification_code,
                                                                       raise_exception=True)
 
         if verification_code is not None:
-            user = User.objects.get(username=username)
+            user = User.objects.get(phone=phone)
             user.phone = new_phone
             user.save()
-            return Response(data={'verificationCode': verification_code}, status=status.HTTP_200_OK)
+            return Response(data={'new phone': new_phone}, status=status.HTTP_200_OK)
         else:
             return Response(status=status.HTTP_404_NOT_FOUND)
 
