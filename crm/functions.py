@@ -9,6 +9,7 @@ import time
 from functools import wraps
 from collections import OrderedDict
 
+from helpers.functions import get_current_user
 from products.models import Product
 
 
@@ -39,7 +40,7 @@ def save_search_log(request, query_value, search_type=SearchLog.RAW_TEXT):
 
 def save_product_view_log(request, product):
     if request.user.is_authenticated:
-        user_key = f"user:{request.user.id}"
+        user_key = f"user:{get_current_user().id or request.session.session_key}"
     else:
         if not request.session.session_key:
             request.session.save()
@@ -52,7 +53,7 @@ def save_product_view_log(request, product):
 
     ShopProductViewLog.objects.create(
         user_agent=request.META.get("HTTP_USER_AGENT", ""),
-        user=request.user,
+        user=request.get_current_user() or None,
         product=product,
         ip_address=request.META.get("REMOTE_ADDR", ""),
         session_key=request.session.session_key,
