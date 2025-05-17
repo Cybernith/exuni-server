@@ -130,6 +130,7 @@ class UserCreateSerializer(SModelSerializer):
 
 class UserUpdateSerializer(SModelSerializer):
     profile_picture = serializers.ImageField(required=False)
+    cover_picture = serializers.ImageField(required=False)
 
     class Meta:
         model = get_user_model()
