@@ -253,39 +253,28 @@ class PhoneVerification(BaseModel):
         get_latest_by = 'id'
 
     @staticmethod
-    def send_verification_code(username, phone):
+    def send_verification_code(phone):
         verify_code = ''.join(str(secrets.randbelow(10)) for _ in range(6))
-        if username and not phone:
-            try:
-                user = User.objects.get(username=username)
-                phone_number = user.phone
-                PhoneVerification.objects.create(user=user, phone=phone_number, code=verify_code)
-                Sms.send(phone=phone_number, message="کد تایید شما در اکسونی: {}".format(verify_code))
-                return phone_number
-            except User.DoesNotExist:
-                return None
+        if User.objects.filter(mobile_number=phone).exists():
+            PhoneVerification.objects.create(user=User.objects.get(mobile_number=phone), phone=phone,
+                                             code=verify_code)
+            Sms.send(phone=phone, message="کد تایید شما در اکسونی: {}".format(verify_code))
+            return phone
         else:
             PhoneVerification.objects.create(phone=phone, code=verify_code)
             Sms.send(phone=phone, message="کد تایید شما در  اکسونی: {}".format(verify_code))
             return phone
 
-
     @staticmethod
-    def check_verification_code(username, phone, code, raise_exception=False):
+    def check_verification_code(phone, code, raise_exception=False):
         try:
-            if username:
-                phone = User.objects.get(username=username).phone
-                phone_verification = PhoneVerification.objects.filter(phone=phone, code=code).earliest()
-            else:
-                phone_verification = PhoneVerification.objects.filter(phone=phone, code=code).earliest()
+            phone_verification = PhoneVerification.objects.filter(phone=phone, code=code).earliest()
         except PhoneVerification.DoesNotExist:
             raise ValidationError("کد تایید اکسونی اشتباه است")
-
         if not phone_verification.is_expired:
             return code
         elif raise_exception:
             raise ValidationError("کد تایید شما در اکسونی منقضی شده است")
-
         return None
 
 

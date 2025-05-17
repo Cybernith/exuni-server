@@ -270,6 +270,7 @@ class OrderProductsSimpleListSerializers(serializers.ModelSerializer):
             'id',
             'name',
             'image',
+            'offer_percentage',
         ]
 
     def get_image(self, obj):
@@ -302,6 +303,7 @@ class UserCommentProductsSimpleListSerializers(serializers.ModelSerializer):
             'name',
             'image',
             'comments',
+            'products_rates',
         ]
 
     def get_image(self, obj):
@@ -331,5 +333,5 @@ class CustomerShopOrderSimpleSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ShopOrder
-        fields = '__al__'
+        fields = '__all__'
 

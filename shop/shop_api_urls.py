@@ -11,9 +11,15 @@ from shop.views import ToggleWishListBTNView, ToggleComparisonListBTNView, Curre
     CurrentUserComparisonApiView, ComparisonSyncView, ComparisonDetailView, SyncAllDataView, \
     ClearCustomerComparisonView, ClearCustomerWishListView, CurrentUserShipmentAddressApiView, \
     ShipmentAddressDetailView, UserOrdersListView
+from users.views.usersView import CheckVerificationAndLogin, SendVerificationCodeView, UserUpdateView, ChangePhoneView
 
 urlpatterns = [
     # limit - offset - ordering - topRated -> boolean - top viewd -> booleand
+    url(r'^login$', CheckVerificationAndLogin.as_view(), name='checkVerificationAndLogin'),
+    url(r'^sendVerificationCode$', SendVerificationCodeView.as_view()),
+    url(r'^userUpdate/(?P<pk>[0-9]+)$', UserUpdateView.as_view(), name='update-user'),
+    url(r'^changePhoneByVerificationCode$', ChangePhoneView.as_view()),
+
     url(r'^products$', ShopProductSimpleListView.as_view(), name='shopProductSimpleList'),
 
     url(r'^brands$', BrandShopListView.as_view(),name='brandShop'),
