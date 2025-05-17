@@ -36,7 +36,7 @@ class Command(BaseCommand):
                     while response_len == 100:
                         terms = wcapi.get(f"products/attributes/{prop['id']}/terms", params={"per_page": 100, 'page': page}).json()
                         for term in terms:
-                            if not ProductPropertyTerm.objects.filter(unique_code=term['id']).exists():
+                            if not ProductPropertyTerm.objects.filter(name=term['name']).exists():
                                 ProductPropertyTerm.objects.create(
                                     product_property=product_prop,
                                     unique_code=term['id'],
