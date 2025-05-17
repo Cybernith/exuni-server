@@ -5,7 +5,7 @@ Databases = {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'NAME': 'exuni_db',
         'USER': 'postgres',
-        'PASSWORD': '3bac126a292bf85ba4248a2d59a258a8',
+        'PASSWORD': '58936bf3904894e2a72ff75395401376',
         'HOST': 'dokku-postgres-exuni-db',
         'PORT': '5432',
         'ATOMIC_REQUESTS': True,
