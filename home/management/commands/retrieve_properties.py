@@ -3,7 +3,7 @@ from django.db import transaction
 from django.db.models import F
 from woocommerce import API
 
-from products.models import ProductProperty, ProductPropertyTerm, Brand
+from products.models import ProductProperty, ProductPropertyTerm, Brand, ProductAttribute, ProductAttributeTerm
 from server.settings import WC_C_KEY, WC_C_SECRET
 
 
@@ -11,8 +11,10 @@ class Command(BaseCommand):
     help = 'retrieve properties'
 
     def handle(self, *args, **options):
-        ProductProperty.objects.all().delete()
+        ProductAttributeTerm.objects.all().delete()
+        ProductAttribute.objects.all().delete()
         ProductPropertyTerm.objects.all().delete()
+        ProductProperty.objects.all().delete()
         wcapi = API(
             url="https://exuni.ir",
             consumer_key=WC_C_KEY,
