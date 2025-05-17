@@ -111,6 +111,7 @@ class ShopProductsSimpleListSerializers(serializers.ModelSerializer):
             'is_in_user_comparison',
             'get_current_inventory',
             'variations',
+            'brand',
         ]
 
     def get_image(self, obj):
