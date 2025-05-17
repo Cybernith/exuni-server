@@ -62,7 +62,7 @@ urlpatterns = [
     # shop APIs
 
     url(r'^product/shop$', ShopProductListView.as_view(), name='shopProductList'),
-    url(r'^product/shop/detail(?P<id>[0-9]+)$', ShopProductDetailView.as_view(), name='topViewedProduct'),
+    url(r'^product/shop/detail/(?P<id>[0-9]+)$', ShopProductDetailView.as_view(), name='productDetail'),
 
     url(r'^product/(?P<product_id>[0-9]+)/related$', RelatedProductsApiView.as_view(), name='relatedProducts'),
     url(r'^product/(?P<product_id>[0-9]+)/similarBrand$', SimilarBrandProductsApiView.as_view(),

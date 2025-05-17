@@ -74,7 +74,7 @@ class ShopProductDetailView(generics.RetrieveAPIView):
         'current_price',
         'current_inventory',
         'products_in_wish_list',
-        # 'product_comments'
+        'product_comments'
         'gallery'
     ).prefetch_related(
         'properties',

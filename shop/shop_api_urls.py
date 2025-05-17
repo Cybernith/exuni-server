@@ -1,10 +1,11 @@
 from django.conf.urls import url
 
 from cms.views import HeaderElementApiView, PopUpElementApiView, BannerContentApiView, ShopHomePageStoryApiView
-from crm.views import UserCurrentNotificationsAPIView, UserCurrentNotificationsBySortAPIView
+from crm.views import UserCurrentNotificationsAPIView, UserCurrentNotificationsBySortAPIView, RecommendedProductsAPIView
 from products.shop.views import ShopProductSimpleListView, BrandShopListView, CategoryTreeView, RootCategoryListView, \
     ShopProductWithCommentsListView, CurrentUserHasOrderProductViewSet, CurrentUserRelatedProductViewSet, \
-    PendingReviewProductsView, UserProductsWithCommentView, CommentCreateView, RateUpsertApiView
+    PendingReviewProductsView, UserProductsWithCommentView, CommentCreateView, RateUpsertApiView, \
+    RelatedProductsApiView, SimilarBrandProductsApiView, ShopProductDetailView
 from shop.search import GlobalAutoCompleteSearchAPIView
 from shop.views import ToggleWishListBTNView, ToggleComparisonListBTNView, CurrentUserCartApiView, CartSyncView, \
     CartDetailView, ClearCustomerCartView, CurrentUserWishListApiView, WishListDetailView, WishlistSyncView, \
@@ -21,6 +22,7 @@ urlpatterns = [
     url(r'^changePhoneByVerificationCode$', ChangePhoneView.as_view()),
 
     url(r'^products$', ShopProductSimpleListView.as_view(), name='shopProductSimpleList'),
+    url(r'^productDetail/(?P<id>[0-9]+)$', ShopProductDetailView.as_view(), name='ProductDetail'),
 
     url(r'^brands$', BrandShopListView.as_view(),name='brandShop'),
     url(r'^categoryTree$', CategoryTreeView.as_view(), name='categoryTree'),
@@ -82,5 +84,11 @@ urlpatterns = [
 
     url(r'^sendComment$', CommentCreateView.as_view(), name='sendComment'),
     url(r'^sendRate$', RateUpsertApiView.as_view(), name='sendRate'),
+
+    url(r'^product/(?P<product_id>[0-9]+)/related$', RelatedProductsApiView.as_view(), name='relatedProducts'),
+    url(r'^product/(?P<product_id>[0-9]+)/similarBrand$', SimilarBrandProductsApiView.as_view(),
+        name='similarBrandProducts'),
+    url(r'^userRecommendation$', RecommendedProductsAPIView.as_view(),
+        name='userRecommendation'),
 
 ]
