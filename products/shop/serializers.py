@@ -3,7 +3,8 @@ from rest_framework import serializers
 
 from helpers.functions import get_current_user
 from products.models import Product, ProductGallery, Category
-from products.serializers import ProductGallerySerializer, AvailSerializer, ProductPropertySerializer
+from products.serializers import ProductGallerySerializer, AvailSerializer, ProductPropertySerializer, \
+    BrandShopListSerializer
 from shop.models import Comment, Rate, WishList, Comparison
 from shop.serializers import CommentRepliesSerializer, CommentSerializer
 
@@ -93,6 +94,7 @@ class ShopProductsSimpleListSerializers(serializers.ModelSerializer):
     offer_percentage = serializers.SerializerMethodField()
     get_current_inventory = serializers.ReadOnlyField()
     variations = ShopProductVariationsSerializers(read_only=True, many=True)
+    brand = BrandShopListSerializer(read_only=True)
 
     class Meta:
         model = Product
