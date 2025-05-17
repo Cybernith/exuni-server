@@ -205,8 +205,10 @@ class CheckVerificationAndLogin(APIView, RecaptchaView):
             else:
                 user = User.objects.get(mobile_number=phone, username=phone)
             Token.objects.filter(user=user).delete()
-            Token.objects.get_or_create(user=user)
-            return Response(data=UserRetrieveSerializer(user).data, status=status.HTTP_200_OK)
+            token, created = Token.objects.get_or_create(user=user)
+            response_data = UserRetrieveSerializer(user).data
+            response_data['token'] = token.key
+            return Response(data=response_data, status=status.HTTP_200_OK)
         else:
             return Response(status=status.HTTP_404_NOT_FOUND)
 
