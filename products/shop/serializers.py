@@ -297,7 +297,7 @@ class ShopProductDetailSerializers(serializers.ModelSerializer):
 
     def get_category(self, obj):
         categories = []
-        for category in obj.category:
+        for category in obj.category.all():
             categories.append(
                 {'id': category.id, 'name': category.name}
             )
