@@ -56,7 +56,7 @@ class UserAgentModel(models.Model):
 
     @property
     def get_device_family(self):
-        return self.user_agent_object.device.version or None
+        return self.user_agent_object.device.family or None
 
     @property
     def get_user_device(self):
