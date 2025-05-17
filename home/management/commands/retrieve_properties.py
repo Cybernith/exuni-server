@@ -36,12 +36,13 @@ class Command(BaseCommand):
                     while response_len == 100:
                         terms = wcapi.get(f"products/attributes/{prop['id']}/terms", params={"per_page": 100, 'page': page}).json()
                         for term in terms:
-                            ProductPropertyTerm.objects.create(
-                                product_property=product_prop,
-                                unique_code=term['id'],
-                                name=term['name'],
-                                slug=term['slug'],
-                            )
+                            if not ProductPropertyTerm.objects.filter(unique_code=term['id']).exists():
+                                ProductPropertyTerm.objects.create(
+                                    product_property=product_prop,
+                                    unique_code=term['id'],
+                                    name=term['name'],
+                                    slug=term['slug'],
+                                )
                         page += 1
                         response_len = len(terms)
 
