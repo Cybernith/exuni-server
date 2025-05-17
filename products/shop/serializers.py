@@ -9,14 +9,14 @@ from shop.serializers import CommentRepliesSerializer, CommentSerializer
 
 
 class ShopProductsListSerializers(serializers.ModelSerializer):
-    final_price = serializers.ReadOnlyField(source='final_price')
-    effective_price = serializers.ReadOnlyField(source='effective_price')
-    has_offer = serializers.ReadOnlyField(source='has_offer')
-    offer_amount = serializers.ReadOnlyField(source='offer_amount')
-    current_inventory = serializers.ReadOnlyField(source='current_inventory')
-    rate = serializers.ReadOnlyField(source='rate')
-    offer_display = serializers.ReadOnlyField(source='offer_display')
-    in_wish_list_count = serializers.ReadOnlyField(source='in_wish_list_count')
+    final_price = serializers.ReadOnlyField()
+    effective_price = serializers.ReadOnlyField()
+    has_offer = serializers.ReadOnlyField()
+    offer_amount = serializers.ReadOnlyField()
+    current_inventory = serializers.ReadOnlyField()
+    rate = serializers.ReadOnlyField()
+    offer_display = serializers.ReadOnlyField()
+    in_wish_list_count = serializers.ReadOnlyField()
 
     image = serializers.SerializerMethodField()
     category = serializers.SerializerMethodField()
