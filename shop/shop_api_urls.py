@@ -4,7 +4,7 @@ from cms.views import HeaderElementApiView, PopUpElementApiView, BannerContentAp
 from crm.views import UserCurrentNotificationsAPIView, UserCurrentNotificationsBySortAPIView
 from products.shop.views import ShopProductSimpleListView, BrandShopListView, CategoryTreeView, RootCategoryListView, \
     ShopProductWithCommentsListView, CurrentUserHasOrderProductViewSet, CurrentUserRelatedProductViewSet, \
-    PendingReviewProductsView, UserProductsWithCommentView
+    PendingReviewProductsView, UserProductsWithCommentView, CommentCreateView, RateUpsertApiView
 from shop.search import GlobalAutoCompleteSearchAPIView
 from shop.views import ToggleWishListBTNView, ToggleComparisonListBTNView, CurrentUserCartApiView, CartSyncView, \
     CartDetailView, ClearCustomerCartView, CurrentUserWishListApiView, WishListDetailView, WishlistSyncView, \
@@ -79,5 +79,8 @@ urlpatterns = [
 
     url(r'^retrieveNotificationBySort$', UserCurrentNotificationsBySortAPIView.as_view(),
         name='retrieveNotificationBySort'),
+
+    url(r'^sendComment$', CommentCreateView.as_view(), name='sendComment'),
+    url(r'^sendRate$', RateUpsertApiView.as_view(), name='sendRate'),
 
 ]
