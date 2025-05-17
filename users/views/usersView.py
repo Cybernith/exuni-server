@@ -188,6 +188,7 @@ class ChangePasswordByVerificationCodeView(APIView, RecaptchaView):
 
 
 class CheckVerificationAndLogin(APIView, RecaptchaView):
+    throttle_scope = 'verification_code'
 
     def post(self, request):
         # self.verify_recaptcha()
