@@ -12,8 +12,9 @@ from helpers.models import manage_files
 from helpers.views.recaptcha import RecaptchaView
 from users.models import User, PhoneVerification
 from users.serializers import UserListSerializer, UserCreateSerializer, UserUpdateSerializer, \
-     UserRetrieveSerializer, CurrentUserNotificationSerializer
+    UserRetrieveSerializer, CurrentUserNotificationSerializer
 from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.authtoken.models import Token
 
 from users.throttles import UserCreateRateThrottle, UserUpdateRateThrottle
 
@@ -58,7 +59,6 @@ class UserUpdateView(generics.UpdateAPIView):
     parser_classes = (MultiPartParser, FormParser)
     throttle_classes = [UserUpdateRateThrottle]
 
-
     def get_queryset(self) -> QuerySet:
         return User.objects.filter(pk=self.request.user.id)
 
@@ -72,11 +72,11 @@ class SendVerificationCodeView(APIView, RecaptchaView):
 
     def post(self, request):
         data = request.data
-        username = data.get('username')
+        phone = data.get('phone')
 
-        if not self.request.user:
-            self.verify_recaptcha()
-        phone = PhoneVerification.send_verification_code(username=username, phone=data.get('phone'))
+        # if not self.request.user:
+        #     self.verify_recaptcha()
+        phone = PhoneVerification.send_verification_code(phone=phone)
 
         if phone is not None:
             phone_sample = phone[8:] + " **** " + phone[:4]
@@ -89,7 +89,7 @@ class CheckVerificationCodeView(APIView, RecaptchaView):
     throttle_scope = 'verification_code'
 
     def post(self, request):
-        self.verify_recaptcha()
+        # self.verify_recaptcha()
 
         data = request.data
 
@@ -108,21 +108,18 @@ class CheckVerificationForRegister(APIView, RecaptchaView):
     throttle_scope = 'verification_code'
 
     def post(self, request):
-        self.verify_recaptcha()
+        # self.verify_recaptcha()
 
         data = request.data
-
-        username = data['username']
-        if User.objects.filter(username=username).exists():
-            raise ValidationError('کد ملی در سامانه تکراری میباشد')
-
         verification_code = data.get('verification_code')
         phone = data.get('phone')
-        verification_code = PhoneVerification.check_verification_code(username=None, phone=phone,
-                                                                      code=verification_code,
-                                                                      raise_exception=True)
+        verification_code = PhoneVerification.check_verification_code(
+            phone=phone, code=verification_code, raise_exception=True
+        )
 
         if verification_code:
+            if not User.objects.filter(mobile_number=phone):
+                User.objects.create(mobile_number=phone, username=phone)
             return Response(data={'verificationCode': verification_code}, status=status.HTTP_200_OK)
         else:
             return Response(status=status.HTTP_404_NOT_FOUND)
@@ -188,4 +185,28 @@ class ChangePasswordByVerificationCodeView(APIView, RecaptchaView):
                 return Response(status=status.HTTP_404_NOT_FOUND)
         except User.DoesNotExist:
             raise ValidationError('نام کاربری اشتباه می باشد')
+
+
+class CheckVerificationAndLogin(APIView, RecaptchaView):
+
+    def post(self, request):
+        # self.verify_recaptcha()
+        data = request.data
+        verification_code = data.get('verification_code')
+        phone = data.get('phone')
+        verification_code = PhoneVerification.check_verification_code(
+            phone=phone, code=verification_code, raise_exception=True
+        )
+
+        if verification_code:
+            if not User.objects.filter(mobile_number=phone):
+                user = User.objects.create(mobile_number=phone, username=phone)
+            else:
+                user = User.objects.get(mobile_number=phone, username=phone)
+            Token.objects.filter(user=user).delete()
+            Token.objects.get_or_create(user=user)
+            return Response(data=UserRetrieveSerializer(user).data, status=status.HTTP_200_OK)
+        else:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
 
