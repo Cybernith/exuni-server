@@ -17,7 +17,7 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.authtoken.models import Token
 
 from users.throttles import UserCreateRateThrottle, UserUpdateRateThrottle
-
+from django.contrib.auth import login
 
 class CurrentUserApiView(APIView):
     permission_classes = (IsAuthenticated,)
@@ -208,6 +208,7 @@ class CheckVerificationAndLogin(APIView, RecaptchaView):
             token, created = Token.objects.get_or_create(user=user)
             response_data = UserRetrieveSerializer(user).data
             response_data['token'] = token.key
+            login(request, user)
             return Response(data=response_data, status=status.HTTP_200_OK)
         else:
             return Response(status=status.HTTP_404_NOT_FOUND)
