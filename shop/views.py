@@ -142,7 +142,7 @@ class CurrentUserWishListApiView(APIView):
     throttle_classes = [AddToWishListRateThrottle]
 
     def get(self, request):
-        customer = get_current_user()
+        customer = request.user
         query = WishList.objects.filter(customer=customer)
         serializers = ApiWishListRetrieveSerializer(query, many=True, context={'request': request})
         return Response(serializers.data, status=status.HTTP_200_OK)
