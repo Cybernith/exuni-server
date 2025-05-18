@@ -245,20 +245,24 @@ class ApiProductsWithCommentsListSerializers(serializers.ModelSerializer):
     def get_search_comments(self, obj):
         request = self.context.get('request')
         comment_text = request.query_params.get('global_search', None)
+        user = self.context['request'].user
+        if user.id:
+            comments = obj.product_comments.filter(Q(confirmed=True) | Q(customer=self.context['request'].user))
+        else:
+            comments = obj.product_comments.filter(confirmed=True)
 
         if comment_text:
-            filtered_comments = obj.product_comments.filter(
-                Q(text__icontains=comment_text) &
-                (Q(confirmed=True) | Q(customer=self.context['request'].user))
-            )
+            filtered_comments = comments.filter(text__icontains=comment_text)
         else:
-            filtered_comments = obj.product_comments.filter(
-                Q(confirmed=True) | Q(customer=self.context['request'].user)
-                                                            )
+            filtered_comments = comments
         return ApiCommentSerializer(filtered_comments, read_only=True, many=True).data
 
     def get_comments(self, obj):
-        comments = obj.product_comments.filter(Q(confirmed=True) | Q(customer=self.context['request'].user))
+        user = self.context['request'].user
+        if user.id:
+            comments = obj.product_comments.filter(Q(confirmed=True) | Q(customer=self.context['request'].user))
+        else:
+            comments = obj.product_comments.filter(confirmed=True)
         return ApiCommentSerializer(comments, many=True).data
 
 
@@ -367,7 +371,11 @@ class ApiUserCommentProductsSimpleListSerializers(serializers.ModelSerializer):
         return None
 
     def get_comments(self, obj):
-        comments = obj.product_comments.filter(Q(confirmed=True) | Q(customer=self.context['request'].user))
+        user = self.context['request'].user
+        if user.id:
+            comments = obj.product_comments.filter(Q(confirmed=True) | Q(customer=self.context['request'].user))
+        else:
+            comments = obj.product_comments.filter(confirmed=True)
         return ApiCommentSerializer(comments, many=True).data
 
     def get_user_rate(self, obj):
@@ -492,7 +500,11 @@ class ApiProductDetailSerializers(serializers.ModelSerializer):
     #    return ShopSimilarProductsListSerializers(similar_products, many=True).data
 
     def get_comments(self, obj):
-        comments = obj.product_comments.filter(Q(confirmed=True) | Q(customer=self.context['request'].user))
+        user = self.context['request'].user
+        if user.id:
+            comments = obj.product_comments.filter(Q(confirmed=True) | Q(customer=self.context['request'].user))
+        else:
+            comments = obj.product_comments.filter(confirmed=True)
         return ApiCommentSerializer(comments, many=True).data
 
 
