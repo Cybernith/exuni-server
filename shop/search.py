@@ -1,3 +1,4 @@
+from django.contrib.postgres.aggregates import StringAgg
 from django.contrib.postgres.search import SearchQuery, SearchVector, SearchRank, TrigramSimilarity
 from django.db.models import Q, Value, CharField
 from django.db.models.functions import Greatest
@@ -27,11 +28,12 @@ class GlobalAutoCompleteSearchAPIView(APIView):
         result = []
 
         product_queryset = Product.objects.annotate(
+            category_names=StringAgg('category__name', delimiter=' ', distinct=True),
             rank=SearchRank(search_vector, search_query),
             similarity=Greatest(
                 TrigramSimilarity('name', query),
                 TrigramSimilarity('brand__name', query),
-                TrigramSimilarity('category__name', query),
+                TrigramSimilarity('category_names', query),
             )
         ).filter(
             similarity__gt=0.15
@@ -49,7 +51,7 @@ class GlobalAutoCompleteSearchAPIView(APIView):
         brand_queryset = Brand.objects.annotate(
             similarity=TrigramSimilarity('name', query)
         ).filter(
-            search_querysimilarity__gt=0.3
+            similarity__gt=0.3
         ).annotate(
             type=Value('brand', output_field=CharField())
         ).values(
@@ -63,14 +65,10 @@ class GlobalAutoCompleteSearchAPIView(APIView):
         category_queryset = Category.objects.annotate(
             similarity=TrigramSimilarity('name', query)
         ).filter(
-            search_querysimilarity__gt=0.3
+            similarity__gt=0.3
         ).annotate(
             type=Value('category', output_field=CharField())
-        ).values(
-            'id', 'name', 'type'
-        ).order_by(
-            '-similarity'
-        )[:5]
+        ).values('id', 'name', 'type').order_by('-similarity').distinct()[:5]
 
         result.extend(category_queryset)
 
