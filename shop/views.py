@@ -526,11 +526,10 @@ class ShopOrderRegistrationView(APIView):
 
 
 class CustomerOrdersDetailView(APIView):
-    permission_classes = (IsAuthenticated, BasicObjectPermission)
-    permission_basename = 'shop_order'
+    permission_classes = [IsAuthenticated]
 
-    def get(self, request, pk):
-        orders = ShopOrder.objects.filter(customer_id=pk)
+    def get(self, request):
+        orders = ShopOrder.objects.filter(customer=get_current_user())
         serializers = ShopOrderSerializer(orders, many=True)
         return Response(serializers.data, status=status.HTTP_200_OK)
 

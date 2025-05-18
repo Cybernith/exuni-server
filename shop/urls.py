@@ -49,5 +49,5 @@ urlpatterns = [
     url(r'^product/(?P<product_id>[0-9]+)/userRate$', UserProductRateApiView.as_view(), name='productUserRate'),
 
     url(r'^createOrder$', ShopOrderRegistrationView.as_view(), name='createOrder'),
-    url(r'^customerOrders/(?P<pk>[0-9]+)$', CustomerOrdersDetailView.as_view(), name='customerOrders'),
+    url(r'^customerOrders', CustomerOrdersDetailView.as_view(), name='customerOrders'),
 ]
