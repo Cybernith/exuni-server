@@ -56,6 +56,7 @@ class ShopProductsListSerializers(serializers.ModelSerializer):
             if obj.brand else None
 
     def get_category(self, obj):
+
         categories = []
         for category in obj.category.all():
             categories.append(
