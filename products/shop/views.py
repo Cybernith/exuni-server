@@ -134,8 +134,8 @@ class RelatedProductsApiView(generics.ListAPIView):
         except Product.DoesNotExist:
             return Product.objects.none()
 
-        properties_ids = product.properties.values_list('id', flat=True)
-        avails_ids = product.avails.values_list('id', flat=True)
+        properties_ids = product.properties.all().values_list('id', flat=True)
+        avails_ids = product.avails.all().values_list('id', flat=True)
 
         related_products = Product.objects.annotate(view_count=Count('views_log')).filter(
             Q(category=product.category) |
