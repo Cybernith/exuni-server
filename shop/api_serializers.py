@@ -483,3 +483,12 @@ class ApiProductDetailSerializers(serializers.ModelSerializer):
         return ApiCommentSerializer(comments, many=True).data
 
 
+class CartAddSerializer(serializers.Serializer):
+    product_id = serializers.IntegerField()
+    quantity = serializers.IntegerField(min_value=1, default=1)
+
+    def validate_product_id(self, value):
+        from products.models import Product
+        if not Product.objects.filter(id=value).exists():
+            raise serializers.ValidationError("محصول مورد نظر یافت نشد.")
+        return value

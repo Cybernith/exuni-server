@@ -1,6 +1,7 @@
 import datetime
 
 from django.core.exceptions import ValidationError
+from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models import Q, Sum, F, DecimalField
 
@@ -14,11 +15,16 @@ from location_field.models.plain import PlainLocationField
 class Cart(BaseModel):
     customer = models.ForeignKey('users.User', related_name='cart_items', on_delete=models.PROTECT)
     product = models.ForeignKey('products.Product', related_name='products_in_cart',  on_delete=models.PROTECT)
-    quantity = models.IntegerField(default=1)
+    quantity = models.IntegerField(default=1, validators=[MinValueValidator(1)])
 
     class Meta(BaseModel.Meta):
         verbose_name = 'Cart'
         permission_basename = 'cart'
+        unique_together = ('customer', 'product')
+        indexes = [
+            models.Index(fields=['customer']),
+            models.Index(fields=['product']),
+        ]
         permissions = (
             ('get.cart', 'مشاهده آیتم سبد خرید'),
             ('create.cart', 'تعریف آیتم سبد خرید'),
@@ -31,7 +37,7 @@ class Cart(BaseModel):
         )
 
     def __str__(self):
-        return "محصول {} در سبد {}".format(self.product.name, self.customer.name)
+        return f"محصول {self.product.name or '-'} در سبد {self.customer.get_full_name() or self.customer.username}"
 
 
 class WishList(BaseModel):
@@ -42,6 +48,10 @@ class WishList(BaseModel):
         verbose_name = 'WishList'
         permission_basename = 'wish_list'
         unique_together = ('customer', 'product')
+        indexes = [
+            models.Index(fields=['customer']),
+            models.Index(fields=['product']),
+        ]
         permissions = (
             ('get.wish_list', 'مشاهده آیتم علاقه مندی ها'),
             ('create.wish_list', 'تعریف آیتم علاقه مندی ها'),
@@ -65,6 +75,10 @@ class Comparison(BaseModel):
         verbose_name = 'Comparison'
         permission_basename = 'comparison'
         unique_together = ('customer', 'product')
+        indexes = [
+            models.Index(fields=['customer']),
+            models.Index(fields=['product']),
+        ]
 
         permissions = (
             ('get.comparison', 'مشاهده آیتم های مقایسه'),

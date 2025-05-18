@@ -11,7 +11,7 @@ from shop.views import ToggleWishListBTNView, ToggleComparisonListBTNView, Curre
     CartDetailView, ClearCustomerCartView, CurrentUserWishListApiView, WishlistSyncView, \
     CurrentUserComparisonApiView, ComparisonSyncView, SyncAllDataView, \
     ClearCustomerComparisonView, ClearCustomerWishListView, CurrentUserShipmentAddressApiView, \
-    ShipmentAddressDetailView, UserOrdersListView
+    ShipmentAddressDetailView, UserOrdersListView, AddToCartAPIView
 from users.views.usersView import CheckVerificationAndLogin, SendVerificationCodeView, UserUpdateView, ChangePhoneView, \
     CurrentUserApiView
 
@@ -35,6 +35,7 @@ urlpatterns = [
     url(r'^toggleComparisonBtn$', ToggleComparisonListBTNView.as_view(), name='toggleComparisonBtn'),
 
     url(r'^currentUserCart$', CurrentUserCartApiView.as_view(), name='currentUserCart'),
+    url(r'^cartAdd$', AddToCartAPIView.as_view(), name='addToCart'),
     url(r'^cartSync$', CartSyncView.as_view(), name='cartSync'),
     url(r'^cart/(?P<pk>[0-9]+)$', CartDetailView.as_view(), name='cartDetail'),
     url(r'^clearCard$', ClearCustomerCartView.as_view(), name='clearCustomerCart'),

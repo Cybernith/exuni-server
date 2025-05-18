@@ -20,7 +20,8 @@ from helpers.auth import BasicObjectPermission
 from helpers.functions import get_current_user
 from products.models import Product
 from shop.api_serializers import ApiCartRetrieveSerializer, ApiWishListRetrieveSerializer, \
-    ApiComparisonRetrieveSerializer, ApiShipmentAddressRetrieveSerializer, ApiCustomerShopOrderSimpleSerializer
+    ApiComparisonRetrieveSerializer, ApiShipmentAddressRetrieveSerializer, ApiCustomerShopOrderSimpleSerializer, \
+    CartAddSerializer
 from shop.filters import ShopOrderFilter
 from shop.helpers import reduce_inventory
 from shop.models import Cart, WishList, Comparison, ShipmentAddress, LimitedTimeOffer, Rate, Comment, ShopOrder, \
@@ -720,3 +721,32 @@ class UserOrdersListView(generics.ListAPIView):
         return ShopOrder.objects.filter(
             customer=get_current_user()
         ).prefetch_related('history', 'items')
+
+
+class AddToCartAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = CartAddSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        product_id = serializer.validated_data['product_id']
+        quantity = serializer.validated_data['quantity']
+        user = get_current_user()
+
+        cart_item, created = Cart.objects.get_or_create(
+            customer=user,
+            product_id=product_id,
+            defaults={'quantity': quantity}
+        )
+
+        if not created:
+            cart_item.quantity = quantity
+            cart_item.save()
+
+        return Response({
+            "message": "محصول با موفقیت به سبد خرید اضافه شد.",
+            "item_id": cart_item.id,
+            "quantity": cart_item.quantity
+        }, status=status.HTTP_200_OK)
+    
