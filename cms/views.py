@@ -128,11 +128,11 @@ class BannerContentApiView(APIView):
     throttle_classes = [CMSUserRateThrottle, CMSAnonRateThrottle]
 
     def get(self, request):
-        order_one_query = BannerContent.objects.filter(order=BannerContent.ONE).current_by_datetime().first()
-        order_two_query = BannerContent.objects.filter(order=BannerContent.TWO).current_by_datetime().first()
-        order_three_query = BannerContent.objects.filter(order=BannerContent.THREE).current_by_datetime().first()
-        order_four_query = BannerContent.objects.filter(order=BannerContent.FOUR).current_by_datetime().first()
-        order_five_query = BannerContent.objects.filter(order=BannerContent.FIVE).current_by_datetime().first()
+        order_one_query = BannerContent.objects.current_by_datetime().filter(order=BannerContent.ONE).first()
+        order_two_query = BannerContent.objects.current_by_datetime().filter(order=BannerContent.TWO).first()
+        order_three_query = BannerContent.objects.current_by_datetime().filter(order=BannerContent.THREE).first()
+        order_four_query = BannerContent.objects.current_by_datetime().filter(order=BannerContent.FOUR).first()
+        order_five_query = BannerContent.objects.current_by_datetime().filter(order=BannerContent.FIVE).first()
         query = {
             1: BannerContentSerializer(order_one_query, many=True, context={'request': request}),
             2: BannerContentSerializer(order_two_query, many=True, context={'request': request}),
