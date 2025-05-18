@@ -1,3 +1,4 @@
+from django.db.models import Q
 from rest_framework import serializers
 
 from helpers.functions import get_current_user
@@ -190,7 +191,7 @@ class ApiProductsWithCommentsListSerializers(serializers.ModelSerializer):
     variations = ApiVariationListSerializers(read_only=True, many=True)
     brand = ApiBrandListSerializer(read_only=True)
     search_comments = serializers.SerializerMethodField()
-    product_comments = ApiCommentSerializer(source='confirmed_comments', read_only=True, many=True)
+    comments = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
@@ -208,7 +209,7 @@ class ApiProductsWithCommentsListSerializers(serializers.ModelSerializer):
             'calculate_current_inventory',
             'variations',
             'brand',
-            'product_comments',
+            'comments',
             'search_comments',
         ]
 
@@ -246,10 +247,19 @@ class ApiProductsWithCommentsListSerializers(serializers.ModelSerializer):
         comment_text = request.query_params.get('global_search', None)
 
         if comment_text:
-            filtered_comments = obj.product_comments.filter(text__icontains=comment_text)
+            filtered_comments = obj.product_comments.filter(
+                Q(text__icontains=comment_text) &
+                (Q(confirmed=True) | Q(customer=self.context['request'].user))
+            )
         else:
-            filtered_comments = obj.product_comments.all()
+            filtered_comments = obj.product_comments.filter(
+                Q(confirmed=True) | Q(customer=self.context['request'].user)
+                                                            )
         return ApiCommentSerializer(filtered_comments, read_only=True, many=True).data
+
+    def get_comments(self, obj):
+        comments = obj.product_comments.filter(Q(confirmed=True) | Q(customer=self.context['request'].user))
+        return ApiCommentSerializer(comments, many=True).data
 
 
 class ApiShipmentAddressRetrieveSerializer(serializers.ModelSerializer):
@@ -357,7 +367,8 @@ class ApiUserCommentProductsSimpleListSerializers(serializers.ModelSerializer):
         return None
 
     def get_comments(self, obj):
-        return ApiCommentSerializer(obj.product_comments.filter(customer=get_current_user()), many=True).data
+        comments = obj.product_comments.filter(Q(confirmed=True) | Q(customer=self.context['request'].user))
+        return ApiCommentSerializer(comments, many=True).data
 
     def get_user_rate(self, obj):
         return ApiUserRateSerializer(obj.rates.filter(customer=get_current_user()), many=True).data
@@ -408,6 +419,7 @@ class ApiProductDetailSerializers(serializers.ModelSerializer):
     comments = serializers.SerializerMethodField()
     user_rate = serializers.SerializerMethodField()
     comments_count = serializers.ReadOnlyField()
+    variations = ApiVariationListSerializers(read_only=True, many=True)
 
     class Meta:
         model = Product
@@ -439,6 +451,7 @@ class ApiProductDetailSerializers(serializers.ModelSerializer):
             'in_wish_list_count',
             'comments',
             'comments_count',
+            'variations',
             #'similar_products',
             #'similar_brand_products',
         ]
@@ -479,7 +492,7 @@ class ApiProductDetailSerializers(serializers.ModelSerializer):
     #    return ShopSimilarProductsListSerializers(similar_products, many=True).data
 
     def get_comments(self, obj):
-        comments = obj.product_comments.filter()
+        comments = obj.product_comments.filter(Q(confirmed=True) | Q(customer=self.context['request'].user))
         return ApiCommentSerializer(comments, many=True).data
 
 

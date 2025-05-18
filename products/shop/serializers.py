@@ -348,12 +348,12 @@ class ShopProductRateSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         user = get_current_user()
-        product = self.context['product']
+        product = self.context['product_id']
         level = self.context['level']
 
         rate_object, created = Rate.objects.update_or_create(
             customer=user,
-            product=product,
+            product=Product.objects.get(pk=product),
             level=level,
         )
         return rate_object
