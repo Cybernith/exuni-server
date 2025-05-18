@@ -102,7 +102,7 @@ class Command(BaseCommand):
                     if brand_name and brand_name['options'][0]:
                         new_product_brand = Brand.objects.get(name=brand_name['options'][0])
                         new_product.brand = new_product_brand
-                        if made_in['options']:
+                        if made_in and not new_product_brand.made_in:
                             new_product_brand.made_in = made_in['options'][0]
                             new_product_brand.save()
 
