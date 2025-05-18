@@ -21,7 +21,7 @@ from helpers.functions import get_current_user
 from products.models import Product
 from shop.api_serializers import ApiCartRetrieveSerializer, ApiWishListRetrieveSerializer, \
     ApiComparisonRetrieveSerializer, ApiShipmentAddressRetrieveSerializer, ApiCustomerShopOrderSimpleSerializer, \
-    CartAddSerializer
+    CartAddSerializer, ApiOrderListSerializer, ApiOrderStatusHistorySerializer
 from shop.filters import ShopOrderFilter
 from shop.helpers import reduce_inventory
 from shop.models import Cart, WishList, Comparison, ShipmentAddress, LimitedTimeOffer, Rate, Comment, ShopOrder, \
@@ -525,12 +525,27 @@ class ShopOrderRegistrationView(APIView):
             return Response({'detail': str(exception)}, status=status.HTTP_400_BAD_REQUEST)
 
 
-class CustomerOrdersDetailView(APIView):
+class CustomerOrdersView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
         orders = ShopOrder.objects.filter(customer=get_current_user())
-        serializers = ShopOrderSerializer(orders, many=True)
+        serializers = ApiOrderListSerializer(orders, many=True)
+        return Response(serializers.data, status=status.HTTP_200_OK)
+
+
+class CustomerOrdersDetailView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get_objects(self, pk, customer):
+        try:
+            return ShopOrder.objects.get(id=pk, customer=customer)
+        except ShopOrder.DoesNotExist:
+            raise Http404
+
+    def get(self, request, order_id):
+        orders = ShopOrder.objects.get(order_id, customer=get_current_user())
+        serializers = ApiOrderListSerializer(orders, many=True)
         return Response(serializers.data, status=status.HTTP_200_OK)
 
 
@@ -555,8 +570,8 @@ class ShopOrderStatusHistoryApiView(APIView):
             raise Http404
 
     def get(self, request, order_id):
-        query = self.get_objects(order_id, request.user)
-        serializers = ShopOrderStatusHistorySerializer(query, many=True)
+        query = self.get_objects(order_id, get_current_user())
+        serializers = ApiOrderStatusHistorySerializer(query, many=True)
         return Response(serializers.data, status=status.HTTP_200_OK)
 
 

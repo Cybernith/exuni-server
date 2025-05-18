@@ -5,9 +5,10 @@ from shop.search import GlobalAutoCompleteSearchAPIView
 from shop.views import CurrentUserCartApiView, CartDetailView, CurrentUserWishListApiView, WishListDetailView, \
     CurrentUserComparisonApiView, ComparisonDetailView, CurrentUserShipmentAddressApiView, ShipmentAddressDetailView, \
     CurrentLimitedTimeOfferRetrieveView, ProductRateApiView, ProductRateDetailView, PostCommentApiView, \
-    CommentDetailView, ShopOrderStatusHistoryApiView,\
+    CommentDetailView, ShopOrderStatusHistoryApiView, \
     UserProductRateApiView, CartSyncView, WishlistSyncView, \
-    ComparisonSyncView, SyncAllDataView, ShopOrderRegistrationView, CustomerOrdersDetailView, ClearCustomerCartView
+    ComparisonSyncView, SyncAllDataView, ShopOrderRegistrationView, CustomerOrdersDetailView, ClearCustomerCartView, \
+    CustomerOrdersView
 
 app_name = 'shop'
 urlpatterns = [
@@ -49,5 +50,6 @@ urlpatterns = [
     url(r'^product/(?P<product_id>[0-9]+)/userRate$', UserProductRateApiView.as_view(), name='productUserRate'),
 
     url(r'^createOrder$', ShopOrderRegistrationView.as_view(), name='createOrder'),
-    url(r'^customerOrders', CustomerOrdersDetailView.as_view(), name='customerOrders'),
+    url(r'^customerOrders', CustomerOrdersView.as_view(), name='customerOrders'),
+    url(r'^customerOrderDetail/(?P<order_id>[0-9]+)$', CustomerOrdersDetailView.as_view(), name='customerOrdersDetail'),
 ]

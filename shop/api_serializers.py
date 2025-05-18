@@ -544,3 +544,33 @@ class CartAddSerializer(serializers.Serializer):
         if not Product.objects.filter(id=value).exists():
             raise serializers.ValidationError("محصول مورد نظر یافت نشد.")
         return value
+
+
+class ApiOrderItemSerializer(serializers.ModelSerializer):
+    product_name = serializers.CharField(source='product.name', read_only=True)
+
+    class Meta:
+        read_only_fields = ('created_at', 'updated_at')
+        model = ShopOrderItem
+        fields = '__all__'
+
+
+class ApiOrderStatusHistorySerializer(serializers.ModelSerializer):
+    new_status_display = serializers.CharField(source='get_new_status_display', read_only=True)
+    previous_status_display = serializers.CharField(source='get_previous_status_display', read_only=True)
+
+    class Meta:
+        read_only_fields = ('created_at', 'updated_at')
+        model = ShopOrderStatusHistory
+        fields = '__all__'
+
+
+class ApiOrderListSerializer(serializers.ModelSerializer):
+    customer = UserSimpleSerializer(read_only=True)
+    items = ApiOrderItemSerializer(many=True, read_only=True)
+    history = ApiOrderStatusHistorySerializer(many=True, read_only=True)
+
+    class Meta:
+        read_only_fields = ('created_at', 'updated_at')
+        model = ShopOrder
+        fields = '__all__'
