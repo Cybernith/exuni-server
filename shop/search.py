@@ -22,7 +22,7 @@ class GlobalAutoCompleteSearchAPIView(APIView):
         search_vector = (
             SearchVector('name', weight='A') +
             SearchVector('brand__name', weight='B') +
-            SearchVector('category__name', weight='B')
+            SearchVector('category_names', weight='B')
 
         )
         result = []
