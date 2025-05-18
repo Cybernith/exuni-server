@@ -99,7 +99,7 @@ class ShopProductsSimpleListSerializers(serializers.ModelSerializer):
     is_in_user_wish_list = serializers.SerializerMethodField()
     is_in_user_comparison = serializers.SerializerMethodField()
     offer_percentage = serializers.SerializerMethodField()
-    get_current_inventory = serializers.ReadOnlyField()
+    calculate_current_inventory = serializers.ReadOnlyField()
     variations = ShopProductVariationsSerializers(read_only=True, many=True)
     brand = BrandShopListSerializer(read_only=True)
 
@@ -116,7 +116,7 @@ class ShopProductsSimpleListSerializers(serializers.ModelSerializer):
             'offer_percentage',
             'is_in_user_wish_list',
             'is_in_user_comparison',
-            'get_current_inventory',
+            'calculate_current_inventory',
             'variations',
             'brand',
         ]
