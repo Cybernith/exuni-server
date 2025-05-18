@@ -679,7 +679,7 @@ class ToggleWishListBTNView(APIView):
                 customer=request.user,
                 product=product
             )
-            return Response({'detail': 'product added to wish list'}, status=status.HTTP_204_NO_CONTENT)
+            return Response({'detail': 'product added to wish list'}, status=status.HTTP_201_CREATED)
 
 
 class ToggleComparisonListBTNView(APIView):
@@ -705,7 +705,7 @@ class ToggleComparisonListBTNView(APIView):
                 customer=request.user,
                 product=product
             )
-            return Response({'detail': 'product added to comparisons'}, status=status.HTTP_204_NO_CONTENT)
+            return Response({'detail': 'product added to comparisons'}, status=status.HTTP_201_CREATED)
 
 
 class UserOrdersListView(generics.ListAPIView):
