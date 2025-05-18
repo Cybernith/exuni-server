@@ -687,7 +687,6 @@ class ToggleComparisonListBTNView(APIView):
     throttle_classes = [ToggleComparisonBtnRateThrottle]
 
     def post(self, request):
-        user = get_current_user()
         data = request.data
         product = get_object_or_404(
             Product,

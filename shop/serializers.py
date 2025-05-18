@@ -2,7 +2,7 @@ from rest_framework import serializers
 
 from helpers.functions import get_current_user
 from products.models import Product
-from products.serializers import ProductSerializer
+from products.shop.serializers import ShopProductsSimpleListSerializers
 from shop.models import Cart, WishList, Comparison, Comment, Rate, LimitedTimeOffer, LimitedTimeOfferItems, \
     ShipmentAddress,  ShopOrder, ShopOrderItem, ShopOrderStatusHistory
 from users.models import User
@@ -19,7 +19,7 @@ class CartCRUDSerializer(serializers.ModelSerializer):
 
 class CartRetrieveSerializer(serializers.ModelSerializer):
     customer = UserSimpleSerializer(read_only=True)
-    product = ProductSerializer(read_only=True)
+    product = ShopProductsSimpleListSerializers(read_only=True)
 
     class Meta:
         read_only_fields = ('created_at', 'updated_at')
@@ -37,7 +37,7 @@ class WishListCRUDSerializer(serializers.ModelSerializer):
 
 class WishListRetrieveSerializer(serializers.ModelSerializer):
     customer = UserSimpleSerializer(read_only=True)
-    product = ProductSerializer(read_only=True)
+    product = ShopProductsSimpleListSerializers(read_only=True)
 
     class Meta:
         read_only_fields = ('created_at', 'updated_at')
@@ -55,7 +55,7 @@ class ComparisonCRUDSerializer(serializers.ModelSerializer):
 
 class ComparisonRetrieveSerializer(serializers.ModelSerializer):
     customer = UserSimpleSerializer(read_only=True)
-    product = ProductSerializer(read_only=True)
+    product = ShopProductsSimpleListSerializers(read_only=True)
 
     class Meta:
         read_only_fields = ('created_at', 'updated_at')
@@ -100,7 +100,7 @@ class LimitedTimeOfferItemsSerializer(serializers.ModelSerializer):
     price_after_offer = serializers.ReadOnlyField()
     offer_amount = serializers.ReadOnlyField()
     offer_display = serializers.ReadOnlyField()
-    product = ProductSerializer(read_only=True, many=True)
+    product = ShopProductsSimpleListSerializers(read_only=True, many=True)
 
     class Meta:
         read_only_fields = ('created_at', 'updated_at')
@@ -173,7 +173,7 @@ class CustomerCartItemsSerializer(serializers.ModelSerializer):
 
 
 class ShopOrderItemRetrieveSerializer(serializers.ModelSerializer):
-    product = ProductSerializer(read_only=True)
+    product = ShopProductsSimpleListSerializers(read_only=True)
     price_sum = serializers.ReadOnlyField()
 
     class Meta:

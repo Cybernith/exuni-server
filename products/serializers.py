@@ -171,7 +171,7 @@ class ProductSerializer(serializers.ModelSerializer):
     gallery = ProductGallerySerializer(many=True, read_only=True)
     avails = AvailSerializer(many=True, read_only=True)
     properties = ProductPropertySerializer(many=True, read_only=True)
-    category = CategorySerializer(read_only=True)
+    category = CategorySerializer(many=True, read_only=True)
     brand_name = serializers.CharField(source='brand.name', read_only=True)
     supplier_name = serializers.CharField(source='supplier.name', read_only=True)
     made_in = serializers.ReadOnlyField()
