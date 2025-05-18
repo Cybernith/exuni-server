@@ -24,27 +24,31 @@ class GlobalAutoCompleteSearchAPIView(APIView):
         search_query = SearchQuery(query)
 
         product_queryset = Product.objects.annotate(
-            category_names=StringAgg('category__name', delimiter=' ', distinct=True)
-        ).annotate(
+            category_names=StringAgg('category__name', delimiter=' ', distinct=True),
             search_vector=(
-                SearchVector('name', weight='A') +
-                SearchVector('brand__name', weight='B') +
-                SearchVector('category_names', weight='B')
-            )
-        ).annotate(
+                    SearchVector('name', weight='A') +
+                    SearchVector('brand__name', weight='B') +
+                    SearchVector('category_names', weight='B')
+            ),
             rank=SearchRank(F('search_vector'), search_query),
+            trigram_name=TrigramSimilarity('name', query_value),
+            trigram_brand=TrigramSimilarity('brand__name', query_value),
+            trigram_category=TrigramSimilarity('category_names', query_value),
+        ).annotate(
             similarity=Greatest(
-                TrigramSimilarity('name', query_value),
-                TrigramSimilarity('brand__name', query_value),
-                TrigramSimilarity('category_names', query_value)
+                F('trigram_name') * 2,
+                F('trigram_brand'),
+                F('trigram_category')
             )
         ).filter(
-            similarity__gt=0.15
+            similarity__gt=0.1
+        ).annotate(
+            relevance=F('rank') + F('similarity')
         ).annotate(
             type=Value('product', output_field=CharField())
         ).values(
             'id', 'name', 'type'
-        ).order_by('-rank', '-similarity')[:5]
+        ).order_by('-relevance', '-similarity', '-rank')[:5]
 
         result.extend(product_queryset)
 
