@@ -18,7 +18,6 @@ class ApiBrandListSerializer(serializers.ModelSerializer):
         return obj.logo.url if obj.logo else None
 
 
-
 class ApiVariationListSerializers(serializers.ModelSerializer):
     image = serializers.SerializerMethodField()
     second_image = serializers.SerializerMethodField()
@@ -42,8 +41,13 @@ class ApiVariationListSerializers(serializers.ModelSerializer):
             'is_in_user_wish_list',
             'is_in_user_comparison',
             'calculate_current_inventory',
-            'variations',
             'brand',
+            'postal_weight',
+            'length',
+            'width',
+            'height',
+            'variation_of'
+            'variation_title'
         ]
 
     def get_image(self, obj):
@@ -102,6 +106,12 @@ class ApiProductsListSerializers(serializers.ModelSerializer):
             'calculate_current_inventory',
             'variations',
             'brand',
+            'postal_weight',
+            'length',
+            'width',
+            'height',
+            'variation_of'
+            'variation_title'
         ]
 
     def get_image(self, obj):
