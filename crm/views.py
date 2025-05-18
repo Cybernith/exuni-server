@@ -24,6 +24,7 @@ from django.db.models.functions import TruncMonth
 
 from products.serializers import ProductForLogSerializer
 from products.shop.serializers import ShopProductsListSerializers
+from shop.api_serializers import ApiProductsListSerializers
 from shop.models import ShopOrderItem, ShopOrder
 from users.models import User
 
@@ -206,7 +207,7 @@ class RecommendedProductsAPIView(APIView):
 
     def get(self, request):
         products = get_recommended_products(request.user)
-        serializer = ShopProductsListSerializers(products, many=True)
+        serializer = ApiProductsListSerializers(products, many=True)
         return Response(serializer.data)
 
 

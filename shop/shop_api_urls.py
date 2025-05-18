@@ -8,8 +8,8 @@ from products.shop.views import ShopProductSimpleListView, BrandShopListView, Ca
     RelatedProductsApiView, SimilarBrandProductsApiView, ShopProductDetailView
 from shop.search import GlobalAutoCompleteSearchAPIView
 from shop.views import ToggleWishListBTNView, ToggleComparisonListBTNView, CurrentUserCartApiView, CartSyncView, \
-    CartDetailView, ClearCustomerCartView, CurrentUserWishListApiView, WishListDetailView, WishlistSyncView, \
-    CurrentUserComparisonApiView, ComparisonSyncView, ComparisonDetailView, SyncAllDataView, \
+    CartDetailView, ClearCustomerCartView, CurrentUserWishListApiView, WishlistSyncView, \
+    CurrentUserComparisonApiView, ComparisonSyncView, SyncAllDataView, \
     ClearCustomerComparisonView, ClearCustomerWishListView, CurrentUserShipmentAddressApiView, \
     ShipmentAddressDetailView, UserOrdersListView
 from users.views.usersView import CheckVerificationAndLogin, SendVerificationCodeView, UserUpdateView, ChangePhoneView, \

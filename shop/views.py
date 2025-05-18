@@ -19,6 +19,8 @@ from rest_framework import status, generics
 from helpers.auth import BasicObjectPermission
 from helpers.functions import get_current_user
 from products.models import Product
+from shop.api_serializers import ApiCartRetrieveSerializer, ApiWishListRetrieveSerializer, \
+    ApiComparisonRetrieveSerializer, ApiShipmentAddressRetrieveSerializer, ApiCustomerShopOrderSimpleSerializer
 from shop.filters import ShopOrderFilter
 from shop.helpers import reduce_inventory
 from shop.models import Cart, WishList, Comparison, ShipmentAddress, LimitedTimeOffer, Rate, Comment, ShopOrder, \
@@ -42,7 +44,7 @@ class CurrentUserCartApiView(APIView):
     def get(self, request):
         customer = get_current_user()
         query = Cart.objects.filter(customer=customer)
-        serializers = CartRetrieveSerializer(query, many=True, context={'request': request})
+        serializers = ApiCartRetrieveSerializer(query, many=True, context={'request': request})
         return Response(serializers.data, status=status.HTTP_200_OK)
 
     def post(self, request):
@@ -142,7 +144,7 @@ class CurrentUserWishListApiView(APIView):
     def get(self, request):
         customer = get_current_user()
         query = WishList.objects.filter(customer=customer)
-        serializers = WishListRetrieveSerializer(query, many=True, context={'request': request})
+        serializers = ApiWishListRetrieveSerializer(query, many=True, context={'request': request})
         return Response(serializers.data, status=status.HTTP_200_OK)
 
 
@@ -229,7 +231,7 @@ class CurrentUserComparisonApiView(APIView):
     def get(self, request):
         customer = get_current_user()
         query = Comparison.objects.filter(customer=customer)
-        serializers = ComparisonRetrieveSerializer(query, many=True, context={'request': request})
+        serializers = ApiComparisonRetrieveSerializer(query, many=True, context={'request': request})
         return Response(serializers.data, status=status.HTTP_200_OK)
 
 
@@ -321,7 +323,7 @@ class CurrentUserShipmentAddressApiView(APIView):
     def get(self, request):
         customer = get_current_user()
         query = ShipmentAddress.objects.filter(customer=customer)
-        serializers = ShipmentAddressRetrieveSerializer(query, many=True, context={'request': request})
+        serializers = ApiShipmentAddressRetrieveSerializer(query, many=True, context={'request': request})
         return Response(serializers.data, status=status.HTTP_200_OK)
 
     def post(self, request):
@@ -709,7 +711,7 @@ class ToggleComparisonListBTNView(APIView):
 
 class UserOrdersListView(generics.ListAPIView):
 
-    serializer_class = CustomerShopOrderSimpleSerializer
+    serializer_class = ApiCustomerShopOrderSimpleSerializer
     filterset_class = ShopOrderFilter
     ordering_fields = '__all__'
     pagination_class = LimitOffsetPagination

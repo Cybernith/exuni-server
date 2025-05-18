@@ -11,14 +11,16 @@ from crm.functions import save_product_view_log
 from helpers.functions import get_current_user
 from products.lists.filters import RootCategoryFilter
 from products.models import Product, Category, Brand
-from products.serializers import BrandShopListSerializer, CategorySerializer
+from products.serializers import BrandShopListSerializer
 from products.shop.filters import ShopProductFilter, BrandShopListFilter, ShopProductSimpleFilter
-from products.shop.serializers import ShopProductsListSerializers, ShopProductDetailSerializers, ShopCommentSerializer, \
-    ShopProductRateSerializer, ShopProductsSimpleListSerializers, RootCategorySerializer, \
+from products.shop.serializers import ShopProductsListSerializers, ShopCommentSerializer, \
+    ShopProductRateSerializer, RootCategorySerializer, \
     ShopProductsWithCommentsListSerializers
 from products.trottles import UserProductDetailRateThrottle, AnonProductDetailRateThrottle, AnonProductListRateThrottle, \
     UserProductListRateThrottle, CreateCommentRateThrottle, RateUpsertRateThrottle, CategoryTreeThrottle, BrandThrottle, \
     RootCategoryThrottle
+from shop.api_serializers import ApiProductsListSerializers, ApiProductDetailSerializers, ApiBrandListSerializer, \
+    ApiProductsWithCommentsListSerializers, ApiUserCommentProductsSimpleListSerializers
 from shop.models import Comment
 from shop.serializers import CommentRepliesSerializer, OrderProductsSimpleListSerializers, \
     UserCommentProductsSimpleListSerializers
@@ -40,7 +42,7 @@ class ShopProductListView(generics.ListAPIView):
 
 
 class ShopProductSimpleListView(generics.ListAPIView):
-    serializer_class = ShopProductsSimpleListSerializers
+    serializer_class = ApiProductsListSerializers
     throttle_classes = [UserProductListRateThrottle, AnonProductListRateThrottle]
     filterset_class = ShopProductSimpleFilter
     ordering_fields = '__all__'
@@ -51,7 +53,7 @@ class ShopProductSimpleListView(generics.ListAPIView):
 
 
 class ShopProductWithCommentsListView(generics.ListAPIView):
-    serializer_class = ShopProductsWithCommentsListSerializers
+    serializer_class = ApiProductsWithCommentsListSerializers
     throttle_classes = [UserProductListRateThrottle, AnonProductListRateThrottle]
     filterset_class = ShopProductSimpleFilter
     ordering_fields = '__all__'
@@ -64,7 +66,7 @@ class ShopProductWithCommentsListView(generics.ListAPIView):
 
 
 class ShopProductDetailView(generics.RetrieveAPIView):
-    serializer_class = ShopProductDetailSerializers
+    serializer_class = ApiProductDetailSerializers
     throttle_classes = [UserProductDetailRateThrottle, AnonProductDetailRateThrottle]
     lookup_field = 'id'
 
@@ -115,7 +117,7 @@ class RelatedProductPagination(PageNumberPagination):
 
 
 class RelatedProductsApiView(generics.ListAPIView):
-    serializer_class = ShopProductsListSerializers
+    serializer_class = ApiProductsListSerializers
     throttle_classes = [UserProductListRateThrottle, AnonProductListRateThrottle]
     pagination_class = RelatedProductPagination
 
@@ -154,7 +156,7 @@ class RelatedProductsApiView(generics.ListAPIView):
 
 
 class SimilarBrandProductsApiView(generics.ListAPIView):
-    serializer_class = ShopProductsListSerializers
+    serializer_class = ApiProductsListSerializers
     throttle_classes = [UserProductListRateThrottle, AnonProductListRateThrottle]
     pagination_class = RelatedProductPagination
 
@@ -329,7 +331,7 @@ class BrandShopListView(generics.ListAPIView):
     CACHE_KEY = 'brands_data'
     CACHE_TIMEOUT = 60 * 60 * 6
 
-    serializer_class = BrandShopListSerializer
+    serializer_class = ApiBrandListSerializer
     filterset_class = BrandShopListFilter
     ordering_fields = '__all__'
     pagination_class = LimitOffsetPagination
@@ -345,7 +347,7 @@ class BrandShopListView(generics.ListAPIView):
 
 
 class CurrentUserHasOrderProductViewSet(viewsets.ReadOnlyModelViewSet):
-    serializer_class = ShopProductsListSerializers
+    serializer_class = ApiProductsListSerializers
 
     def get_queryset(self):
         user = get_current_user()
@@ -353,14 +355,14 @@ class CurrentUserHasOrderProductViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class CurrentUserRelatedProductViewSet(viewsets.ReadOnlyModelViewSet):
-    serializer_class = ShopProductsListSerializers
+    serializer_class = ApiProductsListSerializers
 
     def get_queryset(self):
         return Product.objects.all().order_by('-created_by')
 
 
 class PendingReviewProductsView(viewsets.ReadOnlyModelViewSet):
-    serializer_class = OrderProductsSimpleListSerializers
+    serializer_class = ApiProductsListSerializers
 
     def get_queryset(self):
         user = get_current_user()
@@ -370,7 +372,7 @@ class PendingReviewProductsView(viewsets.ReadOnlyModelViewSet):
 
 
 class UserProductsWithCommentView(viewsets.ReadOnlyModelViewSet):
-    serializer_class = UserCommentProductsSimpleListSerializers
+    serializer_class = ApiUserCommentProductsSimpleListSerializers
 
     def get_queryset(self):
         user = get_current_user()
