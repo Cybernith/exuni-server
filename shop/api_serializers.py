@@ -190,7 +190,7 @@ class ApiProductsWithCommentsListSerializers(serializers.ModelSerializer):
     variations = ApiVariationListSerializers(read_only=True, many=True)
     brand = ApiBrandListSerializer(read_only=True)
     search_comments = serializers.SerializerMethodField()
-    comments = ApiCommentSerializer(source='confirmed_comments', read_only=True, many=True)
+    product_comments = ApiCommentSerializer(source='confirmed_comments', read_only=True, many=True)
 
     class Meta:
         model = Product
@@ -208,7 +208,7 @@ class ApiProductsWithCommentsListSerializers(serializers.ModelSerializer):
             'calculate_current_inventory',
             'variations',
             'brand',
-            'comments',
+            'product_comments',
             'search_comments',
         ]
 
@@ -246,9 +246,9 @@ class ApiProductsWithCommentsListSerializers(serializers.ModelSerializer):
         comment_text = request.query_params.get('global_search', None)
 
         if comment_text:
-            filtered_comments = obj.comments.filter(text__icontains=comment_text)
+            filtered_comments = obj.product_comments.filter(text__icontains=comment_text)
         else:
-            filtered_comments = obj.comments.all()
+            filtered_comments = obj.product_comments.all()
         return ApiCommentSerializer(filtered_comments, read_only=True, many=True).data
 
 
