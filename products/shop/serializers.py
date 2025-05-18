@@ -14,7 +14,7 @@ class ShopProductsListSerializers(serializers.ModelSerializer):
     effective_price = serializers.ReadOnlyField()
     has_offer = serializers.ReadOnlyField()
     offer_amount = serializers.ReadOnlyField()
-    current_inventory = serializers.ReadOnlyField()
+    calculate_current_inventory = serializers.ReadOnlyField()
     rate = serializers.ReadOnlyField()
     offer_display = serializers.ReadOnlyField()
     in_wish_list_count = serializers.ReadOnlyField()
@@ -36,7 +36,7 @@ class ShopProductsListSerializers(serializers.ModelSerializer):
             'effective_price',
             'has_offer',
             'offer_amount',
-            'current_inventory',
+            'calculate_current_inventory',
             'image',
             'category',
             'brand',
