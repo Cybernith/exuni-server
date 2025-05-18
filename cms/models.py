@@ -173,8 +173,8 @@ class ShopHomePageStory(BaseModel, DateTimeRangeModel):
     description = models.TextField(blank=True, null=True)
     mobile_image = models.ImageField(upload_to=custom_upload_to)
     desktop_image = models.ImageField(upload_to=custom_upload_to)
-    video = models.FileField(upload_to=custom_upload_to)
-    link = models.URLField(max_length=100)
+    video = models.FileField(upload_to=custom_upload_to, blank=True, null=True)
+    link = models.URLField(max_length=100, blank=True, null=True)
     discount_code = models.ForeignKey(
         'subscription.DiscountCode',
         related_name='shop_home_stories',
