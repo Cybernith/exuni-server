@@ -138,7 +138,7 @@ class RelatedProductsApiView(generics.ListAPIView):
         avails_ids = product.avails.all().values_list('id', flat=True)
 
         related_products = Product.objects.annotate(view_count=Count('views_log')).filter(
-            Q(category=product.category) |
+            Q(category__in=product.category.all()) |
             Q(avails__id__in=avails_ids) |
             Q(properties__id__in=properties_ids) |
             Q(brand=product.brand)
@@ -146,11 +146,7 @@ class RelatedProductsApiView(generics.ListAPIView):
             related_properties=Count('properties', filter=Q(properties__id__in=properties_ids)),
             related_avails=Count('avails', filter=Q(avails__id__in=avails_ids)),
             similarity_score=F('related_properties') + F('related_avails')
-        ).order_by('-similarity_score').distinct().select_related(
-            'category', 'brand'
-        ).prefetch_related(
-            'properties', 'avails'
-        )
+        ).order_by('-similarity_score').distinct().select_related('brand').prefetch_related('properties', 'avails')
         cache.set(cache_key, related_products, 60 * 10)
         return related_products
 
