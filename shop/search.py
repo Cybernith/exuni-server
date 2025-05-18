@@ -18,22 +18,25 @@ class GlobalAutoCompleteSearchAPIView(APIView):
         if len(query) < 3:
             return Response({'result': []}, status=status.HTTP_400_BAD_REQUEST)
 
-        search_query = SearchQuery(query)
-        search_vector = (
-            SearchVector('name', weight='A') +
-            SearchVector('brand__name', weight='B') +
-            SearchVector('category_names', weight='B')
-
-        )
         result = []
 
+        query_value = Value(query, output_field=CharField())
+        search_query = SearchQuery(query)
+
         product_queryset = Product.objects.annotate(
-            category_names=StringAgg('category__name', delimiter=' ', distinct=True),
-            rank=SearchRank(search_vector, search_query),
+            category_names=StringAgg('category__name', delimiter=' ', distinct=True)
+        ).annotate(
+            search_vector=(
+                SearchVector('name', weight='A') +
+                SearchVector('brand__name', weight='B') +
+                SearchVector('category_names', weight='B')
+            )
+        ).annotate(
+            rank=SearchRank(F('search_vector'), search_query),
             similarity=Greatest(
-                TrigramSimilarity('name', query),
-                TrigramSimilarity('brand__name', query),
-                TrigramSimilarity('category_names', query),
+                TrigramSimilarity('name', query_value),
+                TrigramSimilarity('brand__name', query_value),
+                TrigramSimilarity('category_names', query_value)
             )
         ).filter(
             similarity__gt=0.15
@@ -41,34 +44,31 @@ class GlobalAutoCompleteSearchAPIView(APIView):
             type=Value('product', output_field=CharField())
         ).values(
             'id', 'name', 'type'
-        ).order_by(
-            '-rank',
-            '-similarity'
-        )[:5]
+        ).order_by('-rank', '-similarity')[:5]
 
         result.extend(product_queryset)
 
         brand_queryset = Brand.objects.annotate(
-            similarity=TrigramSimilarity('name', query)
+            similarity=TrigramSimilarity('name', query_value)
         ).filter(
             similarity__gt=0.3
         ).annotate(
             type=Value('brand', output_field=CharField())
         ).values(
             'id', 'name', 'type'
-        ).order_by(
-            '-similarity'
-        )[:5]
+        ).order_by('-similarity')[:5]
 
         result.extend(brand_queryset)
 
         category_queryset = Category.objects.annotate(
-            similarity=TrigramSimilarity('name', query)
+            similarity=TrigramSimilarity('name', query_value)
         ).filter(
             similarity__gt=0.3
         ).annotate(
             type=Value('category', output_field=CharField())
-        ).values('id', 'name', 'type').order_by('-similarity').distinct()[:5]
+        ).values(
+            'id', 'name', 'type'
+        ).order_by('-similarity').distinct()[:5]
 
         result.extend(category_queryset)
 
