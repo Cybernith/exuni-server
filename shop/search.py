@@ -1,6 +1,6 @@
 from django.contrib.postgres.aggregates import StringAgg
 from django.contrib.postgres.search import SearchQuery, SearchVector, SearchRank, TrigramSimilarity
-from django.db.models import Q, Value, CharField
+from django.db.models import Value, CharField, F
 from django.db.models.functions import Greatest
 from rest_framework import status
 from rest_framework.response import Response
