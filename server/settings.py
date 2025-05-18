@@ -97,7 +97,6 @@ MIDDLEWARE = [
     'helpers.middlewares.check_token_expiration.CheckTokenExpiration',
 
     'helpers.middlewares.log_request_middleWare.LogRequestMiddleware',
-    'helpers.middlewares.check_financial_year_middleware.CheckFinancialYearMiddleware',
 
     'debug_toolbar.middleware.DebugToolbarMiddleware',
 
