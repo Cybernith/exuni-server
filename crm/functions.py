@@ -123,11 +123,11 @@ def get_recommended_products(user, limit=20):
         query |= Q(name__icontains=keyword) | Q(brand__name__icontains=keyword) | Q(category__name__icontains=keyword)
 
     related_products_by_search = Product.objects.filter(query).select_related(
-        'brand', 'category').only('id', 'name', 'brand_name', 'category__name')
+        'brand', 'category').only('id', 'name', 'brand__name', 'category')
 
     most_viewed_products = Product.objects.filter(
         id__in=most_viewed_products_ids
-    ).select_related('brand', 'category').only('id', 'name', 'brand__name', 'category__name')
+    ).select_related('brand', 'category').only('id', 'name', 'brand__name', 'category')
 
     all_products = (related_products_by_search | most_viewed_products).distinct()
 
