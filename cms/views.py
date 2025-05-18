@@ -134,11 +134,11 @@ class BannerContentApiView(APIView):
         order_four_query = BannerContent.objects.current_by_datetime().filter(order=BannerContent.FOUR).first()
         order_five_query = BannerContent.objects.current_by_datetime().filter(order=BannerContent.FIVE).first()
         query = {
-            1: BannerContentSerializer(order_one_query, many=True, context={'request': request}),
-            2: BannerContentSerializer(order_two_query, many=True, context={'request': request}),
-            3: BannerContentSerializer(order_three_query, many=True, context={'request': request}),
-            4: BannerContentSerializer(order_four_query, many=True, context={'request': request}),
-            5: BannerContentSerializer(order_five_query, many=True, context={'request': request}),
+            1: BannerContentSerializer(order_one_query, many=True),
+            2: BannerContentSerializer(order_two_query, many=True),
+            3: BannerContentSerializer(order_three_query, many=True),
+            4: BannerContentSerializer(order_four_query, many=True),
+            5: BannerContentSerializer(order_five_query, many=True),
 
         }
         return Response(query, status=status.HTTP_200_OK)
