@@ -32,6 +32,8 @@ class HeaderElement(BaseModel, DateTimeRangeModel):
         blank=True,
         null=True
     )
+    objects = CMSCustomManager()
+
 
     class Meta(BaseModel.Meta):
         verbose_name = 'HeaderElement'
@@ -73,6 +75,7 @@ class PopUpElement(BaseModel, DateTimeRangeModel):
         blank=True,
         null=True
     )
+    objects = CMSCustomManager()
 
     class Meta(BaseModel.Meta):
         verbose_name = 'PopUpElement'
@@ -129,6 +132,7 @@ class BannerContent(BaseModel, DateTimeRangeModel):
             ('updateOwn.banner_content', 'ویرایش محتوا بنر خود'),
             ('deleteOwn.banner_content', 'حذف محتوا بنر خود'),
         )
+    objects = CMSCustomManager()
 
     def __str__(self):
         title = self.title if self.title else ' '
@@ -182,6 +186,7 @@ class ShopHomePageStory(BaseModel, DateTimeRangeModel):
         blank=True,
         null=True
     )
+    objects = CMSCustomManager()
 
     class Meta(BaseModel.Meta):
         verbose_name = 'ShopHomePageStory'
