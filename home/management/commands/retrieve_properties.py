@@ -1,6 +1,6 @@
 from django.core.management import BaseCommand
 from django.db import transaction
-from django.db.models import F
+from django.db.models import F, Q
 from woocommerce import API
 
 from products.models import ProductProperty, ProductPropertyTerm, Brand, ProductAttribute, ProductAttributeTerm
@@ -34,9 +34,13 @@ class Command(BaseCommand):
                     page = 1
                     response_len = 100
                     while response_len == 100:
-                        terms = wcapi.get(f"products/attributes/{prop['id']}/terms", params={"per_page": 100, 'page': page}).json()
+                        terms = wcapi.get(
+                            f"products/attributes/{prop['id']}/terms", params={"per_page": 100, 'page': page}
+                        ).json()
                         for term in terms:
-                            if not ProductPropertyTerm.objects.filter(name=term['name']).exists():
+                            if not ProductPropertyTerm.objects.filter(
+                                    Q(name=term['name']) | Q(unique_code=term['id'])
+                            ).exists():
                                 ProductPropertyTerm.objects.create(
                                     product_property=product_prop,
                                     unique_code=term['id'],
@@ -44,6 +48,7 @@ class Command(BaseCommand):
                                     slug=term['slug'],
                                 )
                         page += 1
+                        print('added')
                         response_len = len(terms)
 
 

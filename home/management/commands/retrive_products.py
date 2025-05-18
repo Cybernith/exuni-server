@@ -121,9 +121,9 @@ class Command(BaseCommand):
                         )
                         for term in product_attribute['options']:
                             new_product_attribute_term.terms.add(
-                                ProductPropertyTerm.objects.get(name=term)
+                                ProductPropertyTerm.objects.filter(name=term).first()
                             )
-
+                    print('simple product added')
                 elif product['type'] == 'variable':
                     new_product = Product.objects.create(
                         product_type=Product.VARIABLE,
@@ -185,7 +185,7 @@ class Command(BaseCommand):
                     new_product.save()
 
                     for product_attribute in product_attributes:
-                        product_property = ProductProperty.objects.get(unique_code=product_attribute['id'])
+                        product_property = ProductProperty.objects.filter(unique_code=product_attribute['id']).first()
                         new_product_attribute = ProductAttribute.objects.create(
                             product=new_product,
                             product_property=product_property
@@ -195,9 +195,9 @@ class Command(BaseCommand):
                         )
                         for term in product_attribute['options']:
                             new_product_attribute_term.terms.add(
-                                ProductPropertyTerm.objects.get(name=term)
+                                ProductPropertyTerm.objects.filter(name=term).first()
                             )
-
+                    print('variable product added')
                     variations = wcapi.get(f"products/{product['id']}/variations",
                                            params={"per_page": 50, 'page': 1}).json()
                     for variation in variations:
@@ -235,6 +235,7 @@ class Command(BaseCommand):
                         if currency_price:
                             new_variation.currency_price = float(currency_price['value']) if currency_price['value'] else 0
                         new_variation.save()
+                        print('variation >>>>>> product added')
 
                         #attributes = variation['attributes']
                         #product_attributes = [item for item in attributes if item["id"] not in [0, 1, 2]]
