@@ -710,7 +710,6 @@ class ToggleComparisonListBTNView(APIView):
 class UserOrdersListView(generics.ListAPIView):
 
     serializer_class = CustomerShopOrderSimpleSerializer
-    throttle_classes = OrderRetrieveThrottle
     filterset_class = ShopOrderFilter
     ordering_fields = '__all__'
     pagination_class = LimitOffsetPagination

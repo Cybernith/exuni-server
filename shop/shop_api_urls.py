@@ -64,7 +64,6 @@ urlpatterns = [
     url(r'^productsWithComments$', ShopProductWithCommentsListView.as_view(), name='productsWithComments'),
 
     url(r'^currentUserOrders$', UserOrdersListView.as_view(), name='userOrders'),
-    url(r'^currentUserOrders$', UserOrdersListView.as_view(), name='userOrders'),
 
     url(r'^currentUserHasOrderProducts$', CurrentUserHasOrderProductViewSet.as_view({'get': 'list'}),
         name='currentUserHasOrderProducts'),
