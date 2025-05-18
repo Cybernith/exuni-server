@@ -52,10 +52,16 @@ class ShopProductsListSerializers(serializers.ModelSerializer):
         return obj.picture.url if obj.picture else None
 
     def get_brand(self, obj):
-        return {'id': obj.brand.id, 'name': obj.brand.name} if obj.brand else None
+        return {'id': obj.brand.id, 'name': obj.brand.name, 'logo': obj.brand.logo.url if obj.brand.logo else None}\
+            if obj.brand else None
 
     def get_category(self, obj):
-        return {'id': obj.category.id, 'name': obj.category.name} if obj.category else None
+        categories = []
+        for category in obj.category.all():
+            categories.append(
+                {'id': category.id, 'name': category.name}
+            )
+        return categories
 
 
 class ShopProductVariationsSerializers(serializers.ModelSerializer):
