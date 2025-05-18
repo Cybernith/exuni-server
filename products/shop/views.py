@@ -1,5 +1,5 @@
 from django.core.cache import cache
-from django.db.models import Q, Count, F
+from django.db.models import Q, Count, F, Prefetch
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, status, viewsets
 from rest_framework.pagination import LimitOffsetPagination, PageNumberPagination
@@ -61,8 +61,18 @@ class ShopProductWithCommentsListView(generics.ListAPIView):
 
     def get_queryset(self):
         return Product.objects.filter(
-            status=Product.PUBLISHED, product_type__in=[Product.VARIABLE, Product.SIMPLE]
-        ).prefetch_related('product_comments')
+            status=Product.PUBLISHED,
+            product_type__in=[Product.VARIABLE, Product.SIMPLE]
+        ).annotate(
+            confirmed_comment_count=Count('product_comments', filter=Q(product_comments__confirmed=True))
+        ).filter(
+            confirmed_comment_count__gt=0
+        ).prefetch_related(
+            Prefetch(
+                'product_comments',
+                queryset=Comment.objects.filter(confirmed=True)
+            )
+        )
 
 
 class ShopProductDetailView(generics.RetrieveAPIView):

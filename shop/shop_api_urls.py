@@ -11,7 +11,7 @@ from shop.views import ToggleWishListBTNView, ToggleComparisonListBTNView, Curre
     CartDetailView, ClearCustomerCartView, CurrentUserWishListApiView, WishlistSyncView, \
     CurrentUserComparisonApiView, ComparisonSyncView, SyncAllDataView, \
     ClearCustomerComparisonView, ClearCustomerWishListView, CurrentUserShipmentAddressApiView, \
-    ShipmentAddressDetailView, UserOrdersListView, AddToCartAPIView
+    ShipmentAddressDetailView, UserOrdersListView, AddToCartAPIView, ShopOrderRegistrationView, CustomerOrdersDetailView
 from users.views.usersView import CheckVerificationAndLogin, SendVerificationCodeView, UserUpdateView, ChangePhoneView, \
     CurrentUserApiView
 
@@ -92,5 +92,8 @@ urlpatterns = [
         name='similarBrandProducts'),
     url(r'^userRecommendation$', RecommendedProductsAPIView.as_view(),
         name='userRecommendation'),
+
+    url(r'^createOrder$', ShopOrderRegistrationView.as_view(), name='createOrder'),
+    url(r'^customerOrders/(?P<pk>[0-9]+)$', CustomerOrdersDetailView.as_view(), name='customerOrders'),
 
 ]
