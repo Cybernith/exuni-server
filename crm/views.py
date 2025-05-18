@@ -287,7 +287,7 @@ class UserCurrentNotificationsAPIView(APIView):
             Q(notification__send_datetime__lte=datetime.datetime.now())
         )
 
-    def get(self, request, pk):
+    def get(self, request):
         query = self.get_objects()
         query.update(notification_status=UserNotification.NOT_READ)
 
