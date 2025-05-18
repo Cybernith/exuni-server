@@ -1,12 +1,69 @@
 from rest_framework import serializers
 
 from helpers.functions import get_current_user
-from products.models import Product
-from products.shop.serializers import ShopProductsSimpleListSerializers
+from products.models import Product, ProductGallery
+from products.serializers import BrandShopListSerializer
 from shop.models import Cart, WishList, Comparison, Comment, Rate, LimitedTimeOffer, LimitedTimeOfferItems, \
     ShipmentAddress,  ShopOrder, ShopOrderItem, ShopOrderStatusHistory
 from users.models import User
 from users.serializers import UserSimpleSerializer
+
+
+class ProductSimpleSerializers(serializers.ModelSerializer):
+    image = serializers.SerializerMethodField()
+    second_image = serializers.SerializerMethodField()
+    is_in_user_wish_list = serializers.SerializerMethodField()
+    is_in_user_comparison = serializers.SerializerMethodField()
+    offer_percentage = serializers.SerializerMethodField()
+    get_current_inventory = serializers.ReadOnlyField()
+    brand = BrandShopListSerializer(read_only=True)
+
+    class Meta:
+        model = Product
+        fields = [
+            'id',
+            'product_type',
+            'name',
+            'image',
+            'second_image',
+            'regular_price',
+            'price',
+            'offer_percentage',
+            'is_in_user_wish_list',
+            'is_in_user_comparison',
+            'get_current_inventory',
+            'variations',
+            'brand',
+        ]
+
+    def get_image(self, obj):
+        return obj.picture.url if obj.picture else None
+
+    def get_second_image(self, obj):
+        if ProductGallery.objects.filter(product=obj).exists():
+            first_picture_of_gallery = ProductGallery.objects.filter(product=obj).first()
+            return first_picture_of_gallery.picture.url if first_picture_of_gallery.picture else None
+        return None
+
+    def get_is_in_user_wish_list(self, obj):
+        user = get_current_user()
+        if user:
+            return WishList.objects.filter(customer=user, product=obj).exists()
+        else:
+            return False
+
+    def get_is_in_user_comparison(self, obj):
+        user = get_current_user()
+        if user:
+            return Comparison.objects.filter(customer=user, product=obj).exists()
+        else:
+            return False
+
+    def get_offer_percentage(self, obj):
+        if obj.regular_price and obj.price:
+            offer_percentage = round(((obj.regular_price - obj.price) / obj.regular_price) * 100)
+            return f'{offer_percentage}%'
+        return None
 
 
 class CartCRUDSerializer(serializers.ModelSerializer):
@@ -19,7 +76,7 @@ class CartCRUDSerializer(serializers.ModelSerializer):
 
 class CartRetrieveSerializer(serializers.ModelSerializer):
     customer = UserSimpleSerializer(read_only=True)
-    product = ShopProductsSimpleListSerializers(read_only=True)
+    product = ProductSimpleSerializers(read_only=True)
 
     class Meta:
         read_only_fields = ('created_at', 'updated_at')
@@ -37,7 +94,7 @@ class WishListCRUDSerializer(serializers.ModelSerializer):
 
 class WishListRetrieveSerializer(serializers.ModelSerializer):
     customer = UserSimpleSerializer(read_only=True)
-    product = ShopProductsSimpleListSerializers(read_only=True)
+    product = ProductSimpleSerializers(read_only=True)
 
     class Meta:
         read_only_fields = ('created_at', 'updated_at')
@@ -55,7 +112,7 @@ class ComparisonCRUDSerializer(serializers.ModelSerializer):
 
 class ComparisonRetrieveSerializer(serializers.ModelSerializer):
     customer = UserSimpleSerializer(read_only=True)
-    product = ShopProductsSimpleListSerializers(read_only=True)
+    product = ProductSimpleSerializers(read_only=True)
 
     class Meta:
         read_only_fields = ('created_at', 'updated_at')
@@ -100,7 +157,7 @@ class LimitedTimeOfferItemsSerializer(serializers.ModelSerializer):
     price_after_offer = serializers.ReadOnlyField()
     offer_amount = serializers.ReadOnlyField()
     offer_display = serializers.ReadOnlyField()
-    product = ShopProductsSimpleListSerializers(read_only=True, many=True)
+    product = ProductSimpleSerializers(read_only=True, many=True)
 
     class Meta:
         read_only_fields = ('created_at', 'updated_at')
@@ -173,7 +230,7 @@ class CustomerCartItemsSerializer(serializers.ModelSerializer):
 
 
 class ShopOrderItemRetrieveSerializer(serializers.ModelSerializer):
-    product = ShopProductsSimpleListSerializers(read_only=True)
+    product = ProductSimpleSerializers(read_only=True)
     price_sum = serializers.ReadOnlyField()
 
     class Meta:
