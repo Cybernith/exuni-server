@@ -46,8 +46,6 @@ class ApiVariationListSerializers(serializers.ModelSerializer):
             'length',
             'width',
             'height',
-            'variation_of'
-            'variation_title'
         ]
 
     def get_image(self, obj):
@@ -110,8 +108,6 @@ class ApiProductsListSerializers(serializers.ModelSerializer):
             'length',
             'width',
             'height',
-            'variation_of'
-            'variation_title'
         ]
 
     def get_image(self, obj):
