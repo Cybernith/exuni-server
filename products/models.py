@@ -322,7 +322,7 @@ class Product(BaseModel):
         return self.products_in_wish_list.count()
 
     def comments_count(self):
-        return self.product_comments.count()
+        return self.product_comments.filter(confirmed=True).count()
 
     @property
     def calculate_current_inventory(self):

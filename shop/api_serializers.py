@@ -27,6 +27,8 @@ class ApiVariationListSerializers(serializers.ModelSerializer):
     offer_percentage = serializers.SerializerMethodField()
     calculate_current_inventory = serializers.ReadOnlyField()
     brand = ApiBrandListSerializer(read_only=True)
+    price_title = serializers.SerializerMethodField()
+    regular_price_title = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
@@ -48,6 +50,8 @@ class ApiVariationListSerializers(serializers.ModelSerializer):
             'width',
             'height',
             'variation_title',
+            'price_title',
+            'regular_price_title',
         ]
 
     def get_image(self, obj):
@@ -79,6 +83,15 @@ class ApiVariationListSerializers(serializers.ModelSerializer):
             return f'{offer_percentage}%'
         return None
 
+    def get_price_title(self, obj):
+        return 'قیمت در اکسونی'
+
+    def get_regular_price_title(self, obj):
+        if obj.brand and obj.brand.made_in:
+            if obj.brand.made_in == 'ایران':
+                return 'قیمت مصرف کننده'
+        return 'قیمت محصول'
+
 
 class ApiProductsListSerializers(serializers.ModelSerializer):
     image = serializers.SerializerMethodField()
@@ -89,6 +102,9 @@ class ApiProductsListSerializers(serializers.ModelSerializer):
     calculate_current_inventory = serializers.ReadOnlyField()
     variations = ApiVariationListSerializers(read_only=True, many=True)
     brand = ApiBrandListSerializer(read_only=True)
+    price_title = serializers.SerializerMethodField()
+    regular_price_title = serializers.SerializerMethodField()
+
 
     class Meta:
         model = Product
@@ -110,7 +126,18 @@ class ApiProductsListSerializers(serializers.ModelSerializer):
             'length',
             'width',
             'height',
+            'price_title',
+            'regular_price_title',
         ]
+
+    def get_price_title(self, obj):
+        return 'قیمت در اکسونی'
+
+    def get_regular_price_title(self, obj):
+        if obj.brand and obj.brand.made_in:
+            if obj.brand.made_in == 'ایران':
+                return 'قیمت مصرف کننده'
+        return 'قیمت محصول'
 
     def get_image(self, obj):
         return obj.picture.url if obj.picture else None
