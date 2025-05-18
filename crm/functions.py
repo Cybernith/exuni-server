@@ -122,8 +122,7 @@ def get_recommended_products(user, limit=20):
     for keyword in search_keywords:
         query |= Q(name__icontains=keyword) | Q(brand__name__icontains=keyword) | Q(category__name__icontains=keyword)
 
-    related_products_by_search = Product.objects.filter(query).select_related(
-        'brand', 'category').only('id', 'name', 'brand__name')
+    related_products_by_search = Product.objects.filter(query).select_related('brand').only('id', 'name', 'brand__name')
 
     most_viewed_products = Product.objects.filter(
         id__in=most_viewed_products_ids
