@@ -102,7 +102,9 @@ class Command(BaseCommand):
                     if brand_name and brand_name['options'][0]:
                         new_product_brand = Brand.objects.get(name=brand_name['options'][0])
                         new_product.brand = new_product_brand
-                        new_product_brand.made_in = made_in['options'][0]
+                        if made_in['options']:
+                            new_product_brand.made_in = made_in['options'][0]
+                            new_product_brand.save()
 
                     if profit_margin:
                         new_product.profit_margin = float(profit_margin['value']) if profit_margin['value'] else None
@@ -177,8 +179,9 @@ class Command(BaseCommand):
                     if brand_name and brand_name['options'][0]:
                         new_product_brand = Brand.objects.get(name=brand_name['options'][0])
                         new_product.brand = new_product_brand
-                        new_product_brand.made_in = made_in['options'][0]
-                        new_product_brand.save()
+                        if made_in['options']:
+                            new_product_brand.made_in = made_in['options'][0]
+                            new_product_brand.save()
 
                     new_product.profit_margin = float(profit_margin['value']) if profit_margin else 0
                     new_product.currency_price = float(currency_price['value']) if currency_price else 0
