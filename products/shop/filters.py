@@ -1,11 +1,13 @@
 from django.contrib.postgres.search import TrigramSimilarity
-from django.db.models import Q, Count, Avg, Value, FloatField
+from django.db.models import Q, Count, Avg, Value, FloatField, Sum
 from django.db.models.functions import Coalesce
 
 from helpers.filters import BASE_FIELD_FILTERS
 from products.models import Product, Brand, Category
 from django_filters import rest_framework as filters
 import django_filters
+
+from shop.models import ShopOrder
 
 
 class ShopProductFilter(filters.FilterSet):
@@ -55,15 +57,28 @@ class ShopProductFilter(filters.FilterSet):
             return queryset.filter(perperties__id__in=ids)
 
 
-def category_tree_filter(queryset, name, value):
-    ids = [int(cat_id) for cat_id in value.split(',') if cat_id != '']
-    categories = []
-    for cat_id in ids:
-        cats = Category.objects.get(pk=cat_id).get_all_descendants()
-        categories.extend(cats)
-        categories.append(Category.objects.get(pk=cat_id))
+def get_all_descendant_ids(category):
+    descendants = []
+    children = Category.objects.filter(parent=category)
+    for child in children:
+        descendants.append(child.id)
+        descendants.extend(get_all_descendant_ids(child))
+    return descendants
 
-    return queryset.filter(category__in=categories)
+
+def category_tree_filter(queryset, name, value):
+    ids = [int(cat_id) for cat_id in value.split(',') if cat_id.strip()]
+    category_ids = set()
+
+    for cat_id in ids:
+        try:
+            category = Category.objects.get(pk=cat_id)
+            category_ids.add(category.id)
+            category_ids.update(get_all_descendant_ids(category))
+        except Category.DoesNotExist:
+            continue
+
+    return queryset.filter(category__id__in=category_ids).distinct()
 
 
 def top_viewed_filter(queryset, name, value):
@@ -81,7 +96,18 @@ def top_rated_filter(queryset, name, value):
 def product_comments_global_search(queryset, name, value):
     return queryset.prefetch_related('product_comments').annotate(
         similarity=TrigramSimilarity('product_comments__text', value)
-    ).pre.filter(Q(similarity__gt=0.3) | Q(name__contains=value)).distinct().order_by('-similarity')
+    ).filter(Q(similarity__gt=0.3) | Q(name__contains=value)).distinct().order_by('-similarity')
+
+
+def top_selling_filter(queryset, name, value):
+    order_by = '-total_sold' if value else 'total_sold'
+
+    return queryset.annotate(
+        total_sold=Sum(
+            'shop_order_items__product_quantity',
+            filter=Q(shop_order_items__shop_order__status=ShopOrder.PAID)
+        )
+    ).order_by(order_by, '-id')
 
 
 class ShopProductSimpleFilter(filters.FilterSet):
@@ -100,6 +126,7 @@ class ShopProductSimpleFilter(filters.FilterSet):
     category_tree = filters.CharFilter(method=category_tree_filter)
     top_viewed = filters.BooleanFilter(method=top_viewed_filter)
     top_rated = filters.BooleanFilter(method=top_rated_filter)
+    top_selling = filters.BooleanFilter(method=top_selling_filter)
     global_search = filters.CharFilter(method=product_comments_global_search)
 
     class Meta:
