@@ -7,7 +7,7 @@ from reports.lists.export_views import BaseExportView
 import xlsxwriter
 from django.http import HttpResponse
 
-from shop.admin.views import AdminShopOrderListView
+from shop.exuni_admin.views import AdminShopOrderListView
 
 from shop.models import ShopOrder
 

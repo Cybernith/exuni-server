@@ -1,9 +1,9 @@
 from django.conf.urls import url
 
 from products.shop.views import CommentCreateView, ShopProductCommentListView, RateUpsertApiView
-from shop.admin.export_views import ShopOrderListExportView, ShopOrderDetailExportView
+from shop.exuni_admin.export_views import ShopOrderListExportView, ShopOrderDetailExportView
 
-from shop.admin.views import AdminShopOrderListView
+from shop.exuni_admin.views import AdminShopOrderListView
 from shop.search import GlobalAutoCompleteSearchAPIView
 from shop.views import CurrentUserCartApiView, CartDetailView, CurrentUserWishListApiView, WishListDetailView, \
     CurrentUserComparisonApiView, ComparisonDetailView, CurrentUserShipmentAddressApiView, ShipmentAddressDetailView, \
