@@ -10,9 +10,9 @@ from helpers.models import DECIMAL
 
 
 class Wallet(models.Model):
-    user = models.OneToOneField('users.User', on_delete=models.CASCADE, related_name='wallet',
+    user = models.OneToOneField('users.User', on_delete=models.CASCADE, related_name='exuni_wallet',
                                 blank=True, null=True)
-    business = models.OneToOneField('main.Business', on_delete=models.CASCADE, related_name='wallet',
+    business = models.OneToOneField('main.Business', on_delete=models.CASCADE, related_name='exuni_wallet',
                                     blank=True, null=True)
     balance = models.DecimalField(max_digits=18, decimal_places=2, default=0)
     is_active = models.BooleanField(default=True)
@@ -155,6 +155,7 @@ class Payment(models.Model):
 
     status = FSMField(choices=STATUS_CHOICES, default=INITIATED, protected=False)
     amount = DECIMAL()
+    used_amount_from_wallet = DECIMAL()
     gateway = models.CharField(max_length=30, blank=True, null=True)
     reference_id = models.CharField(max_length=100, blank=True, null=True)
     created_at = models.DateTimeField(blank=True, null=True)

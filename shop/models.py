@@ -278,6 +278,35 @@ class ShopOrder(BaseModel):
             self.exuni_tracking_code = self.create_exuni_tracking_code
         super().save(*args, **kwargs)
 
+    def pay_with_wallet(self):
+        assert not self.status == self.PAID
+        final_price = self.final_amount
+        wallet = self.customer.exuni_wallet
+
+        wallet_amount = wallet.balance
+        used_from_wallet = min(wallet_amount, final_price)
+        gateway_amount = final_price - used_from_wallet
+
+        if used_from_wallet > 0:
+            wallet.reduce_balance(amount=used_from_wallet, description=f"پرداخت سفارش {self.exuni_tracking_code}")
+
+        if gateway_amount > 0:
+            payment = Payment.objects.create(
+                shop_order=self,
+                user=self.customer,
+                amount=gateway_amount,
+                used_amount_from_wallet=used_from_wallet,
+                gateway='zarinpal',
+                status=Payment.INITIATED,
+                created_at=timezone.now()
+            )
+
+            return payment
+
+        else:
+            self.mark_as_paid()
+            Payment.objects.none()
+
     def pay(self):
         assert not self.status == self.PAID
 

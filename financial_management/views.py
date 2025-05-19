@@ -31,7 +31,13 @@ class StartZarinpalPaymentApiView(APIView):
         if hasattr(order, 'bank_payment'):
             return Response({'detail': 'this order already have open payment'}, status=status.HTTP_400_BAD_REQUEST)
 
-        payment = order.pay()
+        if request.data.get('use_wallet', False):
+            payment = order.pay_with_wallet
+            if not payment:
+                return Response({'payment_url': '/payment/result?status=success'})
+        else:
+            payment = order.pay()
+
         callback_url = SERVER_URL + reverse('financial_management:zarinpal_callback')
 
         gateway = ZarinpalGateway(

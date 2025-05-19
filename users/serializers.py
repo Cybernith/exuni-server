@@ -5,6 +5,7 @@ from django.db.models import Q
 from rest_framework import serializers
 from rest_framework.authtoken.models import Token
 
+from financial_management.serializers import CurrentUserWalletSerializer
 from helpers.functions import get_current_user
 from helpers.serializers import SModelSerializer
 from main.models import Business
@@ -63,18 +64,8 @@ class UserSimpleSerializer(SModelSerializer):
 
 class UserListSerializer(SModelSerializer):
     name = serializers.SerializerMethodField()
-    has_two_factor_authentication = serializers.SerializerMethodField()
-    unread_notifications_count = serializers.SerializerMethodField()
-    pop_up_notifications = serializers.SerializerMethodField()
     business_token = serializers.SerializerMethodField()
     profile_picture = serializers.ImageField(read_only=True)
-
-    def get_pop_up_notifications(self, obj: User):
-        qs = obj.notifications.exclude(status=UserNotification.READ).filter(notification__show_pop_up=True)
-        return UserNotificationSerializer(qs, many=True).data
-
-    def get_unread_notifications_count(self, obj: User):
-        return obj.notifications.exclude(status=UserNotification.READ).count()
 
     def get_name(self, obj: User):
         if obj.first_name and obj.last_name:
@@ -82,15 +73,11 @@ class UserListSerializer(SModelSerializer):
         else:
             return obj.username
 
-    def get_has_two_factor_authentication(self, obj: User):
-        return obj.secret_key is not None
-
     def get_business_token(self, obj: User):
         if obj.user_type == User.BUSINESS_OWNER and Business.objects.filter(admin=obj).exists():
             return Business.objects.get(admin=obj).api_token
         else:
             return ''
-
 
     class Meta:
         model = get_user_model()
@@ -102,7 +89,7 @@ class UserRetrieveSerializer(UserListSerializer):
     wallet = serializers.SerializerMethodField()
 
     def get_wallet(self, obj: User):
-        return WalletSerializer(obj.get_wallet()).data
+        return CurrentUserWalletSerializer(obj.exuni_wallet).data
 
     class Meta(UserListSerializer.Meta):
         pass
