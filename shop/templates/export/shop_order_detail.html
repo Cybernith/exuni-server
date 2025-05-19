@@ -1,0 +1,166 @@
+{% load report_filters %}
+
+
+<div class="row">
+    <table class="table-head" style="margin-top: -1px">
+        <tbody>
+        <tr>
+            <td>
+                <span style="font-size: x-small;" class="font-weight-bold"> شماره فاکتور : </span>
+                <span style="font-size: x-small;"> {{ forms.exuni_tracking_code }} </span>
+            </td>
+            <td>
+                <span style="font-size: x-small;" class="font-weight-bold"> خریدار : </span>
+                <span style="font-size: x-small;"> {{ forms.customer.name }} {{ forms.customer.mobile_number }}</span>
+            </td>
+            <td>
+                <span style="font-size: x-small" class="font-weight-bold"> تاریخ : </span>
+                <span style="font-size: x-small"> {{ forms.date_time | jDateTime }} </span>
+            </td>
+
+        </tr>
+        </tbody>
+    </table>
+
+</div>
+<div class="row">
+    <table class="table-head" style="margin-top: -1px">
+        <tbody>
+        <tr>
+            <td>
+                <span style="font-size: x-small;" class="font-weight-bold"> کشور : </span>
+                <span style="font-size: x-small;"> {{ forms.shipment_address.country }} </span>
+            </td>
+            <td>
+                <span style="font-size: x-small;" class="font-weight-bold">استان و شهر : </span>
+                <span style="font-size: x-small;"> {{ forms.shipment_address.state }} {{ forms.shipment_address.city }}</span>
+            </td>
+            <td>
+                <span style="font-size: x-small;" class="font-weight-bold">کد پستی : </span>
+                <span style="font-size: x-small;"> {{ forms.shipment_address.zip_code }}</span>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="3">
+                <span style="font-size: x-small;" class="font-weight-bold"> آدرس : </span>
+                <span style="font-size: x-small;">
+                    {{ forms.shipment_address.address }} -
+                    {{ forms.shipment_address.house_number }} -
+                    {{ forms.shipment_address.house_unit }}
+                </span>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+
+</div>
+
+
+<div class="row">
+    <table class="table table-bordered table-striped" style="margin-top: -1px">
+        <thead>
+        <tr>
+            <th class="text-center" width="20">
+                <span style="font-size: xx-small;">ردیف</span>
+            </th>
+            <th class="text-center">
+                <span style="font-size: x-small">نام کالا</span>
+            </th>
+            <th class="text-center">
+                <span style="font-size: x-small">شناسه کالا</span>
+            </th>
+            <th class="text-center">
+                <span style="font-size: x-small">تعداد کالا</span>
+            </th>
+            <th class="text-center">
+                <span style="font-size: x-small">مبلغ کالا</span>
+            </th>
+            <th class="text-center">
+                <span style="font-size: x-small">مبلغ کل</span>
+            </th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for item in forms.items.all %}
+            <tr>
+                <td class="text-center" width="20">
+                    <span style="font-size: xx-small">{{ forloop.counter }}</span>
+                </td>
+                <td class="text-center">
+                    <span style="font-size: x-small">
+                        {{ item.product.name  | default:'-' }}
+                    </span>
+                </td>
+                <td class="text-center">
+                    <span style="font-size: x-small">
+                        {{ item.product.sixteen_digit_code  | default:'-' }}
+                    </span>
+                </td>
+                <td class="text-center">
+                        <span style="font-size: x-small">
+                            {{ item.product_quantity | money }}
+                        </span>
+                </td>
+                <td class="text-center">
+                        <span style="font-size: x-small">
+                            {{ item.price | money }}
+                        </span>
+                </td>
+                <td class="text-center">
+                        <span style="font-size: x-small">
+                            {{ item.price_sum | money }}
+                        </span>
+                </td>
+            </tr>
+        {% endfor %}
+        <tr>
+            <td colspan="5" rowspan="3"></td>
+            <td class="text-center">
+                <span style="font-size: x-small; font-weight: bold">
+                    جمع
+                </span>
+            </td>
+            <td class="text-center">
+                <span style="font-size: x-small">
+                    {{ forms.total_price | money }}
+                </span>
+            </td>
+
+        </tr>
+        <tr>
+            <td class="text-center">
+                <span style="font-size: x-small; font-weight: bold">
+                    مبلغ تخفیف
+                </span>
+            </td>
+            <td class="text-center">
+                <span style="font-size: x-small">
+                    {{ forms.discount_amount | money }}
+                </span>
+            </td>
+
+        </tr>
+        <tr>
+            <td class="text-center">
+                <span style="font-size: x-small; font-weight: bold">
+                    مبلغ نهایی
+                </span>
+            </td>
+            <td class="text-center">
+                <span style="font-size: x-small">
+                    {{ forms.final_amount | money }}
+                </span>
+            </td>
+
+        </tr>
+        </tbody>
+    </table>
+</div>
+
+
+<style>
+    table.table-head {
+        width: 100%;
+        border: 1px solid black;
+    }
+</style>

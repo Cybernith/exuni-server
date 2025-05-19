@@ -123,7 +123,7 @@ class SubscriptionFactorDetailExportView(FactorListView, BaseExportView):
         }
 
         template_prefix = self.get_template_prefix()
-        context['form_content_template'] = 'export/factor_detail.html'.format(template_prefix)
+        context['form_content_template'] = 'export/shop_order_detail.html'.format(template_prefix)
         context['right_header_template'] = 'export/sample_head.html'
 
         context.update(self.context)

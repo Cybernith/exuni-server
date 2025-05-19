@@ -1,0 +1,34 @@
+{% load report_filters %}
+
+<div class="row" style="margin-top: -1px">
+    <table class="table table-bordered table-striped">
+
+        <tr>
+            <th class="text-center">ردیف</th>
+            <th class="text-center">تاریخ ثبت</th>
+            <th class="text-center">وضعیت</th>
+            <th class="text-center">نام مشتری</th>
+            <th class="text-center">شمار تماس مشتری</th>
+            <th class="text-center">مبلغ</th>
+            <th class="text-center">مبلغ تخفیف</th>
+            <th class="text-center">مبلغ پس از تخفیف</th>
+            <th class="text-center">تعداد اقلام</th>
+            <th class="text-center">شناسه</th>
+
+        </tr>
+        {% for form in forms %}
+            <tr>
+                <td class="text-center">{{ forloop.counter }}</td>
+                <td class="text-center">{{ form.date_time | jDateTime }}</td>
+                <td class="text-center">{{  form.get_status_display}}</td>
+                <td class="text-center">{{  form.customer.name}}</td>
+                <td class="text-center">{{  form.customer.mobile_number}}</td>
+                <td class="text-center">{{  form.total_price | money}}</td>
+                <td class="text-center">{{  form.discount_amount | money}}</td>
+                <td class="text-center">{{  form.payable_amount | money}}</td>
+                <td class="text-center">{{  form.total_product_quantity | money}}</td>
+                <td class="text-center">{{  form.exuni_tracking_code | money}}</td>
+            </tr>
+        {% endfor %}
+    </table>
+</div>

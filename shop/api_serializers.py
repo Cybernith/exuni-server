@@ -303,10 +303,14 @@ class ApiShipmentAddressRetrieveSerializer(serializers.ModelSerializer):
 
 
 class ApiOrderStatusHistorySerializer(serializers.ModelSerializer):
+    new_status_display = serializers.CharField(source='get_new_status_display', read_only=True)
+    previous_status_display = serializers.CharField(source='get_previous_status_display', read_only=True)
+
     class Meta:
         read_only_fields = ('created_at', 'updated_at')
         model = ShopOrderStatusHistory
-        fields = ['previous_status', 'new_status', 'changed_at', 'changed_by', 'note']
+        fields = ['previous_status', 'new_status', 'new_status_display', 'previous_status_display', 'changed_at',
+                  'changed_by', 'note']
 
 
 class ApiCustomerShopOrderItemSerializer(serializers.ModelSerializer):

@@ -1,6 +1,6 @@
 from django import template
 
-from helpers.functions import add_separator, rgetattr, date_to_str, fee_display
+from helpers.functions import add_separator, rgetattr, date_to_str, fee_display, datetime_to_str
 from server.settings import DATE_FORMAT, TIME_FORMAT
 import datetime
 
@@ -79,6 +79,15 @@ def jDate(value):
     if value:
         try:
             return date_to_str(value)
+        except:
+            return value
+    return ''
+
+@register.filter(is_safe=True)
+def jDateTime(value):
+    if value:
+        try:
+            return datetime_to_str(value)
         except:
             return value
     return ''
