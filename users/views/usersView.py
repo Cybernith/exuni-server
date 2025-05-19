@@ -80,7 +80,7 @@ class SendVerificationCodeView(APIView, RecaptchaView):
 
         if phone is not None:
             phone_sample = verification_code['phone'][8:] + " **** " + verification_code['phone'][:4]
-            return Response(data={'phone_sample': phone_sample, 'code': verification_code['verify_code']},
+            return Response(data={'phone_sample': phone_sample, 'code': verification_code['code']},
                             status=status.HTTP_200_OK)
         else:
             return Response(status=status.HTTP_404_NOT_FOUND)
