@@ -1,7 +1,7 @@
 import datetime
 
 from django.core.exceptions import ValidationError
-from django.db import models
+from django.db import models, transaction as db_transaction
 from django_fsm import FSMField, transition
 
 from helpers.models import DECIMAL
@@ -21,6 +21,32 @@ class Wallet(models.Model):
         if not self.user and not self.business:
             raise ValidationError("حداقل یکی از فیلدهای 'کاربر' یا 'کسب و کار' باید مقدار داشته باشد.")
 
+    def reduce_balance(self, val, **kwargs):
+        if not val > 0:
+            raise ValidationError('reduce value most be positive number')
+
+        with db_transaction.atomic():
+            if self.balance < val:
+                raise ValidationError("موجودی کیف پول کافی نیست")
+            balance_before = self.balance
+            self.balance -= val
+            self.save()
+
+            WalletLedger.objects.create(
+                wallet=self,
+                amount=val,
+                balance_before=balance_before,
+                balance_after=self.balance,
+                is_credit=False,
+                description='برداشت از کیف پول'
+            )
+            transaction = Transaction.objects.create(
+                user=self.user,
+                amount=val,
+                type=Transaction.BUY,
+                status=Transaction.SUCCESS
+            )
+
 
 class Transaction(models.Model):
     TOP_UP = 'top-up'
@@ -28,10 +54,13 @@ class Transaction(models.Model):
     TRANSFER = 'transfer'
     PAYMENT = 'payment'
     INVESTMENT = 'investment'
+    BUY = 'buy'
 
     TRANSACTION_TYPE = (
         (TOP_UP, 'شارژ ولت'),
         (WITHDRAW, 'برداشت'),
+        (PAYMENT, 'پرداخت'),
+        (BUY, 'خرید'),
         (TRANSFER, 'انتقال'),
         (INVESTMENT, 'سرمایه گذاری'),
     )
@@ -49,11 +78,11 @@ class Transaction(models.Model):
     wallet = models.ForeignKey(Wallet, on_delete=models.CASCADE, related_name='transactions')
     type = models.CharField(max_length=20, choices=TRANSACTION_TYPE)
     amount = models.DecimalField(max_digits=18, decimal_places=2)
-    status = models.CharField(max_length=10, choices=TRANSACTION_STATUS, default='PENDING')
+    status = models.CharField(max_length=10, choices=TRANSACTION_STATUS, default=PENDING)
     description = models.TextField(blank=True, null=True)
     metadata = models.JSONField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    transaction_for = models.CharField(max_length=10, choices=TRANSACTION_STATUS, default='PENDING')
+    transaction_for = models.CharField(max_length=10, choices=TRANSACTION_TYPE, default=WITHDRAW)
 
 
 class WalletLedger(models.Model):
@@ -189,7 +218,7 @@ class FinancialAuditLog(models.Model):
     payment = models.ForeignKey(Payment, on_delete=models.SET_NULL, null=True, blank=True)
     action = models.CharField(max_length=50, choices=AuditAction.choices)
     severity = models.CharField(max_length=10, choices=AuditSeverity.choices, default=AuditSeverity.INFO)
-    ip_address = models.GenericIPAddressField()
-    user_agent = models.CharField(max_length=256)
+    ip_address = models.GenericIPAddressField(blank=True, null=True)
+    user_agent = models.CharField(max_length=256, blank=True, null=True)
     extra_info = models.JSONField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
