@@ -6,6 +6,7 @@ from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models import Q, Sum, F, DecimalField
 from django.db.models.functions import Round, Least, TruncMinute
+from django.utils import timezone
 
 from financial_management.models import Payment
 from helpers.functions import datetime_to_str, add_separator
@@ -291,7 +292,8 @@ class ShopOrder(BaseModel):
             user=self.customer,
             amount=self.final_amount,
             gateway='zarinpal',
-            status=Payment.INITIATED
+            status=Payment.INITIATED,
+            created_at=timezone.now()
         )
 
         payment.mark_as_pending(user=self.customer)

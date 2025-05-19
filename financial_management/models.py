@@ -1,7 +1,9 @@
 import datetime
+from decimal import Decimal
 
 from django.core.exceptions import ValidationError
 from django.db import models, transaction as db_transaction
+from django.db.models import UniqueConstraint, Q
 from django_fsm import FSMField, transition
 
 from helpers.models import DECIMAL
@@ -21,32 +23,37 @@ class Wallet(models.Model):
         if not self.user and not self.business:
             raise ValidationError("حداقل یکی از فیلدهای 'کاربر' یا 'کسب و کار' باید مقدار داشته باشد.")
 
-    def reduce_balance(self, val, **kwargs):
-        if not val > 0:
-            raise ValidationError('reduce value most be positive number')
+    def reduce_balance(self, amount: Decimal, description: str = 'خرید از کیف پول', transaction_type=None, **kwargs):
+        if amount <= 0:
+            raise ValidationError('مقدار برداشت باید یک عدد مثبت باشد.')
 
         with db_transaction.atomic():
-            if self.balance < val:
-                raise ValidationError("موجودی کیف پول کافی نیست")
-            balance_before = self.balance
-            self.balance -= val
-            self.save()
+            wallet = Wallet.objects.select_for_update().get(pk=self.pk)
+
+            if wallet.balance < amount:
+                raise ValidationError('موجودی کافی نیست.')
+
+            balance_before = wallet.balance
+            wallet.balance -= amount
+            wallet.save()
 
             WalletLedger.objects.create(
-                wallet=self,
-                amount=val,
+                wallet=wallet,
+                amount=amount,
                 balance_before=balance_before,
-                balance_after=self.balance,
+                balance_after=wallet.balance,
                 is_credit=False,
-                description='برداشت از کیف پول'
-            )
-            transaction = Transaction.objects.create(
-                user=self.user,
-                amount=val,
-                type=Transaction.BUY,
-                status=Transaction.SUCCESS
+                description=description
             )
 
+            Transaction.objects.create(
+                wallet=wallet,
+                user=wallet.user,
+                amount=amount,
+                type=transaction_type or Transaction.BUY,
+                status=Transaction.SUCCESS,
+                **kwargs
+            )
 
 class Transaction(models.Model):
     TOP_UP = 'top-up'
@@ -60,7 +67,7 @@ class Transaction(models.Model):
         (TOP_UP, 'شارژ ولت'),
         (WITHDRAW, 'برداشت'),
         (PAYMENT, 'پرداخت'),
-        (BUY, 'خرید'),
+        (BUY, 'خرید از ولت'),
         (TRANSFER, 'انتقال'),
         (INVESTMENT, 'سرمایه گذاری'),
     )
@@ -149,12 +156,17 @@ class Payment(models.Model):
     status = FSMField(choices=STATUS_CHOICES, default=INITIATED, protected=False)
     amount = DECIMAL()
     gateway = models.CharField(max_length=30, blank=True, null=True)
-    reference_id = models.CharField(max_length=100, blank=True, null=True, unique=True)
-    created_at = models.DateTimeField(auto_now=True, blank=True, null=True)
+    reference_id = models.CharField(max_length=100, blank=True, null=True)
+    created_at = models.DateTimeField(blank=True, null=True)
     paid_at = models.DateTimeField(blank=True, null=True)
 
+    class Meta:
+        constraints = [
+            UniqueConstraint(fields=['reference_id'], name='unique_reference_id',
+                             condition=Q(reference_id__isnull=False))
+        ]
     def __str__(self):
-        return "پرداخت {} {}".format(self.reference_id, self.user.name)
+        return f"پرداخت {self.reference_id or 'بدون شناسه'} توسط {self.user.name}"
 
     @transition(field='status', source=INITIATED, target=PENDING)
     def mark_as_pending(self, user=None):

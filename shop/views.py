@@ -1,4 +1,5 @@
 import datetime
+
 from urllib.parse import urljoin
 
 import requests
@@ -8,6 +9,7 @@ from django.db.models import Q, F
 from django.http import Http404, HttpResponseForbidden
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
+from django.utils.timezone import now
 from rest_framework.exceptions import ValidationError
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import IsAuthenticated, AllowAny
@@ -477,69 +479,76 @@ class ShopOrderRegistrationView(APIView):
     throttle_classes = [ShopOrderRateThrottle]
 
     def post(self, request):
-        data = request.data
         customer = get_current_user()
+        data = request.data
+        address_id = data.get('address')
+        discount_code_value = data.get('discount_code')
+
         cart_items = Cart.objects.filter(customer=customer).select_related('product')
         if not cart_items.exists():
-            return Response({'detail': 'your cart is empty'}, status=status.HTTP_400_BAD_REQUEST)
-        if not data['address']:
-            return Response({'detail': 'address required'}, status=status.HTTP_400_BAD_REQUEST)
-        else:
-            if ShipmentAddress.objects.filter(id=data['address'], customer=get_current_user()).exists():
-                address = ShipmentAddress.objects.get(id=data['address'])
-            else:
-                return Response({'detail': 'address invalid for this user'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'detail': 'سبد خرید شما خالی است'}, status=status.HTTP_400_BAD_REQUEST)
 
-        discount_code: DiscountCode = DiscountCode.objects.none()
-        if data['discount_code']:
+        if not address_id:
+            return Response({'detail': 'آدرس الزامی است'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            address = ShipmentAddress.objects.get(id=address_id, customer=customer)
+        except ShipmentAddress.DoesNotExist:
+            return Response({'detail': 'آدرس برای این کاربر معتبر نیست'}, status=status.HTTP_400_BAD_REQUEST)
+
+        discount_code = None
+        if discount_code_value:
             try:
-                discount_code = DiscountCode.objects.get(code=data['discount_code'])
+                discount_code = DiscountCode.objects.get(code=discount_code_value)
+                discount_code.verify()
             except DiscountCode.DoesNotExist:
-                raise ValidationError("کد تخفیف معتبر نمی باشد")
-            discount_code.verify()
+                return Response({'detail': 'کد تخفیف معتبر نمی‌باشد'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             with transaction.atomic():
-
-                #Preventing  race condition
-                product_ids = [item.product.id for item in cart_items]
+                product_ids = list(cart_items.values_list('product_id', flat=True))
                 locked_products = Product.objects.filter(id__in=product_ids).select_for_update()
-
                 product_map = {product.id: product for product in locked_products}
 
                 shop_order = ShopOrder.objects.create(
                     customer=customer,
-                    date_time=datetime.datetime.now(),
+                    date_time=now(),
                     shipment_address=address,
                     discount_code=discount_code,
                 )
 
+                order_items = []
                 for item in cart_items:
                     product = product_map[item.product.id]
+
                     if product.inventory < item.quantity:
-                        raise Exception('not enough inventory for {}'.format(product.name))
+                        raise ValidationError(f'موجودی کافی برای "{product.name}" وجود ندارد.')
 
-                    ShopOrderItem.objects.create(
+                    order_items.append(ShopOrderItem(
                         shop_order=shop_order,
-                        product=item.product,
-                        price=item.product.last_price,
+                        product=product,
+                        price=product.last_price,
                         product_quantity=item.quantity,
-                    )
+                    ))
 
-                    # Inventory reduction
-                    reduce_inventory(item.product.id, item.quantity)
+                    reduce_inventory(product.id, item.quantity)
+
+                ShopOrderItem.objects.bulk_create(order_items)
 
                 cart_items.delete()
                 shop_order.set_constants()
-                return Response(
-                    {
-                        'detail': 'initial order registration completed',
-                        'order_id': shop_order.exuni_tracking_code,
-                        'exuni_tracking_code': shop_order.exuni_tracking_code
-                    }, status=status.HTTP_201_CREATED)
+
+                return Response({
+                    'detail': 'ثبت اولیه سفارش با موفقیت انجام شد',
+                    'order_id': shop_order.id,
+                    'exuni_tracking_code': shop_order.exuni_tracking_code
+                }, status=status.HTTP_201_CREATED)
+
+        except ValidationError as validation_error:
+            return Response({'detail': str(validation_error)}, status=status.HTTP_400_BAD_REQUEST)
 
         except Exception as exception:
-            return Response({'detail': str(exception)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'detail': f'خطا در ثبت سفارش: {str(exception)}'}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class CustomerOrdersView(APIView):
