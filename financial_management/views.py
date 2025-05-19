@@ -90,6 +90,8 @@ class ZarinpalCallbackApiView(APIView):
                 user_agent=self.kwargs.get("agent"),
                 extra_info={"amount": str(payment.amount)}
             )
+            if order.discount_code:
+                order.discount_code.use()
             order.mark_as_paid(user=payment.user)
             return Response({'detail': 'payment verify was successfully', 'ref_id': result['data']['ref_id']},
                             status=status.HTTP_200_OK)

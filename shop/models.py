@@ -250,12 +250,20 @@ class ShopOrder(BaseModel):
         self.status = self.CANCELLED
         self.save()
 
+    def get_discount_amount(self):
+        if self.discount_code:
+            discount_amount = self.total_price * self.discount_code.discount_percentage / 100
+            discount_amount = min(discount_amount, self.discount_code.max_discount_amount)
+            return discount_amount
+        return 0
+
     def set_constants(self):
         items = self.items.all().annotate(
             price_sum=Sum(F('product_quantity') * F('price'), output_field=DecimalField()),
         ).aggregate(Sum('price_sum'), Sum('product_quantity'))
         self.total_price = items['price_sum__sum']
         self.total_product_quantity = items['product_quantity__sum']
+        self.discount_amount = self.get_discount_amount
         self.save()
 
     @property
