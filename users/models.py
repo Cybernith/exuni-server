@@ -255,15 +255,20 @@ class PhoneVerification(BaseModel):
     @staticmethod
     def send_verification_code(phone):
         verify_code = ''.join(str(secrets.randbelow(10)) for _ in range(6))
-        if User.objects.filter(mobile_number=phone).exists():
-            PhoneVerification.objects.create(user=User.objects.get(mobile_number=phone), phone=phone,
-                                             code=verify_code)
-            Sms.send(phone=phone, message="کد تایید شما در اکسونی: {}".format(verify_code))
-            return phone
-        else:
-            PhoneVerification.objects.create(phone=phone, code=verify_code)
-            Sms.send(phone=phone, message="کد تایید شما در  اکسونی: {}".format(verify_code))
-            return phone, verify_code
+
+        try:
+            user = User.objects.get(mobile_number=phone)
+        except User.DoesNotExist:
+            user = None
+
+        PhoneVerification.objects.create(user=user, phone=phone, code=verify_code)
+
+        Sms.send(
+            phone=phone,
+            message=f"کد تایید شما در اکسونی: {verify_code}"
+        )
+
+        return {"phone": phone, "code": verify_code}
 
     @staticmethod
     def check_verification_code(phone, code, raise_exception=False):
