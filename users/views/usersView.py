@@ -76,11 +76,11 @@ class SendVerificationCodeView(APIView, RecaptchaView):
 
         # if not self.request.user:
         #     self.verify_recaptcha()
-        phone = PhoneVerification.send_verification_code(phone=phone)
+        phone, code = PhoneVerification.send_verification_code(phone=phone)
 
         if phone is not None:
             phone_sample = phone[8:] + " **** " + phone[:4]
-            return Response(data={'phone_sample': phone_sample}, status=status.HTTP_200_OK)
+            return Response(data={'phone_sample': phone_sample, 'code': code}, status=status.HTTP_200_OK)
         else:
             return Response(status=status.HTTP_404_NOT_FOUND)
 

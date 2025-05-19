@@ -263,7 +263,7 @@ class PhoneVerification(BaseModel):
         else:
             PhoneVerification.objects.create(phone=phone, code=verify_code)
             Sms.send(phone=phone, message="کد تایید شما در  اکسونی: {}".format(verify_code))
-            return phone
+            return phone, verify_code
 
     @staticmethod
     def check_verification_code(phone, code, raise_exception=False):
