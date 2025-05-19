@@ -1,8 +1,9 @@
 import datetime
 from decimal import Decimal
 
+from django.contrib.gis.db.models import PointField
 from django.core.exceptions import ValidationError
-from django.core.validators import MinValueValidator
+from django.core.validators import MinValueValidator, RegexValidator
 from django.db import models
 from django.db.models import Q, Sum, F, DecimalField
 from django.db.models.functions import Round, Least, TruncMinute
@@ -111,7 +112,17 @@ class ShipmentAddress(BaseModel):
     address = models.CharField(max_length=255)
     house_number = models.CharField(max_length=255, blank=True, null=True)
     house_unit = models.CharField(max_length=255, blank=True, null=True)
-    zip_code = models.CharField(max_length=10)
+    zip_code = models.CharField(
+        max_length=10,
+        validators=[
+            RegexValidator(
+                regex=r'^\d{10}$',
+                message='کد پستی باید دقیقاً ۱۰ رقم باشد.',
+                code='invalid_zip_code'
+            )
+        ]
+    )
+    is_default = models.BooleanField(default=False)
 
     class Meta(BaseModel.Meta):
         verbose_name = 'ShipmentAddress'
@@ -128,7 +139,11 @@ class ShipmentAddress(BaseModel):
         )
 
     def __str__(self):
-        return "آدرس {} {} {}".format(self.city, self.first_name, self.last_name, )
+        return f"آدرس در {self.city} - {self.full_name or 'بدون نام'}"
+
+    @property
+    def full_name(self):
+        return f"{self.first_name or ''} {self.last_name or ''}".strip()
 
 
 class ShopOrderManager(models.Manager):
