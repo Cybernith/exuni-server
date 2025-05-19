@@ -90,7 +90,7 @@ class UserRetrieveSerializer(UserListSerializer):
     wallet = serializers.SerializerMethodField()
 
     def get_wallet(self, obj: User):
-        wallet = Wallet.objects.get_or_create(user=obj)
+        wallet, created = Wallet.objects.get_or_create(user=obj)
         return CurrentUserWalletSerializer(wallet).data
 
     class Meta(UserListSerializer.Meta):

@@ -55,6 +55,16 @@ class Wallet(models.Model):
                 **kwargs
             )
 
+    def increase_balance(self, amount: Decimal, description: str = 'شارژ کیف پول', transaction_type=None, **kwargs):
+        if amount <= 0:
+            raise ValidationError('مقدار برداشت باید یک عدد مثبت باشد.')
+
+        with db_transaction.atomic():
+            wallet = Wallet.objects.select_for_update().get(pk=self.pk)
+            wallet.balance += amount
+            wallet.save()
+
+
 class Transaction(models.Model):
     TOP_UP = 'top-up'
     WITHDRAW = 'withdraw'

@@ -14,6 +14,7 @@ class WalletTopUpService(BaseWalletService):
         wallet = Wallet.objects.select_for_update().get(user=self.user)
         with db_transaction.atomic():
             transaction = Transaction.objects.create(
+                wallet=wallet,
                 user=self.user,
                 amount=self.amount,
                 type=Transaction.TOP_UP,
@@ -35,14 +36,12 @@ class WalletTopUpService(BaseWalletService):
                 action=AuditAction.TOP_UP_SUCCESS,
                 severity=AuditSeverity.INFO,
                 transaction=transaction,
-                ip_address=self.kwargs.get("ip"),
-                user_agent=self.kwargs.get("agent"),
+                ip_address=self.ip,
+                user_agent=self.agent,
                 extra_info={"amount": str(self.amount)}
             )
 
-            wallet.balance += self.amount
-            wallet.save()
-
+            wallet.increase_balance(self.amount)
             return transaction
 
 
@@ -59,8 +58,8 @@ class WalletTopUpRequestService(BaseWalletService):
                 action=AuditAction.TOP_UP_REQUESTED,
                 severity=AuditSeverity.INFO,
                 transaction=None,
-                ip_address=self.kwargs.get("ip"),
-                user_agent=self.kwargs.get("agent"),
+                ip_address=self.ip,
+                user_agent=self.agent,
                 extra_info={"amount": str(self.amount)}
             )
             return 'request log registered'

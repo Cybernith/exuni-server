@@ -1,5 +1,7 @@
+
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated, AllowAny
@@ -8,6 +10,7 @@ from rest_framework.views import APIView
 
 from financial_management.loggers.financial_logger import FinancialLogger
 from financial_management.models import Payment, AuditAction, AuditSeverity
+from financial_management.serivces.wallet_top_up_service import WalletTopUpRequestService, WalletTopUpService
 from financial_management.zarinpal import ZarinpalGateway
 from helpers.functions import get_current_user
 from server.gateway_configs import TRUSTED_GATEWAY_IP, GATEWAY_SECRET_PAYMENT_TOKEN
@@ -180,3 +183,118 @@ class VerifyDiscountCodeView(APIView):
             'discount_code_id': discount_code.id,
             'discount_amount': discount_code.get_discount_amount(order_amount)
         })
+
+
+class StartZarinpalWalletTopUPApiView(APIView):
+    permission_classes = [IsAuthenticated]
+    throttle_classes = [PaymentRateThrottle]
+
+    def post(self, request):
+        user = get_current_user()
+        top_up_amount = request.data.get('top_up_amount', None)
+
+        try:
+            top_up_amount = int(top_up_amount)
+        except (TypeError, ValueError):
+            return Response({'detail': 'Invalid amount'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not top_up_amount or top_up_amount < 100000:
+            return Response({'detail': 'amount should be positive and greater than 100,000 rial'},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        payment = Payment.objects.create(
+            user=user,
+            amount=top_up_amount,
+            gateway='zarinpal',
+            status=Payment.INITIATED,
+            type=Payment.FOR_TOP_UP_WALLET,
+            created_at=timezone.now()
+        )
+        payment.mark_as_pending(user=user)
+
+        service = WalletTopUpRequestService(
+            user=user,
+            amount=top_up_amount,
+            ip=request.META.get('REMOTE_ADDR'),
+            agent=request.META.get('HTTP_USER_AGENT')
+        )
+
+        try:
+            service.execute()
+        except Exception as e:
+            return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        callback_url = SERVER_URL + reverse('financial_management:zarinpal_top_up_wallet_callback')
+        gateway = ZarinpalGateway(
+            amount=top_up_amount,
+            description=f'شارژ کیف پول {user.name}',
+            callback_url=callback_url
+        )
+        try:
+            result = gateway.request_payment()
+            payment.reference_id = result['authority']
+            payment.save()
+            return Response({'payment_url': result['payment_url']})
+
+        except Exception as exception:
+            payment.delete()
+            return Response({'detail': str(exception)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ZarinpalTopUpWalletCallbackApiView(APIView):
+
+    def get(self, request):
+        authority = request.query_params.get('Authority')
+        callback_status = request.query_params.get('Status')
+
+        if callback_status != 'OK':
+            return Response({'detail': 'payment failed'}, status=status.HTTP_400_BAD_REQUEST)
+        payment = get_object_or_404(Payment, reference_id=authority)
+
+        gateway = ZarinpalGateway(
+            amount=payment.amount,
+            description=f'شارژ کیف پول {payment.user}',
+            callback_url=''
+        )
+
+        result = gateway.verify_payment(authority)
+        if result.get('data') and result['data'].get('code') == 100:
+            payment.mark_as_success_payment(user=payment.user)
+            FinancialLogger.log(
+                user=payment.user,
+                action=AuditAction.PAYMENT_ORDER,
+                severity=AuditSeverity.INFO,
+                payment=payment,
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT'),
+                extra_info={"amount": str(payment.amount)}
+            )
+
+            service = WalletTopUpService(
+                user=payment.user,
+                amount=payment.amount,
+                ip=request.META.get('REMOTE_ADDR'),
+                agent=request.META.get('HTTP_USER_AGENT')
+            )
+
+            try:
+                service.execute()
+            except Exception as e:
+                return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+            return Response({'detail': 'payment verify and wallet top up was successfully',
+                             'ref_id': result['data']['ref_id']},
+                            status=status.HTTP_200_OK)
+        else:
+            payment.mark_as_failed_payment(user=payment.user)
+            FinancialLogger.log(
+                user=payment.user,
+                action=AuditAction.PAYMENT_FAILED,
+                severity=AuditSeverity.INFO,
+                payment=payment,
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT'),
+                extra_info={"amount": str(payment.amount)}
+            )
+
+            return Response({'detail': 'payment verify failed'}, status=status.HTTP_400_BAD_REQUEST)

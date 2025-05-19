@@ -319,6 +319,7 @@ class ShopOrder(BaseModel):
         payment = Payment.objects.create(
             shop_order=self,
             user=self.customer,
+            type=Payment.FOR_SHOP_ORDER,
             amount=self.final_amount,
             gateway='zarinpal',
             status=Payment.INITIATED,
