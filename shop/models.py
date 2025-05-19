@@ -102,6 +102,8 @@ class Comparison(BaseModel):
 class ShipmentAddress(BaseModel):
     customer = models.ForeignKey('users.User', related_name='shipment_address', on_delete=models.CASCADE)
     address_title = models.CharField(max_length=255, blank=True, null=True)
+    first_name = models.CharField(max_length=255, blank=True, null=True)
+    last_name = models.CharField(max_length=255, blank=True, null=True)
     location = PlainLocationField(based_fields=['city'], zoom=7, blank=True, null=True)
     country = models.CharField(max_length=100, default='ایران')
     state = models.CharField(max_length=100)
@@ -126,7 +128,7 @@ class ShipmentAddress(BaseModel):
         )
 
     def __str__(self):
-        return "آدرس {} {}".format(self.city, self.customer.name)
+        return "آدرس {} {} {}".format(self.city, self.first_name, self.last_name, )
 
 
 class ShopOrderManager(models.Manager):
