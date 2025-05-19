@@ -2,6 +2,8 @@ from django.conf.urls import url
 
 from products.shop.views import CommentCreateView, ShopProductCommentListView, RateUpsertApiView
 from shop.admin.export_views import ShopOrderListExportView, ShopOrderDetailExportView
+
+from shop.admin.views import AdminShopOrderListView
 from shop.search import GlobalAutoCompleteSearchAPIView
 from shop.views import CurrentUserCartApiView, CartDetailView, CurrentUserWishListApiView, WishListDetailView, \
     CurrentUserComparisonApiView, ComparisonDetailView, CurrentUserShipmentAddressApiView, ShipmentAddressDetailView, \
@@ -54,7 +56,8 @@ urlpatterns = [
     url(r'^customerOrders', CustomerOrdersView.as_view(), name='customerOrders'),
     url(r'^customerOrderDetail/(?P<order_id>[0-9]+)$', CustomerOrdersDetailView.as_view(), name='customerOrdersDetail'),
 
-    url(r'^factors/(?P<export_type>\S+)', ShopOrderListExportView.as_view(), name=''),
-    url(r'^factorDetail/(?P<export_type>\S+)', ShopOrderDetailExportView.as_view(), name=''),
+    url(r'^shopOrderList/all$', AdminShopOrderListView.as_view(), name='adminShopOrderListView'),
+    url(r'^ordersExport/(?P<export_type>\S+)', ShopOrderListExportView.as_view(), name=''),
+    url(r'^orderDetailExport/(?P<export_type>\S+)', ShopOrderDetailExportView.as_view(), name=''),
 
 ]
