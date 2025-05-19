@@ -71,19 +71,30 @@ class SendVerificationCodeView(APIView, RecaptchaView):
     throttle_scope = 'verification_code'
 
     def post(self, request):
-        data = request.data
-        phone = data.get('phone')
+        phone = request.data.get('phone')
 
-        # if not self.request.user:
-        #     self.verify_recaptcha()
-        verification_code = PhoneVerification.send_verification_code(phone=phone)
+        if not phone:
+            return Response({"error": "شماره تلفن وارد نشده است."}, status=status.HTTP_400_BAD_REQUEST)
 
-        if phone is not None:
-            phone_sample = verification_code['phone'][8:] + " **** " + verification_code['phone'][:4]
-            return Response(data={'phone_sample': phone_sample, 'code': verification_code['code']},
-                            status=status.HTTP_200_OK)
-        else:
-            return Response(status=status.HTTP_404_NOT_FOUND)
+        #if not request.user.is_authenticated:
+        #    self.verify_recaptcha()
+
+        result = PhoneVerification.send_verification_code(phone=phone)
+        phone = result.get('phone')
+        code = result.get('code')
+
+        if phone:
+            if len(phone) >= 11:
+                phone_sample = f"{phone[8:]} **** {phone[:4]}"
+            else:
+                phone_sample = "شماره نامعتبر"
+
+            return Response(
+                data={'phone_sample': phone_sample, 'code': code},
+                status=status.HTTP_200_OK
+            )
+
+        return Response(status=status.HTTP_404_NOT_FOUND)
 
 
 class CheckVerificationCodeView(APIView, RecaptchaView):

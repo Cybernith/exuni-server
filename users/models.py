@@ -2,6 +2,7 @@ import datetime
 import random
 import secrets
 
+from django.core.exceptions import ObjectDoesNotExist
 from django.core.validators import RegexValidator
 from datetime import timedelta
 from django.contrib.auth.models import AbstractUser, Permission, UserManager
@@ -258,7 +259,7 @@ class PhoneVerification(BaseModel):
 
         try:
             user = User.objects.get(mobile_number=phone)
-        except User.DoesNotExist:
+        except ObjectDoesNotExist:
             user = None
 
         PhoneVerification.objects.create(user=user, phone=phone, code=verify_code)
