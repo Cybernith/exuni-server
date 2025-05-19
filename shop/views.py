@@ -35,6 +35,7 @@ from shop.serializers import CartCRUDSerializer, CartRetrieveSerializer, WishLis
 from shop.throttles import SyncAllDataThrottle, AddToCardRateThrottle, AddToWishListRateThrottle, \
     AddToComparisonRateThrottle, ShopOrderRateThrottle, ToggleWishListBtnRateThrottle, ToggleComparisonBtnRateThrottle, \
     OrderRetrieveThrottle
+from subscription.models import DiscountCode
 from users.models import User
 
 
@@ -481,6 +482,21 @@ class ShopOrderRegistrationView(APIView):
         cart_items = Cart.objects.filter(customer=customer).select_related('product')
         if not cart_items.exists():
             return Response({'detail': 'your cart is empty'}, status=status.HTTP_400_BAD_REQUEST)
+        if not data['address']:
+            return Response({'detail': 'address required'}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            if ShipmentAddress.objects.filter(id=data['address'], customer=get_current_user()).exists():
+                address = ShipmentAddress.objects.get(id=data['address'])
+            else:
+                return Response({'detail': 'address invalid for this user'}, status=status.HTTP_400_BAD_REQUEST)
+
+        discount_code: DiscountCode = DiscountCode.objects.none()
+        if data['discount_code']:
+            try:
+                discount_code = DiscountCode.objects.get(code=data['discount_code'])
+            except DiscountCode.DoesNotExist:
+                raise ValidationError("کد تخفیف معتبر نمی باشد")
+            discount_code.verify()
 
         try:
             with transaction.atomic():
@@ -494,7 +510,8 @@ class ShopOrderRegistrationView(APIView):
                 shop_order = ShopOrder.objects.create(
                     customer=customer,
                     date_time=datetime.datetime.now(),
-                    shipment_address=data['address'],
+                    shipment_address=address,
+                    discount_code=discount_code,
                 )
 
                 for item in cart_items:

@@ -1,6 +1,7 @@
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from rest_framework import status
+from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -8,12 +9,15 @@ from rest_framework.views import APIView
 from financial_management.loggers.financial_logger import FinancialLogger
 from financial_management.models import Payment, AuditAction, AuditSeverity
 from financial_management.zarinpal import ZarinpalGateway
+from helpers.functions import get_current_user
 from server.gateway_configs import TRUSTED_GATEWAY_IP, GATEWAY_SECRET_PAYMENT_TOKEN
 from server.settings import SERVER_URL, SECRET_KEY
 from shop.models import ShopOrder
 from financial_management.throttles import PaymentRateThrottle
 import hmac
 import hashlib
+
+from subscription.models import DiscountCode
 
 
 class StartZarinpalPaymentApiView(APIView):
@@ -22,24 +26,16 @@ class StartZarinpalPaymentApiView(APIView):
 
     def post(self, request, order_id):
 
-        order = get_object_or_404(ShopOrder, id=order_id, customer=request.user)
+        order = get_object_or_404(ShopOrder, id=order_id, customer=get_current_user())
 
         if hasattr(order, 'bank_payment'):
             return Response({'detail': 'this order already have open payment'}, status=status.HTTP_400_BAD_REQUEST)
 
-        payment = Payment.objects.create(
-            shop_order=order,
-            user=request.user,
-            amount=order.total_price,
-            gateway='zarinpal',
-            status=Payment.INITIATED
-        )
-
-        payment.mark_as_pending(user=request.user)
+        payment = order.pay()
         callback_url = SERVER_URL + reverse('financial_management:zarinpal_callback')
 
         gateway = ZarinpalGateway(
-            amount=order.total_price,
+            amount=order.final_amount,
             description=f'پرداخت سفارش {order.id}',
             callback_url=callback_url
         )
@@ -114,18 +110,10 @@ class StartPaymentApiView(APIView):
 
         gateway_name = 'gateway'
 
-        payment = Payment.objects.create(
-            shop_order=order,
-            user=request.user,
-            amount=order.total_price,
-            gateway=gateway_name,
-            status=Payment.INITIATED
-        )
-
-        payment.mark_as_pending(user=request.user)
+        payment = order.pay()
         gateway_url = f'https://gateway.com/pay?payment_id={payment.id}'
 
-        return Response( {
+        return Response({
             'payment_id': payment.id,
             'gateway_url': gateway_url
         })
@@ -168,3 +156,21 @@ class PaymentCallbackApiView(APIView):
         else:
             payment.mark_as_failed_payment(user=payment.user)
             return Response({'detail': 'transaction verify failed'}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class VerifyDiscountCodeView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        discount_code = request.data.get('discount_code')
+        order_amount = request.data.get('order_amount')
+        try:
+            discount_code: DiscountCode = DiscountCode.objects.get(code=discount_code)
+        except DiscountCode.DoesNotExist:
+            raise ValidationError("کد تخفیف معتبر نمی باشد")
+        discount_code.verify()
+
+        return Response({
+            'discount_code_id': discount_code.id,
+            'discount_amount': discount_code.get_discount_amount(order_amount)
+        })

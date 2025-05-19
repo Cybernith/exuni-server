@@ -1,10 +1,13 @@
 import datetime
+from decimal import Decimal
 
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models import Q, Sum, F, DecimalField
+from django.db.models.functions import Round, Least, TruncMinute
 
+from financial_management.models import Payment
 from helpers.functions import datetime_to_str, add_separator
 from helpers.models import BaseModel, DECIMAL, EXPLANATION
 import random
@@ -125,6 +128,15 @@ class ShipmentAddress(BaseModel):
         return "آدرس {} {}".format(self.city, self.customer.name)
 
 
+class ShopOrderManager(models.Manager):
+    def get_queryset(self):
+        qs = super().get_queryset().annotate(
+            payable_amount=Round(F('total_price') - Least('discount_amount', 'total_price')),
+            time=TruncMinute('created_at__time'),
+        )
+        return qs
+
+
 class ShopOrder(BaseModel):
     PENDING = 'pe'
     PAID = 'pa'
@@ -155,6 +167,11 @@ class ShopOrder(BaseModel):
     post_date_time = models.DateTimeField(blank=True, null=True)
     post_tracking_code = models.CharField(max_length=50, blank=True, null=True)
     exuni_tracking_code = models.CharField(max_length=10, unique=True)
+
+    discount_code = models.ForeignKey('subscription.DiscountCode', on_delete=models.PROTECT, null=True, blank=True)
+    discount_amount = DECIMAL(default=0)
+
+    objects = ShopOrderManager()
 
     class Meta(BaseModel.Meta):
         verbose_name = 'ShopOrder'
@@ -240,6 +257,10 @@ class ShopOrder(BaseModel):
         self.total_product_quantity = items['product_quantity__sum']
         self.save()
 
+    @property
+    def final_amount(self):
+        return max(self.total_price - self.discount_amount, Decimal(0))
+
 
     @property
     def create_exuni_tracking_code(self):
@@ -255,6 +276,28 @@ class ShopOrder(BaseModel):
         if not self.id:
             self.exuni_tracking_code = self.create_exuni_tracking_code
         super().save(*args, **kwargs)
+
+    def pay(self):
+        assert not self.status == self.PAID
+
+        discount_code = self.discount_code
+        if discount_code:
+            discount_code.use()
+
+        self.set_constants()
+
+        payment = Payment.objects.create(
+            shop_order=self,
+            user=self.customer,
+            amount=self.final_amount,
+            gateway='zarinpal',
+            status=Payment.INITIATED
+        )
+
+        payment.mark_as_pending(user=self.customer)
+        self.save()
+
+        return payment
 
 
 class ShopOrderStatusHistory(BaseModel):
