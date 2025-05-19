@@ -5,6 +5,7 @@ from django.db.models import Q
 from rest_framework import serializers
 from rest_framework.authtoken.models import Token
 
+from financial_management.models import Wallet
 from financial_management.serializers import CurrentUserWalletSerializer
 from helpers.functions import get_current_user
 from helpers.serializers import SModelSerializer
@@ -89,7 +90,8 @@ class UserRetrieveSerializer(UserListSerializer):
     wallet = serializers.SerializerMethodField()
 
     def get_wallet(self, obj: User):
-        return CurrentUserWalletSerializer(obj.exuni_wallet).data
+        wallet = Wallet.objects.get_or_create(user=obj)
+        return CurrentUserWalletSerializer(wallet).data
 
     class Meta(UserListSerializer.Meta):
         pass
