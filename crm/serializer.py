@@ -79,12 +79,14 @@ class NotificationCreateSerializer(serializers.Serializer):
 
 class NotificationRetrieveSerializer(serializers.ModelSerializer):
     product = ShopProductsListSerializers(read_only=True)
+    sort_display = serializers.CharField(source='get_sort_display')
+    type_display = serializers.CharField(source='get_type_display')
 
     class Meta:
         model = Notification
         fields = ['id', 'send_datetime', 'notification_title',
                  'notification_explanation', 'notification_link',
-                 'notification_btn_title', 'product']
+                 'notification_btn_title', 'sort_display', 'type_display', 'product']
 
 
 class UserNotificationRetrieveSerializer(serializers.ModelSerializer):
