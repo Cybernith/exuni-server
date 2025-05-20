@@ -15,7 +15,7 @@ class Migration(migrations.Migration):
         if not ShippingMethod.objects.all().exists():
             ShippingMethod.objects.create(
                 name='ارسال پیش‌فرض',
-                price=55000,
+                base_price=55000,
                 is_active=True,
             )
 
