@@ -325,9 +325,9 @@ class UserCurrentNotificationsBySortAPIView(APIView):
 
         return Response(
             {
-                'activities': UserNotificationRetrieveSerializer(activities_objects, many=True),
-                'offer': UserNotificationRetrieveSerializer(offer_objects, many=True),
-                'order': UserNotificationRetrieveSerializer(order_objects, many=True),
+                'activities': UserNotificationRetrieveSerializer(activities_objects, many=True).data,
+                'offer': UserNotificationRetrieveSerializer(offer_objects, many=True).data,
+                'order': UserNotificationRetrieveSerializer(order_objects, many=True).data,
             }, status=status.HTTP_200_OK)
 
 
