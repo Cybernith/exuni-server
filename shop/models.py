@@ -208,61 +208,26 @@ class ShopOrder(BaseModel):
 
     @transition(field='status', source=PENDING, target=PAID)
     def mark_as_paid(self, user=None):
-        ShopOrderStatusHistory.objects.create(
-            shop_order=self,
-            previous_status=self.PENDING,
-            new_status=self.PAID,
-            changed_by=user,
-            note=f" order {self.id} mark as paid"
-        )
         self.status = self.PAID
         self.save()
 
     @transition(field='status', source=PAID, target=PROCESSING)
     def process_order(self, user=None):
-        ShopOrderStatusHistory.objects.create(
-            shop_order=self,
-            previous_status=self.PAID,
-            new_status=self.PROCESSING,
-            changed_by=user,
-            note=f" order {self.id} moved to processing"
-        )
         self.status = self.PROCESSING
         self.save()
 
     @transition(field='status', source=PROCESSING, target=SHIPPED)
     def ship_order(self, user=None):
-        ShopOrderStatusHistory.objects.create(
-            shop_order=self,
-            previous_status=self.PROCESSING,
-            new_status=self.SHIPPED,
-            changed_by=user,
-            note=f" order {self.id} shipped"
-        )
         self.status = self.SHIPPED
         self.save()
 
     @transition(field='status', source=SHIPPED, target=DELIVERED)
     def deliver_order(self, user=None):
-        ShopOrderStatusHistory.objects.create(
-            shop_order=self,
-            previous_status=self.SHIPPED,
-            new_status=self.DELIVERED,
-            changed_by=user,
-            note=f" order {self.id} delivered"
-        )
         self.status = self.DELIVERED
         self.save()
 
     @transition(field='status', source='*', target=CANCELLED)
     def cancel_order(self, user=None):
-        ShopOrderStatusHistory.objects.create(
-            shop_order=self,
-            previous_status=self.status,
-            new_status=self.CANCELLED,
-            changed_by=user,
-            note=f" order {self.id} canceled"
-        )
         self.status = self.CANCELLED
         self.save()
 
@@ -279,28 +244,18 @@ class ShopOrder(BaseModel):
         ).aggregate(Sum('price_sum'), Sum('product_quantity'))
         self.total_price = items['price_sum__sum']
         self.total_product_quantity = items['product_quantity__sum']
-        self.discount_amount = self.get_discount_amount
+        self.discount_amount = self.get_discount_amount()
         self.save()
 
     @property
     def final_amount(self):
-        return max(self.total_price - self.discount_amount, Decimal(0))
+        return max(self.total_price - self.get_discount_amount(), Decimal(0))
 
-
-    @property
     def create_exuni_tracking_code(self):
         exuni_tracking_code = random.randint(1000000000, 9999999999)
         while ShopOrder.objects.filter(exuni_tracking_code=exuni_tracking_code).exists():
             exuni_tracking_code = random.randint(1000000000, 9999999999)
         return str(exuni_tracking_code)
-
-    def __str__(self):
-        return "سفارش {} {}".format(self.exuni_tracking_code, self.customer.name)
-
-    def save(self, *args, **kwargs):
-        if not self.id:
-            self.exuni_tracking_code = self.create_exuni_tracking_code
-        super().save(*args, **kwargs)
 
     def pay_with_wallet(self):
         assert not self.status == self.PAID
@@ -354,6 +309,15 @@ class ShopOrder(BaseModel):
         self.save()
 
         return payment
+
+
+    def __str__(self):
+        return "سفارش {} {}".format(self.exuni_tracking_code, self.customer.name)
+
+    def save(self, *args, **kwargs):
+        if not self.exuni_tracking_code:
+            self.exuni_tracking_code = self.create_exuni_tracking_code()
+        super().save(*args, **kwargs)
 
 
 class ShopOrderStatusHistory(BaseModel):
