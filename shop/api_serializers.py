@@ -286,7 +286,7 @@ class ApiProductsWithCommentsListSerializers(serializers.ModelSerializer):
 
     def get_comments(self, obj):
         user = self.context['request'].user
-        if user.id:
+        if user:
             comments = obj.product_comments.filter(Q(confirmed=True) | Q(customer=self.context['request'].user))
         else:
             comments = obj.product_comments.filter(confirmed=True)
@@ -401,7 +401,7 @@ class ApiUserCommentProductsSimpleListSerializers(serializers.ModelSerializer):
 
     def get_comments(self, obj):
         user = self.context['request'].user
-        if user.id:
+        if user:
             comments = obj.product_comments.filter(Q(confirmed=True) | Q(customer=self.context['request'].user))
         else:
             comments = obj.product_comments.filter(confirmed=True)
@@ -530,7 +530,7 @@ class ApiProductDetailSerializers(serializers.ModelSerializer):
 
     def get_comments(self, obj):
         user = self.context['request'].user
-        if user.id:
+        if user:
             comments = obj.product_comments.filter(Q(confirmed=True) | Q(customer=self.context['request'].user))
         else:
             comments = obj.product_comments.filter(confirmed=True)
