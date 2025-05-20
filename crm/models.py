@@ -255,6 +255,11 @@ class Notification(models.Model):
         Sms.bulk_send(phones=phones, message=self.sms_text)
         self.crmUserNotifications.update(sms_status=UserNotification.SENT)
 
+    def save(self, *args, **kwargs):
+        if not self.id:
+            self.create_user_notifications()
+        super().save(*args, **kwargs)
+
 
 class UserNotification(models.Model):
     PENDING = 'p'
