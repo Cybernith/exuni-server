@@ -350,7 +350,6 @@ class ApiUserCommentProductsSimpleListSerializers(serializers.ModelSerializer):
     variations = ApiVariationListSerializers(read_only=True, many=True)
     brand = ApiBrandListSerializer(read_only=True)
     comments = serializers.SerializerMethodField()
-    products_rates = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
@@ -369,7 +368,6 @@ class ApiUserCommentProductsSimpleListSerializers(serializers.ModelSerializer):
             'variations',
             'brand',
             'comments',
-            'products_rates',
         ]
 
     def get_image(self, obj):
