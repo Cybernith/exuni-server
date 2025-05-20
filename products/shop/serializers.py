@@ -337,7 +337,7 @@ class ShopCommentSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         request = self.context.get('request')
-        validated_data['customer'] = get_current_user().id
+        validated_data['customer'] = get_current_user()
         return super().create(validated_data)
 
 
