@@ -434,9 +434,7 @@ class ApiProductPropertySerializer(serializers.ModelSerializer):
 
 
 class ApiProductDetailSerializers(serializers.ModelSerializer):
-    final_price = serializers.ReadOnlyField()
     rate = serializers.ReadOnlyField()
-    effective_price = serializers.ReadOnlyField()
     has_offer = serializers.ReadOnlyField()
     offer_amount = serializers.ReadOnlyField()
     calculate_current_inventory = serializers.ReadOnlyField()
@@ -446,14 +444,14 @@ class ApiProductDetailSerializers(serializers.ModelSerializer):
     image = serializers.SerializerMethodField()
     category = serializers.SerializerMethodField()
     brand = serializers.SerializerMethodField()
-    #similar_products = serializers.SerializerMethodField()
-    #similar_brand_products = serializers.SerializerMethodField()
-    offer_display = serializers.ReadOnlyField()
     in_wish_list_count = serializers.ReadOnlyField()
     comments = serializers.SerializerMethodField()
     user_rate = serializers.SerializerMethodField()
     comments_count = serializers.ReadOnlyField()
     variations = ApiVariationListSerializers(read_only=True, many=True)
+    price_title = serializers.SerializerMethodField()
+    regular_price_title = serializers.SerializerMethodField()
+    offer_percentage = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
@@ -461,8 +459,6 @@ class ApiProductDetailSerializers(serializers.ModelSerializer):
             'id',
             'product_id',
             'name',
-            'final_price',
-            'effective_price',
             'has_offer',
             'offer_amount',
             'calculate_current_inventory',
@@ -486,9 +482,21 @@ class ApiProductDetailSerializers(serializers.ModelSerializer):
             'comments',
             'comments_count',
             'variations',
+            'regular_price',
+            'price',
+            'price_title',
+            'regular_price_title',
+            'offer_percentage',
+
             #'similar_products',
             #'similar_brand_products',
         ]
+
+    def get_offer_percentage(self, obj):
+        if obj.regular_price and obj.price:
+            offer_percentage = round(((obj.regular_price - obj.price) / obj.regular_price) * 100)
+            return f'{offer_percentage}%'
+        return None
 
     def get_image(self, obj):
         return obj.picture.url if obj.picture else None
