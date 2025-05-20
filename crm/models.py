@@ -242,13 +242,17 @@ class Notification(models.Model):
         return "{} ({})".format(self.notification_title, self.id)
 
     def create_user_notifications(self):
-        for receiver in self.receivers.all():
-            UserNotification.objects.create(
-                user=receiver,
-                status=UserNotification.NOT_READ,
-            )
-        self.is_sent = True
-        self.save()
+        notifications = [
+            UserNotification(user=receiver, status=UserNotification.NOT_READ)
+            for receiver in self.receivers.all()
+        ]
+        UserNotification.objects.bulk_create(notifications)
+
+        def mark_as_sent():
+            self.is_sent = True
+            self.save(update_fields=["is_sent"])
+
+        transaction.on_commit(mark_as_sent)
 
     def send_bulk_sms(self):
         phones = [user.mobile_number for user in self.receivers.all()]
