@@ -1,5 +1,5 @@
 from decimal import Decimal
-
+from django.shortcuts import redirect
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django.utils import timezone
@@ -100,8 +100,7 @@ class ZarinpalCallbackApiView(APIView):
             if order.discount_code:
                 order.discount_code.use()
             order.mark_as_paid()
-            return Response({'detail': 'payment verify was successfully', 'ref_id': result['data']['ref_id']},
-                            status=status.HTTP_200_OK)
+            return redirect(f'{SERVER_URL}/payment/success?orderId={order.id}')
         else:
             payment.mark_as_failed_payment(user=payment.user)
             FinancialLogger.log(
@@ -114,7 +113,7 @@ class ZarinpalCallbackApiView(APIView):
                 extra_info={"amount": str(payment.amount)}
             )
 
-            return Response({'detail': 'payment verify failed'}, status=status.HTTP_400_BAD_REQUEST)
+            return redirect(f'{SERVER_URL}/payment/fail?orderId={order.id}')
 
 
 class StartPaymentApiView(APIView):
