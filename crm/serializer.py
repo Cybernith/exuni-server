@@ -82,7 +82,7 @@ class NotificationRetrieveSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Notification
-        field = ['id', 'send_datetime', 'notification_title',
+        fields = ['id', 'send_datetime', 'notification_title',
                  'notification_explanation', 'notification_link',
                  'notification_btn_title', 'product']
 
@@ -92,4 +92,4 @@ class UserNotificationRetrieveSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = UserNotification
-        field = ['id', 'notification', 'notification_status', 'sms_status']
+        fields = ['id', 'notification', 'notification_status', 'sms_status']
