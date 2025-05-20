@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'location_field.apps.DefaultConfig',
 
     'debug_toolbar',
+    'nested_admin',
 
     'rest_framework',
     'corsheaders',

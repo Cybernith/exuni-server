@@ -1,4 +1,5 @@
 from django.contrib import admin
+import nested_admin
 
 from financial_management.models import Wallet, Transaction, WalletLedger, AuditAction, FinancialAuditLog, Payment, \
     AffiliateOrderPayment, DiscountConditionCategory, DiscountConditionBrand, DiscountConditionProduct, \
@@ -13,34 +14,36 @@ admin.site.register(Payment)
 admin.site.register(AffiliateOrderPayment)
 
 
-class DiscountConditionCategoryInline(admin.StackedInline):
+class DiscountConditionCategoryInline(nested_admin.NestedStackedInline):
     model = DiscountConditionCategory
     extra = 0
 
-class DiscountConditionBrandInline(admin.StackedInline):
+class DiscountConditionBrandInline(nested_admin.NestedStackedInline):
     model = DiscountConditionBrand
     extra = 0
 
-class DiscountConditionProductInline(admin.StackedInline):
+class DiscountConditionProductInline(nested_admin.NestedStackedInline):
     model = DiscountConditionProduct
     extra = 0
 
-class DiscountConditionUserInline(admin.StackedInline):
+class DiscountConditionUserInline(nested_admin.NestedStackedInline):
     model = DiscountConditionUser
     extra = 0
 
-class DiscountConditionPriceOverInline(admin.StackedInline):
+class DiscountConditionPriceOverInline(nested_admin.NestedStackedInline):
     model = DiscountConditionPriceOver
     extra = 0
 
-class DiscountConditionPriceLimitInline(admin.StackedInline):
+class DiscountConditionPriceLimitInline(nested_admin.NestedStackedInline):
     model = DiscountConditionPriceLimit
     extra = 0
 
 
-@admin.register(DiscountCondition)
-class DiscountConditionAdmin(admin.ModelAdmin):
-    list_display = ('discount', 'type')
+class DiscountConditionInline(nested_admin.NestedStackedInline):
+    model = DiscountCondition
+    extra = 0
+
+    # اضافه کردن همه زیرشرط‌ها به عنوان inline تو در تو
     inlines = [
         DiscountConditionCategoryInline,
         DiscountConditionBrandInline,
@@ -50,25 +53,17 @@ class DiscountConditionAdmin(admin.ModelAdmin):
         DiscountConditionPriceLimitInline,
     ]
 
+    # این بخش اختیاری: فقط Inline مرتبط با نوع شرط نمایش داده شود
+    # اما برای سادگی می‌توان همه را نشان داد یا در فرم شرطی‌سازی کرد.
 
-class DiscountActionInline(admin.StackedInline):
+class DiscountActionInline(nested_admin.NestedStackedInline):
     model = DiscountAction
     extra = 0
-
-
-class DiscountConditionInline(admin.TabularInline):
-    model = DiscountCondition
-    extra = 0
+    max_num = 1
 
 
 @admin.register(Discount)
-class DiscountAdmin(admin.ModelAdmin):
+class DiscountAdmin(nested_admin.NestedModelAdmin):
     list_display = ('name', 'is_active', 'start_date', 'end_date')
     search_fields = ('name',)
     inlines = [DiscountConditionInline, DiscountActionInline]
-
-
-@admin.register(DiscountUsage)
-class DiscountUsageAdmin(admin.ModelAdmin):
-    list_display = ('discount', 'user', 'used_at')
-    search_fields = ('user__mobile_number',)
