@@ -302,7 +302,7 @@ class UserCurrentNotificationsBySortAPIView(APIView):
         return UserNotification.objects.filter(
             Q(user=get_current_user()) &
             (Q(notification__send_datetime__lte=datetime.datetime.now()) | Q(notification__send_datetime__isnull=True))
-        ).select_related('notification').order_by('-notification__send_datetime')[:50]
+        ).select_related('notification').order_by('-notification__send_datetime')
 
     def get_activities_objects(self):
         return self.get_objects().filter(notification__sort=Notification.ACTIVITIES)
