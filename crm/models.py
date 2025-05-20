@@ -243,7 +243,7 @@ class Notification(models.Model):
 
     def create_user_notifications(self):
         notifications = [
-            UserNotification(user=receiver, status=UserNotification.NOT_READ)
+            UserNotification(user=receiver, notification_status=UserNotification.NOT_READ)
             for receiver in self.receivers.all()
         ]
         UserNotification.objects.bulk_create(notifications)
