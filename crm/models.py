@@ -243,7 +243,7 @@ class Notification(models.Model):
 
     def create_user_notifications(self):
         for receiver in self.receivers.all():
-            self.userNotifications.create(
+            UserNotification.objects.create(
                 user=receiver,
                 status=UserNotification.NOT_READ,
             )
