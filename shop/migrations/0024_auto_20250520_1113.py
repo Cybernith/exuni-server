@@ -20,7 +20,6 @@ class Migration(migrations.Migration):
             )
 
     operations = [
-        migrations.RunPython(create_default_method),
 
         migrations.CreateModel(
             name='ShippingMethod',
@@ -37,4 +36,7 @@ class Migration(migrations.Migration):
             name='shipping_method',
             field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, to='shop.shippingmethod'),
         ),
+
+        migrations.RunPython(create_default_method),
+
     ]
