@@ -18,7 +18,7 @@ from financial_management.zarinpal import ZarinpalGateway
 from helpers.functions import get_current_user
 from products.models import Product
 from server.gateway_configs import TRUSTED_GATEWAY_IP, GATEWAY_SECRET_PAYMENT_TOKEN
-from server.settings import SERVER_URL, SECRET_KEY
+from server.settings import SERVER_URL, SECRET_KEY, FRONT_URL
 from shop.models import ShopOrder
 from financial_management.throttles import PaymentRateThrottle
 import hmac
@@ -100,7 +100,7 @@ class ZarinpalCallbackApiView(APIView):
             if order.discount_code:
                 order.discount_code.use()
             order.mark_as_paid()
-            return redirect(f'{SERVER_URL}/payment/success?orderId={order.id}')
+            return redirect(f'{FRONT_URL}/payment/success?orderId={order.id}')
         else:
             payment.mark_as_failed_payment(user=payment.user)
             FinancialLogger.log(
@@ -113,7 +113,7 @@ class ZarinpalCallbackApiView(APIView):
                 extra_info={"amount": str(payment.amount)}
             )
 
-            return redirect(f'{SERVER_URL}/payment/fail?orderId={order.id}')
+            return redirect(f'{FRONT_URL}/payment/fail?orderId={order.id}')
 
 
 class StartPaymentApiView(APIView):
