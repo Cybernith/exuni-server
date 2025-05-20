@@ -99,7 +99,7 @@ class ZarinpalCallbackApiView(APIView):
             )
             if order.discount_code:
                 order.discount_code.use()
-            order.mark_as_paid(user=payment.user)
+            order.mark_as_paid()
             return Response({'detail': 'payment verify was successfully', 'ref_id': result['data']['ref_id']},
                             status=status.HTTP_200_OK)
         else:
@@ -167,7 +167,7 @@ class PaymentCallbackApiView(APIView):
 
         if success:
             payment.mark_as_success_payment(user=payment.user)
-            payment.shop_order.mark_as_paid(user=payment.user)
+            payment.shop_order.mark_as_paid()
 
             return Response({'detail': 'payment verify was successfully'}, status=status.HTTP_201_CREATED)
 
