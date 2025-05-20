@@ -3,12 +3,13 @@ from decimal import Decimal
 
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator, RegexValidator
-from django.db import models
+from django.db import models, transaction, IntegrityError
 from django.db.models import Q, Sum, F, DecimalField
 from django.db.models.functions import Round, Least, TruncMinute
 from django.utils import timezone
 
-from financial_management.models import Payment
+from financial_management.models import Payment, Discount, DiscountAction, DiscountUsage
+from financial_management.serivces.discount_evaluator import evaluate_discount
 from helpers.functions import datetime_to_str, add_separator
 from helpers.models import BaseModel, DECIMAL, EXPLANATION
 import random
@@ -203,6 +204,8 @@ class ShopOrder(BaseModel):
     discount_code = models.ForeignKey('subscription.DiscountCode', on_delete=models.PROTECT, null=True, blank=True)
     discount_amount = DECIMAL(default=0)
 
+    total_discount = DECIMAL(default=0)
+
     objects = ShopOrderManager()
 
     class Meta(BaseModel.Meta):
@@ -246,7 +249,49 @@ class ShopOrder(BaseModel):
         self.status = self.CANCELLED
         self.save()
 
-    def get_discount_amount(self):
+    def apply_discounts_to_order(self):
+        total_price = self.total_price
+        total_discount = Decimal("0.00")
+        free_shipping_applied = False
+
+        cart_items = []
+        for item in self.items.all():
+            cart_items.append({
+                "product": item.product,
+                "quantity": item.product_quantity,
+            })
+
+        with transaction.atomic():
+            self.order_discounts.all().delete()
+
+            for discount in Discount.objects.filter(is_active=True):
+                result = evaluate_discount(discount, cart_items, self.customer, total_price)
+                if result:
+                    discount_value = result['value'] or Decimal("0.00")
+                    OrderDiscount.objects.create(
+                        order=self,
+                        discount=discount,
+                        discount_value=discount_value,
+                    )
+                    DiscountUsage.objects.create(
+                        discount=discount,
+                        user=self.customer,
+                    )
+                    total_discount += discount_value
+
+                    if result['type'] == DiscountAction.FREE_SHIPPING:
+                        free_shipping_applied = True
+
+            self.total_discount = total_discount
+
+            if free_shipping_applied:
+                self.post_price = Decimal("0.00")
+            else:
+                pass
+
+            self.save()
+
+    def get_discount_code_amount(self):
         if self.discount_code:
             discount_amount = self.total_price * self.discount_code.discount_percentage / 100
             discount_amount = min(discount_amount, self.discount_code.max_discount_amount)
@@ -260,14 +305,17 @@ class ShopOrder(BaseModel):
         ).aggregate(Sum('price_sum'), Sum('product_quantity'))
         self.total_price = items['price_sum__sum']
         self.total_product_quantity = items['product_quantity__sum']
-        self.discount_amount = self.get_discount_amount()
+        self.discount_amount = self.get_discount_code_amount()
         self.shipping_method = default_shipping_method
         self.post_price = default_shipping_method.calculate(self)
         self.save()
+        self.apply_discounts_to_order()
 
     @property
     def final_amount(self):
-        return max(self.total_price - self.get_discount_amount() + self.post_price, Decimal(0))
+        return max(
+            (self.total_price - self.total_discount) - self.get_discount_code_amount() + self.post_price, Decimal(0)
+        )
 
     def create_exuni_tracking_code(self):
         exuni_tracking_code = random.randint(1000000000, 9999999999)
@@ -351,6 +399,13 @@ class ShopOrderStatusHistory(BaseModel):
 
     def __str__(self):
         return f"{self.shop_order} from {self.get_previous_status_display()} to {self.get_new_status_display()}"
+
+
+class OrderDiscount(models.Model):
+    order = models.ForeignKey(ShopOrder, related_name='order_discounts', on_delete=models.CASCADE)
+    discount = models.ForeignKey('financial_management.Discount', on_delete=models.CASCADE)
+    discount_value = models.DecimalField(max_digits=12, decimal_places=2)
+    applied_at = models.DateTimeField(auto_now_add=True)
 
 
 class ShopOrderItem(BaseModel):

@@ -347,6 +347,3 @@ class DiscountUsage(models.Model):
     discount = models.ForeignKey(Discount, on_delete=models.CASCADE)
     user = models.ForeignKey('users.User', on_delete=models.CASCADE)
     used_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        unique_together = ('discount', 'user')
