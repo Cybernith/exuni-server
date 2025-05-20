@@ -245,3 +245,30 @@ class FinancialAuditLog(models.Model):
     user_agent = models.CharField(max_length=256, blank=True, null=True)
     extra_info = models.JSONField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
+
+
+
+
+class DiscountRule(models.Model):
+    PERCENTAGE = 'percentage'
+    FIXED_AMOUNT = 'fixed'
+    FREE_SHIPPING = 'free_shipping'
+    DISCOUNT_TYPE_CHOICES = [
+        (PERCENTAGE, 'درصدی'),
+        (FIXED_AMOUNT, 'مبلغ ثابت'),
+        (FREE_SHIPPING, 'ارسال رایگان'),
+    ]
+
+    name = models.CharField(max_length=255)
+    is_active = models.BooleanField(default=True)
+
+    # Conditions stored as JSON or expression tree (e.g. Q-like DSL)
+    conditions = models.JSONField()
+
+    action_type = models.CharField(choices=DISCOUNT_TYPE_CHOICES, max_length=15)
+    action_value = models.FloatField(null=True, blank=True)
+
+    start_at = models.DateTimeField(null=True, blank=True)
+    end_at = models.DateTimeField(null=True, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
