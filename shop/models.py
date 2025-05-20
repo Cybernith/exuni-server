@@ -145,6 +145,17 @@ class ShipmentAddress(BaseModel):
         return f"{self.first_name or ''} {self.last_name or ''}".strip()
 
 
+class ShippingMethod(models.Model):
+    name = models.CharField(max_length=100)
+    base_price = models.PositiveIntegerField(default=55000)
+
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def calculate(self, order):
+        return self.base_price
+
+
 class ShopOrderManager(models.Manager):
     def get_queryset(self):
         qs = super().get_queryset().annotate(
@@ -180,6 +191,7 @@ class ShopOrder(BaseModel):
     date_time = models.DateTimeField(blank=True, null=True)
     is_sent = models.BooleanField(default=False)
     shipment_address = models.ForeignKey(ShipmentAddress, related_name='shop_orders', on_delete=models.PROTECT)
+    shipping_method = models.ForeignKey(ShippingMethod, on_delete=models.SET_NULL, null=True)
     post_price = DECIMAL(blank=True, null=True)
     post_date_time = models.DateTimeField(blank=True, null=True)
     post_tracking_code = models.CharField(max_length=50, blank=True, null=True)
@@ -207,7 +219,7 @@ class ShopOrder(BaseModel):
     # FSM status change functions
 
     @transition(field='status', source=PENDING, target=PAID)
-    def mark_as_paid(self, user=None):
+    def mark_as_paid(self):
         self.status = self.PAID
         self.save()
 
@@ -217,17 +229,17 @@ class ShopOrder(BaseModel):
         self.save()
 
     @transition(field='status', source=PROCESSING, target=SHIPPED)
-    def ship_order(self, user=None):
+    def ship_order(self):
         self.status = self.SHIPPED
         self.save()
 
     @transition(field='status', source=SHIPPED, target=DELIVERED)
-    def deliver_order(self, user=None):
+    def deliver_order(self):
         self.status = self.DELIVERED
         self.save()
 
     @transition(field='status', source='*', target=CANCELLED)
-    def cancel_order(self, user=None):
+    def cancel_order(self):
         self.status = self.CANCELLED
         self.save()
 
@@ -239,17 +251,20 @@ class ShopOrder(BaseModel):
         return 0
 
     def set_constants(self):
+        default_shipping_method = ShippingMethod.objects.earliest()
         items = self.items.all().annotate(
             price_sum=Sum(F('product_quantity') * F('price'), output_field=DecimalField()),
         ).aggregate(Sum('price_sum'), Sum('product_quantity'))
         self.total_price = items['price_sum__sum']
         self.total_product_quantity = items['product_quantity__sum']
         self.discount_amount = self.get_discount_amount()
+        self.shipping_method = default_shipping_method
+        self.post_price = default_shipping_method.calculate(self)
         self.save()
 
     @property
     def final_amount(self):
-        return max(self.total_price - self.get_discount_amount(), Decimal(0))
+        return max(self.total_price - self.get_discount_amount() + self.post_price, Decimal(0))
 
     def create_exuni_tracking_code(self):
         exuni_tracking_code = random.randint(1000000000, 9999999999)
