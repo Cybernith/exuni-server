@@ -214,8 +214,8 @@ class Notification(models.Model):
         (OFFERS, 'تخفیف ها')
     )
 
-    type = models.CharField(max_length=2, choices=TYPES, default=ACTIVITIES)
-    sort = models.CharField(max_length=2, choices=SORTS, default=SEND_BY_SYSTEM)
+    type = models.CharField(max_length=2, choices=TYPES, default=SEND_BY_SYSTEM)
+    sort = models.CharField(max_length=2, choices=SORTS, default=ACTIVITIES)
 
     product = models.ForeignKey('products.Product', related_name='notifications',
                                 on_delete=models.CASCADE, blank=True, null=True)
@@ -243,7 +243,7 @@ class Notification(models.Model):
 
     def create_user_notifications(self):
         notifications = [
-            UserNotification(user=receiver, notification_status=UserNotification.NOT_READ)
+            UserNotification(notification=self, user=receiver, notification_status=UserNotification.NOT_READ)
             for receiver in self.receivers.all()
         ]
         UserNotification.objects.bulk_create(notifications)
@@ -264,6 +264,7 @@ class Notification(models.Model):
         super().save(*args, **kwargs)
         if is_new:
             transaction.on_commit(lambda: self.create_user_notifications())
+
 
 class UserNotification(models.Model):
     PENDING = 'p'
