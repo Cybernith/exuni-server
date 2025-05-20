@@ -293,7 +293,7 @@ class ShopOrder(BaseModel):
 
     def get_discount_code_amount(self):
         if self.discount_code:
-            discount_amount = self.total_price * self.discount_code.discount_percentage / 100
+            discount_amount = (self.total_price + self.total_discount) * self.discount_code.discount_percentage / 100
             discount_amount = min(discount_amount, self.discount_code.max_discount_amount)
             return discount_amount
         return 0
@@ -305,11 +305,12 @@ class ShopOrder(BaseModel):
         ).aggregate(Sum('price_sum'), Sum('product_quantity'))
         self.total_price = items['price_sum__sum']
         self.total_product_quantity = items['product_quantity__sum']
-        self.discount_amount = self.get_discount_code_amount()
         self.shipping_method = default_shipping_method
         self.post_price = default_shipping_method.calculate(self)
-        self.save()
         self.apply_discounts_to_order()
+
+        self.discount_amount = self.get_discount_code_amount()
+        self.save()
 
     @property
     def final_amount(self):
