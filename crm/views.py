@@ -301,29 +301,19 @@ class UserCurrentNotificationsBySortAPIView(APIView):
     def get_objects(self):
         return UserNotification.objects.filter(
             Q(user=get_current_user()) &
-            Q(notification__send_datetime__lte=datetime.datetime.now())
-        ).select_related('notificcation')
+            (Q(notification__send_datetime__lte=datetime.datetime.now()) | Q(notification__send_datetime__isnull=True))
+        ).select_related('notification').order_by('-notification__send_datetime')[:50]
 
     def get_activities_objects(self):
-        return self.get_objects().filter(
-            Q(notification__sort=Notification.ACTIVITIES) &
-            Q(user=get_current_user()) &
-            Q(notification__send_datetime__lte=datetime.datetime.now())
-        )
+        return self.get_objects().filter(notification__sort=Notification.ACTIVITIES)
+
 
     def get_offer_objects(self):
-        return self.get_objects().filter(
-            Q(notification__sort=Notification.OFFERS) &
-            Q(user=get_current_user()) &
-            Q(notification__send_datetime__lte=datetime.datetime.now())
-        )
+        return self.get_objects().filter(notification__sort=Notification.OFFERS)
+
 
     def get_order_objects(self):
-        return self.get_objects().filter(
-            Q(notification__sort=Notification.ORDERS) &
-            Q(user=get_current_user()) &
-            Q(notification__send_datetime__lte=datetime.datetime.now())
-        )
+        return self.get_objects().filter(notification__sort=Notification.ORDERS)
 
     def get(self, request):
         activities_objects = self.get_activities_objects()
@@ -336,8 +326,8 @@ class UserCurrentNotificationsBySortAPIView(APIView):
         return Response(
             {
                 'activities': UserNotificationRetrieveSerializer(activities_objects, many=True),
-                'offer': UserNotificationRetrieveSerializer(activities_objects, many=True),
-                'order': UserNotificationRetrieveSerializer(activities_objects, many=True),
+                'offer': UserNotificationRetrieveSerializer(offer_objects, many=True),
+                'order': UserNotificationRetrieveSerializer(order_objects, many=True),
             }, status=status.HTTP_200_OK)
 
 
