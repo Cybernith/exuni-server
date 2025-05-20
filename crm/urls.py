@@ -14,7 +14,7 @@ urlpatterns = [
         name='shopProductViewsLogReport'),
     url(r'^shopProductViewsInRangeLogReport/(?P<product_id>[0-9]+)$', ProductInRangeVisitReportView.as_view(),
         name='shopProductViewsLogReport'),
-    url(r'^userTopVisitedProducts/(?P<user_id>[0-9]+)$', UserTopVisitedProductsAPIView.as_view(),
+    url(r'^userTopVisitedProducts$', UserTopVisitedProductsAPIView.as_view(),
         name='userTopVisitedProducts'),
     url(r'^registerFinalSearchLog$', RegisterFinalSearchLogAPIView.as_view(),
         name='registerFinalSearchLog'),

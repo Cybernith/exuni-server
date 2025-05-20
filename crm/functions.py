@@ -10,7 +10,7 @@ from functools import wraps
 from collections import OrderedDict
 
 from helpers.functions import get_current_user
-from products.models import Product
+from products.models import Product, Category, Brand, Avail, ProductProperty
 
 
 def save_search_log(request, query_value, search_type=SearchLog.RAW_TEXT):
@@ -21,20 +21,38 @@ def save_search_log(request, query_value, search_type=SearchLog.RAW_TEXT):
             request.session.save()
         user_key = f"anon:{request.session.session_key}"
 
-    cache_key = f"search_log:{user_key}:{query_value}"
+    cache_key = f"search_log:{user_key}:{query_value}:{search_type}"
     if cache.get(cache_key):
         return
 
+    # Ensure session exists
     if not request.session.session_key:
         request.session.save()
-    SearchLog.objects.create(
-        user_agent=request.META.get("HTTP_USER_AGENT", ""),
-        user=request.user,
-        query_value=query_value,
-        ip_address=request.META.get("REMOTE_ADDR", ""),
-        session_key=request.session.session_key,
-        search_type=search_type
-    )
+
+    log_kwargs = {
+        "user_agent": request.META.get("HTTP_USER_AGENT", ""),
+        "user": request.user if request.user.is_authenticated else None,
+        "query_value": query_value,
+        "ip_address": request.META.get("REMOTE_ADDR", ""),
+        "session_key": request.session.session_key,
+        "search_type": search_type,
+    }
+
+    try:
+        if search_type == SearchLog.PRODUCT:
+            log_kwargs["product"] = Product.objects.filter(id=query_value).first()
+        elif search_type == SearchLog.CATEGORY:
+            log_kwargs["category"] = Category.objects.filter(id=query_value).first()
+        elif search_type == SearchLog.BRAND:
+            log_kwargs["brand"] = Brand.objects.filter(id=query_value).first()
+        elif search_type == SearchLog.AVAIL:
+            log_kwargs["avail"] = Avail.objects.filter(id=query_value).first()
+        elif search_type == SearchLog.PROPERTY:
+            log_kwargs["property"] = ProductProperty.objects.filter(id=query_value).first()
+    except Exception as exception:
+        pass
+
+    SearchLog.objects.create(**log_kwargs)
     cache.set(cache_key, True, timeout=5 * 60)
 
 

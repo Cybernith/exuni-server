@@ -164,7 +164,7 @@ class ProductInRangeVisitReportView(APIView):
 
 class UserTopVisitedProductsAPIView(ListAPIView):
     permission_classes = [IsAdminUser]
-    serializer_class = ProductForLogSerializer
+    serializer_class = ApiProductsListSerializers
 
     def get_queryset(self):
         try:
@@ -174,11 +174,10 @@ class UserTopVisitedProductsAPIView(ListAPIView):
         except ValueError:
             raise ValidationError({"limit": "Must be a positive integer."})
 
-        user_id = self.kwargs['user_id']
         queryset = Product.objects.annotate(
             user_visits=Count(
                 'views_log',
-                filter=Q(views_log__user_id=user_id)
+                filter=Q(views_log__user=get_current_user())
             )
         ).filter(
             user_visits__gt=0
@@ -194,7 +193,7 @@ class RegisterFinalSearchLogAPIView(APIView):
 
     def post(self, request):
         search_value = request.data.get('search_value', '').strip()
-        search_type = request.data.get('search_value', SearchLog.RAW_TEXT).strip()
+        search_type = request.data.get('search_type', SearchLog.RAW_TEXT).strip()
         if not search_value:
             return Response(status=status.HTTP_204_NO_CONTENT)
         save_search_log(request, query_value=search_value, search_type=search_type)

@@ -35,4 +35,4 @@ rclone.exe
 accounts/~$coding.xlsx
 
 .dbf
-*.dbf
+*.dbf!/crm/urls.py
