@@ -92,7 +92,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'corsheaders.middleware.CorsMiddleware',
 
     'helpers.middlewares.modify_request_middleware.ModifyRequestMiddleware',
@@ -216,6 +216,7 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')  # مقصد collectstatic
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'static'),  # سورس فایل‌های استاتیکت در زمان توسعه
 ]
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = '/media/'
 
