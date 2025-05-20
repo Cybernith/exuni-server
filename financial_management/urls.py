@@ -1,7 +1,8 @@
 from django.conf.urls import url
 
 from financial_management.views import StartZarinpalPaymentApiView, ZarinpalCallbackApiView, StartPaymentApiView, \
-    PaymentCallbackApiView, VerifyDiscountCodeView, StartZarinpalWalletTopUPApiView, ZarinpalTopUpWalletCallbackApiView
+    PaymentCallbackApiView, VerifyDiscountCodeView, StartZarinpalWalletTopUPApiView, ZarinpalTopUpWalletCallbackApiView, \
+    DiscountCheckAPIView
 
 app_name = 'financial_management'
 urlpatterns = [
@@ -16,5 +17,5 @@ urlpatterns = [
     url(r'^paymentCallback$', PaymentCallbackApiView.as_view(), name='paymentCallback'),
 
     url(r'verifyDiscountCode$', VerifyDiscountCodeView.as_view(), name=''),
-
+    url(r'discountCheck$', DiscountCheckAPIView.as_view(), name='discountCheck'),
 ]

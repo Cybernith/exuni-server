@@ -4,6 +4,7 @@ from decimal import Decimal
 from django.core.exceptions import ValidationError
 from django.db import models, transaction as db_transaction
 from django.db.models import UniqueConstraint, Q
+from django.utils import timezone
 from django_fsm import FSMField, transition
 
 from helpers.models import DECIMAL
@@ -247,28 +248,105 @@ class FinancialAuditLog(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
 
-
-
-class DiscountRule(models.Model):
-    PERCENTAGE = 'percentage'
-    FIXED_AMOUNT = 'fixed'
-    FREE_SHIPPING = 'free_shipping'
-    DISCOUNT_TYPE_CHOICES = [
-        (PERCENTAGE, 'درصدی'),
-        (FIXED_AMOUNT, 'مبلغ ثابت'),
-        (FREE_SHIPPING, 'ارسال رایگان'),
-    ]
-
+class Discount(models.Model):
     name = models.CharField(max_length=255)
+    description = models.TextField(blank=True)
     is_active = models.BooleanField(default=True)
-
-    # Conditions stored as JSON or expression tree (e.g. Q-like DSL)
-    conditions = models.JSONField()
-
-    action_type = models.CharField(choices=DISCOUNT_TYPE_CHOICES, max_length=15)
-    action_value = models.FloatField(null=True, blank=True)
-
-    start_at = models.DateTimeField(null=True, blank=True)
-    end_at = models.DateTimeField(null=True, blank=True)
+    start_date = models.DateTimeField(null=True, blank=True)
+    end_date = models.DateTimeField(null=True, blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.name
+
+    def is_valid(self):
+        now = timezone.now()
+        return (
+                self.is_active and
+                (self.start_date is None or self.start_date <= now) and
+                (self.end_date is None or now <= self.end_date)
+        )
+
+
+class DiscountCondition(models.Model):
+    CATEGORY = 'category'
+    BRAND = 'brand'
+    PRODUCT = 'product'
+    PRICE_OVER = 'price_over'
+    PRICE_LIMIT = 'price_limit'
+    USER = 'user'
+
+    CONDITION_TYPES = (
+        (CATEGORY, 'دسته بندی'),
+        (BRAND, 'برند'),
+        (PRODUCT, 'کالا'),
+        (PRICE_OVER, 'از قیمت'),
+        (PRICE_LIMIT, 'تا قیمت'),
+        (USER, 'کاربر'),
+    )
+
+    discount = models.ForeignKey(Discount, on_delete=models.CASCADE, related_name='conditions')
+    type = models.CharField(max_length=20, choices=CONDITION_TYPES)
+
+    def __str__(self):
+        return f"{self.discount.name} - {self.get_type_display()}"
+
+
+class DiscountConditionCategory(models.Model):
+    condition = models.OneToOneField(DiscountCondition, on_delete=models.CASCADE, related_name='category_condition')
+    categories = models.ManyToManyField('products.Category')
+
+
+class DiscountConditionProduct(models.Model):
+    condition = models.OneToOneField(DiscountCondition, on_delete=models.CASCADE, related_name='product_condition')
+    products = models.ManyToManyField('products.Product')
+
+
+class DiscountConditionUser(models.Model):
+    condition = models.OneToOneField(DiscountCondition, on_delete=models.CASCADE, related_name='user_condition')
+    users = models.ManyToManyField('users.User')
+
+
+class DiscountConditionBrand(models.Model):
+    condition = models.OneToOneField(DiscountCondition, on_delete=models.CASCADE, related_name='brand_condition')
+    brands = models.ManyToManyField('products.Brand')
+
+
+class DiscountConditionPriceOver(models.Model):
+    condition = models.OneToOneField(DiscountCondition, on_delete=models.CASCADE, related_name='price_over_condition')
+    price_over = models.DecimalField(max_digits=12, decimal_places=2)
+
+
+class DiscountConditionPriceLimit(models.Model):
+    condition = models.OneToOneField(DiscountCondition, on_delete=models.CASCADE, related_name='price_limit_condition')
+    price_limit = models.DecimalField(max_digits=12, decimal_places=2)
+
+
+class DiscountAction(models.Model):
+    PERCENTAGE = 'percentage'
+    FIXED = 'fixed_amount'
+    FREE_SHIPPING = 'free_shipping'
+
+    ACTION_TYPES = (
+        (PERCENTAGE, 'درصد'),
+        (FIXED, 'مبلغ'),
+        (FREE_SHIPPING, 'ارسال رایگان'),
+    )
+
+    discount = models.OneToOneField(Discount, on_delete=models.CASCADE, related_name='action')
+    type = models.CharField(max_length=20, choices=ACTION_TYPES)
+    value = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.discount.name} - {self.value}{self.get_type_display()}"
+
+
+class DiscountUsage(models.Model):
+    discount = models.ForeignKey(Discount, on_delete=models.CASCADE)
+    user = models.ForeignKey('users.User', on_delete=models.CASCADE)
+    used_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('discount', 'user')

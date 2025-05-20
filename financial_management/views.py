@@ -1,3 +1,4 @@
+from decimal import Decimal
 
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
@@ -9,18 +10,24 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from financial_management.loggers.financial_logger import FinancialLogger
-from financial_management.models import Payment, AuditAction, AuditSeverity
+from financial_management.models import Payment, AuditAction, AuditSeverity, Discount, DiscountAction
+from financial_management.serializers import DiscountResultSerializer
+from financial_management.serivces.discount_evaluator import evaluate_discount
 from financial_management.serivces.wallet_top_up_service import WalletTopUpRequestService, WalletTopUpService
 from financial_management.zarinpal import ZarinpalGateway
 from helpers.functions import get_current_user
+from products.models import Product
 from server.gateway_configs import TRUSTED_GATEWAY_IP, GATEWAY_SECRET_PAYMENT_TOKEN
 from server.settings import SERVER_URL, SECRET_KEY
 from shop.models import ShopOrder
 from financial_management.throttles import PaymentRateThrottle
 import hmac
-import hashlib
-
+from django.views.decorators.cache import cache_page
+from django.utils.decorators import method_decorator
 from subscription.models import DiscountCode
+import hashlib
+import json
+from django.core.cache import cache
 
 
 class StartZarinpalPaymentApiView(APIView):
@@ -182,8 +189,89 @@ class VerifyDiscountCodeView(APIView):
         discount_code.verify()
 
         return Response({
-            'discount_code_id': discount_code.id,
+            'discount_code': discount_code,
             'discount_amount': discount_code.get_discount_amount(order_amount)
+        })
+
+
+def filter_discount_results(results):
+    discounts = []
+    free_shipping = []
+
+    for res in results:
+        if res['type'] == DiscountAction.FREE_SHIPPING:
+            free_shipping.append(res)
+        else:
+            discounts.append(res)
+
+    return discounts, free_shipping
+
+
+class DiscountCheckAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @staticmethod
+    def generate_cart_hash(cart_items):
+        sorted_items = sorted(cart_items, key=lambda x: x['product'])
+        cart_str = json.dumps(sorted_items, sort_keys=True)
+        return hashlib.md5(cart_str.encode('utf-8')).hexdigest()
+
+    def get_discounts_from_cache_or_db(self, user_id, enriched_cart_items, total_price):
+        cart_hash = self.generate_cart_hash([
+            {"product": item["product"].id, "quantity": item["quantity"]}
+            for item in enriched_cart_items
+        ])
+        cache_key = f"discounts_{user_id}_{cart_hash}"
+
+        cached = cache.get(cache_key)
+        if cached is not None:
+            return cached
+
+        active_discounts = Discount.objects.filter(is_active=True).prefetch_related(
+            "conditions__category_condition__categories",
+            "conditions__product_condition__products",
+            "conditions__brand_condition__brands",
+            "conditions__user_condition__users"
+        )
+        results = []
+        for discount in active_discounts:
+            result = evaluate_discount(discount, enriched_cart_items, user_id, total_price)
+            if result:
+                results.append(result)
+
+        cache.set(cache_key, results, timeout=300)
+        return results
+
+    @staticmethod
+    def calculate_cart_total(cart_items, product_map):
+        total = Decimal("0.00")
+        for item in cart_items:
+            product = product_map[item['product']]
+            total += Decimal(product.price) * item['quantity']
+        return total
+
+    def post(self, request):
+        user = request.user
+        cart_items_data = request.data.get("cart_items", [])
+
+        product_ids = [item["product"] for item in cart_items_data]
+        products = Product.objects.filter(id__in=product_ids)
+        product_map = {p.id: p for p in products}
+
+        enriched_cart_items = [
+            {"product": product_map[item["product"]], "quantity": item["quantity"]}
+            for item in cart_items_data if item["product"] in product_map
+        ]
+
+        total_price = self.calculate_cart_total(cart_items_data, product_map)
+
+        raw_discounts = self.get_discounts_from_cache_or_db(user.id, enriched_cart_items, total_price)
+
+        discounts, free_shipping = filter_discount_results(raw_discounts)
+
+        return Response({
+            "discounts": DiscountResultSerializer(discounts, many=True).data,
+            "free_shipping": DiscountResultSerializer(free_shipping, many=True).data
         })
 
 
