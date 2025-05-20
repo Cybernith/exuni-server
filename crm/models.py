@@ -1,4 +1,4 @@
-from django.db import models
+from django.db import models, transaction
 
 from helpers.models import TimeStampedModel
 
@@ -256,10 +256,10 @@ class Notification(models.Model):
         self.crmUserNotifications.update(sms_status=UserNotification.SENT)
 
     def save(self, *args, **kwargs):
-        if not self.id:
-            self.create_user_notifications()
+        is_new = self._state.adding
         super().save(*args, **kwargs)
-
+        if is_new:
+            transaction.on_commit(lambda: self.create_user_notifications())
 
 class UserNotification(models.Model):
     PENDING = 'p'
