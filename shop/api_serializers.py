@@ -240,6 +240,7 @@ class ApiProductsWithCommentsListSerializers(serializers.ModelSerializer):
             'search_comments',
         ]
 
+
     def get_image(self, obj):
         return obj.picture.url if obj.picture else None
 
@@ -487,10 +488,16 @@ class ApiProductDetailSerializers(serializers.ModelSerializer):
             'price_title',
             'regular_price_title',
             'offer_percentage',
-
-            #'similar_products',
-            #'similar_brand_products',
         ]
+
+    def get_price_title(self, obj):
+        return 'قیمت در اکسونی'
+
+    def get_regular_price_title(self, obj):
+        if obj.brand and obj.brand.made_in:
+            if obj.brand.made_in == 'ایران':
+                return 'قیمت مصرف کننده'
+        return 'قیمت محصول'
 
     def get_offer_percentage(self, obj):
         if obj.regular_price and obj.price:
@@ -519,19 +526,6 @@ class ApiProductDetailSerializers(serializers.ModelSerializer):
                 {'id': category.id, 'name': category.name}
             )
         return categories
-
-    #def get_similar_products(self, obj):
-    #    similar_products = Product.objects.filter(
-    #        Q(category=obj.category) |
-    #        Q(avails__in=obj.avails) |
-    #        Q(properties__in=obj.properties)
-    #    ).only('id', 'name', 'picture').exclude(id=obj.id)[:10]
-    #    return ShopSimilarProductsListSerializers(similar_products, many=True).data
-
-    #def get_similar_brand_products(self, obj):
-    #    similar_products = Product.objects.filter(brand=obj.brand).only('id', 'name', 'picture').exclude(id=obj.id)[:10]
-    #
-    #    return ShopSimilarProductsListSerializers(similar_products, many=True).data
 
     def get_comments(self, obj):
         user = get_current_user()
