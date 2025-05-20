@@ -563,15 +563,15 @@ class CustomerOrdersView(APIView):
 class CustomerOrdersDetailView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get_objects(self, pk, customer):
+    def get_object(self, pk, customer):
         try:
             return ShopOrder.objects.get(id=pk, customer=customer)
         except ShopOrder.DoesNotExist:
             raise Http404
 
     def get(self, request, order_id):
-        orders = ShopOrder.objects.get(order_id, customer=get_current_user())
-        serializers = ApiOrderListSerializer(orders, many=True)
+        order = self.get_object(order_id, customer=get_current_user())
+        serializers = ApiOrderListSerializer(order)
         return Response(serializers.data, status=status.HTTP_200_OK)
 
 
