@@ -210,9 +210,12 @@ SPECTACULAR_SETTINGS = {
         'server.schema_hooks.filter_store_endpoints',
     ],
 }
-STATIC_ROOT = os.path.join(BASE_DIR, "static/")
 STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')  # مقصد collectstatic
 
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'static'),  # سورس فایل‌های استاتیکت در زمان توسعه
+]
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = '/media/'
 
