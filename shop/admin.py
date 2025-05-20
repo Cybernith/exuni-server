@@ -1,7 +1,7 @@
 from django.contrib import admin
 
 from shop.models import Cart, WishList, Comparison, Comment, Rate, LimitedTimeOffer, LimitedTimeOfferItems, \
-    ShipmentAddress, ShopOrder, ShopOrderItem, ShopOrderStatusHistory
+    ShipmentAddress, ShopOrder, ShopOrderItem, ShopOrderStatusHistory, ShippingMethod
 
 admin.site.register(Cart)
 admin.site.register(WishList)
@@ -13,6 +13,7 @@ admin.site.register(LimitedTimeOfferItems)
 admin.site.register(ShipmentAddress)
 admin.site.register(ShopOrder)
 admin.site.register(ShopOrderItem)
+admin.site.register(ShippingMethod)
 
 
 @admin.register(ShopOrderStatusHistory)
