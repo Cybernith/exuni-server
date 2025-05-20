@@ -103,6 +103,7 @@ class BannerContent(BaseModel, DateTimeRangeModel):
     THREE = 3
     FOUR = 4
     FIVE = 5
+    SIX = 6
 
     ORDERS = (
         (ONE, 'بنر اصلی'),
@@ -110,6 +111,7 @@ class BannerContent(BaseModel, DateTimeRangeModel):
         (THREE, 'بنر سه'),
         (FOUR, 'بنر چهار'),
         (FIVE, 'بنر پنج'),
+        (SIX, 'بنر شش'),
     )
 
     title = models.CharField(max_length=100, blank=True, null=True)
