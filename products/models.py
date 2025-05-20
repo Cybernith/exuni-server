@@ -199,6 +199,7 @@ class Product(BaseModel):
 
     name = models.CharField(max_length=150)
 
+    feature_vector = models.BinaryField(null=True, blank=True)
     picture = models.ImageField(upload_to=custom_upload_to, null=True, blank=True, default=None)
     first_texture_picture = models.ImageField(upload_to=custom_upload_to, null=True, blank=True, default=None)
     second_texture_picture = models.ImageField(upload_to=custom_upload_to, null=True, blank=True, default=None)

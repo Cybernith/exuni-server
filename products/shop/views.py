@@ -19,6 +19,7 @@ from products.shop.serializers import ShopProductsListSerializers, ShopCommentSe
 from products.trottles import UserProductDetailRateThrottle, AnonProductDetailRateThrottle, AnonProductListRateThrottle, \
     UserProductListRateThrottle, CreateCommentRateThrottle, RateUpsertRateThrottle, CategoryTreeThrottle, BrandThrottle, \
     RootCategoryThrottle
+from products.utils import extract_features
 from shop.api_serializers import ApiProductsListSerializers, ApiProductDetailSerializers, ApiBrandListSerializer, \
     ApiProductsWithCommentsListSerializers, ApiUserCommentProductsSimpleListSerializers
 from shop.models import Comment
@@ -27,6 +28,8 @@ from shop.serializers import CommentRepliesSerializer, OrderProductsSimpleListSe
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import OrderingFilter
 
+from rest_framework.parsers import MultiPartParser, FormParser
+import numpy as np
 
 class ShopProductListView(generics.ListAPIView):
     serializer_class = ShopProductsListSerializers
@@ -385,3 +388,37 @@ class UserProductsWithCommentView(viewsets.ReadOnlyModelViewSet):
         return Product.objects.filter(Q(shop_order_items__shop_order__customer=user) &
                                       Q(product_comments__customer=user)
                                       ).distinct()
+
+
+class ImageSearchAPIView(APIView):
+    parser_classes = [MultiPartParser, FormParser]
+
+    def post(self, request, *args, **kwargs):
+        uploaded_file = request.FILES.get('image')
+        if not uploaded_file:
+            return Response({'error': 'No image uploaded'}, status=400)
+
+        tmp_path = f'/tmp/{uploaded_file.name}'
+        with open(tmp_path, 'wb+') as f:
+            for chunk in uploaded_file.chunks():
+                f.write(chunk)
+
+        query_features = extract_features(tmp_path)
+
+        products = Product.objects.exclude(feature_vector=None)
+
+        def cosine_similarity(a, b):
+            return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
+
+        sims = []
+        for p in products:
+            fv = np.frombuffer(p.feature_vector, dtype=np.float32)
+            sim = cosine_similarity(query_features.flatten(), fv)
+            sims.append((sim, p))
+
+        sims.sort(key=lambda x: x[0], reverse=True)
+
+        top_products = [p for _, p in sims[:5]]
+
+        serializer = ApiProductsListSerializers(top_products, many=True)
+        return Response(serializer.data)
