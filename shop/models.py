@@ -155,6 +155,9 @@ class ShippingMethod(models.Model):
     def calculate(self, order):
         return self.base_price
 
+    class Meta(BaseModel.Meta):
+        get_latest_by = 'created_at'
+
 
 class ShopOrderManager(models.Manager):
     def get_queryset(self):
