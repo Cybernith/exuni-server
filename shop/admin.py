@@ -66,7 +66,6 @@ class ShopOrderAdmin(NestedModelAdmin):
         'post_tracking_code', 'is_sent', 'date_time', 'final_amount'
     ]
     readonly_fields = ['exuni_tracking_code', 'total_price', 'total_product_quantity', 'final_amount']
-    autocomplete_fields = ['customer', 'shipment_address', 'shipping_method', 'discount_code']
     date_hierarchy = 'date_time'
 
     def status_display(self, obj):

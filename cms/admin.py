@@ -133,8 +133,8 @@ class ShopHomeHighlightItemInline(NestedStackedInline):
         'mobile_image', 'desktop_image', 'mobile_image_preview', 'desktop_image_preview',
         'from_date_time', 'to_date_time'
     ]
+    search_fields = ['name', 'id']
     readonly_fields = ['mobile_image_preview', 'desktop_image_preview']
-    autocomplete_fields = ['category', 'brand']
 
     def mobile_image_preview(self, obj):
         if obj.mobile_image:
