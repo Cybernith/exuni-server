@@ -21,7 +21,7 @@ class ZarinpalGateway:
         data = {
             'merchant_id': self.MERCHANT_ID,
             'amount': self.amount,
-            'currency': 'IRR',
+            'currency': 'IRT',
             'callback_url': self.callback_url,
             'description': self.description,
             'order_id': self.payment_id,
