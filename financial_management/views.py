@@ -369,9 +369,7 @@ class ZarinpalTopUpWalletCallbackApiView(APIView):
             except Exception as e:
                 return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-            return Response({'detail': 'payment verify and wallet top up was successfully',
-                             'ref_id': result['data']['ref_id']},
-                            status=status.HTTP_200_OK)
+            return redirect(f'{FRONT_URL}/payment/success?top_up_wallet=true&amount={payment.amount}')
         else:
             payment.mark_as_failed_payment(user=payment.user)
             FinancialLogger.log(
@@ -383,5 +381,4 @@ class ZarinpalTopUpWalletCallbackApiView(APIView):
                 user_agent=request.META.get('HTTP_USER_AGENT'),
                 extra_info={"amount": str(payment.amount)}
             )
-
-            return Response({'detail': 'payment verify failed'}, status=status.HTTP_400_BAD_REQUEST)
+            return redirect(f'{FRONT_URL}/payment/fail?top_up_wallet=true&amount={payment.amount}')
