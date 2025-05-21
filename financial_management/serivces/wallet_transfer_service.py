@@ -5,7 +5,7 @@ from financial_management.models import Wallet, Transaction, WalletLedger, Audit
 
 
 class WalletTransferService:
-    def _init_(self, sender_user, receiver_user, amount, ip=None, agent=None):
+    def __init__(self, sender_user, receiver_user, amount, ip=None, agent=None):
         self.sender_user = sender_user
         self.receiver_user = receiver_user
         self.amount = amount

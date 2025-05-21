@@ -15,7 +15,6 @@ class WalletTopUpService(BaseWalletService):
         with db_transaction.atomic():
             transaction = Transaction.objects.create(
                 wallet=wallet,
-                user=self.user,
                 amount=self.amount,
                 type=Transaction.TOP_UP,
                 status=Transaction.SUCCESS

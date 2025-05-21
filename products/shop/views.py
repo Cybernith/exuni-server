@@ -385,7 +385,7 @@ class UserProductsWithCommentView(viewsets.ReadOnlyModelViewSet):
     def get_queryset(self):
         user = get_current_user()
         return Product.objects.filter(
-            Q(shop_order_items__shop_order__customer=user) &Q(product_comments__customer=user)).distinct()
+            Q(shop_order_items__shop_order__customer=user) & Q(product_comments__customer=user)).distinct()
 
 
 extractor = ImageFeatureExtractor()
