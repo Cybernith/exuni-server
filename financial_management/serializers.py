@@ -63,19 +63,6 @@ class DiscountConditionProductSerializer(serializers.ModelSerializer):
         model = DiscountConditionProduct
         fields = ['products']
 
-
-class DiscountConditionUserSerializer(serializers.ModelSerializer):
-    users = serializers.SlugRelatedField(
-        many=True,
-        read_only=True,
-        slug_field='username'
-    )
-
-    class Meta:
-        model = DiscountConditionUser
-        fields = ['users']
-
-
 class DiscountConditionBrandSerializer(serializers.ModelSerializer):
     brands = serializers.SlugRelatedField(
         many=True,
@@ -104,7 +91,6 @@ class DiscountConditionSerializer(serializers.ModelSerializer):
     type_display = serializers.CharField(source='get_type_display', read_only=True)
     category_condition = DiscountConditionCategorySerializer(read_only=True)
     product_condition = DiscountConditionProductSerializer(read_only=True)
-    user_condition = DiscountConditionUserSerializer(read_only=True)
     brand_condition = DiscountConditionBrandSerializer(read_only=True)
     price_over_condition = DiscountConditionPriceOverSerializer(read_only=True)
     price_limit_condition = DiscountConditionPriceLimitSerializer(read_only=True)
