@@ -1,6 +1,7 @@
 from django.conf.urls import url
 
-from cms.views import HeaderElementApiView, PopUpElementApiView, BannerContentApiView, ShopHomePageStoryApiView
+from cms.views import HeaderElementApiView, PopUpElementApiView, BannerContentApiView, ShopHomePageStoryApiView, \
+    CurrentShopHomeHighlightApiView
 from crm.views import UserCurrentNotificationsAPIView, UserCurrentNotificationsBySortAPIView, RecommendedProductsAPIView
 from products.shop.views import ShopProductSimpleListView, BrandShopListView, CategoryTreeView, RootCategoryListView, \
     ShopProductWithCommentsListView, CurrentUserHasOrderProductViewSet, CurrentUserRelatedProductViewSet, \
@@ -60,6 +61,7 @@ urlpatterns = [
     url(r'^currentPopUpElement$', PopUpElementApiView.as_view(), name='currentPopUpElement'),
     url(r'^currentBannerContent$', BannerContentApiView.as_view(), name='currentBannerContent'),
     url(r'^currentShopHomePageStory$', ShopHomePageStoryApiView.as_view(), name='currentShopHomePageStory'),
+    url(r'^currentShopHomeHighlight$', CurrentShopHomeHighlightApiView.as_view(), name='currentShopHomeHighlight'),
 
     url(r'^searchAutoCompelete$', GlobalAutoCompleteSearchAPIView.as_view(), name='globalAutoCompleteSearch'),
 
