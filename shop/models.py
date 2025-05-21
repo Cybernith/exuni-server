@@ -348,7 +348,7 @@ class ShopOrder(BaseModel):
                 status=Payment.INITIATED,
                 created_at=timezone.now()
             )
-
+            payment.mark_as_pending(user=self.customer)
             return payment
 
         else:
