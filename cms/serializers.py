@@ -95,7 +95,7 @@ class ShopHomeHighlightItemSerializer(serializers.ModelSerializer):
 
 
 class ShopHomeHighlightSerializer(serializers.ModelSerializer):
-    items = BannerContentItemSerializer(many=True, read_only=True)
+    items = ShopHomeHighlightItemSerializer(many=True, read_only=True)
 
     class Meta:
         read_only_fields = ('created_at', 'updated_at')
