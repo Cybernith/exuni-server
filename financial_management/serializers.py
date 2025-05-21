@@ -133,7 +133,7 @@ class DiscountActionSerializer(serializers.ModelSerializer):
 
 
 class DiscountSerializer(serializers.ModelSerializer):
-    conditions = DiscountConditionSerializer(many=True, read_only=True, source='conditions')
+    conditions = DiscountConditionSerializer(many=True, read_only=True)
     action = DiscountActionSerializer(read_only=True)
 
     class Meta:
