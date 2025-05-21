@@ -40,8 +40,8 @@ class ProductAdmin(NestedModelAdmin):
         'id', 'picture_preview', 'name', 'sixteen_digit_code', 'product_type', 'regular_price', 'price',
         'offer_percentage', 'calculate_current_inventory', 'brand'
     ]
-    list_filter = ['status', 'product_type', 'brand']
-    search_fields = ['name', 'product_id', 'sixteen_digit_code']
+    list_filter = ['status', 'product_type', 'brand', 'sixteen_digit_code']
+    search_fields = ['id', 'name', 'product_id', 'sixteen_digit_code']
     inlines = [ProductVariationInline]
     fields = [
         'id', 'picture', 'name', 'product_type', 'picture_preview',
