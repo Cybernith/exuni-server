@@ -21,7 +21,8 @@ class ProductVariationInline(NestedStackedInline):
     fk_name = 'variation_of'
     fields = [
         'name', 'variation_title', 'product_type', 'product_id',
-        'picture', 'picture_preview', 'price', 'regular_price'
+        'picture', 'picture_preview', 'price', 'regular_price',
+        'calculate_current_inventory'
     ]
     readonly_fields = ['picture_preview', 'calculate_current_inventory']
     autocomplete_fields = ['brand']
@@ -31,6 +32,11 @@ class ProductVariationInline(NestedStackedInline):
             return format_html('<img src="{}" style="max-height: 100px;" />', obj.picture.url)
         return "-"
     picture_preview.short_description = "پیش‌نمایش تصویر اصلی"
+
+    def calculate_current_inventory(self, obj):
+        return obj.calculate_current_inventory()
+    calculate_current_inventory.short_description = "موجودی فعلی"
+
 
 @admin.register(Product)
 class ProductAdmin(NestedModelAdmin):
@@ -43,11 +49,10 @@ class ProductAdmin(NestedModelAdmin):
     inlines = [ProductVariationInline]
     fields = [
         'id', 'picture', 'name', 'product_type', 'picture_preview',
-        'regular_price', 'price',
+        'regular_price', 'price', 'calculate_current_inventory',
         'brand'
     ]
-    readonly_fields = ['picture_preview', 'price_title', 'regular_price_title',
-                       'calculate_current_inventory', 'price_title', 'regular_price_title']
+    readonly_fields = ['picture_preview', 'price_title', 'regular_price_title', 'calculate_current_inventory']
     autocomplete_fields = ['brand']
 
     def picture_preview(self, obj):
@@ -82,6 +87,10 @@ class ProductAdmin(NestedModelAdmin):
             offer_percentage = round(((obj.regular_price - obj.price) / obj.regular_price) * 100)
             return f'{offer_percentage}%'
         return None
+
+    def calculate_current_inventory(self, obj):
+        return obj.calculate_current_inventory()
+    calculate_current_inventory.short_description = "موجودی فعلی"
 
     def get_queryset(self, request):
         return super().get_queryset(request).prefetch_related('brand', 'variations')
