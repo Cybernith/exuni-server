@@ -5,7 +5,6 @@ from affiliate.views import get_business_from_request
 from entrance.models import StoreReceiptItem
 from entrance.serializers import StoreReceiptItemSerializer
 from financial_management.models import Discount
-from financial_management.serializers import DiscountSerializer
 from helpers.auth import BasicObjectPermission
 from rest_framework.views import APIView
 from django.http import Http404
@@ -23,6 +22,8 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework import generics
 from helpers.models import manage_files
 from django.db.models import QuerySet, Q
+
+from shop.api_serializers import DiscountSerializer
 
 
 class BrandApiView(APIView):

@@ -11,7 +11,6 @@ from rest_framework.views import APIView
 
 from financial_management.loggers.financial_logger import FinancialLogger
 from financial_management.models import Payment, AuditAction, AuditSeverity, Discount, DiscountAction
-from financial_management.serializers import DiscountResultSerializer
 from financial_management.serivces.discount_evaluator import evaluate_discount
 from financial_management.serivces.wallet_top_up_service import WalletTopUpRequestService, WalletTopUpService
 from financial_management.zarinpal import ZarinpalGateway
