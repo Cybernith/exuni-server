@@ -1,4 +1,5 @@
 from django.db.models import Q
+from django.utils import timezone
 from rest_framework import serializers
 
 from financial_management.models import DiscountCondition, Discount, DiscountAction, DiscountConditionPriceLimit, \
@@ -106,6 +107,7 @@ class ApiProductsListSerializers(serializers.ModelSerializer):
     brand = ApiBrandListSerializer(read_only=True)
     price_title = serializers.SerializerMethodField()
     regular_price_title = serializers.SerializerMethodField()
+    active_discounts = serializers.SerializerMethodField()
 
 
     class Meta:
@@ -131,7 +133,41 @@ class ApiProductsListSerializers(serializers.ModelSerializer):
             'height',
             'price_title',
             'regular_price_title',
+            'active_discounts',
         ]
+
+    def get_active_discounts(self, obj):
+        now = timezone.now()
+        discounts = Discount.objects.filter(
+            is_active=True,
+            start_date__lte=now,
+            end_date__gte=now
+        ).select_related('action').prefetch_related('conditions__category_condition__categories',
+                                                    'conditions__product_condition__products',
+                                                    'conditions__brand_condition__brands',
+                                                    'conditions__price_over_condition',
+                                                    'conditions__price_limit_condition')
+
+        applicable_discounts = []
+        for discount in discounts:
+            is_applicable = False
+            for condition in discount.conditions.all():
+                if condition.type == DiscountCondition.CATEGORY:
+                    if condition.category_condition and obj.category.filter(
+                            id__in=condition.category_condition.categories.values('id')).exists():
+                        is_applicable = True
+                elif condition.type == DiscountCondition.BRAND:
+                    if condition.brand_condition and obj.brand and obj.brand.id in\
+                            condition.brand_condition.brands.values(
+                            'id'):
+                        is_applicable = True
+                elif condition.type == DiscountCondition.PRODUCT:
+                    if condition.product_condition and obj.id in condition.product_condition.products.values('id'):
+                        is_applicable = True
+            if is_applicable:
+                applicable_discounts.append(discount)
+
+        return DiscountSerializer(applicable_discounts, many=True, context=self.context).data
 
     def get_price_title(self, obj):
         return 'قیمت در اکسونی'
@@ -456,6 +492,7 @@ class ApiProductDetailSerializers(serializers.ModelSerializer):
     price_title = serializers.SerializerMethodField()
     regular_price_title = serializers.SerializerMethodField()
     offer_percentage = serializers.SerializerMethodField()
+    active_discounts = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
@@ -491,7 +528,41 @@ class ApiProductDetailSerializers(serializers.ModelSerializer):
             'price_title',
             'regular_price_title',
             'offer_percentage',
+            'active_discounts',
         ]
+
+    def get_active_discounts(self, obj):
+        now = timezone.now()
+        discounts = Discount.objects.filter(
+            is_active=True,
+            start_date__lte=now,
+            end_date__gte=now
+        ).select_related('action').prefetch_related('conditions__category_condition__categories',
+                                                    'conditions__product_condition__products',
+                                                    'conditions__brand_condition__brands',
+                                                    'conditions__price_over_condition',
+                                                    'conditions__price_limit_condition')
+
+        applicable_discounts = []
+        for discount in discounts:
+            is_applicable = False
+            for condition in discount.conditions.all():
+                if condition.type == DiscountCondition.CATEGORY:
+                    if condition.category_condition and obj.category.filter(
+                            id__in=condition.category_condition.categories.values('id')).exists():
+                        is_applicable = True
+                elif condition.type == DiscountCondition.BRAND:
+                    if condition.brand_condition and obj.brand and obj.brand.id in\
+                            condition.brand_condition.brands.values(
+                            'id'):
+                        is_applicable = True
+                elif condition.type == DiscountCondition.PRODUCT:
+                    if condition.product_condition and obj.id in condition.product_condition.products.values('id'):
+                        is_applicable = True
+            if is_applicable:
+                applicable_discounts.append(discount)
+
+        return DiscountSerializer(applicable_discounts, many=True, context=self.context).data
 
     def get_price_title(self, obj):
         return 'قیمت در اکسونی'
