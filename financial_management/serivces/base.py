@@ -1,5 +1,5 @@
 class BaseWalletService:
-    def _init_(self, user, amount, ip, agent, **kwargs):
+    def __init__(self, user, amount, ip, agent, **kwargs):
         self.user = user
         self.amount = amount
         self.ip = ip
