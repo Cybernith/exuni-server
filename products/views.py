@@ -1,8 +1,11 @@
+from django.utils import timezone
 from rest_framework.permissions import IsAuthenticated
 
 from affiliate.views import get_business_from_request
 from entrance.models import StoreReceiptItem
 from entrance.serializers import StoreReceiptItemSerializer
+from financial_management.models import Discount
+from financial_management.serializers import DiscountSerializer
 from helpers.auth import BasicObjectPermission
 from rest_framework.views import APIView
 from django.http import Http404
@@ -454,4 +457,33 @@ class ProductPriceHistoryApiView(APIView):
         query = ProductPriceHistory.objects.filter(prduct=product)
         serializers = ProductPriceHistorySerializer(query, many=True)
         return Response(serializers.data, status=status.HTTP_200_OK)
+
+
+class ActiveDiscountsAPIView(APIView):
+
+    def get(self, request, *args, **kwargs):
+        try:
+            now = timezone.now()
+            discounts = Discount.objects.filter(
+                is_active=True,
+                start_date__lte=now,
+                end_date__gte=now
+            ).select_related('action').prefetch_related(
+                'conditions__category_condition__categories',
+                'conditions__product_condition__products',
+                'conditions__user_condition__users',
+                'conditions__brand_condition__brands',
+                'conditions__price_over_condition',
+                'conditions__price_limit_condition'
+            )
+
+            if not discounts.exists():
+                return Response({'message': 'هیچ تخفیف فعالی یافت نشد'}, status=200)
+
+            serializer = DiscountSerializer(discounts, many=True)
+            return Response(serializer.data)
+
+        except Exception as e:
+            return Response({'error': f'خطا در پردازش: {str(e)}'}, status=500)
+
 

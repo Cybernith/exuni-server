@@ -13,19 +13,19 @@ def evaluate_discount(discount, cart_items, user, total_price):
     for condition in discount.conditions.all():
         if condition.type == DiscountCondition.CATEGORY:
             allowed_cats = condition.category_condition.categories.all()
-            if not all(item['product'].category in allowed_cats for item in cart_items):
+            if not any(item['product'].category in allowed_cats for item in cart_items):
                 valid = False
                 reasons.append("محصولات در دسته‌بندی مجاز نیست.")
 
         elif condition.type == DiscountCondition.PRODUCT:
             allowed_products = condition.product_condition.products.all()
-            if not all(item['product'] in allowed_products for item in cart_items):
+            if not any(item['product'] in allowed_products for item in cart_items):
                 valid = False
                 reasons.append("محصولات سبد با شرط تطابق ندارند.")
 
         elif condition.type == DiscountCondition.BRAND:
             allowed_brands = condition.brand_condition.brands.all()
-            if not all(item['product'].brand in allowed_brands for item in cart_items):
+            if not any(item['product'].brand in allowed_brands for item in cart_items):
                 valid = False
                 reasons.append("محصولات از برند مجاز نیست.")
 
