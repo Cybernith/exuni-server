@@ -45,10 +45,11 @@ class ProductAdmin(NestedModelAdmin):
     inlines = [ProductVariationInline]
     fields = [
         'id', 'picture', 'name', 'product_type', 'picture_preview',
-        'regular_price', 'price', 'calculate_current_inventory',
-        'brand', 'price_title', 'regular_price_title'
+        'regular_price', 'price',
+        'brand'
     ]
-    readonly_fields = ['picture_preview', 'price_title', 'regular_price_title', 'calculate_current_inventory']
+    readonly_fields = ['picture_preview', 'price_title', 'regular_price_title',
+                       'calculate_current_inventory', 'price_title', 'regular_price_title']
     autocomplete_fields = ['brand']
 
     def picture_preview(self, obj):
