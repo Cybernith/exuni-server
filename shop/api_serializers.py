@@ -113,6 +113,7 @@ class ApiProductsListSerializers(serializers.ModelSerializer):
             'product_type',
             'name',
             'image',
+            'picture',
             'second_image',
             'regular_price',
             'price',

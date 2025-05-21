@@ -1,3 +1,4 @@
+from PIL import Image
 from django.core.cache import cache
 from django.db.models import Q, Count, F, Prefetch
 from django.shortcuts import get_object_or_404
@@ -11,20 +12,17 @@ from crm.functions import save_product_view_log
 from helpers.functions import get_current_user
 from products.lists.filters import RootCategoryFilter
 from products.models import Product, Category, Brand
-from products.serializers import BrandShopListSerializer
 from products.shop.filters import ShopProductFilter, BrandShopListFilter, ShopProductSimpleFilter
 from products.shop.serializers import ShopProductsListSerializers, ShopCommentSerializer, \
-    ShopProductRateSerializer, RootCategorySerializer, \
-    ShopProductsWithCommentsListSerializers
+    ShopProductRateSerializer, RootCategorySerializer
 from products.trottles import UserProductDetailRateThrottle, AnonProductDetailRateThrottle, AnonProductListRateThrottle, \
     UserProductListRateThrottle, CreateCommentRateThrottle, RateUpsertRateThrottle, CategoryTreeThrottle, BrandThrottle, \
     RootCategoryThrottle
-from products.utils import extract_features
+from products.utils import ImageFeatureExtractor
 from shop.api_serializers import ApiProductsListSerializers, ApiProductDetailSerializers, ApiBrandListSerializer, \
     ApiProductsWithCommentsListSerializers, ApiUserCommentProductsSimpleListSerializers
 from shop.models import Comment
-from shop.serializers import CommentRepliesSerializer, OrderProductsSimpleListSerializers, \
-    UserCommentProductsSimpleListSerializers
+from shop.serializers import CommentRepliesSerializer
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import OrderingFilter
 
@@ -385,9 +383,11 @@ class UserProductsWithCommentView(viewsets.ReadOnlyModelViewSet):
 
     def get_queryset(self):
         user = get_current_user()
-        return Product.objects.filter(Q(shop_order_items__shop_order__customer=user) &
-                                      Q(product_comments__customer=user)
-                                      ).distinct()
+        return Product.objects.filter(
+            Q(shop_order_items__shop_order__customer=user) &Q(product_comments__customer=user)).distinct()
+
+
+extractor = ImageFeatureExtractor()
 
 
 class ImageSearchAPIView(APIView):
@@ -396,29 +396,27 @@ class ImageSearchAPIView(APIView):
     def post(self, request, *args, **kwargs):
         uploaded_file = request.FILES.get('image')
         if not uploaded_file:
-            return Response({'error': 'No image uploaded'}, status=400)
+            return Response({'error': 'هیچ تصویری آپلود نشده است'}, status=400)
 
-        tmp_path = f'/tmp/{uploaded_file.name}'
-        with open(tmp_path, 'wb+') as f:
-            for chunk in uploaded_file.chunks():
-                f.write(chunk)
+        try:
+            img = Image.open(uploaded_file).convert('RGB')
+            query_features = extractor.extract_features(img)
 
-        query_features = extract_features(tmp_path)
+            products = Product.objects.exclude(feature_vector=None)
+            if not products.exists():
+                return Response({'error': 'هیچ محصولی یافت نشد'}, status=404)
 
-        products = Product.objects.exclude(feature_vector=None)
+            feature_vectors = np.array([np.frombuffer(p.feature_vector, dtype=np.float32) for p in products])
+            query_features = query_features.flatten()
+            norms = np.linalg.norm(feature_vectors, axis=1) * np.linalg.norm(query_features)
+            similarities = np.dot(feature_vectors, query_features) / norms
+            similarities = np.nan_to_num(similarities, nan=0.0)
 
-        def cosine_similarity(a, b):
-            return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
+            top_indices = np.argsort(similarities)[::-1][:5]
+            top_products = [products[i] for i in top_indices]
 
-        sims = []
-        for p in products:
-            fv = np.frombuffer(p.feature_vector, dtype=np.float32)
-            sim = cosine_similarity(query_features.flatten(), fv)
-            sims.append((sim, p))
+            serializer = ApiProductsListSerializers(top_products, many=True)
+            return Response(serializer.data)
 
-        sims.sort(key=lambda x: x[0], reverse=True)
-
-        top_products = [p for _, p in sims[:5]]
-
-        serializer = ApiProductsListSerializers(top_products, many=True)
-        return Response(serializer.data)
+        except Exception as e:
+            return Response({'error': f'خطا در پردازش: {str(e)}'}, status=500)
