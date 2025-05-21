@@ -40,7 +40,7 @@ class StartZarinpalPaymentApiView(APIView):
             return Response({'detail': 'this order already have open payment'}, status=status.HTTP_400_BAD_REQUEST)
 
         if request.data.get('use_wallet', False):
-            payment = order.pay_with_wallet
+            payment = order.pay_with_wallet()
             if not payment:
                 return Response({'payment_url': '/payment/result?status=success'})
         else:
