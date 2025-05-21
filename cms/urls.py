@@ -3,7 +3,7 @@ from django.conf.urls import url
 from cms.views import HeaderElementApiView, AllHeaderElementApiView, PopUpElementApiView, AllPopUpElementApiView, \
     BannerContentApiView, AllBannerContentApiView, HeaderElementDetailView, PopUpElementDetailView, \
     BannerContentDetailView, BannerContentItemApiView, BannerContentItemDetailView, ShopHomePageStoryApiView, \
-    AllShopHomePageStoryApiView, ShopHomePageStoryDetailView
+    AllShopHomePageStoryApiView, ShopHomePageStoryDetailView, CurrentShopHomeHighlightApiView
 
 app_name = 'cms'
 urlpatterns = [
@@ -21,6 +21,8 @@ urlpatterns = [
 
     url(r'^bannerContentItem$', BannerContentItemApiView.as_view(), name='bannerContentItem'),
     url(r'^bannerContentItem/(?P<pk>[0-9]+)$', BannerContentItemDetailView.as_view(), name='bannerContentItemDetail'),
+
+    url(r'^currentShopHomeHighlight$', CurrentShopHomeHighlightApiView.as_view(), name='currentShopHomeHighlight'),
 
     url(r'^currentShopHomePageStory$', ShopHomePageStoryApiView.as_view(), name='currentShopHomePageStory'),
     url(r'^shopHomePageStory$', AllShopHomePageStoryApiView.as_view(), name='shopHomePageStory'),

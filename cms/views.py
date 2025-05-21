@@ -5,9 +5,10 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 
-from cms.models import HeaderElement, PopUpElement, BannerContent, BannerContentItem, ShopHomePageStory
+from cms.models import HeaderElement, PopUpElement, BannerContent, BannerContentItem, ShopHomePageStory, \
+    ShopHomeHighlight
 from cms.serializers import HeaderElementSerializer, PopUpElementSerializer, BannerContentSerializer, \
-    BannerContentItemSerializer, ShopHomePageStorySerializer
+    BannerContentItemSerializer, ShopHomePageStorySerializer, ShopHomeHighlightSerializer
 from cms.trottles import CMSUserRateThrottle, CMSAnonRateThrottle
 from helpers.auth import BasicObjectPermission
 
@@ -288,3 +289,11 @@ class ShopHomePageStoryDetailView(APIView):
         query.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+
+class CurrentShopHomeHighlightApiView(APIView):
+    throttle_classes = [CMSUserRateThrottle, CMSAnonRateThrottle]
+
+    def get(self, request):
+        query = ShopHomeHighlight.objects.current_by_datetime().first()
+        serializers = ShopHomeHighlightSerializer(query)
+        return Response(serializers.data, status=status.HTTP_200_OK)

@@ -2,12 +2,15 @@ from django.contrib import admin
 from nested_admin import NestedModelAdmin, NestedStackedInline
 from django.utils.translation import gettext_lazy as _
 
-from cms.models import HeaderElement, PopUpElement, BannerContent, BannerContentItem, ShopHomePageStory
+from cms.models import HeaderElement, PopUpElement, BannerContent, BannerContentItem, ShopHomePageStory, \
+    ShopHomeHighlight, ShopHomeHighlightItem
 from subscription.models import DiscountCode
 
 admin.site.register(HeaderElement)
 admin.site.register(PopUpElement)
 admin.site.register(ShopHomePageStory)
+admin.site.register(ShopHomeHighlight)
+admin.site.register(ShopHomeHighlightItem)
 
 
 

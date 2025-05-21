@@ -203,3 +203,65 @@ class ShopHomePageStory(BaseModel, DateTimeRangeModel):
             ('updateOwn.shop_home_page_story', 'ویرایش استوری خود'),
             ('deleteOwn.shop_home_page_story', 'حذف استوری خود'),
         )
+
+
+class ShopHomeHighlight(BaseModel, DateTimeRangeModel):
+    title = models.CharField(max_length=100, blank=True, null=True)
+    description = models.TextField(blank=True, null=True)
+
+    objects = CMSCustomManager()
+
+    class Meta(BaseModel.Meta):
+        verbose_name = 'ShopHomeHighlight'
+        permission_basename = 'shop_home_highlight'
+        permissions = (
+            ('get.shop_home_highlight', 'مشاهده هایلایت'),
+            ('create.shop_home_highlight', 'تعریف هایلایت'),
+            ('update.shop_home_highlight', 'ویرایش هایلایت'),
+            ('delete.shop_home_highlight', 'حذف هایلایت'),
+
+            ('getOwn.shop_home_highlight', 'مشاهده هایلایت خود'),
+            ('updateOwn.shop_home_highlight', 'ویرایش هایلایت خود'),
+            ('deleteOwn.shop_home_highlight', 'حذف هایلایت خود'),
+        )
+
+
+class ShopHomeHighlightItem(BaseModel, DateTimeRangeModel):
+    CATEGORY = 'category'
+    BRAND = 'brand'
+
+    TYPES = (
+        (CATEGORY, 'دسته بندی'),
+        (BRAND, 'برند'),
+    )
+
+    highlight = models.ForeignKey(ShopHomeHighlight, related_name='items', on_delete=models.CASCADE)
+    title = models.CharField(max_length=100, blank=True, null=True)
+
+    mobile_image = models.ImageField(upload_to=custom_upload_to)
+    desktop_image = models.ImageField(upload_to=custom_upload_to)
+    type = models.CharField(max_length=20, choices=TYPES)
+    category = models.ForeignKey(
+        'products.Category', related_name='highlights', on_delete=models.CASCADE, blank=True, null=True
+    )
+    brand = models.ForeignKey(
+        'products.Brand', related_name='highlights', on_delete=models.CASCADE, blank=True, null=True
+    )
+
+    objects = CMSCustomManager()
+
+    class Meta(BaseModel.Meta):
+        verbose_name = 'ShopHomeHighlightItem'
+        permission_basename = 'shop_home_highlight_item'
+        permissions = (
+            ('get.shop_home_highlight_item', 'مشاهده آیتم هایلایت'),
+            ('create.shop_home_highlight_item', 'تعریف آیتم هایلایت'),
+            ('update.shop_home_highlight_item', 'ویرایش آیتم هایلایت'),
+            ('delete.shop_home_highlight_item', 'حذف آیتم هایلایت'),
+
+            ('getOwn.shop_home_highlight_item', 'مشاهده آیتم هایلایت خود'),
+            ('updateOwn.shop_home_highlight_item', 'ویرایش آیتم هایلایت خود'),
+            ('deleteOwn.shop_home_highlight_item', 'حذف آیتم هایلایت خود'),
+        )
+
+
