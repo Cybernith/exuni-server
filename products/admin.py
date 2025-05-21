@@ -33,7 +33,7 @@ class ProductVariationInline(NestedStackedInline):
     picture_preview.short_description = "پیش‌نمایش تصویر اصلی"
 
     def calculate_current_inventory(self, obj):
-        return obj.calculate_current_inventory()
+        return obj.calculate_current_inventory
     calculate_current_inventory.short_description = "موجودی فعلی"
 
 
@@ -88,7 +88,7 @@ class ProductAdmin(NestedModelAdmin):
         return None
 
     def calculate_current_inventory(self, obj):
-        return obj.calculate_current_inventory()
+        return obj.calculate_current_inventory
     calculate_current_inventory.short_description = "موجودی فعلی"
 
     def get_queryset(self, request):
