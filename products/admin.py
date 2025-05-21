@@ -15,10 +15,11 @@ admin.site.register(Category)
 admin.site.register(ProductGallery)
 
 
+# اینلاین برای متغیرهای محصول
 class ProductVariationInline(NestedStackedInline):
     model = Product
-    extra = 1
-    fk_name = 'variation_of'
+    extra = 1  # تعداد فرم‌های خالی پیش‌فرض
+    fk_name = 'variation_of'  # مشخص کردن ForeignKey برای variations
     fields = [
         'name', 'variation_title', 'product_type', 'product_id',
         'picture', 'picture_preview', 'price', 'regular_price', 'calculate_current_inventory'
@@ -32,18 +33,19 @@ class ProductVariationInline(NestedStackedInline):
         return "-"
     picture_preview.short_description = "پیش‌نمایش تصویر اصلی"
 
+# ادمین برای Product
 @admin.register(Product)
 class ProductAdmin(NestedModelAdmin):
     list_display = [
-        'id', 'name', 'product_type', 'picture_preview', 'regular_price', 'price',
+        'id', 'picture_preview', 'name', 'sixteen_digit_code', 'product_type', 'regular_price', 'price',
         'offer_percentage', 'calculate_current_inventory', 'brand'
     ]
     list_filter = ['status', 'product_type', 'brand']
     search_fields = ['name', 'product_id', 'sixteen_digit_code']
     inlines = [ProductVariationInline]
     fields = [
-        'id', 'product_type', 'name', 'picture', 'picture_preview',
-        'regular_price', 'price', 'offer_percentage', 'calculate_current_inventory',
+        'id', 'picture', 'name', 'product_type', 'picture_preview',
+        'regular_price', 'price', 'calculate_current_inventory',
         'brand', 'price_title', 'regular_price_title'
     ]
     readonly_fields = ['picture_preview', 'price_title', 'regular_price_title', 'calculate_current_inventory']

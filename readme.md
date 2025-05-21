@@ -1,15 +1,18 @@
+# EXUNI project
+* `reverce affiliate marketing ` , `shopping `, `crm ` and `warehouse handling ` super app
+
 # Deploy notes
 * comment lines 345 and 346 of `filterset.py` of `django_filters` package
 
 # Notes
 
-* accounts which has method in Account model can't have floatAccount
+powered by `soroosh morshedi `
 
 # Naming
 
 ### Models
 
-* relation: floatAccountGroup
+* relation: postal_code
 * fields: postal_code
 * methods: get_new_code
 
@@ -33,9 +36,6 @@ Serializer of a model should be in one of the following formats:
 
 * _* apps are add-on apps
 
-### Default Accounts
-
-* 1001 to 1999 ids are for dashtbashi module
 
 # PDF Export Ubuntu Installation Commands
 
@@ -46,23 +46,6 @@ Serializer of a model should be in one of the following formats:
 
 # Notes
 
-## Sanad
-
-* after creating / updating sanad you should call `update_values` method to updating `sanad.bed` & `sanad.bes`
-* `clearSanad` make sanad an empty manual sanad and it can be used by user again
-
-## Factor
-
-* after creating / updating factor you should call `factor.sync` to sync factor items and factor expenses
-* factor doesn't effect inventory until you definite it or call `DefiniteFactor.updateFactorInventory` (you should call that with `revert=True` before
-  updating a factor)
-* before updating a factor you should verify items by `factor.verify_items` method by passing items data and item ids to delete to it. Verifying means
-  for each item check if it changed or not, if we have newer items on it's ware raise an exception
-* ware inventory validation performs in `increase_inventory` & `decrease_inventory` of `WareInventory`
-
-## Imprest
-
-* you should add imprest moein account to imprest default accounts
 
 ## Helpers
 
