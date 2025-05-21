@@ -194,6 +194,9 @@ class SearchLog(TimeStampedModel, UserAgentModel):
     def __str__(self):
         return f"{self.user.name or 'guest'} search about ''' {self.query_value} ''' at {self.created_at}"
 
+def custom_upload_to(instance, filename):
+    return 'images/{filename}'.format(filename=filename)
+
 
 class Notification(models.Model):
     SEND_BY_SYSTEM = 'ss'
@@ -213,6 +216,7 @@ class Notification(models.Model):
         (ORDERS, 'سفارش ها'),
         (OFFERS, 'تخفیف ها')
     )
+    picture = models.ImageField(upload_to=custom_upload_to, null=True, blank=True, default=None)
 
     type = models.CharField(max_length=2, choices=TYPES, default=SEND_BY_SYSTEM)
     sort = models.CharField(max_length=2, choices=SORTS, default=ACTIVITIES)
