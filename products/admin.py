@@ -21,7 +21,7 @@ class ProductVariationInline(NestedStackedInline):
     fk_name = 'variation_of'
     fields = [
         'name', 'variation_title', 'product_type', 'product_id',
-        'picture', 'price', 'regular_price',
+        'picture', 'picture_preview', 'price', 'regular_price', 'calculate_current_inventory'
     ]
     readonly_fields = ['picture_preview', 'calculate_current_inventory']
     autocomplete_fields = ['brand']
@@ -47,9 +47,9 @@ class ProductAdmin(NestedModelAdmin):
     search_fields = ['id', 'name', 'product_id', 'sixteen_digit_code']
     inlines = [ProductVariationInline]
     fields = [
-        'picture', 'name', 'product_type',
+        'id', 'picture', 'name', 'sixteen_digit_code', 'product_type',
         'regular_price', 'price',
-        'brand'
+        'brand', 'picture_preview', 'price_title', 'regular_price_title', 'calculate_current_inventory'
     ]
     readonly_fields = ['id', 'picture_preview', 'price_title', 'regular_price_title', 'calculate_current_inventory']
     autocomplete_fields = ['brand']
