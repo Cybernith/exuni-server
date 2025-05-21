@@ -369,6 +369,7 @@ class CurrentUserRelatedProductViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class PendingReviewProductsView(viewsets.ReadOnlyModelViewSet):
+    permission_classes = [IsAuthenticated]
     serializer_class = ApiProductsListSerializers
 
     def get_queryset(self):
