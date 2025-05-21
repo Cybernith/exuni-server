@@ -644,6 +644,7 @@ class ApiOrderListSerializer(serializers.ModelSerializer):
     customer = UserSimpleSerializer(read_only=True)
     items = ApiOrderItemSerializer(many=True, read_only=True)
     history = ApiOrderStatusHistorySerializer(many=True, read_only=True)
+    status_display = serializers.CharField(source='get_status_display', read_only=True)
 
     class Meta:
         read_only_fields = ('created_at', 'updated_at')

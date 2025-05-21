@@ -789,4 +789,15 @@ class AddToCartAPIView(APIView):
             "item_id": cart_item.id,
             "quantity": cart_item.quantity
         }, status=status.HTTP_200_OK)
-    
+
+
+class CustomerOrdersSearchView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        code = request.query_params.get('code', '').strip()
+
+        orders = ShopOrder.objects.filter(customer=get_current_user())
+        orders = orders.filter(Q(exuni_tracking_code__contains=code) | Q(post_tracking_code__contains=code))
+        serializers = ApiOrderListSerializer(orders, many=True)
+        return Response(serializers.data, status=status.HTTP_200_OK)

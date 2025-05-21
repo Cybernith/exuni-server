@@ -11,7 +11,7 @@ from shop.views import CurrentUserCartApiView, CartDetailView, CurrentUserWishLi
     CommentDetailView, ShopOrderStatusHistoryApiView, \
     UserProductRateApiView, CartSyncView, WishlistSyncView, \
     ComparisonSyncView, SyncAllDataView, ShopOrderRegistrationView, CustomerOrdersDetailView, ClearCustomerCartView, \
-    CustomerOrdersView
+    CustomerOrdersView, CustomerOrdersSearchView
 
 app_name = 'shop'
 urlpatterns = [
@@ -53,6 +53,7 @@ urlpatterns = [
     url(r'^product/(?P<product_id>[0-9]+)/userRate$', UserProductRateApiView.as_view(), name='productUserRate'),
 
     url(r'^createOrder$', ShopOrderRegistrationView.as_view(), name='createOrder'),
+    url(r'^createOrderByCode$', CustomerOrdersSearchView.as_view(), name='createOrderByCode$'),
     url(r'^customerOrders', CustomerOrdersView.as_view(), name='customerOrders'),
     url(r'^customerOrderDetail/(?P<order_id>[0-9]+)$', CustomerOrdersDetailView.as_view(), name='customerOrdersDetail'),
 
