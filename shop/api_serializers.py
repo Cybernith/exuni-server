@@ -367,6 +367,7 @@ class ApiCustomerShopOrderSimpleSerializer(serializers.ModelSerializer):
     shipment_address = ApiShipmentAddressRetrieveSerializer(read_only=True)
     history = ApiOrderStatusHistorySerializer(many=True, read_only=True)
     items = ApiCustomerShopOrderItemSerializer(many=True, read_only=True)
+    final_amount = serializers.ReadOnlyField()
 
     class Meta:
         model = ShopOrder
