@@ -38,3 +38,10 @@ class CurrentUserWalletSerializer(serializers.ModelSerializer):
         fields = ['balance']
         read_only_fields = ['balance']
 
+
+class DiscountResultSerializer(serializers.Serializer):
+    discount_id = serializers.IntegerField()
+    discount_name = serializers.CharField()
+    type = serializers.CharField()
+    value = serializers.DecimalField(max_digits=12, decimal_places=2, required=False, allow_null=True)
+    reason = serializers.ListField(child=serializers.CharField(), required=False)
