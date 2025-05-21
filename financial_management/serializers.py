@@ -4,7 +4,10 @@ from rest_framework import serializers
 from financial_management.models import Payment, Wallet, DiscountConditionCategory, DiscountConditionProduct, \
     DiscountConditionUser, DiscountConditionBrand, DiscountConditionPriceOver, DiscountConditionPriceLimit, \
     DiscountCondition, DiscountAction, Discount
+from helpers.functions import get_current_user
 from helpers.serializers import SModelSerializer
+from products.models import Product
+from shop.api_serializers import ApiProductsListSerializers
 from users.models import User
 
 
@@ -41,14 +44,6 @@ class CurrentUserWalletSerializer(serializers.ModelSerializer):
         read_only_fields = ['balance']
 
 
-class DiscountResultSerializer(serializers.Serializer):
-    discount_id = serializers.IntegerField()
-    discount_name = serializers.CharField()
-    type = serializers.CharField()
-    value = serializers.DecimalField(max_digits=12, decimal_places=2, required=False, allow_null=True)
-    reason = serializers.ListField(child=serializers.CharField(), required=False)
-
-
 class DiscountConditionCategorySerializer(serializers.ModelSerializer):
     categories = serializers.SlugRelatedField(
         many=True,
@@ -62,11 +57,7 @@ class DiscountConditionCategorySerializer(serializers.ModelSerializer):
 
 
 class DiscountConditionProductSerializer(serializers.ModelSerializer):
-    products = serializers.SlugRelatedField(
-        many=True,
-        read_only=True,
-        slug_field='name'
-    )
+    products = ApiProductsListSerializers(many=True, read_only=True)
 
     class Meta:
         model = DiscountConditionProduct
@@ -135,8 +126,34 @@ class DiscountActionSerializer(serializers.ModelSerializer):
 class DiscountSerializer(serializers.ModelSerializer):
     conditions = DiscountConditionSerializer(many=True, read_only=True)
     action = DiscountActionSerializer(read_only=True)
+    applicable_products = serializers.SerializerMethodField()
 
     class Meta:
         model = Discount
         fields = ['id', 'name', 'description', 'is_active', 'start_date', 'end_date',
-                  'created_at', 'updated_at', 'conditions', 'action']
+                  'created_at', 'updated_at', 'conditions', 'action', 'applicable_products']
+
+    def get_applicable_products(self, obj):
+        conditions = obj.conditions.all()
+        has_price_condition = any(
+            condition.type in [DiscountCondition.PRICE_OVER, DiscountCondition.PRICE_LIMIT] for condition in conditions
+        )
+
+        if has_price_condition:
+            products = Product.objects.filter(status=Product.PUBLISHED).order_by('-id')[:10]
+        else:
+            products = Product.objects.filter(status=Product.PUBLISHED)
+            for condition in conditions:
+                if condition.type == DiscountCondition.CATEGORY:
+                    if condition.category_condition:
+                        products = products.filter(category__in=condition.category_condition.categories.all())
+                elif condition.type == DiscountCondition.BRAND:
+                    if condition.brand_condition:
+                        products = products.filter(brand__in=condition.brand_condition.brands.all())
+                elif condition.type == DiscountCondition.PRODUCT:
+                    if condition.product_condition:
+                        products = products.filter(id__in=condition.product_condition.products.values('id'))
+
+            products = products.distinct()[:10]
+
+        return ApiProductsListSerializers(products, many=True, context=self.context).data
