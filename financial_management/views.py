@@ -49,7 +49,7 @@ class StartZarinpalPaymentApiView(APIView):
         callback_url = SERVER_URL + reverse('financial_management:zarinpal_callback')
 
         gateway = ZarinpalGateway(
-            amount=order.final_amount,
+            amount=payment.amount,
             description=f'پرداخت سفارش {order.id}',
             callback_url=callback_url
         )
