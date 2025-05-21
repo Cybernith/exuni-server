@@ -186,7 +186,7 @@ class VerifyDiscountCodeView(APIView):
         discount_code.verify()
 
         return Response({
-            'discount_code': discount_code,
+            'discount_code': discount_code.code,
             'discount_amount': discount_code.get_discount_amount(order_amount)
         })
 
