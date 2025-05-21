@@ -1,16 +1,16 @@
 from django.contrib import admin
 from nested_admin import NestedModelAdmin, NestedStackedInline
 from django.utils.translation import gettext_lazy as _
-
+from django.utils.html import format_html
+from django.utils import timezone
 from cms.models import HeaderElement, PopUpElement, BannerContent, BannerContentItem, ShopHomePageStory, \
     ShopHomeHighlight, ShopHomeHighlightItem
 from subscription.models import DiscountCode
 
+
 admin.site.register(HeaderElement)
 admin.site.register(PopUpElement)
 admin.site.register(ShopHomePageStory)
-admin.site.register(ShopHomeHighlight)
-admin.site.register(ShopHomeHighlightItem)
 
 
 
@@ -67,9 +67,9 @@ class BannerContentAdmin(NestedModelAdmin):
         'order',
         'from_date_time',
         'to_date_time',
-        ('items__discount_code', admin.RelatedOnlyFieldListFilter)  # اصلاح فیلتر
+        ('items__discount_code', admin.RelatedOnlyFieldListFilter)
     )
-    search_fields = ('title',)  # برای autocomplete_fields
+    search_fields = ('title',)
     list_editable = ('auto_scroll_seconds',)
     list_per_page = 20
     fieldsets = (
@@ -105,7 +105,7 @@ class BannerContentItemAdmin(admin.ModelAdmin):
         'has_images'
     )
     list_filter = ('banner_content', 'discount_code')
-    search_fields = ('title', 'link', 'description')  # اضافه شد برای autocomplete_fields
+    search_fields = ('title', 'link', 'description')
     list_per_page = 20
     fields = (
         'banner_content',
@@ -123,3 +123,50 @@ class BannerContentItemAdmin(admin.ModelAdmin):
         return bool(obj.mobile_image and obj.desktop_image)
     has_images.short_description = _("دارای تصویر")
     has_images.boolean = True
+
+
+class ShopHomeHighlightItemInline(NestedStackedInline):
+    model = ShopHomeHighlightItem
+    extra = 1
+    fields = [
+        'title', 'type', 'category', 'brand',
+        'mobile_image', 'desktop_image', 'mobile_image_preview', 'desktop_image_preview',
+        'from_date_time', 'to_date_time'
+    ]
+    readonly_fields = ['mobile_image_preview', 'desktop_image_preview']
+    autocomplete_fields = ['category', 'brand']
+
+    def mobile_image_preview(self, obj):
+        if obj.mobile_image:
+            return format_html('<img src="{}" style="max-height: 100px;" />', obj.mobile_image.url)
+        return "-"
+    mobile_image_preview.short_description = "پیش‌نمایش تصویر موبایل"
+
+    def desktop_image_preview(self, obj):
+        if obj.desktop_image:
+            return format_html('<img src="{}" style="max-height: 100px;" />', obj.desktop_image.url)
+        return "-"
+    desktop_image_preview.short_description = "پیش‌نمایش تصویر دسکتاپ"
+
+
+@admin.register(ShopHomeHighlight)
+class ShopHomeHighlightAdmin(NestedModelAdmin):
+    list_display = ['title', 'from_date_time', 'to_date_time', 'is_active', 'item_count']
+    list_filter = ['from_date_time', 'to_date_time']
+    search_fields = ['title', 'description']
+    inlines = [ShopHomeHighlightItemInline]
+    fields = ['title', 'description', 'from_date_time', 'to_date_time']
+    date_hierarchy = 'from_date_time'
+
+    def is_active(self, obj):
+        now = timezone.now()
+        return obj.from_date_time <= now <= obj.to_date_time
+    is_active.short_description = "فعال"
+    is_active.boolean = True
+
+    def item_count(self, obj):
+        return obj.items.count()
+    item_count.short_description = "تعداد آیتم‌ها"
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).prefetch_related('items')
