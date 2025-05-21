@@ -49,7 +49,6 @@ class Wallet(models.Model):
 
             Transaction.objects.create(
                 wallet=wallet,
-                user=wallet.user,
                 amount=amount,
                 type=transaction_type or Transaction.BUY,
                 status=Transaction.SUCCESS,

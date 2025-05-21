@@ -160,7 +160,11 @@ class ShopHomeHighlightAdmin(NestedModelAdmin):
 
     def is_active(self, obj):
         now = timezone.now()
-        return obj.from_date_time <= now <= obj.to_date_time
+        if obj.from_date_time is None and obj.to_date_time is None:
+            return True
+        else:
+            return obj.from_date_time <= now <= obj.to_date_time
+
     is_active.short_description = "فعال"
     is_active.boolean = True
 
