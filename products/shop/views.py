@@ -369,7 +369,7 @@ class CurrentUserHasOrderProductViewSet(viewsets.ReadOnlyModelViewSet):
 class CurrentUserRelatedProductViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = ApiProductsListSerializers
     pagination_class = None  # Disable pagination for fixed-size recommendations
-    authentication_classes = [IsAuthenticated]  # Explicit auth
+    permission_classes = [IsAuthenticated]  # Explicit auth
     # Cache settings (5 minutes)
     CACHE_TIMEOUT = 60
 
