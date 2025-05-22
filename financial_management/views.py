@@ -36,7 +36,8 @@ class StartZarinpalPaymentApiView(APIView):
 
         order = get_object_or_404(ShopOrder, id=order_id, customer=get_current_user())
 
-        if hasattr(order, 'bank_payment'):
+        payment_status = getattr(order, 'bank_payment', None)
+        if payment_status and payment_status.status != 'pending':
             return Response({'detail': 'this order already have open payment'}, status=status.HTTP_400_BAD_REQUEST)
 
         if request.data.get('use_wallet', False):
@@ -120,7 +121,8 @@ class StartPaymentApiView(APIView):
     def post(self, request, order_id):
         order = get_object_or_404(ShopOrder, id=order_id, customer=request.user)
 
-        if hasattr(order, 'bank_payment'):
+        payment_status = getattr(order, 'bank_payment', None)
+        if payment_status and payment_status.status != 'pending':
             return Response({'detail': 'this order already have open payment'}, status=status.HTTP_400_BAD_REQUEST)
 
         gateway_name = 'gateway'
