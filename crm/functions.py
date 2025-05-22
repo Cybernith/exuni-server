@@ -163,4 +163,4 @@ def get_recommended_products(user, limit=20):
 
     products_with_score.sort(key=lambda x: x[1], reverse=True)
 
-    return [product.id for product, score in products_with_score][:limit]
+    return [product for product, score in products_with_score][:limit]
