@@ -93,7 +93,7 @@ urlpatterns = [
     url(r'^product/(?P<product_id>[0-9]+)/related$', RelatedProductsApiView.as_view(), name='relatedProducts'),
     url(r'^product/(?P<product_id>[0-9]+)/similarBrand$', SimilarBrandProductsApiView.as_view(),
         name='similarBrandProducts'),
-    url(r'^userRecommendation$', CurrentUserRelatedProductViewSet.as_view(),
+    url(r'^userRecommendation$', CurrentUserRelatedProductViewSet.as_view({'get': 'list'}),
         name='userRecommendation'),
 
     url(r'^createOrder$', ShopOrderRegistrationView.as_view(), name='createOrder'),
