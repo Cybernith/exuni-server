@@ -367,7 +367,7 @@ class ZarinpalTopUpWalletCallbackApiView(APIView):
             try:
                 service.execute()
             except Exception as e:
-                return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+                return redirect(f'{FRONT_URL}/payment/fail?top_up_wallet=true&amount={payment.amount}&message={e}')
 
             return redirect(f'{FRONT_URL}/payment/success?top_up_wallet=true&amount={payment.amount}')
         else:
