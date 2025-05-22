@@ -8,7 +8,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from crm.functions import save_product_view_log
+from crm.functions import save_product_view_log, get_recommended_products
 from helpers.functions import get_current_user
 from products.lists.filters import RootCategoryFilter
 from products.models import Product, Category, Brand
@@ -365,7 +365,7 @@ class CurrentUserRelatedProductViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = ApiProductsListSerializers
 
     def get_queryset(self):
-        return Product.objects.all().order_by('-created_by')
+        return get_recommended_products(user=get_current_user(), limit=10)
 
 
 class PendingReviewProductsView(viewsets.ReadOnlyModelViewSet):
