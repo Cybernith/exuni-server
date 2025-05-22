@@ -368,9 +368,8 @@ class CurrentUserHasOrderProductViewSet(viewsets.ReadOnlyModelViewSet):
 
 class CurrentUserRelatedProductViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = ApiProductsListSerializers
-    pagination_class = None  # Disable pagination for fixed-size recommendations
-    permission_classes = [IsAuthenticated]  # Explicit auth
-    # Cache settings (5 minutes)
+    pagination_class = None
+    permission_classes = [IsAuthenticated]
     CACHE_TIMEOUT = 60
 
     @method_decorator(cache_page(CACHE_TIMEOUT))
@@ -379,18 +378,14 @@ class CurrentUserRelatedProductViewSet(viewsets.ReadOnlyModelViewSet):
         return super().list(request, *args, **kwargs)
 
     def get_queryset(self):
-        """
-        Optimized queryset with cached recommendations and direct user access
-        """
         return Product.objects.filter(
             id__in=get_recommended_products(
-                user=get_current_user(),  # Direct access instead of get_current_user()
+                user=get_current_user(),
                 limit=10
             )
         )
 
     def get_serializer_context(self):
-        """Optimize serializer context for URL generation"""
         context = super().get_serializer_context()
         context['request'] = self.request
         return context
