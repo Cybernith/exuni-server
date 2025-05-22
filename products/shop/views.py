@@ -33,6 +33,7 @@ from rest_framework.filters import OrderingFilter
 from rest_framework.parsers import MultiPartParser, FormParser
 import numpy as np
 
+
 class ShopProductListView(generics.ListAPIView):
     serializer_class = ShopProductsListSerializers
     throttle_classes = [UserProductListRateThrottle, AnonProductListRateThrottle]
@@ -365,9 +366,6 @@ class CurrentUserHasOrderProductViewSet(viewsets.ReadOnlyModelViewSet):
         return Product.objects.filter(shop_order_items__shop_order__customer=user).distinct()
 
 
-
-
-
 class CurrentUserRelatedProductViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = ApiProductsListSerializers
     pagination_class = None  # Disable pagination for fixed-size recommendations
@@ -384,9 +382,11 @@ class CurrentUserRelatedProductViewSet(viewsets.ReadOnlyModelViewSet):
         """
         Optimized queryset with cached recommendations and direct user access
         """
-        return get_recommended_products(
-            user=self.request.user,  # Direct access instead of get_current_user()
-            limit=10
+        return Product.objects.filter(
+            id__in=get_recommended_products(
+                user=self.request.user,  # Direct access instead of get_current_user()
+                limit=10
+            )
         )
 
     def get_serializer_context(self):
@@ -394,6 +394,7 @@ class CurrentUserRelatedProductViewSet(viewsets.ReadOnlyModelViewSet):
         context = super().get_serializer_context()
         context['request'] = self.request
         return context
+
 
 class PendingReviewProductsView(viewsets.ReadOnlyModelViewSet):
     permission_classes = [IsAuthenticated]
