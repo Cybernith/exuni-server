@@ -384,7 +384,7 @@ class CurrentUserRelatedProductViewSet(viewsets.ReadOnlyModelViewSet):
         """
         return Product.objects.filter(
             id__in=get_recommended_products(
-                user=self.request.user,  # Direct access instead of get_current_user()
+                user=get_current_user(),  # Direct access instead of get_current_user()
                 limit=10
             )
         )
