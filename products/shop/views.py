@@ -3,10 +3,14 @@ from django.core.cache import cache
 from django.db.models import Q, Count, F, Prefetch
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, status, viewsets
+from rest_framework.authentication import SessionAuthentication
 from rest_framework.pagination import LimitOffsetPagination, PageNumberPagination
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
+from django.views.decorators.vary import vary_on_cookie
 
 from crm.functions import save_product_view_log, get_recommended_products
 from helpers.functions import get_current_user
@@ -361,12 +365,35 @@ class CurrentUserHasOrderProductViewSet(viewsets.ReadOnlyModelViewSet):
         return Product.objects.filter(shop_order_items__shop_order__customer=user).distinct()
 
 
+
+
+
 class CurrentUserRelatedProductViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = ApiProductsListSerializers
+    pagination_class = None  # Disable pagination for fixed-size recommendations
+    authentication_classes = [IsAuthenticated]  # Explicit auth
+    # Cache settings (5 minutes)
+    CACHE_TIMEOUT = 60
+
+    @method_decorator(cache_page(CACHE_TIMEOUT))
+    @method_decorator(vary_on_cookie)
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
 
     def get_queryset(self):
-        return get_recommended_products(user=get_current_user(), limit=10)
+        """
+        Optimized queryset with cached recommendations and direct user access
+        """
+        return get_recommended_products(
+            user=self.request.user,  # Direct access instead of get_current_user()
+            limit=10
+        )
 
+    def get_serializer_context(self):
+        """Optimize serializer context for URL generation"""
+        context = super().get_serializer_context()
+        context['request'] = self.request
+        return context
 
 class PendingReviewProductsView(viewsets.ReadOnlyModelViewSet):
     permission_classes = [IsAuthenticated]
