@@ -19,6 +19,7 @@ from rest_framework.authtoken.models import Token
 from users.throttles import UserCreateRateThrottle, UserUpdateRateThrottle
 from django.contrib.auth import login
 import re
+import requests
 
 class CurrentUserApiView(APIView):
     permission_classes = (IsAuthenticated,)

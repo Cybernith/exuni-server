@@ -1,6 +1,7 @@
 import datetime
 import random
 import secrets
+import requests
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.validators import RegexValidator
@@ -255,7 +256,7 @@ class PhoneVerification(BaseModel):
 
     @staticmethod
     def send_verification_code(phone):
-        verify_code = ''.join(str(secrets.randbelow(10)) for _ in range(6))
+        verify_code = random.randint(100000, 999999)
 
         try:
             user = User.objects.get(mobile_number=phone)
@@ -264,11 +265,24 @@ class PhoneVerification(BaseModel):
 
         PhoneVerification.objects.create(user=user, phone=phone, code=verify_code)
 
-        Sms.send(
-            phone=phone,
-            message=f"کد تایید شما در اکسونی: {verify_code}"
-        )
+        url = "https://api2.ippanel.com/api/v1/sms/pattern/normal/send"
 
+        headers = {
+            "accept": "*/*",
+            "apikey": "NV8iLMxAXqPyYIjKx_xlWMTk1Z0SzXpsU4QWIkqlZfI=",  # اینجا api key واقعی‌ات رو بذار
+            "Content-Type": "application/json"
+        }
+
+        payload = {
+            "code": "6k4owz2cjxbrmt2",  # کد الگوی ساخته‌شده در پنل
+            "sender": "+983000505",
+            "recipient": phone,
+            "variable": {
+                "verification-code": verify_code
+            }
+        }
+
+        requests.post(url, json=payload, headers=headers)
         return {"phone": phone, "code": verify_code}
 
     @staticmethod
