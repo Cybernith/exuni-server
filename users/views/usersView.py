@@ -94,7 +94,7 @@ class SendVerificationCodeView(APIView, RecaptchaView):
 
         if phone:
             if len(phone) == 11:
-                phone_sample = f"{phone[8:]} **** {phone[:4]}"
+                phone_sample = f"{phone[:4]} **** {phone[-4:]}"
             else:
                 phone_sample = "شماره نامعتبر"
             return Response(
