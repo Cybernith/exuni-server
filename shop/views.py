@@ -93,7 +93,7 @@ class CartDetailView(APIView):
 
 class CartSyncView(APIView):
     permission_classes = [IsAuthenticated]
-    throttle_classes = [SyncAllDataThrottle]
+    throttle_scope = 'sync_all_data'
 
     @transaction.atomic
     def post(self, request, *args, **kwargs):
@@ -180,7 +180,7 @@ class WishListDetailView(APIView):
 
 class WishlistSyncView(APIView):
     permission_classes = [IsAuthenticated]
-    throttle_classes = [SyncAllDataThrottle]
+    throttle_scope = 'sync_all_data'
 
     @transaction.atomic
     def post(self, request, *args, **kwargs):
@@ -272,7 +272,7 @@ class ComparisonDetailView(APIView):
 
 class ComparisonSyncView(APIView):
     permission_classes = [IsAuthenticated]
-    throttle_classes = [SyncAllDataThrottle]
+    throttle_scope = 'sync_all_data'
 
     @transaction.atomic
     def post(self, request, *args, **kwargs):
@@ -618,7 +618,7 @@ class UserProductRateApiView(APIView):
 
 class SyncAllDataView(APIView):
     permission_classes = [IsAuthenticated]
-    throttle_classes = [SyncAllDataThrottle]
+    throttle_scope = 'sync_all_data'
 
     @transaction.atomic
     def post(self, request, *args, **kwargs):
