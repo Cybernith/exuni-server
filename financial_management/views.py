@@ -71,9 +71,22 @@ class ZarinpalCallbackApiView(APIView):
     def get(self, request):
         authority = request.query_params.get('Authority')
         callback_status = request.query_params.get('Status')
+        payment = get_object_or_404(Payment, reference_id=authority)
+        order = payment.shop_order
 
         if callback_status != 'OK':
-            return Response({'detail': 'payment failed'}, status=status.HTTP_400_BAD_REQUEST)
+            payment.mark_as_failed_payment(user=payment.user)
+            FinancialLogger.log(
+                user=payment.user,
+                action=AuditAction.PAYMENT_FAILED,
+                severity=AuditSeverity.INFO,
+                payment=payment,
+                ip_address=self.kwargs.get("ip"),
+                user_agent=self.kwargs.get("agent"),
+                extra_info={"amount": str(payment.amount)}
+            )
+
+            return redirect(f'{FRONT_URL}/payment/fail?orderId={order.id}')
 
         payment = get_object_or_404(Payment, reference_id=authority)
         order = payment.shop_order
@@ -336,9 +349,20 @@ class ZarinpalTopUpWalletCallbackApiView(APIView):
         authority = request.query_params.get('Authority')
         callback_status = request.query_params.get('Status')
 
-        if callback_status != 'OK':
-            return Response({'detail': 'payment failed'}, status=status.HTTP_400_BAD_REQUEST)
         payment = get_object_or_404(Payment, reference_id=authority)
+
+        if callback_status != 'OK':
+            payment.mark_as_failed_payment(user=payment.user)
+            FinancialLogger.log(
+                user=payment.user,
+                action=AuditAction.PAYMENT_FAILED,
+                severity=AuditSeverity.INFO,
+                payment=payment,
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT'),
+                extra_info={"amount": str(payment.amount)}
+            )
+            return redirect(f'{FRONT_URL}/payment/fail?top_up_wallet=true&amount={payment.amount}')
 
         gateway = ZarinpalGateway(
             amount=payment.amount,
