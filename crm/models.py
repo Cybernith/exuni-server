@@ -1,5 +1,6 @@
 from django.db import models, transaction
 
+from crm.managers import UserNotificationManager
 from helpers.models import TimeStampedModel
 
 from user_agents import parse as user_agent_parse
@@ -292,6 +293,8 @@ class UserNotification(models.Model):
 
     notification_status = models.CharField(choices=STATUSES, max_length=2, blank=True, null=True)
     sms_status = models.CharField(choices=STATUSES, max_length=2, blank=True, null=True)
+
+    objects = UserNotificationManager()
 
     def __str__(self):
         return "{} -> {} ({})".format(self.notification, self.user, self.id)
