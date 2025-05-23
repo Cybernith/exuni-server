@@ -1,12 +1,13 @@
 from django.contrib.postgres.aggregates import StringAgg
 from django.contrib.postgres.search import SearchQuery, SearchVector, SearchRank, TrigramSimilarity
-from django.db.models import Value, CharField, F
+from django.db.models import Value, CharField, F, Func
 from django.db.models.functions import Greatest
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from products.models import Product, Brand, Category
+from server.settings import FRONT_URL
 from shop.throttles import UserSearchAutoCompleteRateThrottle, AnonSearchAutoCompleteRateThrottle
 
 
@@ -45,9 +46,15 @@ class GlobalAutoCompleteSearchAPIView(APIView):
         ).annotate(
             relevance=F('rank') + F('similarity')
         ).annotate(
-            type=Value('product', output_field=CharField())
+            type=Value('product', output_field=CharField()),
+            picture_url=Func(
+                Value(f'{FRONT_URL}/'),
+                F('picture'),
+                function='CONCAT',
+                output_field=CharField()
+            )
         ).values(
-            'id', 'name', 'type'
+            'id', 'name', 'type', 'picture_url'
         ).order_by('-relevance', '-similarity', '-rank')[:5]
 
         result.extend(product_queryset)
@@ -57,9 +64,16 @@ class GlobalAutoCompleteSearchAPIView(APIView):
         ).filter(
             similarity__gt=0.3
         ).annotate(
-            type=Value('brand', output_field=CharField())
+            type=Value('brand', output_field=CharField()),
+            picture_url=Func(
+                Value(f'{FRONT_URL}/'),
+                F('logo'),
+                function='CONCAT',
+                output_field=CharField()
+            )
+
         ).values(
-            'id', 'name', 'type'
+            'id', 'name', 'type', 'picture_url'
         ).order_by('-similarity')[:5]
 
         result.extend(brand_queryset)
