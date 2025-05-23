@@ -24,7 +24,7 @@ from products.trottles import UserProductDetailRateThrottle, AnonProductDetailRa
 from products.utils import ImageFeatureExtractor
 from shop.api_serializers import ApiProductsListSerializers, ApiProductDetailSerializers, ApiBrandListSerializer, \
     ApiProductsWithCommentsListSerializers, ApiUserCommentProductsSimpleListSerializers
-from shop.models import Comment
+from shop.models import Comment, ShopOrder
 from shop.serializers import CommentRepliesSerializer
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import OrderingFilter
@@ -362,7 +362,10 @@ class CurrentUserHasOrderProductViewSet(viewsets.ReadOnlyModelViewSet):
 
     def get_queryset(self):
         user = get_current_user()
-        return Product.objects.filter(shop_order_items__shop_order__customer=user).distinct()
+        return Product.objects.filter(
+            Q(shop_order_items__shop_order__customer=user) &
+            ~Q(shop_order_items__shop_order__status=ShopOrder.PENDING)
+        ).distinct()
 
 
 class CurrentUserRelatedProductViewSet(viewsets.ReadOnlyModelViewSet):
