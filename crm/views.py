@@ -335,11 +335,11 @@ class UserCurrentNotificationsBySortAPIView(APIView):
 
     def get(self, request):
         activities_objects = self.get_activities_objects()
-        activities_objects.mark_as_not_read()
+        activities_objects.update(notification_status=UserNotification.NOT_READ)
         offer_objects = self.get_offer_objects()
-        offer_objects.mark_as_not_read()
+        offer_objects.update(notification_status=UserNotification.NOT_READ)
         order_objects = self.get_order_objects()
-        order_objects.mark_as_not_read()
+        order_objects.update(notification_status=UserNotification.NOT_READ)
 
         return Response(
             {
