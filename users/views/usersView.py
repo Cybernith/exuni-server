@@ -18,6 +18,7 @@ from rest_framework.authtoken.models import Token
 
 from users.throttles import UserCreateRateThrottle, UserUpdateRateThrottle
 from django.contrib.auth import login
+import re
 
 class CurrentUserApiView(APIView):
     permission_classes = (IsAuthenticated,)
@@ -70,21 +71,29 @@ class UserUpdateView(generics.UpdateAPIView):
 class SendVerificationCodeView(APIView, RecaptchaView):
     throttle_scope = 'verification_code'
 
+    @staticmethod
+    def is_valid_persian_mobile(phone: str) -> bool:
+        phone = re.sub(r'\D', '', phone)
+        pattern = r"^09[0-3]\d{8}$"
+        return bool(re.match(pattern, phone))
+
     def post(self, request):
         phone = request.data.get('phone')
 
         if not phone:
             return Response({"error": "شماره تلفن وارد نشده است."}, status=status.HTTP_400_BAD_REQUEST)
 
-        #if not request.user.is_authenticated:
-        #    self.verify_recaptcha()
+        phone = phone.strip()
+        
+        if not self.is_valid_persian_mobile(phone=phone):
+            return Response({"error": "شماره نا معتبر است"}, status=status.HTTP_400_BAD_REQUEST)
 
         result = PhoneVerification.send_verification_code(phone=phone)
         phone = result.get('phone')
         code = result.get('code')
 
         if phone:
-            if len(phone) >= 11:
+            if len(phone) == 11:
                 phone_sample = f"{phone[8:]} **** {phone[:4]}"
             else:
                 phone_sample = "شماره نامعتبر"
