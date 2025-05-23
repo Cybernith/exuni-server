@@ -669,8 +669,8 @@ class SyncAllDataView(APIView):
 
         products = Product.objects.filter(id__in=product_ids).only('id')
 
-        existing_wishlist = WishList.objects.filter(user=user, product_id__in=product_ids)
-        existing_compare = Comparison.objects.filter(user=user, product_id__in=product_ids)
+        existing_wishlist = WishList.objects.filter(customer=user, product_id__in=product_ids)
+        existing_compare = Comparison.objects.filter(customer=user, product_id__in=product_ids)
 
         existing_wishlist_map = {item.product_id: item for item in existing_wishlist}
         existing_compare_map = {item.product_id: item for item in existing_compare}
@@ -682,14 +682,14 @@ class SyncAllDataView(APIView):
             pid = item['product_id']
             if pid in [p.id for p in products] and pid not in existing_wishlist_map:
                 wishlist_to_create.append(
-                    WishList(user=user, product_id=pid)
+                    WishList(customer=user, product_id=pid)
                 )
 
         for item in compare_items:
             pid = item['product_id']
             if pid in [p.id for p in products] and pid not in existing_compare_map:
                 compare_to_create.append(
-                    Comparison(user=user, product_id=pid)
+                    Comparison(customer=user, product_id=pid)
                 )
 
         if wishlist_to_create:
