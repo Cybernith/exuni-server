@@ -334,10 +334,6 @@ class ShopOrder(BaseModel):
 
         gateway_amount = final_price - used_from_wallet
 
-        if used_from_wallet > 0:
-            wallet.reduce_balance(amount=used_from_wallet, description=f"پرداخت سفارش {self.exuni_tracking_code}")
-        wallet.refresh_from_db()
-
         if gateway_amount > 0:
             payment = Payment.objects.create(
                 shop_order=self,
@@ -352,6 +348,8 @@ class ShopOrder(BaseModel):
             return payment
 
         else:
+            wallet.reduce_balance(amount=used_from_wallet, description=f"پرداخت سفارش {self.exuni_tracking_code}")
+            wallet.refresh_from_db()
             self.mark_as_paid()
             return None
 

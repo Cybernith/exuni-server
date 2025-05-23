@@ -88,9 +88,6 @@ class ZarinpalCallbackApiView(APIView):
 
             return redirect(f'{FRONT_URL}/payment/fail?orderId={order.id}')
 
-        payment = get_object_or_404(Payment, reference_id=authority)
-        order = payment.shop_order
-
         gateway = ZarinpalGateway(
             amount=payment.amount,
             description=f'تایید پرداخت سفارش {order.id}',
@@ -99,6 +96,13 @@ class ZarinpalCallbackApiView(APIView):
 
         result = gateway.verify_payment(authority)
         if result.get('data') and result['data'].get('code') == 100:
+            if payment.used_amount_from_wallet > 0:
+                wallet = payment.user.exuni_wallet
+                wallet.reduce_balance(
+                    amount=payment.used_amount_from_wallet,
+                    description=f"پرداخت سفارش {order.exuni_tracking_code}"
+                )
+                wallet.refresh_from_db()
             payment.mark_as_success_payment(user=payment.user)
             FinancialLogger.log(
                 user=payment.user,
@@ -114,6 +118,8 @@ class ZarinpalCallbackApiView(APIView):
             order.mark_as_paid()
             return redirect(f'{FRONT_URL}/payment/success?orderId={order.id}')
         else:
+            payment.used_amount_from_wallet = 0
+            payment.save()
             payment.mark_as_failed_payment(user=payment.user)
             FinancialLogger.log(
                 user=payment.user,
@@ -124,7 +130,6 @@ class ZarinpalCallbackApiView(APIView):
                 user_agent=self.kwargs.get("agent"),
                 extra_info={"amount": str(payment.amount)}
             )
-
             return redirect(f'{FRONT_URL}/payment/fail?orderId={order.id}')
 
 
@@ -300,8 +305,8 @@ class StartZarinpalWalletTopUPApiView(APIView):
         except (TypeError, ValueError):
             return Response({'detail': 'Invalid amount'}, status=status.HTTP_400_BAD_REQUEST)
 
-        if not top_up_amount or top_up_amount < 100000:
-            return Response({'detail': 'amount should be positive and greater than 100,000 rial'},
+        if not top_up_amount:
+            return Response({'detail': 'amount should be positive'},
                             status=status.HTTP_400_BAD_REQUEST)
 
         payment = Payment.objects.create(
