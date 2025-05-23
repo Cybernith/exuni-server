@@ -19,7 +19,7 @@ from rest_framework.authtoken.models import Token
 from users.throttles import UserCreateRateThrottle, UserUpdateRateThrottle
 from django.contrib.auth import login
 import re
-import requests
+
 
 class CurrentUserApiView(APIView):
     permission_classes = (IsAuthenticated,)
@@ -91,16 +91,14 @@ class SendVerificationCodeView(APIView, RecaptchaView):
 
         result = PhoneVerification.send_verification_code(phone=phone)
         phone = result.get('phone')
-        code = result.get('code')
 
         if phone:
             if len(phone) == 11:
                 phone_sample = f"{phone[8:]} **** {phone[:4]}"
             else:
                 phone_sample = "شماره نامعتبر"
-
             return Response(
-                data={'phone_sample': phone_sample, 'code': code},
+                data={'phone_sample': phone_sample},
                 status=status.HTTP_200_OK
             )
 
@@ -111,17 +109,16 @@ class CheckVerificationCodeView(APIView, RecaptchaView):
     throttle_scope = 'verification_code'
 
     def post(self, request):
-        # self.verify_recaptcha()
 
         data = request.data
 
-        username = data['username']
-        verificationCode = data.get('verificationCode')
-        verificationCode = PhoneVerification.check_verification_code(username=username, phone=None,
-                                                                     code=verificationCode, raise_exception=True)
+        verification_code = data.get('verificationCode')
+        verification_code = PhoneVerification.check_verification_code(
+            phone=None, code=verification_code, raise_exception=True
+        )
 
-        if verificationCode is not None:
-            return Response(data={'verificationCode': verificationCode}, status=status.HTTP_200_OK)
+        if verification_code is not None:
+            return Response(data={'verificationCode': verification_code}, status=status.HTTP_200_OK)
         else:
             return Response(status=status.HTTP_404_NOT_FOUND)
 

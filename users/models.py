@@ -11,6 +11,7 @@ from django.contrib.postgres.fields.array import ArrayField
 from django.db import models
 from rest_framework.exceptions import ValidationError, PermissionDenied
 
+from crm.faraz_sms import IPPanelSMSService
 from helpers.models import BaseModel, BaseManager
 from helpers.sms import Sms
 from location_field.models.plain import PlainLocationField
@@ -256,34 +257,15 @@ class PhoneVerification(BaseModel):
 
     @staticmethod
     def send_verification_code(phone):
-        verify_code = random.randint(100000, 999999)
-
         try:
             user = User.objects.get(mobile_number=phone)
         except ObjectDoesNotExist:
             user = None
+        sms_service = IPPanelSMSService()
+        otp_code = sms_service.send_otp(phone=phone)
+        PhoneVerification.objects.create(user=user, phone=phone, code=otp_code)
 
-        PhoneVerification.objects.create(user=user, phone=phone, code=verify_code)
-
-        url = "https://api2.ippanel.com/api/v1/sms/pattern/normal/send"
-
-        headers = {
-            "accept": "*/*",
-            "apikey": "NV8iLMxAXqPyYIjKx_xlWMTk1Z0SzXpsU4QWIkqlZfI=",  # اینجا api key واقعی‌ات رو بذار
-            "Content-Type": "application/json"
-        }
-
-        payload = {
-            "code": "6k4owz2cjxbrmt2",  # کد الگوی ساخته‌شده در پنل
-            "sender": "+983000505",
-            "recipient": phone,
-            "variable": {
-                "verification-code": verify_code
-            }
-        }
-
-        requests.post(url, json=payload, headers=headers)
-        return {"phone": phone, "code": verify_code}
+        return {'otp_code': otp_code, 'phone': phone}
 
     @staticmethod
     def check_verification_code(phone, code, raise_exception=False):
@@ -292,7 +274,7 @@ class PhoneVerification(BaseModel):
         except PhoneVerification.DoesNotExist:
             raise ValidationError("کد تایید اکسونی اشتباه است")
         if not phone_verification.is_expired:
-            return code
+            return phone
         elif raise_exception:
             raise ValidationError("کد تایید شما در اکسونی منقضی شده است")
         return None
