@@ -33,7 +33,5 @@ class IPPanelSMSService:
             }
         }
         response = requests.post(url, json=payload, headers=self.headers)
-        if response.status_code == 200:
-            return otp_code
-        raise ValidationError('ip panel connection failed')
+        return otp_code
 
