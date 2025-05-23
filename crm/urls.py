@@ -3,7 +3,7 @@ from django.conf.urls import url
 from crm.list.views import ShopProductViewLogReportListView
 from crm.views import ShopProductViewLogApiView, ProductVisitReportView, ProductInRangeVisitReportView, \
     UserTopVisitedProductsAPIView, RegisterFinalSearchLogAPIView, CreateNotificationAPIView, \
-    UserCurrentNotificationsAPIView
+    UserCurrentNotificationsAPIView, MarkNotificationAsReadView
 
 app_name = 'crm'
 urlpatterns = [
@@ -22,4 +22,6 @@ urlpatterns = [
         name='createNotification'),
     url(r'^retrieveNotification$', UserCurrentNotificationsAPIView.as_view(),
         name='retrieveNotification'),
+    url(r'^markNotificationAsRead/(?P<notification_id>[0-9]+)$', MarkNotificationAsReadView.as_view(),
+        name='markNotificationAsRead'),
 ]

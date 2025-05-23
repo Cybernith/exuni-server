@@ -335,11 +335,11 @@ class UserCurrentNotificationsBySortAPIView(APIView):
 
     def get(self, request):
         activities_objects = self.get_activities_objects()
-        activities_objects.update(notification_status=UserNotification.NOT_READ)
+        activities_objects.mark_as_not_read()
         offer_objects = self.get_offer_objects()
-        offer_objects.update(notification_status=UserNotification.NOT_READ)
+        offer_objects.mark_as_not_read()
         order_objects = self.get_order_objects()
-        order_objects.update(notification_status=UserNotification.NOT_READ)
+        order_objects.mark_as_not_read()
 
         return Response(
             {
@@ -349,3 +349,10 @@ class UserCurrentNotificationsBySortAPIView(APIView):
             }, status=status.HTTP_200_OK)
 
 
+class MarkNotificationAsReadView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, notification_id):
+        user_notification = get_object_or_404(UserNotification, id=notification_id, user=get_current_user())
+        user_notification.mark_as_read()
+        return Response({'detail': 'Notification marked as read.'}, status=status.HTTP_200_OK)

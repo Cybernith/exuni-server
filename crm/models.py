@@ -301,5 +301,12 @@ class UserNotification(models.Model):
         self.sms_status = self.SENT
         self.save()
 
+    def mark_as_read(self):
+        if self.notification_status != self.READ and self.notification_status == self.PENDING:
+            self.notification_status = self.READ
+            self.save(update_fields=["notification_status"])
 
-
+    def mark_as_not_read(self):
+        if self.notification_status == self.PENDING:
+            self.notification_status = self.NOT_READ
+            self.save(update_fields=["notification_status"])
