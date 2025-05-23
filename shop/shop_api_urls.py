@@ -2,7 +2,8 @@ from django.conf.urls import url
 
 from cms.views import HeaderElementApiView, PopUpElementApiView, BannerContentApiView, ShopHomePageStoryApiView, \
     CurrentShopHomeHighlightApiView
-from crm.views import UserCurrentNotificationsAPIView, UserCurrentNotificationsBySortAPIView, RecommendedProductsAPIView
+from crm.views import UserCurrentNotificationsAPIView, UserCurrentNotificationsBySortAPIView, \
+    RecommendedProductsAPIView, MarkNotificationAsReadView
 from products.shop.views import ShopProductSimpleListView, BrandShopListView, CategoryTreeView, RootCategoryListView, \
     ShopProductWithCommentsListView, CurrentUserHasOrderProductViewSet, CurrentUserRelatedProductViewSet, \
     PendingReviewProductsView, UserProductsWithCommentView, CommentCreateView, RateUpsertApiView, \
@@ -86,6 +87,8 @@ urlpatterns = [
 
     url(r'^retrieveNotificationBySort$', UserCurrentNotificationsBySortAPIView.as_view(),
         name='retrieveNotificationBySort'),
+    url(r'^markNotificationAsRead/(?P<notification_id>[0-9]+)$', MarkNotificationAsReadView.as_view(),
+        name='markNotificationAsRead'),
 
     url(r'^sendComment$', CommentCreateView.as_view(), name='sendComment'),
     url(r'^sendRate$', RateUpsertApiView.as_view(), name='sendRate'),
