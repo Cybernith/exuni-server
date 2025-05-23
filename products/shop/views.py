@@ -3,7 +3,6 @@ from django.core.cache import cache
 from django.db.models import Q, Count, F, Prefetch
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, status, viewsets
-from rest_framework.authentication import SessionAuthentication
 from rest_framework.pagination import LimitOffsetPagination, PageNumberPagination
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response

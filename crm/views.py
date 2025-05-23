@@ -27,6 +27,9 @@ from products.shop.serializers import ShopProductsListSerializers
 from shop.api_serializers import ApiProductsListSerializers
 from shop.models import ShopOrderItem, ShopOrder
 from users.models import User
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
+from django.views.decorators.vary import vary_on_cookie
 
 
 class ShopProductViewLogApiView(generics.CreateAPIView):
@@ -202,12 +205,28 @@ class RegisterFinalSearchLogAPIView(APIView):
 
 
 class RecommendedProductsAPIView(APIView):
+    serializer_class = ApiProductsListSerializers
+    pagination_class = None
     permission_classes = [IsAuthenticated]
+    CACHE_TIMEOUT = 60
 
-    def get(self, request):
-        products = get_recommended_products(request.user)
-        serializer = ApiProductsListSerializers(products, many=True)
-        return Response(serializer.data)
+    @method_decorator(cache_page(CACHE_TIMEOUT))
+    @method_decorator(vary_on_cookie)
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
+
+    def get_queryset(self):
+        return Product.objects.filter(
+            id__in=get_recommended_products(
+                user=get_current_user(),
+                limit=10
+            )
+        )
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['request'] = self.request
+        return context
 
 
 class CreateNotificationAPIView(APIView):
