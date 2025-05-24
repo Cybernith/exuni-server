@@ -40,7 +40,8 @@ class WalletTopUpService(BaseWalletService):
                 extra_info={"amount": str(self.amount)}
             )
 
-            wallet.increase_balance(self.amount)
+            wallet.balance += self.amount
+            wallet.save()
             return transaction
 
 

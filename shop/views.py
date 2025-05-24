@@ -18,6 +18,8 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, generics
 
+from financial_management.loggers.financial_logger import FinancialLogger
+from financial_management.models import Payment, Transaction, AuditAction, AuditSeverity
 from helpers.auth import BasicObjectPermission
 from helpers.functions import get_current_user
 from products.models import Product
@@ -801,3 +803,70 @@ class CustomerOrdersSearchView(APIView):
         orders = orders.filter(Q(exuni_tracking_code__contains=code) | Q(post_tracking_code__contains=code))
         serializers = ApiOrderListSerializer(orders, many=True)
         return Response(serializers.data, status=status.HTTP_200_OK)
+
+
+class CancelShopOrderView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk):
+        shop_order = get_object_or_404(ShopOrder, pk=pk)
+
+        if not (shop_order.customer == get_current_user()):
+            return Response(
+                {'detail': 'You do not have permission to cancel this order.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        if shop_order.status == ShopOrder.CANCELLED:
+            return Response(
+                {'detail': 'This order is already cancelled.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if shop_order.status != ShopOrder.PAID:
+            return Response(
+                {'detail': 'you cant cancel this order .'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        previous_status = shop_order.status
+        try:
+            shop_order.cancel_order()
+        except Exception as e:
+            return Response(
+                {'detail': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        ShopOrderStatusHistory.objects.create(
+            shop_order=shop_order,
+            previous_status=previous_status,
+            new_status=ShopOrder.CANCELLED,
+            changed_by=request.user,
+            note=request.data.get('note', '')
+        )
+
+        payment = shop_order.bank_payment
+        if payment and payment.status == Payment.SUCCESS:
+            shop_order.customer.exuni_wallet.increase_balance(
+                amount=(payment.amount + payment.used_amount_from_wallet),
+                description=f'لغو سفارش {shop_order.exuni_tracking_code} بعد از پرداخت',
+                transaction_type=Transaction.ORDER_REFUND,
+                order=shop_order,
+            )
+
+            FinancialLogger.log(
+                user=get_current_user(),
+                action=AuditAction.REFUND_PAYMENT_ORDER,
+                severity=AuditSeverity.INFO,
+                transaction=transaction,
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT'),
+                extra_info={"amount": str(payment.amount)}
+            )
+            payment.status = Payment.CANCELLED
+            payment.save()
+        return Response(
+            {'status': 'Order cancelled successfully.'},
+            status=status.HTTP_200_OK
+        )

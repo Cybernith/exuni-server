@@ -55,14 +55,35 @@ class Wallet(models.Model):
                 **kwargs
             )
 
-    def increase_balance(self, amount: Decimal, description: str = 'شارژ کیف پول', transaction_type=None, **kwargs):
+    def increase_balance(
+            self, amount: Decimal, description: str = 'شارژ کیف پول', transaction_type=None, order=None, **kwargs
+    ):
         if amount <= 0:
             raise ValidationError('مقدار برداشت باید یک عدد مثبت باشد.')
 
         with db_transaction.atomic():
             wallet = Wallet.objects.select_for_update().get(pk=self.pk)
+            balance_before = wallet.balance
             wallet.balance += amount
             wallet.save()
+
+            WalletLedger.objects.create(
+                wallet=wallet,
+                amount=amount,
+                balance_before=balance_before,
+                balance_after=wallet.balance,
+                is_credit=True,
+                description=description
+            )
+
+            Transaction.objects.create(
+                wallet=wallet,
+                shop_order=order,
+                amount=amount,
+                type=transaction_type or Transaction.TOP_UP,
+                status=Transaction.SUCCESS,
+                **kwargs
+            )
 
 
 class Transaction(models.Model):
@@ -72,6 +93,7 @@ class Transaction(models.Model):
     PAYMENT = 'payment'
     INVESTMENT = 'investment'
     BUY = 'buy'
+    ORDER_REFUND = 'refund'
 
     TRANSACTION_TYPE = (
         (TOP_UP, 'شارژ ولت'),
@@ -80,6 +102,7 @@ class Transaction(models.Model):
         (BUY, 'خرید از ولت'),
         (TRANSFER, 'انتقال'),
         (INVESTMENT, 'سرمایه گذاری'),
+        (ORDER_REFUND, 'برگشت مبلغ سفارش'),
     )
 
     PENDING = 'pending'
@@ -91,7 +114,8 @@ class Transaction(models.Model):
         (SUCCESS, 'موفق'),
         (FAILED, 'ناموفق'),
     )
-
+    shop_order = models.ForeignKey('shop.ShopOrder', related_name='transaction', on_delete=models.CASCADE,
+                                      blank=True, null=True, unique=True)
     wallet = models.ForeignKey(Wallet, on_delete=models.CASCADE, related_name='transactions')
     type = models.CharField(max_length=20, choices=TRANSACTION_TYPE)
     amount = models.DecimalField(max_digits=18, decimal_places=2)
@@ -137,6 +161,7 @@ class Payment(models.Model):
     SUCCESS = 'su'
     FAILED = 'fa'
     EXPIRED = 'ex'
+    CANCELLED = 'ca'
 
     STATUS_CHOICES = (
         (INITIATED, 'شروع شده'),
@@ -144,6 +169,7 @@ class Payment(models.Model):
         (SUCCESS, 'موفق'),
         (FAILED, 'ناموفق'),
         (EXPIRED, 'منقضی  شده'),
+        (CANCELLED, 'لغو شده'),
     )
 
     FOR_SHOP_ORDER = 'fso'
@@ -221,6 +247,7 @@ class AuditAction(models.TextChoices):
     WITHDRAW_SUCCESS = "wallet_withdraw_wallet__success", "Wallet Withdraw Success"
     TRANSFER = "wallet_transfer", "Wallet Transfer"
     PAYMENT_ORDER = "payment_order", "Payment for Order"
+    REFUND_PAYMENT_ORDER = "refund_payment_order", "Refund Payment for Order"
     INVESTMENT = "wallet_investment", "Investment Made"
     BALANCE_UPDATED = "wallet_balance_updated", "Balance Updated"
     TRANSACTION_FAILED = "transaction_failed", "Transaction Failed"

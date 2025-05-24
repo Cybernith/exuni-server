@@ -14,7 +14,8 @@ from shop.views import ToggleWishListBTNView, ToggleComparisonListBTNView, Curre
     CurrentUserComparisonApiView, ComparisonSyncView, SyncAllDataView, \
     ClearCustomerComparisonView, ClearCustomerWishListView, CurrentUserShipmentAddressApiView, \
     ShipmentAddressDetailView, UserOrdersListView, AddToCartAPIView, ShopOrderRegistrationView, \
-    CustomerOrdersDetailView, ShopOrderStatusHistoryApiView, CustomerOrdersView, CustomerOrdersSearchView
+    CustomerOrdersDetailView, ShopOrderStatusHistoryApiView, CustomerOrdersView, CustomerOrdersSearchView, \
+    CancelShopOrderView
 from users.views.usersView import CheckVerificationAndLogin, SendVerificationCodeView, UserUpdateView, ChangePhoneView, \
     CurrentUserApiView
 
@@ -105,5 +106,6 @@ urlpatterns = [
     url(r'^orderStatusHistory/(?P<order_id>[0-9]+)$', ShopOrderStatusHistoryApiView.as_view(),
         name='shopOrderStatusHistory'),
     url(r'^customerOrderDetail/(?P<order_id>[0-9]+)$', CustomerOrdersDetailView.as_view(), name='customerOrdersDetail'),
+    url(r'^cancelCustomerOrder/(?P<pk>[0-9]+)$', CancelShopOrderView.as_view(), name='cancelCustomerOrder'),
 
 ]
