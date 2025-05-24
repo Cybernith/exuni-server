@@ -1,17 +1,12 @@
-import datetime
-from decimal import Decimal
-
 from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.db import transaction
 from django.db.models import F, Q
-
-from products.models import ProductInventoryHistory, ProductInventory, Product
-from shop.models import LimitedTimeOfferItems
 
 
 def reduce_inventory(product_id, val, user=None):
 
     with transaction.atomic():
+        from products.models import ProductInventoryHistory, ProductInventory
         try:
             inventory = ProductInventory.objects.select_for_update().get(product_id=product_id)
 
@@ -36,7 +31,7 @@ def reduce_inventory(product_id, val, user=None):
 
 
 def increase_inventory(product_id, val, user=None):
-
+    from products.models import ProductInventoryHistory, ProductInventory
     with transaction.atomic():
         try:
             inventory = ProductInventory.objects.select_for_update().get(product_id=product_id)
