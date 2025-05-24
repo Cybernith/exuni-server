@@ -17,6 +17,9 @@ from django_fsm import FSMField, transition
 
 from location_field.models.plain import PlainLocationField
 
+from shop.helpers import increase_inventory
+
+
 class Cart(BaseModel):
     customer = models.ForeignKey('users.User', related_name='cart_items', on_delete=models.PROTECT)
     product = models.ForeignKey('products.Product', related_name='products_in_cart',  on_delete=models.PROTECT)
@@ -247,6 +250,9 @@ class ShopOrder(BaseModel):
     @transition(field='status', source='*', target=CANCELLED)
     def cancel_order(self):
         self.status = self.CANCELLED
+        for item in self.items.all():
+            increase_inventory(item.product.id, item.product_quantity)
+
         self.save()
 
     def apply_discounts_to_order(self):
