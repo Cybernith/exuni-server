@@ -108,7 +108,7 @@ class ApiProductsListSerializers(serializers.ModelSerializer):
     price_title = serializers.SerializerMethodField()
     regular_price_title = serializers.SerializerMethodField()
     active_discounts = serializers.SerializerMethodField()
-
+    inventory_count = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = Product
@@ -134,6 +134,7 @@ class ApiProductsListSerializers(serializers.ModelSerializer):
             'price_title',
             'regular_price_title',
             'active_discounts',
+            'inventory_count',
         ]
 
     def get_active_discounts(self, obj):

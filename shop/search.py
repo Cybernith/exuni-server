@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from products.models import Product, Brand, Category
-from server.settings import FRONT_URL
+from server.settings import FRONT_MEDIA_URL
 from shop.throttles import UserSearchAutoCompleteRateThrottle, AnonSearchAutoCompleteRateThrottle
 
 
@@ -48,7 +48,7 @@ class GlobalAutoCompleteSearchAPIView(APIView):
         ).annotate(
             type=Value('product', output_field=CharField()),
             picture_url=Func(
-                Value(f'{FRONT_URL}/'),
+                Value(FRONT_MEDIA_URL),
                 F('picture'),
                 function='CONCAT',
                 output_field=CharField()
@@ -66,7 +66,7 @@ class GlobalAutoCompleteSearchAPIView(APIView):
         ).annotate(
             type=Value('brand', output_field=CharField()),
             picture_url=Func(
-                Value(f'{FRONT_URL}/'),
+                Value(FRONT_MEDIA_URL),
                 F('logo'),
                 function='CONCAT',
                 output_field=CharField()

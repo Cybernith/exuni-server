@@ -13,6 +13,7 @@ from helpers.functions import change_to_num
 from helpers.models import BaseModel, DECIMAL, EXPLANATION
 from main.models import Supplier, Currency, Business
 from packing.models import OrderPackageItem
+from products.managers import ProductManager
 from shop.models import Rate, LimitedTimeOfferItems
 
 
@@ -242,6 +243,8 @@ class Product(BaseModel):
 
     category = models.ManyToManyField(Category, related_name='products')
     barcode = models.CharField(max_length=150, blank=True, null=True)
+
+    objects = ProductManager()
 
     @property
     def confirmed_comments(self):

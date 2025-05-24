@@ -50,11 +50,10 @@ class ShopProductSimpleListView(generics.ListAPIView):
     serializer_class = ApiProductsListSerializers
     throttle_classes = [UserProductListRateThrottle, AnonProductListRateThrottle]
     filterset_class = ShopProductSimpleFilter
-    ordering_fields = '__all__'
     pagination_class = LimitOffsetPagination
 
     def get_queryset(self):
-        return Product.objects.filter(status=Product.PUBLISHED, product_type__in=[Product.VARIABLE, Product.SIMPLE])
+        return Product.objects.shop_products()
 
 
 class ShopProductWithCommentsListView(generics.ListAPIView):
@@ -145,14 +144,14 @@ class RelatedProductsApiView(generics.ListAPIView):
             return cache_queryset
 
         try:
-            product = Product.objects.prefetch_related('properties', 'avails').get(id=product_id)
+            product = Product.objects.shop_products().prefetch_related('properties', 'avails').get(id=product_id)
         except Product.DoesNotExist:
             return Product.objects.none()
 
         properties_ids = product.properties.all().values_list('id', flat=True)
         avails_ids = product.avails.all().values_list('id', flat=True)
 
-        related_products = Product.objects.annotate(view_count=Count('views_log')).filter(
+        related_products = Product.objects.shop_products().annotate(view_count=Count('views_log')).filter(
             Q(category__in=product.category.all()) |
             Q(avails__id__in=avails_ids) |
             Q(properties__id__in=properties_ids) |
@@ -180,7 +179,7 @@ class SimilarBrandProductsApiView(generics.ListAPIView):
             return cache_queryset
 
         product = get_object_or_404(Product, pk=product_id)
-        similar_brand_products = Product.objects.filter(
+        similar_brand_products = Product.objects.shop_products().filter(
             Q(status=Product.PUBLISHED) & Q(brand=product.brand)
         ).exclude(id=product_id).annotate(view_count=Count('views_log')).select_related(
             'brand', 'category', 'current_price', 'current_inventory', 'products_in_wish_list', 'product_comments'
@@ -204,7 +203,7 @@ class SimilarAvailProductsApiView(generics.ListAPIView):
             return cache_queryset
 
         product = get_object_or_404(Product, pk=product_id)
-        similar_avails_products = Product.objects.filter(
+        similar_avails_products = Product.objects.shop_products().filter(
             Q(status=Product.PUBLISHED) & Q(avails__in=product.avails)
         ).exclude(id=product_id).annotate(view_count=Count('views_log')).select_related(
             'brand', 'category', 'current_price', 'current_inventory', 'products_in_wish_list', 'product_comments'
@@ -228,7 +227,7 @@ class SimilarPropertiesProductsApiView(generics.ListAPIView):
             return cache_queryset
 
         product = get_object_or_404(Product, pk=product_id)
-        similar_properties_products = Product.objects.filter(
+        similar_properties_products = Product.objects.shop_products().filter(
             Q(status=Product.PUBLISHED) & Q(properties__in=product.properties)
         ).exclude(id=product_id).annotate(view_count=Count('views_log')).select_related(
             'brand', 'category', 'current_price', 'current_inventory', 'products_in_wish_list', 'product_comments'
@@ -252,7 +251,7 @@ class SimilarCategoryProductsApiView(generics.ListAPIView):
             return cache_queryset
 
         product = get_object_or_404(Product, pk=product_id)
-        similar_category_products = Product.objects.filter(
+        similar_category_products = Product.objects.shop_products().filter(
             Q(status=Product.PUBLISHED) & Q(category=product.category)
         ).exclude(id=product_id).annotate(view_count=Count('views_log')).select_related(
             'brand', 'category', 'current_price', 'current_inventory', 'products_in_wish_list', 'product_comments'
@@ -273,13 +272,9 @@ class TopViewedShopProductsAPIView(generics.ListAPIView):
 
     def get_queryset(self):
         return (
-            Product.objects
-                .prefetch_related('brand', 'category')
-                .select_related(
+            Product.objects.shop_products().prefetch_related('brand', 'category').select_related(
                 'brand', 'category', 'current_price', 'current_inventory', 'products_in_wish_list', 'product_comments'
-            )
-                .annotate(view_count=Count('views_log'))
-                .order_by('-view_count', '-id')
+            ).annotate(view_count=Count('views_log')).order_by('-view_count', '-id')
         )
 
 
@@ -362,7 +357,7 @@ class CurrentUserHasOrderProductViewSet(viewsets.ReadOnlyModelViewSet):
 
     def get_queryset(self):
         user = get_current_user()
-        return Product.objects.filter(
+        return Product.objects.shop_products().filter(
             Q(shop_order_items__shop_order__customer=user) &
             ~Q(shop_order_items__shop_order__status=ShopOrder.PENDING)
         ).distinct()
@@ -380,7 +375,7 @@ class CurrentUserRelatedProductViewSet(viewsets.ReadOnlyModelViewSet):
         return super().list(request, *args, **kwargs)
 
     def get_queryset(self):
-        return Product.objects.filter(
+        return Product.objects.shop_products().filter(
             id__in=get_recommended_products(
                 user=get_current_user(),
                 limit=10
@@ -399,7 +394,7 @@ class PendingReviewProductsView(viewsets.ReadOnlyModelViewSet):
 
     def get_queryset(self):
         user = get_current_user()
-        return Product.objects.filter(shop_order_items__shop_order__customer=user).exclude(
+        return Product.objects.shop_products().filter(shop_order_items__shop_order__customer=user).exclude(
             product_comments__customer=user
         ).distinct()
 
@@ -409,7 +404,7 @@ class UserProductsWithCommentView(viewsets.ReadOnlyModelViewSet):
 
     def get_queryset(self):
         user = get_current_user()
-        return Product.objects.filter(
+        return Product.objects.shop_products().filter(
             Q(shop_order_items__shop_order__customer=user) & Q(product_comments__customer=user)).distinct()
 
 
@@ -428,7 +423,7 @@ class ImageSearchAPIView(APIView):
             img = Image.open(uploaded_file).convert('RGB')
             query_features = extractor.extract_features(img)
 
-            products = Product.objects.exclude(feature_vector=None)
+            products = Product.objects.shop_products().exclude(feature_vector=None)
             if not products.exists():
                 return Response({'error': 'هیچ محصولی یافت نشد'}, status=404)
 

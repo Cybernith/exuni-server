@@ -1,23 +1,25 @@
 from django.db import models
 
-from crm.models import UserNotification
-
 
 class UserNotificationQuerySet(models.QuerySet):
     def mark_all_as_read(self):
+        from crm.models import UserNotification
         return self.filter(notification_status=UserNotification.NOT_READ).update(
             notification_status=UserNotification.READ
         )
 
     def unread(self):
+        from crm.models import UserNotification
         return self.filter(notification_status=UserNotification.NOT_READ)
 
     def mark_all_as_un_read(self):
+        from crm.models import UserNotification
         return self.filter(
             notification_status=UserNotification.PENDING
         ).update(notification_status=UserNotification.NOT_READ)
 
     def pending(self):
+        from crm.models import UserNotification
         return self.filter(notification_status=UserNotification.PENDING)
 
 

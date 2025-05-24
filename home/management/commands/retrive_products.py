@@ -75,8 +75,9 @@ class Command(BaseCommand):
                         new_product.picture = pic
                         add_product_picture_gallery_from_url(new_product.id, [item['src'] for item in pictures[1:]])
                     else:
-                        pic = save_product_picture_from_url(new_product.id, pictures[0]['src'])
-                        new_product.picture = pic
+                        if len(pictures) == 1:
+                            pic = save_product_picture_from_url(new_product.id, pictures[0]['src'])
+                            new_product.picture = pic
 
                     attributes = product['attributes']
                     meta_datas = product['meta_data']
@@ -149,8 +150,9 @@ class Command(BaseCommand):
                         new_product.picture = pic
                         add_product_picture_gallery_from_url(new_product.id, [item['src'] for item in pictures[1:]])
                     else:
-                        pic = save_product_picture_from_url(new_product.id, pictures[0]['src'])
-                        new_product.picture = pic
+                        if len(pictures) == 1:
+                            pic = save_product_picture_from_url(new_product.id, pictures[0]['src'])
+                            new_product.picture = pic
 
                     attributes = product['attributes']
                     meta_datas = product['meta_data']
