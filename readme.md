@@ -29,22 +29,6 @@
 
 ---
 
-## 📂 Project Structure (Simplified)
-
-```
-exuni/
-├── accounts/           # User accounts, authentication
-├── products/           # Product models, properties, search
-├── orders/             # Orders, shipping, invoices
-├── payments/           # Payment gateway integrations
-├── discounts/          # Dynamic discount engine
-├── warehouse/          # Inventory, stock entries
-├── wallet/             # Financial transactions & balance
-└── core/               # Shared logic, base models
-```
-
----
-
 ## 📦 Installation (Development)
 
 ```bash
