@@ -123,7 +123,7 @@ class UserUpdateSerializer(SModelSerializer):
 
     class Meta:
         model = get_user_model()
-        fields = ('first_name', 'last_name', 'profile_picture', 'cover_picture')
+        fields = ('first_name', 'last_name', 'profile_picture', 'cover_picture', 'national_code')
 
 
 class CitySerializer(SModelSerializer):
