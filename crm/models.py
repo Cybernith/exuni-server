@@ -313,3 +313,13 @@ class UserNotification(models.Model):
         if self.notification_status == self.PENDING:
             self.notification_status = self.NOT_READ
             self.save(update_fields=["notification_status"])
+
+
+class InventoryReminder(models.Model):
+    user = models.ForeignKey('users.User', on_delete=models.CASCADE)
+    product = models.ForeignKey('products.Product', on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+    notified = models.BooleanField(default=False)
+
+    class Meta:
+        unique_together = ('user', 'product')

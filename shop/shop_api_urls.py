@@ -3,7 +3,7 @@ from django.conf.urls import url
 from cms.views import HeaderElementApiView, PopUpElementApiView, BannerContentApiView, ShopHomePageStoryApiView, \
     CurrentShopHomeHighlightApiView
 from crm.views import UserCurrentNotificationsAPIView, UserCurrentNotificationsBySortAPIView, \
-    RecommendedProductsAPIView, MarkNotificationAsReadView
+    RecommendedProductsAPIView, MarkNotificationAsReadView, InventoryReminderCreateView
 from products.shop.views import ShopProductSimpleListView, BrandShopListView, CategoryTreeView, RootCategoryListView, \
     ShopProductWithCommentsListView, CurrentUserHasOrderProductViewSet, CurrentUserRelatedProductViewSet, \
     PendingReviewProductsView, UserProductsWithCommentView, CommentCreateView, RateUpsertApiView, \
@@ -88,6 +88,8 @@ urlpatterns = [
 
     url(r'^retrieveNotificationBySort$', UserCurrentNotificationsBySortAPIView.as_view(),
         name='retrieveNotificationBySort'),
+    url(r'^inventoryReminder$', InventoryReminderCreateView.as_view(),
+        name='inventoryReminder'),
     url(r'^markNotificationAsRead/(?P<notification_id>[0-9]+)$', MarkNotificationAsReadView.as_view(),
         name='markNotificationAsRead'),
 

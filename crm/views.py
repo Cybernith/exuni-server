@@ -11,7 +11,7 @@ from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from crm.functions import save_search_log, get_recommended_products
 from crm.models import ShopProductViewLog, SearchLog, Notification, UserNotification
 from crm.serializer import ShopProductViewLogCreateSerializer, NotificationCreateSerializer, \
-    UserNotificationRetrieveSerializer
+    UserNotificationRetrieveSerializer, InventoryReminderSerializer
 from crm.throttles import UserFinalSearchLogRateThrottle, AnonFinalSearchLogRateThrottle
 from helpers.functions import date_to_str, get_current_user
 from products.models import Product
@@ -336,11 +336,8 @@ class UserCurrentNotificationsBySortAPIView(APIView):
     def get(self, request):
         user = get_current_user()
         activities_objects = self.get_activities_objects()
-        activities_objects.update(notification_status=UserNotification.NOT_READ)
         offer_objects = self.get_offer_objects()
-        offer_objects.update(notification_status=UserNotification.NOT_READ)
         order_objects = self.get_order_objects()
-        order_objects.update(notification_status=UserNotification.NOT_READ)
 
         return Response(
             {
@@ -357,3 +354,11 @@ class MarkNotificationAsReadView(APIView):
         user_notification = get_object_or_404(UserNotification, id=notification_id, user=get_current_user())
         user_notification.mark_as_read()
         return Response({'detail': 'Notification marked as read.'}, status=status.HTTP_200_OK)
+
+
+class InventoryReminderCreateView(generics.CreateAPIView):
+    serializer_class = InventoryReminderSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def perform_create(self, serializer):
+        serializer.save(user=get_current_user())

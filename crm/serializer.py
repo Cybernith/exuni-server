@@ -1,7 +1,7 @@
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 
-from crm.models import ShopProductViewLog, UserNotification, Notification
+from crm.models import ShopProductViewLog, UserNotification, Notification, InventoryReminder
 from products.models import Product
 from products.shop.serializers import ShopProductsListSerializers
 from users.models import User
@@ -99,3 +99,9 @@ class UserNotificationRetrieveSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserNotification
         fields = ['id', 'notification', 'notification_status', 'sms_status']
+
+
+class InventoryReminderSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = InventoryReminder
+        fields = ['id', 'product']
