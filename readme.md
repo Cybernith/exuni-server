@@ -1,61 +1,91 @@
-# EXUNI project
-* `reverce affiliate marketing ` , `shopping `, `crm ` and `warehouse handling ` super app
+# Exuni Backend
 
-# Deploy notes
-* comment lines 345 and 346 of `filterset.py` of `django_filters` package
+**Exuni Backend** is the core engine behind [Exuni](https://exuni.ir) – a scalable, modular, and secure e-commerce platform designed to support product-based affiliate marketing with powerful inventory, payment, and discount systems.
 
-# Notes
+---
 
-powered by `soroosh morshedi `
+## 🚀 Features
 
-# Naming
+- ⚙️ Modular architecture with Django & Django REST Framework
+- 🛒 Advanced product & inventory management
+- 💳 Payment gateway integration (e.g., Zarinpal)
+- 🎯 Powerful discount and shipping engine (event-driven, state machine-based)
+- 🧾 Financial wallet system with transaction logging
+- 📦 Order and fulfillment tracking
+- 🔍 Smart autocomplete search (products, brands, categories)
+- 📊 Reporting & analytics for product views and user actions
+- 🔐 Role-based access control and secure API design
+- 🌍 Fully ready for localization (i18n/l10n)
 
-### Models
+---
 
-* relation: postal_code
-* fields: postal_code
-* methods: get_new_code
+## 🧱 Tech Stack
 
-### Serializers
+- **Backend**: Python, Django, Django REST Framework
+- **Database**: PostgreSQL
+- **Payment**: Zarinpal (abstracted for multi-gateway support)
+- **Search**: PostgreSQL Full-Text Search + Trigram
+- **Architecture**: Scalable, event-driven, audit-logged
 
-Serializer of a model should be in one of the following formats:
+---
 
-* One serializer:
-    * ModelSerializer
-* Two Serializers:
-    * ModelCreateUpdateSerializer
-    * ModelListRetrieveSerializer
-* Three or more:
-    * ModelCreateSerializer
-    * ModelUpdateSerializer
-    * ModelListSerializer
-    * ModelRetrieveSerializer
-* There can be more serializers, like `ModelSimpleSerializer`
+## 📂 Project Structure (Simplified)
 
-### Apps
+```
+exuni/
+├── accounts/           # User accounts, authentication
+├── products/           # Product models, properties, search
+├── orders/             # Orders, shipping, invoices
+├── payments/           # Payment gateway integrations
+├── discounts/          # Dynamic discount engine
+├── warehouse/          # Inventory, stock entries
+├── wallet/             # Financial transactions & balance
+└── core/               # Shared logic, base models
+```
 
-* _* apps are add-on apps
+---
 
+## 📦 Installation (Development)
 
-# PDF Export Ubuntu Installation Commands
+```bash
+git clone https://github.com/your-username/exuni-backend.git
+cd exuni-backend
+python -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env
+python manage.py migrate
+python manage.py runserver
+```
 
-    wget https://github.com/wkhtmltopdf/wkhtmltopdf/releases/download/0.12.3/wkhtmltox-0.12.3_linux-generic-amd64.tar.xz 
-    tar vxf wkhtmltox-0.12.3_linux-generic-amd64.tar.xz
-    sudo cp wkhtmltox/bin/wk* /usr/local/bin/
-    sudo apt-get install libxrender1
+---
 
-# Notes
+## 🧪 Running Tests
 
+```bash
+pytest
+```
 
-## Helpers
+---
 
-* queryset
-    * `add_sum`: adds sum for passed fields to `response.data.sum` for queryset and `response.data.page_sum` for page
+## 📄 License
 
-* db
-    * `bulk_create`: inserts multiple rows into database in one query
-    * `queryset_iterator`: returns generator of queryset, useful to iterate large rows
+This project is licensed under the MIT License.
 
-* exports
-    * `get_xlsx_response`: generates an xlsx download response from provided data, data structure is 2D array :)
-    
+---
+
+## 🤝 Contributing
+
+Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
+
+---
+
+## 📬 Contact
+
+For inquiries or collaboration:
+📧 **team@exuni.ir**  
+🌐 [exuni.ir](https://exuni.ir)
+
+---
+
+> Designed with care to empower affiliate-first commerce in Iran and beyond.
