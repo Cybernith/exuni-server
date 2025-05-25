@@ -315,8 +315,8 @@ class UserNotification(models.Model):
 
 
 class InventoryReminder(models.Model):
-    user = models.ForeignKey('users.User', on_delete=models.CASCADE)
-    product = models.ForeignKey('products.Product', on_delete=models.CASCADE)
+    user = models.ForeignKey('users.User', on_delete=models.CASCADE, related_name='inventory_reminders')
+    product = models.ForeignKey('products.Product', on_delete=models.CASCADE, related_name='inventory_reminders')
     created_at = models.DateTimeField(auto_now_add=True)
     notified = models.BooleanField(default=False)
 

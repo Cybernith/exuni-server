@@ -9,7 +9,7 @@ from rest_framework.generics import ListAPIView
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
 
 from crm.functions import save_search_log, get_recommended_products
-from crm.models import ShopProductViewLog, SearchLog, Notification, UserNotification
+from crm.models import ShopProductViewLog, SearchLog, Notification, UserNotification, InventoryReminder
 from crm.serializer import ShopProductViewLogCreateSerializer, NotificationCreateSerializer, \
     UserNotificationRetrieveSerializer, InventoryReminderSerializer
 from crm.throttles import UserFinalSearchLogRateThrottle, AnonFinalSearchLogRateThrottle
@@ -356,9 +356,12 @@ class MarkNotificationAsReadView(APIView):
         return Response({'detail': 'Notification marked as read.'}, status=status.HTTP_200_OK)
 
 
-class InventoryReminderCreateView(generics.CreateAPIView):
-    serializer_class = InventoryReminderSerializer
-    permission_classes = [permissions.IsAuthenticated]
+class InventoryReminderCreateView(APIView):
+    permission_classes = [IsAuthenticated]
 
-    def perform_create(self, serializer):
-        serializer.save(user=get_current_user())
+    def post(self, request, product_id):
+        product = Product.objects.get(id=product_id)
+        reminder, created = InventoryReminder.objects.get_or_create(user=request.user, product=product)
+        if not created:
+            return Response({'detail': 'قبلاً ثبت شده است.'}, status=200)
+        return Response({'detail': 'درخواست یادآوری ثبت شد.'}, status=201)

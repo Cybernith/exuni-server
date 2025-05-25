@@ -88,7 +88,7 @@ urlpatterns = [
 
     url(r'^retrieveNotificationBySort$', UserCurrentNotificationsBySortAPIView.as_view(),
         name='retrieveNotificationBySort'),
-    url(r'^inventoryReminder$', InventoryReminderCreateView.as_view(),
+    url(r'^inventoryReminder/(?P<product_id>[0-9]+)$', InventoryReminderCreateView.as_view(),
         name='inventoryReminder'),
     url(r'^markNotificationAsRead/(?P<notification_id>[0-9]+)$', MarkNotificationAsReadView.as_view(),
         name='markNotificationAsRead'),

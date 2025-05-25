@@ -8,6 +8,7 @@ from django.core.exceptions import ValidationError
 from django.db import models, transaction
 from django.db.models import IntegerField, F, Sum, Q, Avg
 
+from crm.services.inventory_reminder import notify_users_if_in_stock
 from entrance.models import StoreReceiptItem
 from helpers.functions import change_to_num
 from helpers.models import BaseModel, DECIMAL, EXPLANATION
@@ -561,6 +562,9 @@ class ProductInventory(models.Model):
                     first_inventory=first_inventory,
                     changed_by=user
                 )
+
+                if previous_quantity <= 0 < self.inventory:
+                    notify_users_if_in_stock(self.product)
 
 
     def __str__(self):

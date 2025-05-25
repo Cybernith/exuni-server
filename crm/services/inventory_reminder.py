@@ -4,8 +4,7 @@ from server.settings import FRONT_URL
 
 def notify_users_if_in_stock(product):
     if product.stock > 0:
-        reminders = product.stockreminder_set.filter(notified=False).select_related('user')
-
+        reminders = product.inventory_reminders.filter(notified=False).select_related('user')
         if reminders.exists():
             phones = [reminder.user.mobile_number for reminder in reminders]
             link = f'{FRONT_URL}/products/{product.id}'
