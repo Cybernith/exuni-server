@@ -124,6 +124,7 @@ class ShipmentAddress(BaseModel):
                 code='invalid_zip_code'
             )
         ]
+        , blank=True, null=True
     )
     is_default = models.BooleanField(default=False)
 
