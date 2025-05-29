@@ -848,7 +848,7 @@ class CancelShopOrderView(APIView):
         )
 
         try:
-            payment = order.bank_payment
+            payment = shop_order.bank_payment
         except ShopOrder.bank_payment.RelatedObjectDoesNotExist:
             payment = None
 
