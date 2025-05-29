@@ -84,6 +84,7 @@ class Wallet(models.Model):
                 status=Transaction.SUCCESS,
                 **kwargs
             )
+        return transition
 
 
 class Transaction(models.Model):

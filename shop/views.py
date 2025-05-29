@@ -898,13 +898,14 @@ class OrderMoveToCartAPIView(APIView):
                 if not created:
                     cart_item.quantity += item.product_quantity
                     cart_item.save()
-            if order.bank_payment:
+
+            try:
                 payment = order.bank_payment
-            else:
+            except ShopOrder.bank_payment.RelatedObjectDoesNotExist:
                 payment = None
 
             if payment and payment.status == Payment.SUCCESS:
-                order.customer.exuni_wallet.increase_balance(
+                exuni_transaction = order.customer.exuni_wallet.increase_balance(
                     amount=(payment.amount + payment.used_amount_from_wallet),
                     description=f'ویرایش سفارش {order.exuni_tracking_code} بعد از پرداخت',
                     transaction_type=Transaction.ORDER_REFUND,
@@ -915,7 +916,7 @@ class OrderMoveToCartAPIView(APIView):
                     user=get_current_user(),
                     action=AuditAction.REFUND_PAYMENT_ORDER,
                     severity=AuditSeverity.INFO,
-                    transaction=transaction,
+                    transaction=exuni_transaction,
                     ip_address=request.META.get('REMOTE_ADDR'),
                     user_agent=request.META.get('HTTP_USER_AGENT'),
                     extra_info={"amount": str(payment.amount)}
