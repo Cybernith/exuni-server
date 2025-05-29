@@ -433,9 +433,9 @@ class ImageSearchAPIView(APIView):
             similarities = np.dot(feature_vectors, query_features) / norms
             similarities = np.nan_to_num(similarities, nan=0.0)
 
-            threshold = 0.2
+            threshold = 0.3
             top_indices = np.argsort(similarities)[::-1]
-            filtered = [(i, similarities[i]) for i in top_indices if similarities[i] >= threshold]
+            filtered = [(i, similarities[i]) for i in top_indices if  not similarities[i] >= threshold]
 
             if not filtered:
                 return Response({'message': 'محصول مشابهی یافت نشد'}, status=200)
