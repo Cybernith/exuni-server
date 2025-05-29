@@ -849,7 +849,7 @@ class CancelShopOrderView(APIView):
 
         payment = shop_order.bank_payment
         if payment and payment.status == Payment.SUCCESS:
-            shop_order.customer.exuni_wallet.increase_balance(
+            exuni_transaction = shop_order.customer.exuni_wallet.increase_balance(
                 amount=(payment.amount + payment.used_amount_from_wallet),
                 description=f'لغو سفارش {shop_order.exuni_tracking_code} بعد از پرداخت',
                 transaction_type=Transaction.ORDER_REFUND,
@@ -860,7 +860,7 @@ class CancelShopOrderView(APIView):
                 user=get_current_user(),
                 action=AuditAction.REFUND_PAYMENT_ORDER,
                 severity=AuditSeverity.INFO,
-                transaction=transaction,
+                transaction=exuni_transaction,
                 ip_address=request.META.get('REMOTE_ADDR'),
                 user_agent=request.META.get('HTTP_USER_AGENT'),
                 extra_info={"amount": str(payment.amount)}
