@@ -423,7 +423,7 @@ class ImageSearchAPIView(APIView):
             img = Image.open(uploaded_file).convert('RGB')
             query_features = extractor.extract_features(img)
 
-            products = Product.objects.shop_products().exclude(feature_vector=None, )
+            products = Product.objects.shop_products().exclude(feature_vector=None)
             if not products.exists():
                 return Response({'error': 'هیچ محصولی یافت نشد'}, status=404)
 
@@ -433,14 +433,8 @@ class ImageSearchAPIView(APIView):
             similarities = np.dot(feature_vectors, query_features) / norms
             similarities = np.nan_to_num(similarities, nan=0.0)
 
-            threshold = 0.3
-            top_indices = np.argsort(similarities)[::-1]
-            filtered = [(i, similarities[i]) for i in top_indices if  not similarities[i] >= threshold]
-
-            if not filtered:
-                return Response({'message': 'محصول مشابهی یافت نشد'}, status=200)
-
-            top_products = [products[int(i)] for i, _ in filtered[:5]]
+            top_indices = np.argsort(similarities)[::-1][:5]
+            top_products = [products[int(i)] for i in top_indices]
 
             serializer = ApiProductsListSerializers(top_products, many=True)
             return Response(serializer.data)
