@@ -898,8 +898,11 @@ class OrderMoveToCartAPIView(APIView):
                 if not created:
                     cart_item.quantity += item.product_quantity
                     cart_item.save()
+            if order.bank_payment:
+                payment = order.bank_payment
+            else:
+                payment = None
 
-            payment = order.bank_payment
             if payment and payment.status == Payment.SUCCESS:
                 order.customer.exuni_wallet.increase_balance(
                     amount=(payment.amount + payment.used_amount_from_wallet),
