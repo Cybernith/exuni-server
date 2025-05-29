@@ -434,7 +434,7 @@ class ImageSearchAPIView(APIView):
             similarities = np.nan_to_num(similarities, nan=0.0)
 
             top_indices = np.argsort(similarities)[::-1][:5]
-            top_products = [products[i] for i in top_indices]
+            top_products = [products[int(i)] for i in top_indices]
 
             serializer = ApiProductsListSerializers(top_products, many=True)
             return Response(serializer.data)
