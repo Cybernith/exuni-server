@@ -10,13 +10,14 @@ from django.http import Http404, HttpResponseForbidden
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django.utils.timezone import now
+from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.views import APIView
 
 from rest_framework.response import Response
-from rest_framework import status, generics
+from rest_framework import status, generics, viewsets
 
 from financial_management.loggers.financial_logger import FinancialLogger
 from financial_management.models import Payment, Transaction, AuditAction, AuditSeverity
@@ -813,19 +814,19 @@ class CancelShopOrderView(APIView):
 
         if not (shop_order.customer == get_current_user()):
             return Response(
-                {'detail': 'You do not have permission to cancel this order.'},
+                {'detail': 'دسترسی غیرمجاز'},
                 status=status.HTTP_403_FORBIDDEN
             )
 
         if shop_order.status == ShopOrder.CANCELLED:
             return Response(
-                {'detail': 'This order is already cancelled.'},
+                {'detail': 'این سفارش از قبل کنسل شده است'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
         if shop_order.status not in [ShopOrder.PAID, ShopOrder.PENDING]:
             return Response(
-                {'detail': 'you cant cancel this order .'},
+                {'detail': 'سفارش فقط در وضعیت در انتظار پرداخت یا پرداخت شده قابل حذف است'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
@@ -870,3 +871,55 @@ class CancelShopOrderView(APIView):
             {'status': 'Order cancelled successfully.'},
             status=status.HTTP_200_OK
         )
+
+
+class OrderMoveToCartAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, pk):
+        try:
+            order = ShopOrder.objects.prefetch_related('items').get(pk=pk, customer=get_current_user())
+        except ShopOrder.DoesNotExist:
+            return Response({'detail': 'سفارش یافت نشد.'}, status=status.HTTP_404_NOT_FOUND)
+
+        if order.status not in [ShopOrder.PAID, ShopOrder.PENDING]:
+            return Response(
+                {'detail': 'سفارش فقط در وضعیت در انتظار پرداخت یا پرداخت شده قابل حذف است'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        with transaction.atomic():
+            for item in order.items.all():
+                cart_item, created = Cart.objects.get_or_create(
+                    customer=request.user,
+                    product=item.product,
+                    defaults={'quantity': item.product_quantity}
+                )
+                if not created:
+                    cart_item.quantity += item.product_quantity
+                    cart_item.save()
+
+            payment = order.bank_payment
+            if payment and payment.status == Payment.SUCCESS:
+                order.customer.exuni_wallet.increase_balance(
+                    amount=(payment.amount + payment.used_amount_from_wallet),
+                    description=f'ویرایش سفارش {order.exuni_tracking_code} بعد از پرداخت',
+                    transaction_type=Transaction.ORDER_REFUND,
+                    order=order,
+                )
+
+                FinancialLogger.log(
+                    user=get_current_user(),
+                    action=AuditAction.REFUND_PAYMENT_ORDER,
+                    severity=AuditSeverity.INFO,
+                    transaction=transaction,
+                    ip_address=request.META.get('REMOTE_ADDR'),
+                    user_agent=request.META.get('HTTP_USER_AGENT'),
+                    extra_info={"amount": str(payment.amount)}
+                )
+                payment.status = Payment.CANCELLED
+                payment.save()
+
+            order.delete()
+
+        return Response({'detail': 'سفارش با موفقیت حذف و آیتم‌ها به سبد خرید منتقل شدند.'}, status=status.HTTP_200_OK)
