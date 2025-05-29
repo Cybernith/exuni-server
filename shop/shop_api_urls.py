@@ -7,7 +7,7 @@ from crm.views import UserCurrentNotificationsAPIView, UserCurrentNotificationsB
 from products.shop.views import ShopProductSimpleListView, BrandShopListView, CategoryTreeView, RootCategoryListView, \
     ShopProductWithCommentsListView, CurrentUserHasOrderProductViewSet, CurrentUserRelatedProductViewSet, \
     PendingReviewProductsView, UserProductsWithCommentView, CommentCreateView, RateUpsertApiView, \
-    RelatedProductsApiView, SimilarBrandProductsApiView, ShopProductDetailView
+    RelatedProductsApiView, SimilarBrandProductsApiView, ShopProductDetailView, ImageSearchAPIView
 from shop.search import GlobalAutoCompleteSearchAPIView
 from shop.views import ToggleWishListBTNView, ToggleComparisonListBTNView, CurrentUserCartApiView, CartSyncView, \
     CartDetailView, ClearCustomerCartView, CurrentUserWishListApiView, WishlistSyncView, \
@@ -66,6 +66,7 @@ urlpatterns = [
     url(r'^currentShopHomeHighlight$', CurrentShopHomeHighlightApiView.as_view(), name='currentShopHomeHighlight'),
 
     url(r'^searchAutoCompelete$', GlobalAutoCompleteSearchAPIView.as_view(), name='globalAutoCompleteSearch'),
+    url(r'^imageSearch$', ImageSearchAPIView.as_view(), name='imageSearch'),
 
     url(r'^productsWithComments$', ShopProductWithCommentsListView.as_view(), name='productsWithComments'),
 
