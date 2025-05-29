@@ -847,7 +847,11 @@ class CancelShopOrderView(APIView):
             note=request.data.get('note', '')
         )
 
-        payment = shop_order.bank_payment
+        try:
+            payment = order.bank_payment
+        except ShopOrder.bank_payment.RelatedObjectDoesNotExist:
+            payment = None
+
         if payment and payment.status == Payment.SUCCESS:
             exuni_transaction = shop_order.customer.exuni_wallet.increase_balance(
                 amount=(payment.amount + payment.used_amount_from_wallet),

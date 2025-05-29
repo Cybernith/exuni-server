@@ -47,13 +47,14 @@ class Wallet(models.Model):
                 description=description
             )
 
-            Transaction.objects.create(
+            transition = Transaction.objects.create(
                 wallet=wallet,
                 amount=amount,
                 type=transaction_type or Transaction.BUY,
                 status=Transaction.SUCCESS,
                 **kwargs
             )
+            return transition
 
     def increase_balance(
             self, amount: Decimal, description: str = 'شارژ کیف پول', transaction_type=None, order=None, **kwargs
@@ -76,7 +77,7 @@ class Wallet(models.Model):
                 description=description
             )
 
-            Transaction.objects.create(
+            transition = Transaction.objects.create(
                 wallet=wallet,
                 shop_order=order,
                 amount=amount,
@@ -84,7 +85,7 @@ class Wallet(models.Model):
                 status=Transaction.SUCCESS,
                 **kwargs
             )
-        return transition
+            return transition
 
 
 class Transaction(models.Model):
