@@ -823,7 +823,7 @@ class CancelShopOrderView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        if shop_order.status != ShopOrder.PAID:
+        if shop_order.status not in [ShopOrder.PAID, ShopOrder.PENDING]:
             return Response(
                 {'detail': 'you cant cancel this order .'},
                 status=status.HTTP_400_BAD_REQUEST
