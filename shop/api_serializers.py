@@ -154,6 +154,7 @@ class ApiCartItemProductSerializers(serializers.ModelSerializer):
             'active_discounts',
             'same_variable_variations',
             'calculate_current_inventory',
+            'variation_of',
         ]
 
     def get_active_discounts(self, obj):
