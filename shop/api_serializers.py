@@ -204,9 +204,10 @@ class ApiCartItemProductSerializers(serializers.ModelSerializer):
         return None
 
     def get_same_variable_variations(self, obj):
-        same_variable_variations = Product.objects.filter(variation_of=obj.variation_of)
-        return ApiVariationListSerializers(same_variable_variations, many=True).data
-
+        if obj.variation_of:
+            same_variable_variations = Product.objects.filter(variation_of=obj.variation_of)
+            return ApiVariationListSerializers(same_variable_variations, many=True).data
+        return []
 
 class ApiProductsListSerializers(serializers.ModelSerializer):
     image = serializers.SerializerMethodField()
