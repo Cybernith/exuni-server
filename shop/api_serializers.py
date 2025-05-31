@@ -109,6 +109,7 @@ class ApiProductsListSerializers(serializers.ModelSerializer):
     regular_price_title = serializers.SerializerMethodField()
     active_discounts = serializers.SerializerMethodField()
     inventory_count = serializers.IntegerField(read_only=True)
+    same_variable_variations = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
@@ -135,6 +136,7 @@ class ApiProductsListSerializers(serializers.ModelSerializer):
             'regular_price_title',
             'active_discounts',
             'inventory_count',
+            'same_variable_variations',
         ]
 
     def get_active_discounts(self, obj):
@@ -208,6 +210,10 @@ class ApiProductsListSerializers(serializers.ModelSerializer):
             return f'{offer_percentage}%'
         return None
 
+    def get_same_variable_variations(self, obj):
+        same_variable_variations = Product.objects.filter(variation_of=obj.variation_of)
+        return ApiVariationListSerializers(same_variable_variations, many=True).data
+
 
 class ApiCartRetrieveSerializer(serializers.ModelSerializer):
     customer = UserSimpleSerializer(read_only=True)
@@ -217,6 +223,8 @@ class ApiCartRetrieveSerializer(serializers.ModelSerializer):
         read_only_fields = ('created_at', 'updated_at')
         model = Cart
         fields = '__all__'
+
+
 
 
 class ApiWishListRetrieveSerializer(serializers.ModelSerializer):
