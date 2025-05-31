@@ -5,10 +5,40 @@ from rest_framework import serializers
 from financial_management.models import DiscountCondition, Discount, DiscountAction, DiscountConditionPriceLimit, \
     DiscountConditionPriceOver, DiscountConditionBrand, DiscountConditionProduct, DiscountConditionCategory
 from helpers.functions import get_current_user
-from products.models import Product, Brand, ProductGallery, Avail, ProductProperty
+from products.models import Product, Brand, ProductGallery, Avail, ProductProperty, ProductPropertyTerm, \
+    ProductAttributeTerm, ProductAttribute
 from shop.models import WishList, Comparison, Cart, Comment, ShipmentAddress, ShopOrderStatusHistory, ShopOrderItem, \
     ShopOrder, Rate
 from users.serializers import UserSimpleSerializer
+
+
+class ShopProductPropertyTermSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProductPropertyTerm
+        fields = ['id', 'name', 'slug']
+
+
+class ShopProductAttributeTermSerializer(serializers.ModelSerializer):
+    terms = ShopProductPropertyTermSerializer(many=True)
+
+    class Meta:
+        model = ProductAttributeTerm
+        fields = ['id', 'terms']
+
+
+class ShopProductPropertySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProductProperty
+        fields = ['id', 'name', 'slug']
+
+
+class ShopProductAttributeSerializer(serializers.ModelSerializer):
+    product_property = ShopProductPropertySerializer()
+    terms = ShopProductAttributeTermSerializer(many=True, source='terms.all')
+
+    class Meta:
+        model = ProductAttribute
+        fields = ['id', 'product_property', 'terms']
 
 
 class ApiBrandListSerializer(serializers.ModelSerializer):
@@ -110,6 +140,7 @@ class ApiProductsListSerializers(serializers.ModelSerializer):
     active_discounts = serializers.SerializerMethodField()
     inventory_count = serializers.IntegerField(read_only=True)
     same_variable_variations = serializers.SerializerMethodField()
+    attributes = ShopProductAttributeSerializer(many=True, read_only=True)
 
     class Meta:
         model = Product
@@ -137,6 +168,7 @@ class ApiProductsListSerializers(serializers.ModelSerializer):
             'active_discounts',
             'inventory_count',
             'same_variable_variations',
+            'attributes',
         ]
 
     def get_active_discounts(self, obj):
@@ -503,6 +535,7 @@ class ApiProductDetailSerializers(serializers.ModelSerializer):
     regular_price_title = serializers.SerializerMethodField()
     offer_percentage = serializers.SerializerMethodField()
     active_discounts = serializers.SerializerMethodField()
+    attributes = ShopProductAttributeSerializer(many=True, read_only=True)
 
     class Meta:
         model = Product
@@ -539,6 +572,7 @@ class ApiProductDetailSerializers(serializers.ModelSerializer):
             'regular_price_title',
             'offer_percentage',
             'active_discounts',
+            'attributes',
         ]
 
     def get_active_discounts(self, obj):
