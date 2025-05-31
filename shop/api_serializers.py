@@ -126,6 +126,88 @@ class ApiVariationListSerializers(serializers.ModelSerializer):
         return 'قیمت محصول'
 
 
+class ApiCartItemProductSerializers(serializers.ModelSerializer):
+    image = serializers.SerializerMethodField()
+    offer_percentage = serializers.SerializerMethodField()
+    brand = ApiBrandListSerializer(read_only=True)
+    price_title = serializers.SerializerMethodField()
+    regular_price_title = serializers.SerializerMethodField()
+    same_variable_variations = serializers.SerializerMethodField()
+    active_discounts = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Product
+        fields = [
+            'id',
+            'product_type',
+            'name',
+            'image',
+            'regular_price',
+            'price',
+            'offer_percentage',
+            'brand',
+            'price_title',
+            'regular_price_title',
+            'active_discounts',
+            'same_variable_variations',
+        ]
+
+    def get_active_discounts(self, obj):
+        now = timezone.now()
+        discounts = Discount.objects.filter(
+            is_active=True,
+            start_date__lte=now,
+            end_date__gte=now
+        ).select_related('action').prefetch_related('conditions__category_condition__categories',
+                                                    'conditions__product_condition__products',
+                                                    'conditions__brand_condition__brands',
+                                                    'conditions__price_over_condition',
+                                                    'conditions__price_limit_condition')
+
+        applicable_discounts = []
+        for discount in discounts:
+            is_applicable = False
+            for condition in discount.conditions.all():
+                if condition.type == DiscountCondition.CATEGORY:
+                    if condition.category_condition and obj.category.filter(
+                            id__in=condition.category_condition.categories.values('id')).exists():
+                        is_applicable = True
+                elif condition.type == DiscountCondition.BRAND:
+                    if condition.brand_condition and obj.brand and obj.brand.id in\
+                            condition.brand_condition.brands.values(
+                            'id'):
+                        is_applicable = True
+                elif condition.type == DiscountCondition.PRODUCT:
+                    if condition.product_condition and obj.id in condition.product_condition.products.values('id'):
+                        is_applicable = True
+            if is_applicable:
+                applicable_discounts.append(discount)
+
+        return DiscountSerializer(applicable_discounts, many=True, context=self.context).data
+
+    def get_price_title(self, obj):
+        return 'قیمت در اکسونی'
+
+    def get_regular_price_title(self, obj):
+        if obj.brand and obj.brand.made_in:
+            if obj.brand.made_in == 'ایران':
+                return 'قیمت مصرف کننده'
+        return 'قیمت محصول'
+
+    def get_image(self, obj):
+        return obj.picture.url if obj.picture else None
+
+    def get_offer_percentage(self, obj):
+        if obj.regular_price and obj.price:
+            offer_percentage = round(((obj.regular_price - obj.price) / obj.regular_price) * 100)
+            return f'{offer_percentage}%'
+        return None
+
+    def get_same_variable_variations(self, obj):
+        same_variable_variations = Product.objects.filter(variation_of=obj.variation_of)
+        return ApiVariationListSerializers(same_variable_variations, many=True).data
+
+
 class ApiProductsListSerializers(serializers.ModelSerializer):
     image = serializers.SerializerMethodField()
     second_image = serializers.SerializerMethodField()
@@ -139,7 +221,6 @@ class ApiProductsListSerializers(serializers.ModelSerializer):
     regular_price_title = serializers.SerializerMethodField()
     active_discounts = serializers.SerializerMethodField()
     inventory_count = serializers.IntegerField(read_only=True)
-    #same_variable_variations = serializers.SerializerMethodField()
     #attributes = ShopProductAttributeSerializer(many=True, read_only=True)
 
     class Meta:
@@ -167,7 +248,6 @@ class ApiProductsListSerializers(serializers.ModelSerializer):
             'regular_price_title',
             'active_discounts',
             'inventory_count',
-        #   'same_variable_variations',
         #    'attributes',
         ]
 
@@ -242,20 +322,15 @@ class ApiProductsListSerializers(serializers.ModelSerializer):
             return f'{offer_percentage}%'
         return None
 
-    def get_same_variable_variations(self, obj):
-        same_variable_variations = Product.objects.filter(variation_of=obj.variation_of)
-        return ApiVariationListSerializers(same_variable_variations, many=True).data
-
 
 class ApiCartRetrieveSerializer(serializers.ModelSerializer):
     customer = UserSimpleSerializer(read_only=True)
-    product = ApiProductsListSerializers(read_only=True)
+    product = ApiCartItemProductSerializers(read_only=True)
 
     class Meta:
         read_only_fields = ('created_at', 'updated_at')
         model = Cart
         fields = '__all__'
-
 
 
 
