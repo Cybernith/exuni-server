@@ -136,6 +136,7 @@ class ApiCartItemProductSerializers(serializers.ModelSerializer):
     active_discounts = serializers.SerializerMethodField()
     calculate_current_inventory = serializers.ReadOnlyField()
     variation_of = ApiVariationListSerializers(read_only=True)
+    attributes = ShopProductAttributeSerializer(many=True, read_only=True)
 
     class Meta:
         model = Product
@@ -155,6 +156,7 @@ class ApiCartItemProductSerializers(serializers.ModelSerializer):
             'same_variable_variations',
             'calculate_current_inventory',
             'variation_of',
+            'attributes',
         ]
 
     def get_active_discounts(self, obj):
