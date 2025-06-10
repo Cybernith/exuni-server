@@ -1,0 +1,35 @@
+.nested-inline > .inline-related {
+    border-left: 3px solid #fca130;  /* رنگ خط عمودی آبی */
+    margin-left: 15px;
+    padding-left: 10px;
+    margin-bottom: 15px;
+    background: #fca130; /* بک‌گراند کمی روشن برای تمیزی */
+    border-radius: 4px;
+}
+
+/* تغییر رنگ هدر هر inline */
+.nested-inline > .inline-related > h2 {
+    background-color: #ff80cc;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 4px 4px 0 0;
+    cursor: pointer;
+    user-select: none;
+}
+
+/* تغییر ظاهر collapse/expand arrow */
+.nested-inline > .inline-related.collapsed > h2::before {
+    content: "▶";  /* مثل فلش بسته */
+    display: inline-block;
+    margin-right: 8px;
+    transform: rotate(0deg);
+    transition: transform 0.2s ease;
+}
+
+.nested-inline > .inline-related:not(.collapsed) > h2::before {
+    content: "▼"; /* فلش باز */
+    display: inline-block;
+    margin-right: 8px;
+    transform: rotate(0deg);
+    transition: transform 0.2s ease;
+}
