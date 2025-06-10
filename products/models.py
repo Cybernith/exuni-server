@@ -32,7 +32,7 @@ class Brand(BaseModel):
     supplier = models.ForeignKey(Supplier, on_delete=models.SET_NULL, related_name='brands', blank=True, null=True)
 
     class Meta(BaseModel.Meta):
-        verbose_name = 'Brand'
+        verbose_name_plural = 'برند'
         permission_basename = 'brand'
         permissions = (
             ('get.brand', 'مشاهده برند'),
@@ -52,20 +52,109 @@ class Brand(BaseModel):
 class Avail(BaseModel):
     name = models.CharField(max_length=150)
     explanation = models.CharField(max_length=255, blank=True, null=True)
+    parent = models.ForeignKey('self', on_delete=models.PROTECT, related_name='children', blank=True, null=True)
 
     class Meta(BaseModel.Meta):
-        verbose_name = 'Avail'
+        verbose_name_plural = 'خواص محصولات'
         permission_basename = 'avail'
         permissions = (
-            ('get.avail', 'مشاهده فایده'),
-            ('create.avail', 'تعریف فایده'),
-            ('update.avail', 'ویرایش فایده'),
-            ('delete.avail', 'حذف فایده'),
+            ('get.avail', 'مشاهده خواص'),
+            ('create.avail', 'تعریف خواص'),
+            ('update.avail', 'ویرایش خواص'),
+            ('delete.avail', 'حذف خواص'),
 
-            ('getOwn.avail', 'مشاهده فایده خود'),
-            ('updateOwn.avail', 'ویرایش فایده خود'),
-            ('deleteOwn.avail', 'حذف فایده خود'),
+            ('getOwn.avail', 'مشاهده خواص خود'),
+            ('updateOwn.avail', 'ویرایش خواص خود'),
+            ('deleteOwn.avail', 'حذف خواص خود'),
         )
+
+    def get_all_descendants(self):
+        descendants = []
+        children = Category.objects.filter(parent=self)
+        for child in children:
+            descendants.append(child)
+            descendants.extend(child.get_all_descendants())
+        return descendants
+
+    def __str__(self):
+        names = [self.name]
+        parent = self.parent
+        while parent:
+            names.append(parent.name)
+            parent = parent.parent
+        return " > ".join(reversed(names))
+
+
+class Categorization(BaseModel):
+    name = models.CharField(max_length=150)
+    explanation = models.CharField(max_length=255, blank=True, null=True)
+    parent = models.ForeignKey('self', on_delete=models.PROTECT, related_name='children', blank=True, null=True)
+
+    class Meta(BaseModel.Meta):
+        verbose_name_plural = 'دسته بندی محصولات '
+        permission_basename = 'categorization'
+        permissions = (
+            ('get.categorization', 'مشاهده دسته بندی محصولات '),
+            ('create.categorization', 'تعریف دسته بندی محصولات '),
+            ('update.categorization', 'ویرایش دسته بندی محصولات '),
+            ('delete.categorization', 'حذف دسته بندی محصولات '),
+
+            ('getOwn.categorization', 'مشاهده دسته بندی محصولات  خود'),
+            ('updateOwn.categorization', 'ویرایش دسته بندی محصولات  خود'),
+            ('deleteOwn.categorization', 'حذف دسته بندی محصولات  خود'),
+        )
+
+    def get_all_descendants(self):
+        descendants = []
+        children = Category.objects.filter(parent=self)
+        for child in children:
+            descendants.append(child)
+            descendants.extend(child.get_all_descendants())
+        return descendants
+
+    def __str__(self):
+        names = [self.name]
+        parent = self.parent
+        while parent:
+            names.append(parent.name)
+            parent = parent.parent
+        return " > ".join(reversed(names))
+
+
+class Feature(BaseModel):
+    name = models.CharField(max_length=150)
+    explanation = models.CharField(max_length=255, blank=True, null=True)
+    parent = models.ForeignKey('self', on_delete=models.PROTECT, related_name='children', blank=True, null=True)
+
+    class Meta(BaseModel.Meta):
+        verbose_name_plural = 'ویژگی محصولات'
+        permission_basename = 'avail'
+        permissions = (
+            ('get.avail', 'مشاهده ویژگی محصولات '),
+            ('create.avail', 'تعریف ویژگی محصولات '),
+            ('update.avail', 'ویرایش ویژگی محصولات '),
+            ('delete.avail', 'حذف ویژگی محصولات '),
+
+            ('getOwn.avail', 'مشاهده ویژگی محصولات  خود'),
+            ('updateOwn.avail', 'ویرایش ویژگی محصولات  خود'),
+            ('deleteOwn.avail', 'حذف ویژگی محصولات  خود'),
+        )
+
+    def get_all_descendants(self):
+        descendants = []
+        children = Category.objects.filter(parent=self)
+        for child in children:
+            descendants.append(child)
+            descendants.extend(child.get_all_descendants())
+        return descendants
+
+    def __str__(self):
+        names = [self.name]
+        parent = self.parent
+        while parent:
+            names.append(parent.name)
+            parent = parent.parent
+        return " > ".join(reversed(names))
 
 
 class ProductProperty(BaseModel):
@@ -75,7 +164,7 @@ class ProductProperty(BaseModel):
     explanation = models.CharField(max_length=255, blank=True, null=True)
 
     class Meta(BaseModel.Meta):
-        verbose_name = 'ProductProperty'
+        verbose_name_plural = 'خصوصیت کالا'
         permission_basename = 'product_property'
         permissions = (
             ('get.product_property', 'مشاهده خصوصیت کالا'),
@@ -101,7 +190,7 @@ class ProductPropertyTerm(BaseModel):
     explanation = models.CharField(max_length=255, blank=True, null=True)
 
     class Meta(BaseModel.Meta):
-        verbose_name = 'ProductPropertyTerm'
+        verbose_name_plural = 'آیتم خصوصیت کالا'
         permission_basename = 'product_property_term'
         permissions = (
             ('get.product_property_term', 'مشاهده آیتم خصوصیت کالا'),
@@ -127,7 +216,7 @@ class Category(BaseModel):
     picture = models.ImageField(upload_to=custom_upload_to, null=True, blank=True, default=None)
 
     class Meta(BaseModel.Meta):
-        verbose_name = 'Category'
+        verbose_name_plural = 'دسته بندی'
         permission_basename = 'category'
         permissions = (
             ('get.category', 'مشاهده دسته بندی'),
@@ -403,7 +492,7 @@ class Product(BaseModel):
             price.increase_price(val=self.price)
 
     class Meta(BaseModel.Meta):
-        verbose_name = 'Product'
+        verbose_name_plural = 'محصول'
         permission_basename = 'product'
         permissions = (
             ('get.product', 'مشاهده محصول'),
@@ -447,17 +536,17 @@ class ProductAttribute(BaseModel):
     explanation = models.CharField(max_length=255, blank=True, null=True)
 
     class Meta(BaseModel.Meta):
-        verbose_name = 'ProductAttribute'
+        verbose_name_plural = 'صفت  کالا'
         permission_basename = 'product_attribute'
         permissions = (
-            ('get.product_attribute', 'مشاهده ویژگی کالا'),
-            ('create.product_attribute', 'تعریف ویژگی کالا'),
-            ('update.product_attribute', 'ویرایش ویژگی کالا'),
-            ('delete.product_attribute', 'حذف ویژگی کالا'),
+            ('get.product_attribute', 'مشاهده صفت  کالا'),
+            ('create.product_attribute', 'تعریف صفت  کالا'),
+            ('update.product_attribute', 'ویرایش صفت  کالا'),
+            ('delete.product_attribute', 'حذف صفت  کالا'),
 
-            ('getOwn.product_attribute', 'مشاهده ویژگی کالا خود'),
-            ('updateOwn.product_attribute', 'ویرایش ویژگی کالا خود'),
-            ('deleteOwn.product_attribute', 'حذف ویژگی کالا خود'),
+            ('getOwn.product_attribute', 'مشاهده صفت  کالا خود'),
+            ('updateOwn.product_attribute', 'ویرایش صفت  کالا خود'),
+            ('deleteOwn.product_attribute', 'حذف صفت  کالا خود'),
         )
 
     def __str__(self):
@@ -471,17 +560,17 @@ class ProductAttributeTerm(BaseModel):
     terms = models.ManyToManyField(ProductPropertyTerm, related_name='attribute_in_products')
 
     class Meta(BaseModel.Meta):
-        verbose_name = 'ProductAttributeTerm'
+        verbose_name_plural = 'آیتم صفت  کالا'
         permission_basename = 'product_attribute_term'
         permissions = (
-            ('get.product_attribute_term', 'مشاهده آیتم ویژگی کالا'),
-            ('create.product_attribute_term', 'تعریف آیتم ویژگی کالا'),
-            ('update.product_attribute_term', 'ویرایش آیتم ویژگی کالا'),
-            ('delete.product_attribute_term', 'حذف آیتم ویژگی کالا'),
+            ('get.product_attribute_term', 'مشاهده آیتم صفت  کالا'),
+            ('create.product_attribute_term', 'تعریف آیتم صفت  کالا'),
+            ('update.product_attribute_term', 'ویرایش آیتم صفت  کالا'),
+            ('delete.product_attribute_term', 'حذف آیتم صفت  کالا'),
 
-            ('getOwn.product_attribute_term', 'مشاهده آیتم ویژگی کالا خود'),
-            ('updateOwn.product_attribute_term', 'ویرایش آیتم ویژگی کالا خود'),
-            ('deleteOwn.product_attribute_term', 'حذف آیتم ویژگی کالا خود'),
+            ('getOwn.product_attribute_term', 'مشاهده آیتم صفت  کالا خود'),
+            ('updateOwn.product_attribute_term', 'ویرایش آیتم صفت  کالا خود'),
+            ('deleteOwn.product_attribute_term', 'حذف آیتم صفت  کالا خود'),
         )
 
     def __str__(self):
@@ -499,7 +588,7 @@ class ProductGallery(BaseModel):
     picture = models.ImageField(upload_to=custom_upload_to, null=True, blank=True, default=None)
 
     class Meta(BaseModel.Meta):
-        verbose_name = 'ProductGallery'
+        verbose_name_plural = 'گالری محصول'
         permission_basename = 'product_gallery'
         permissions = (
             ('get.product_gallery', 'مشاهده گالری محصول'),
