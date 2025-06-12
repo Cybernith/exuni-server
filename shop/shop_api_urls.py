@@ -8,7 +8,7 @@ from products.shop.views import ShopProductSimpleListView, BrandShopListView, Ca
     ShopProductWithCommentsListView, CurrentUserHasOrderProductViewSet, CurrentUserRelatedProductViewSet, \
     PendingReviewProductsView, UserProductsWithCommentView, CommentCreateView, RateUpsertApiView, \
     RelatedProductsApiView, SimilarBrandProductsApiView, ShopProductDetailView, ImageSearchAPIView
-from products.views import AvailTreeViewSet
+from products.views import AvailSubtreeView, AvailTreeSaveView, AvailRootListView
 from shop.search import GlobalAutoCompleteSearchAPIView
 from shop.views import ToggleWishListBTNView, ToggleComparisonListBTNView, CurrentUserCartApiView, CartSyncView, \
     CartDetailView, ClearCustomerCartView, CurrentUserWishListApiView, WishlistSyncView, \
@@ -27,7 +27,6 @@ urlpatterns = [
     url(r'^userUpdate/(?P<pk>[0-9]+)$', UserUpdateView.as_view(), name='update-user'),
     url(r'^changePhoneByVerificationCode$', ChangePhoneView.as_view()),
     url(r'^currentUser/$', CurrentUserApiView.as_view(), name='current-user'),
-    url(r'^availTree$', AvailTreeViewSet.as_view({'get': 'list'}), name='AvailTreeViewSet'),
 
     url(r'^products$', ShopProductSimpleListView.as_view(), name='shopProductSimpleList'),
     url(r'^productDetail/(?P<id>[0-9]+)$', ShopProductDetailView.as_view(), name='ProductDetail'),
@@ -114,4 +113,7 @@ urlpatterns = [
     url(r'^cancelCustomerOrder/(?P<pk>[0-9]+)$', CancelShopOrderView.as_view(), name='cancelCustomerOrder'),
     url(r'^editCustomerOrder/(?P<pk>[0-9]+)$', OrderMoveToCartAPIView.as_view(), name='orderMoveToCart'),
 
+    url(r'^availSubtree/(?P<pk>[0-9]+)$', AvailSubtreeView.as_view(), name='availSubtree'),
+    url(r'^availSubtree$', AvailTreeSaveView.as_view(), name='availsTreeSave'),
+    url(r'^availRootList$', AvailRootListView.as_view(), name='availRootList'),
 ]

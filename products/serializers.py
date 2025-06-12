@@ -59,6 +59,17 @@ class AvailSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class AvailTreeRootSerializer(serializers.ModelSerializer):
+    image = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Avail
+        fields = ('id', 'name', 'explanation', 'image')
+
+    def get_image(self, obj):
+        return 'http://exuni.shop' + obj.image.url if obj.image else None
+
+
 class ProductPropertySerializer(serializers.ModelSerializer):
     created_by = UserSimpleSerializer(read_only=True)
 
