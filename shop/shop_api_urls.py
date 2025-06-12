@@ -8,7 +8,8 @@ from products.shop.views import ShopProductSimpleListView, BrandShopListView, Ca
     ShopProductWithCommentsListView, CurrentUserHasOrderProductViewSet, CurrentUserRelatedProductViewSet, \
     PendingReviewProductsView, UserProductsWithCommentView, CommentCreateView, RateUpsertApiView, \
     RelatedProductsApiView, SimilarBrandProductsApiView, ShopProductDetailView, ImageSearchAPIView
-from products.views import AvailSubtreeView, AvailTreeSaveView, AvailRootListView, AvailDeleteView
+from products.views import AvailSubtreeView, AvailTreeSaveView, AvailRootListView, AvailDeleteView, FeatureSubtreeView, \
+    FeatureDeleteView, FeatureTreeSaveView, FeatureRootListView
 from shop.search import GlobalAutoCompleteSearchAPIView
 from shop.views import ToggleWishListBTNView, ToggleComparisonListBTNView, CurrentUserCartApiView, CartSyncView, \
     CartDetailView, ClearCustomerCartView, CurrentUserWishListApiView, WishlistSyncView, \
@@ -117,4 +118,9 @@ urlpatterns = [
     url(r'^availDelete/(?P<pk>[0-9]+)$', AvailDeleteView.as_view(), name='availDeleteView'),
     url(r'^availSubtree$', AvailTreeSaveView.as_view(), name='availsTreeSave'),
     url(r'^availRootList$', AvailRootListView.as_view(), name='availRootList'),
+
+    url(r'^featureSubtree/(?P<pk>[0-9]+)$', FeatureSubtreeView.as_view(), name='featureSubtree'),
+    url(r'^featureDelete/(?P<pk>[0-9]+)$', FeatureDeleteView.as_view(), name='featureDeleteView'),
+    url(r'^featureSubtree$', FeatureTreeSaveView.as_view(), name='featureTreeSave'),
+    url(r'^featureRootList$', FeatureRootListView.as_view(), name='featureRootList'),
 ]
