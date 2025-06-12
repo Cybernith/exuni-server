@@ -26,3 +26,4 @@ RequestLogs = db_handle['request_logs']
 PEC = {
     'PIN_CODE': "123456",
     'TERMINAL': ""
+}
