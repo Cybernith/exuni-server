@@ -89,7 +89,8 @@ class Avail(BaseModel):
 class Categorization(BaseModel):
     name = models.CharField(max_length=150)
     explanation = models.CharField(max_length=255, blank=True, null=True)
-    parent = models.ForeignKey('self', on_delete=models.PROTECT, related_name='children', blank=True, null=True)
+    parent = models.ForeignKey('self', on_delete=models.CASCADE, related_name='children', blank=True, null=True)
+    image = models.ImageField(upload_to=custom_upload_to, null=True, blank=True, default=None)
 
     class Meta(BaseModel.Meta):
         verbose_name_plural = 'دسته بندی محصولات '

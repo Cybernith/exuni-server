@@ -4,7 +4,7 @@ from entrance.models import StoreReceiptItem
 from helpers.functions import change_to_num
 from helpers.serializers import SModelSerializer
 from products.models import Brand, Avail, ProductProperty, Category, Product, ProductGallery, ProductInventory, \
-    ProductPrice, ProductPriceHistory, Feature
+    ProductPrice, ProductPriceHistory, Feature, Categorization
 from server.settings import BASE_DIR, SERVER_URL
 from users.serializers import UserSimpleSerializer
 
@@ -75,6 +75,17 @@ class FeatureTreeRootSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Feature
+        fields = ('id', 'name', 'explanation', 'image')
+
+    def get_image(self, obj):
+        return 'http://exuni.shop' + obj.image.url if obj.image else None
+
+
+class CategorizationRootSerializer(serializers.ModelSerializer):
+    image = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Categorization
         fields = ('id', 'name', 'explanation', 'image')
 
     def get_image(self, obj):

@@ -18,11 +18,12 @@ from rest_framework.response import Response
 from rest_framework import status, viewsets
 
 from products.models import Brand, Avail, ProductProperty, Category, Product, ProductGallery, ProductPriceHistory, \
-    Feature
+    Feature, Categorization
 from products.serializers import BrandSerializer, AvailSerializer, ProductPropertySerializer, CategorySerializer, \
     ProductSerializer, ProductGallerySerializer, BrandLogoUpdateSerializer, CategoryPictureUpdateSerializer, \
     ProductSimpleSerializer, ProductContentDevelopmentSerializer, ProductPictureUpdateSerializer, \
-    ProductPriceHistorySerializer, AvailTreeSerializer, AvailTreeRootSerializer, FeatureTreeRootSerializer
+    ProductPriceHistorySerializer, AvailTreeSerializer, AvailTreeRootSerializer, FeatureTreeRootSerializer, \
+    CategorizationRootSerializer
 
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework import generics
@@ -627,7 +628,6 @@ class AvailDeleteView(APIView):
         query.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-
 class FeatureSubtreeView(APIView):
 
     def get(self, request, pk):
@@ -762,3 +762,137 @@ class FeatureDeleteView(APIView):
         query.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+
+class CategorizationSubtreeView(APIView):
+
+    def get(self, request, pk):
+        root = get_object_or_404(Categorization.objects.only('id', 'name', 'parent_id'), pk=pk)
+
+        categorizations = Categorization.objects.all().only('id', 'name', 'parent_id')
+
+        categorization_map = {}
+        for categorization in categorizations:
+            categorization_map.setdefault(categorization.parent_id, []).append({
+                'id': categorization.id,
+                'name': categorization.name,
+                'explanation': categorization.explanation,
+                'image': 'http://exuni.shop' + categorization.image.url if categorization.image else None,
+                'children': []
+            })
+
+        def build_tree(parent_id):
+            nodes = []
+            for cat in categorization_map.get(parent_id, []):
+                cat['children'] = build_tree(cat['id'])
+                nodes.append(cat)
+            return nodes
+
+        tree = {
+            'id': root.id,
+            'name': root.name,
+            'explanation': root.explanation,
+            'image': 'http://exuni.shop' + root.image.url if root.image else None,
+            'children': build_tree(root.id)
+        }
+
+        return Response(tree, status=status.HTTP_200_OK)
+
+
+class CategorizationTreeSaveView(APIView):
+    @transaction.atomic
+    def post(self, request):
+        data = request.data
+        root = self._create_or_update_node(data, parent=None)
+        return Response({'success': True, 'root_id': root.id}, status=status.HTTP_200_OK)
+
+    def _create_or_update_node(self, data, parent):
+        raw_id = data.get('id')
+        name = data['name']
+        image_data = data.get('image', None)
+        explanation = data.get('explanation', '')
+
+        instance = None
+        if self._is_valid_id(raw_id):
+            try:
+                instance = Categorization.objects.get(pk=raw_id)
+                instance.name = name
+                instance.explanation = explanation
+                instance.parent = parent
+                if image_data:
+                    self._save_image(instance, image_data)
+                else:
+                    instance.image = None
+                    instance.save()
+            except Categorization.DoesNotExist:
+                instance = Categorization.objects.create(
+                    name=name,
+                    explanation=explanation,
+                    parent=parent
+                )
+                if image_data:
+                    self._save_image(instance, image_data)
+                else:
+                    instance.image = None
+
+        else:
+            instance = Categorization.objects.create(
+                name=name,
+                explanation=explanation,
+                parent=parent
+            )
+            if image_data:
+                self._save_image(instance, image_data)
+            else:
+                instance.image = None
+
+        children = data.get('children', [])
+        current_child_ids = set()
+        for child_data in children:
+            child_instance = self._create_or_update_node(child_data, parent=instance)
+            current_child_ids.add(child_instance.id)
+
+        existing_child_ids = set(instance.children.values_list('id', flat=True))
+        to_delete_ids = existing_child_ids - current_child_ids
+        if to_delete_ids:
+            Categorization.objects.filter(id__in=to_delete_ids).delete()
+
+        return instance
+
+    def _is_valid_id(self, val):
+        try:
+            val = int(val)
+            return val > 0
+        except (ValueError, TypeError):
+            return False
+
+    def _save_image(self, instance, image_data):
+        if image_data.startswith("data:image"):
+            format, imgstr = image_data.split(';base64,')
+            ext = format.split('/')[-1]
+            name = f"{uuid.uuid4()}.{ext}"
+            decoded_image = base64.b64decode(imgstr)
+            content_file = ContentFile(decoded_image, name)
+            instance.image.save(name, content_file, save=True)
+        else:
+            pass
+
+
+class CategorizationRootListView(APIView):
+    def get(self, request):
+        roots = Categorization.objects.filter(parent__isnull=True).order_by('id')
+        serializer = CategorizationRootSerializer(roots, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class CategorizationDeleteView(APIView):
+
+    def get_object(self, pk):
+        try:
+            return Categorization.objects.get(pk=pk)
+        except Categorization.DoesNotExist:
+            raise Http404
+
+    def delete(self, request, pk):
+        query = self.get_object(pk)
+        query.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
