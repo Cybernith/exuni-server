@@ -8,6 +8,7 @@ from products.shop.views import ShopProductSimpleListView, BrandShopListView, Ca
     ShopProductWithCommentsListView, CurrentUserHasOrderProductViewSet, CurrentUserRelatedProductViewSet, \
     PendingReviewProductsView, UserProductsWithCommentView, CommentCreateView, RateUpsertApiView, \
     RelatedProductsApiView, SimilarBrandProductsApiView, ShopProductDetailView, ImageSearchAPIView
+from products.views import AvailTreeViewSet
 from shop.search import GlobalAutoCompleteSearchAPIView
 from shop.views import ToggleWishListBTNView, ToggleComparisonListBTNView, CurrentUserCartApiView, CartSyncView, \
     CartDetailView, ClearCustomerCartView, CurrentUserWishListApiView, WishlistSyncView, \
@@ -26,6 +27,7 @@ urlpatterns = [
     url(r'^userUpdate/(?P<pk>[0-9]+)$', UserUpdateView.as_view(), name='update-user'),
     url(r'^changePhoneByVerificationCode$', ChangePhoneView.as_view()),
     url(r'^currentUser/$', CurrentUserApiView.as_view(), name='current-user'),
+    url(r'^availTree$', AvailTreeViewSet.as_view({'get': 'list'}), name='AvailTreeViewSet'),
 
     url(r'^products$', ShopProductSimpleListView.as_view(), name='shopProductSimpleList'),
     url(r'^productDetail/(?P<id>[0-9]+)$', ShopProductDetailView.as_view(), name='ProductDetail'),

@@ -1,10 +1,13 @@
 from django.contrib import admin
 from django.utils.html import format_html
-from nested_admin import NestedModelAdmin, NestedStackedInline
+from nested_admin import NestedModelAdmin, NestedStackedInline,NestedTabularInline
 
 from products.models import Brand, Avail, ProductProperty, Category, Product, ProductGallery, ProductInventory, \
     ProductPrice, ProductPriceHistory, ProductInventoryHistory, ProductPropertyTerm, ProductAttribute, \
     ProductAttributeTerm, Feature, Categorization
+
+from django.contrib import admin
+
 
 admin.site.register(Avail)
 admin.site.register(Feature)

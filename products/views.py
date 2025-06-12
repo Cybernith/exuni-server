@@ -10,7 +10,7 @@ from rest_framework.views import APIView
 from django.http import Http404
 
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework import status, viewsets
 
 from products.models import Brand, Avail, ProductProperty, Category, Product, ProductGallery, ProductPriceHistory
 from products.serializers import BrandSerializer, AvailSerializer, ProductPropertySerializer, CategorySerializer, \
@@ -486,5 +486,15 @@ class ActiveDiscountsAPIView(APIView):
 
         except Exception as e:
             return Response({'error': f'خطا در پردازش: {str(e)}'}, status=500)
+from rest_framework.decorators import action
 
 
+class AvailTreeViewSet(viewsets.ModelViewSet):
+    queryset = Avail.objects.all()
+    serializer_class = AvailSerializer
+
+    @action(detail=False)
+    def roots(self, request):
+        roots = Avail.objects.filter(parent__isnull=True)
+        serializer = self.get_serializer(roots, many=True)
+        return Response(serializer.data)

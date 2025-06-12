@@ -249,3 +249,18 @@ class ProductPriceHistorySerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductPriceHistory
         fields = ['previous_price', 'new_price', 'changed_at', 'changed_by', 'note']
+
+
+class AvailTreeSerializer(serializers.ModelSerializer):
+    children = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Avail
+        fields = ['id', 'name', 'explanation', 'parent', 'children']
+
+    def get_children(self, obj):
+        children = obj.children.all()
+        serializer = AvailTreeSerializer(children, many=True)
+        return serializer.data
+
+
