@@ -612,3 +612,17 @@ class AvailRootListView(APIView):
         roots = Avail.objects.filter(parent__isnull=True).order_by('id')
         serializer = AvailTreeRootSerializer(roots, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class AvailDeleteView(APIView):
+
+    def get_object(self, pk):
+        try:
+            return Avail.objects.get(pk=pk)
+        except Avail.DoesNotExist:
+            raise Http404
+
+    def delete(self, request, pk):
+        query = self.get_object(pk)
+        query.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)

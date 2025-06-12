@@ -8,7 +8,7 @@ from products.shop.views import ShopProductSimpleListView, BrandShopListView, Ca
     ShopProductWithCommentsListView, CurrentUserHasOrderProductViewSet, CurrentUserRelatedProductViewSet, \
     PendingReviewProductsView, UserProductsWithCommentView, CommentCreateView, RateUpsertApiView, \
     RelatedProductsApiView, SimilarBrandProductsApiView, ShopProductDetailView, ImageSearchAPIView
-from products.views import AvailSubtreeView, AvailTreeSaveView, AvailRootListView
+from products.views import AvailSubtreeView, AvailTreeSaveView, AvailRootListView, AvailDeleteView
 from shop.search import GlobalAutoCompleteSearchAPIView
 from shop.views import ToggleWishListBTNView, ToggleComparisonListBTNView, CurrentUserCartApiView, CartSyncView, \
     CartDetailView, ClearCustomerCartView, CurrentUserWishListApiView, WishlistSyncView, \
@@ -114,6 +114,7 @@ urlpatterns = [
     url(r'^editCustomerOrder/(?P<pk>[0-9]+)$', OrderMoveToCartAPIView.as_view(), name='orderMoveToCart'),
 
     url(r'^availSubtree/(?P<pk>[0-9]+)$', AvailSubtreeView.as_view(), name='availSubtree'),
+    url(r'^availDelete/(?P<pk>[0-9]+)$', AvailDeleteView.as_view(), name='availDeleteView'),
     url(r'^availSubtree$', AvailTreeSaveView.as_view(), name='availsTreeSave'),
     url(r'^availRootList$', AvailRootListView.as_view(), name='availRootList'),
 ]
