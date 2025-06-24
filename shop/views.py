@@ -107,7 +107,7 @@ class CartSyncView(APIView):
         cart_items = validated_data.get('cart_items', [])
 
         if not cart_items:
-            return Response({"detail": "No items provided."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"message": "No items provided."}, status=status.HTTP_400_BAD_REQUEST)
 
         cart_items_product_ids = [item['product_id'] for item in cart_items]
         products = Product.objects.filter(id__in=cart_items_product_ids).only('id')
@@ -141,7 +141,7 @@ class CartSyncView(APIView):
         if items_to_update:
             Cart.objects.bulk_update(items_to_update, ['quantity'], batch_size=100)
 
-        return Response({"detail": "Cart synced successfully."}, status=status.HTTP_200_OK)
+        return Response({"message": "Cart synced successfully."}, status=status.HTTP_200_OK)
 
 
 class CurrentUserWishListApiView(APIView):
@@ -194,7 +194,7 @@ class WishlistSyncView(APIView):
         items = validated_data.get('wishlist_items', [])
 
         if not items:
-            return Response({"detail": "No items provided."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"message": "No items provided."}, status=status.HTTP_400_BAD_REQUEST)
 
         product_ids = [item['product_id'] for item in items]
         products = Product.objects.filter(id__in=product_ids).only('id')
@@ -218,7 +218,7 @@ class WishlistSyncView(APIView):
         if items_to_create:
             WishList.objects.bulk_create(items_to_create, batch_size=100)
 
-        return Response({"detail": "Wishlist synced successfully."}, status=status.HTTP_200_OK)
+        return Response({"message": "Wishlist synced successfully."}, status=status.HTTP_200_OK)
 
 
 class ClearCustomerWishListView(APIView):
@@ -228,7 +228,7 @@ class ClearCustomerWishListView(APIView):
     def delete(self, request):
         wish_list = WishList.objects.filter(customer_id=get_current_user())
         wish_list.delete()
-        return Response({'detail': 'your wish list has been cleared'}, status=status.HTTP_204_NO_CONTENT)
+        return Response({'message': 'your wish list has been cleared'}, status=status.HTTP_204_NO_CONTENT)
 
 
 class CurrentUserComparisonApiView(APIView):
@@ -287,7 +287,7 @@ class ComparisonSyncView(APIView):
         items = validated_data.get('comparison_items', [])
 
         if not items:
-            return Response({"detail": "No items provided"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"message": "No items provided"}, status=status.HTTP_400_BAD_REQUEST)
 
         product_ids = [item['product_id'] for item in items]
         products = Product.objects.filter(id__in=product_ids).only('id')
@@ -311,7 +311,7 @@ class ComparisonSyncView(APIView):
         if items_to_create:
             Comparison.objects.bulk_create(items_to_create, batch_size=100)
 
-        return Response({"detail": "Comparison synced successfully."}, status=status.HTTP_200_OK)
+        return Response({"message": "Comparison synced successfully."}, status=status.HTTP_200_OK)
 
 
 class ClearCustomerComparisonView(APIView):
@@ -321,7 +321,7 @@ class ClearCustomerComparisonView(APIView):
     def delete(self, request):
         comparison = Comparison.objects.filter(customer_id=get_current_user())
         comparison.delete()
-        return Response({'detail': 'your comparisons has been cleared'}, status=status.HTTP_204_NO_CONTENT)
+        return Response({'message': 'your comparisons has been cleared'}, status=status.HTTP_204_NO_CONTENT)
 
 
 class CurrentUserShipmentAddressApiView(APIView):
@@ -489,15 +489,15 @@ class ShopOrderRegistrationView(APIView):
 
         cart_items = Cart.objects.filter(customer=customer).select_related('product')
         if not cart_items.exists():
-            return Response({'detail': 'سبد خرید شما خالی است'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'message': 'سبد خرید شما خالی است'}, status=status.HTTP_400_BAD_REQUEST)
 
         if not address_id:
-            return Response({'detail': 'آدرس الزامی است'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'message': 'آدرس الزامی است'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             address = ShipmentAddress.objects.get(id=address_id, customer=customer)
         except ShipmentAddress.DoesNotExist:
-            return Response({'detail': 'آدرس برای این کاربر معتبر نیست'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'message': 'آدرس برای این کاربر معتبر نیست'}, status=status.HTTP_400_BAD_REQUEST)
 
         discount_code = None
         if discount_code_value:
@@ -505,7 +505,7 @@ class ShopOrderRegistrationView(APIView):
                 discount_code = DiscountCode.objects.get(code=discount_code_value)
                 discount_code.verify()
             except DiscountCode.DoesNotExist:
-                return Response({'detail': 'کد تخفیف معتبر نمی‌باشد'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({'message': 'کد تخفیف معتبر نمی‌باشد'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             with transaction.atomic():
@@ -542,16 +542,16 @@ class ShopOrderRegistrationView(APIView):
                 shop_order.set_constants()
 
                 return Response({
-                    'detail': 'ثبت اولیه سفارش با موفقیت انجام شد',
+                    'message': 'ثبت اولیه سفارش با موفقیت انجام شد',
                     'order_id': shop_order.id,
                     'exuni_tracking_code': shop_order.exuni_tracking_code
                 }, status=status.HTTP_201_CREATED)
 
         except ValidationError as validation_error:
-            return Response({'detail': str(validation_error)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'message': str(validation_error)}, status=status.HTTP_400_BAD_REQUEST)
 
         except Exception as exception:
-            return Response({'detail': f'خطا در ثبت سفارش: {str(exception)}'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'message': f'خطا در ثبت سفارش: {str(exception)}'}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class CustomerOrdersView(APIView):
@@ -585,7 +585,7 @@ class ClearCustomerCartView(APIView):
     def delete(self, request):
         carts = Cart.objects.filter(customer_id=get_current_user())
         carts.delete()
-        return Response({'detail': 'your cart has been cleared'}, status=status.HTTP_204_NO_CONTENT)
+        return Response({'message': 'your cart has been cleared'}, status=status.HTTP_204_NO_CONTENT)
 
 
 class ShopOrderStatusHistoryApiView(APIView):
@@ -700,7 +700,7 @@ class SyncAllDataView(APIView):
         if compare_to_create:
             Comparison.objects.bulk_create(compare_to_create, batch_size=100)
 
-        return Response({"detail": "All data synced successfully."}, status=status.HTTP_200_OK)
+        return Response({"message": "All data synced successfully."}, status=status.HTTP_200_OK)
 
 
 class ToggleWishListBTNView(APIView):
@@ -718,14 +718,14 @@ class ToggleWishListBTNView(APIView):
             product=product
         ).exists():
             WishList.objects.get(Q(customer=request.user) & Q(product=product)).delete()
-            return Response({'detail': 'product deleted from wish list'}, status=status.HTTP_201_CREATED)
+            return Response({'message': 'product deleted from wish list'}, status=status.HTTP_201_CREATED)
 
         else:
             WishList.objects.create(
                 customer=request.user,
                 product=product
             )
-            return Response({'detail': 'product added to wish list'}, status=status.HTTP_201_CREATED)
+            return Response({'message': 'product added to wish list'}, status=status.HTTP_201_CREATED)
 
 
 class ToggleComparisonListBTNView(APIView):
@@ -743,14 +743,14 @@ class ToggleComparisonListBTNView(APIView):
             product=product
         ).exists():
             Comparison.objects.get(Q(customer=request.user) & Q(product=product)).delete()
-            return Response({'detail': 'product deleted from comparisons'}, status=status.HTTP_201_CREATED)
+            return Response({'message': 'product deleted from comparisons'}, status=status.HTTP_201_CREATED)
 
         else:
             Comparison.objects.create(
                 customer=request.user,
                 product=product
             )
-            return Response({'detail': 'product added to comparisons'}, status=status.HTTP_201_CREATED)
+            return Response({'message': 'product added to comparisons'}, status=status.HTTP_201_CREATED)
 
 
 class UserOrdersListView(generics.ListAPIView):
@@ -814,19 +814,19 @@ class CancelShopOrderView(APIView):
 
         if not (shop_order.customer == get_current_user()):
             return Response(
-                {'detail': 'دسترسی غیرمجاز'},
+                {'message': 'دسترسی غیرمجاز'},
                 status=status.HTTP_403_FORBIDDEN
             )
 
         if shop_order.status == ShopOrder.CANCELLED:
             return Response(
-                {'detail': 'این سفارش از قبل کنسل شده است'},
+                {'message': 'این سفارش از قبل کنسل شده است'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
         if shop_order.status not in [ShopOrder.PAID, ShopOrder.PENDING]:
             return Response(
-                {'detail': 'سفارش فقط در وضعیت در انتظار پرداخت یا پرداخت شده قابل حذف است'},
+                {'message': 'سفارش فقط در وضعیت در انتظار پرداخت یا پرداخت شده قابل حذف است'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
@@ -835,7 +835,7 @@ class CancelShopOrderView(APIView):
             shop_order.cancel_order()
         except Exception as e:
             return Response(
-                {'detail': str(e)},
+                {'message': str(e)},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
@@ -884,11 +884,11 @@ class OrderMoveToCartAPIView(APIView):
         try:
             order = ShopOrder.objects.prefetch_related('items').get(pk=pk, customer=get_current_user())
         except ShopOrder.DoesNotExist:
-            return Response({'detail': 'سفارش یافت نشد.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'message': 'سفارش یافت نشد.'}, status=status.HTTP_404_NOT_FOUND)
 
         if order.status not in [ShopOrder.PAID, ShopOrder.PENDING]:
             return Response(
-                {'detail': 'سفارش فقط در وضعیت در انتظار پرداخت یا پرداخت شده قابل حذف است'},
+                {'message': 'سفارش فقط در وضعیت در انتظار پرداخت یا پرداخت شده قابل حذف است'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
@@ -930,4 +930,4 @@ class OrderMoveToCartAPIView(APIView):
 
             order.delete()
 
-        return Response({'detail': 'سفارش با موفقیت حذف و آیتم‌ها به سبد خرید منتقل شدند.'}, status=status.HTTP_200_OK)
+        return Response({'message': 'سفارش با موفقیت حذف و آیتم‌ها به سبد خرید منتقل شدند.'}, status=status.HTTP_200_OK)

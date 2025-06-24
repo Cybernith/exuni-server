@@ -46,7 +46,7 @@ class ProductViewSummaryAPIView(APIView):
         try:
             product = Product.objects.get(pk=product_id)
         except Product.DoesNotExist:
-            return Response({"detail": "Product not found."}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"message": "Product not found."}, status=status.HTTP_404_NOT_FOUND)
 
         total_views = ShopProductViewLog.objects.filter(product=product).count()
 
@@ -123,7 +123,7 @@ class ProductInRangeVisitReportView(APIView):
             else:
                 end_date = None
         except:
-            return Response({'detail': 'invalid date format'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'message': 'invalid date format'}, status=status.HTTP_400_BAD_REQUEST)
 
         if start and end:
             logs = ShopProductViewLog.objects.filter(
@@ -292,7 +292,7 @@ class CreateNotificationAPIView(APIView):
                 )
             notification.create_user_notifications()
 
-            return Response({'detail': f"{len(notification)} notifications created."}, status=status.HTTP_201_CREATED)
+            return Response({'message': f"{len(notification)} notifications created."}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -353,7 +353,7 @@ class MarkNotificationAsReadView(APIView):
     def post(self, request, notification_id):
         user_notification = get_object_or_404(UserNotification, id=notification_id, user=get_current_user())
         user_notification.mark_as_read()
-        return Response({'detail': 'Notification marked as read.'}, status=status.HTTP_200_OK)
+        return Response({'message': 'Notification marked as read.'}, status=status.HTTP_200_OK)
 
 
 class InventoryReminderCreateView(APIView):
@@ -363,5 +363,5 @@ class InventoryReminderCreateView(APIView):
         product = Product.objects.get(id=product_id)
         reminder, created = InventoryReminder.objects.get_or_create(user=request.user, product=product)
         if not created:
-            return Response({'detail': 'قبلاً ثبت شده است.'}, status=200)
-        return Response({'detail': 'درخواست یادآوری ثبت شد.'}, status=201)
+            return Response({'message': 'قبلاً ثبت شده است.'}, status=200)
+        return Response({'message': 'درخواست یادآوری ثبت شد.'}, status=201)

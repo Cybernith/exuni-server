@@ -38,7 +38,7 @@ class StartZarinpalPaymentApiView(APIView):
 
         payment_status = getattr(order, 'bank_payment', None)
         if payment_status and payment_status.status not in ['ca', 'pe']:
-            return Response({'detail': 'this order already have open payment'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'message': 'this order already have open payment'}, status=status.HTTP_400_BAD_REQUEST)
 
         if request.data.get('use_wallet', False):
             payment = order.pay_with_wallet()
@@ -63,7 +63,7 @@ class StartZarinpalPaymentApiView(APIView):
 
         except Exception as exception:
             payment.delete()
-            return Response({'detail': str(exception)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'message': str(exception)}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class ZarinpalCallbackApiView(APIView):
@@ -141,7 +141,7 @@ class StartPaymentApiView(APIView):
 
         payment_status = getattr(order, 'bank_payment', None)
         if payment_status and payment_status.status != 'pending':
-            return Response({'detail': 'this order already have open payment'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'message': 'this order already have open payment'}, status=status.HTTP_400_BAD_REQUEST)
 
         gateway_name = 'gateway'
 
@@ -170,13 +170,13 @@ class PaymentCallbackApiView(APIView):
         gateway_token = request.headers.get('X-Gateway-Token')
 
         if gateway_token != GATEWAY_SECRET_PAYMENT_TOKEN:
-            return Response({'detail': 'invalid gateway token'}, status=status.HTTP_403_FORBIDDEN)
+            return Response({'message': 'invalid gateway token'}, status=status.HTTP_403_FORBIDDEN)
 
         if client_ip not in TRUSTED_GATEWAY_IP:
-            return Response({'detail': 'Unauthorized IP'}, status=status.HTTP_403_FORBIDDEN)
+            return Response({'message': 'Unauthorized IP'}, status=status.HTTP_403_FORBIDDEN)
 
         if not self.verify_signature(payload, signature, SECRET_KEY):
-            return Response({'detail': 'invalid gateway signature'}, status=status.HTTP_403_FORBIDDEN)
+            return Response({'message': 'invalid gateway signature'}, status=status.HTTP_403_FORBIDDEN)
 
         payment_id = request.data.get('payment_id')
         success = request.data.get('success')
@@ -186,11 +186,11 @@ class PaymentCallbackApiView(APIView):
             payment.mark_as_success_payment(user=payment.user)
             payment.shop_order.mark_as_paid()
 
-            return Response({'detail': 'payment verify was successfully'}, status=status.HTTP_201_CREATED)
+            return Response({'message': 'payment verify was successfully'}, status=status.HTTP_201_CREATED)
 
         else:
             payment.mark_as_failed_payment(user=payment.user)
-            return Response({'detail': 'transaction verify failed'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'message': 'transaction verify failed'}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class VerifyDiscountCodeView(APIView):
@@ -303,10 +303,10 @@ class StartZarinpalWalletTopUPApiView(APIView):
         try:
             top_up_amount = int(top_up_amount)
         except (TypeError, ValueError):
-            return Response({'detail': 'Invalid amount'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'message': 'Invalid amount'}, status=status.HTTP_400_BAD_REQUEST)
 
         if not top_up_amount:
-            return Response({'detail': 'amount should be positive'},
+            return Response({'message': 'amount should be positive'},
                             status=status.HTTP_400_BAD_REQUEST)
 
         payment = Payment.objects.create(
@@ -329,7 +329,7 @@ class StartZarinpalWalletTopUPApiView(APIView):
         try:
             service.execute()
         except Exception as e:
-            return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'message': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
         callback_url = SERVER_URL + reverse('financial_management:zarinpal_top_up_wallet_callback')
         gateway = ZarinpalGateway(
@@ -345,7 +345,7 @@ class StartZarinpalWalletTopUPApiView(APIView):
 
         except Exception as exception:
             payment.delete()
-            return Response({'detail': str(exception)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'message': str(exception)}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class ZarinpalTopUpWalletCallbackApiView(APIView):
