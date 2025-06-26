@@ -76,11 +76,24 @@ class Command(BaseCommand):
             wp_api=True,
             timeout=600
         )
-        page = 5
+        page = 1
         response_len = 20
         while response_len == 20:
-            products = wcapi.get("products", params={"per_page": 20, 'page': page}).json()
-            print('fetch product done')
+            products = []
+            for attempt in range(3):  # ۳ بار تلاش مجدد
+                try:
+                    products = wcapi.get("products", params={"per_page": 20, 'page': page}).json()
+                    if products:
+                        print('fetch product done')
+                        break
+                except RequestException as e:
+                    print(f"❌ خطا در دانلود : {e}")
+                    if attempt < 2:
+                        print("⏳ 3 ثانیه صبر می‌کنم و دوباره تلاش می‌کنم...")
+                        time.sleep(3)
+                    else:
+                        print("❌ پس از ۳ تلاش، رد شد.")
+
             for product in products:
                 if not Product.objects.filter(sixteen_digit_code=product['sku']).exists():
                     if product['type'] == 'simple':
@@ -235,8 +248,22 @@ class Command(BaseCommand):
                                     ProductPropertyTerm.objects.filter(name=term).first()
                                 )
                         print('variable product added')
-                        variations = wcapi.get(f"products/{product['id']}/variations",
-                                               params={"per_page": 50, 'page': 1}).json()
+                        variations = []
+                        for attempt in range(3):  # ۳ بار تلاش مجدد
+                            try:
+                                variations = wcapi.get(f"products/{product['id']}/variations",
+                                                       params={"per_page": 50, 'page': 1}).json()
+                                if products:
+                                    print('fetch variations done')
+                                    break
+                            except RequestException as e:
+                                print(f"❌ خطا در دانلود : {e}")
+                                if attempt < 2:
+                                    print("⏳ 3 ثانیه صبر می‌کنم و دوباره تلاش می‌کنم...")
+                                    time.sleep(3)
+                                else:
+                                    print("❌ پس از ۳ تلاش، رد شد.")
+
                         for variation in variations:
                             new_variation = Product.objects.create(
                                     variation_of=new_product,
