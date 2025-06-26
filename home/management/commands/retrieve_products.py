@@ -14,7 +14,7 @@ from django.core.files.base import ContentFile
 
 
 def save_product_picture_from_url(product_id, image_url):
-    response = requests.get(image_url)
+    response = requests.get('https://exuni.ir' + image_url)
     if response.status_code == 200:
         current_product = Product.objects.get(id=product_id)
         file_name = image_url.split('/')[-1]
@@ -24,7 +24,7 @@ def save_product_picture_from_url(product_id, image_url):
 
 def add_product_picture_gallery_from_url(product_id, image_urls):
     for image_url in image_urls:
-        response = requests.get(image_url)
+        response = requests.get('https://exuni.ir' + image_url)
         # counter = 1
         if response.status_code == 200:
             product = Product.objects.get(id=product_id)
