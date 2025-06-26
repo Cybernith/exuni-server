@@ -48,9 +48,9 @@ class Command(BaseCommand):
             timeout=600
         )
         page = 1
-        response_len = 3
-        while response_len == 3:
-            products = wcapi.get("products", params={"per_page": 3, 'page': page}).json()
+        response_len = 1
+        while response_len == 1:
+            products = wcapi.get("products", params={"per_page": 1, 'page': page}).json()
             for product in products:
                 if product['type'] == 'simple':
                     new_product = Product.objects.create(
@@ -260,7 +260,7 @@ class Command(BaseCommand):
                         #             ProductPropertyTerm.objects.get(name=term)
                         #         )
 
-            print(f'{3 * page} product retrieved')
+            print(f'{page} product retrieved')
             page += 1
             response_len = len(products)
 
