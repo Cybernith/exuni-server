@@ -47,7 +47,7 @@ class Command(BaseCommand):
             wp_api=True,
             timeout=120
         )
-        page = 5
+        page = 1
         response_len = 20
         while response_len == 20:
             products = wcapi.get("products", params={"per_page": 20, 'page': page}).json()
