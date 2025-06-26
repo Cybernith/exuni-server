@@ -9,7 +9,9 @@ from products.models import Product, ProductGallery, Category, Brand, ProductPro
 from server.settings import WC_C_KEY, WC_C_SECRET
 from users.models import User
 import json
+import time
 import requests
+from requests.exceptions import RequestException
 from django.core.files.base import ContentFile
 
 
@@ -25,14 +27,26 @@ def save_product_picture_from_url(product_id, image_url):
 
 def add_product_picture_gallery_from_url(product_id, image_urls):
     for image_url in image_urls:
-        print('galery >', image_url)
-        response = requests.get(image_url)
-        # counter = 1
-        if response.status_code == 200:
-            product = Product.objects.get(id=product_id)
-            gallery = ProductGallery.objects.create(product=product)
-            file_name = image_url.split('/')[-1]
-            gallery.picture.save(file_name, ContentFile(response.content), save=True)
+        print('gallery >', image_url)
+        for attempt in range(3):  # ۳ بار تلاش مجدد
+            try:
+                response = requests.get(image_url, timeout=10)
+                if response.status_code == 200:
+                    product = Product.objects.get(id=product_id)
+                    gallery = ProductGallery.objects.create(product=product)
+                    file_name = image_url.split('/')[-1]
+                    gallery.picture.save(file_name, ContentFile(response.content), save=True)
+                    break  # موفق شدیم، بیرون بزن از حلقه تلاش‌ها
+                else:
+                    print(f"❌ دانلود عکس موفق نبود: {image_url} با کد {response.status_code}")
+                    break
+            except RequestException as e:
+                print(f"❌ خطا در دانلود {image_url}: {e}")
+                if attempt < 2:
+                    print("⏳ 3 ثانیه صبر می‌کنم و دوباره تلاش می‌کنم...")
+                    time.sleep(3)
+                else:
+                    print("❌ پس از ۳ تلاش، این عکس رد شد.")
 
 
 class Command(BaseCommand):
@@ -50,9 +64,9 @@ class Command(BaseCommand):
             timeout=600
         )
         page = 1
-        response_len = 1
-        while response_len == 1:
-            products = wcapi.get("products", params={"per_page": 1, 'page': page}).json()
+        response_len = 5
+        while response_len == 5:
+            products = wcapi.get("products", params={"per_page": 5, 'page': page}).json()
             print(products)
             for product in products:
                 if product['type'] == 'simple':
@@ -263,7 +277,7 @@ class Command(BaseCommand):
                         #             ProductPropertyTerm.objects.get(name=term)
                         #         )
 
-            print(f'{page} product retrieved')
+            print(f'{5 + page} product retrieved')
             page += 1
             response_len = len(products)
 
