@@ -45,7 +45,7 @@ class Command(BaseCommand):
             consumer_secret=WC_C_SECRET,
             version="wc/v3",
             wp_api=True,
-            timeout=120
+            timeout=600
         )
         page = 1
         response_len = 20
