@@ -76,7 +76,7 @@ class Command(BaseCommand):
             wp_api=True,
             timeout=600
         )
-        page = 50
+        page = 20
         response_len = 20
         while response_len == 20:
             products = []
