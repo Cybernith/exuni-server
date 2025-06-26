@@ -280,14 +280,14 @@ class Product(BaseModel):
     )
     status = models.CharField(max_length=7, choices=STATUSES, default=PENDING)
     product_type = models.CharField(max_length=9, choices=TYPES, default=SIMPLE)
-    variation_of = models.ForeignKey('self', on_delete=models.PROTECT, related_name='variations', blank=True, null=True)
+    variation_of = models.ForeignKey('self', on_delete=models.CASCADE, related_name='variations', blank=True, null=True)
     variation_title = models.CharField(max_length=150, blank=True, null=True)
 
     product_id = models.CharField(max_length=255, unique=True,
                                   error_messages={'unique': "کالا با این شناسه از قبل در اکسونی ثبت شده"})
     slug = models.SlugField(max_length=255, blank=True, null=True)
 
-    sixteen_digit_code = models.CharField(max_length=16, blank=True, null=True)
+    sixteen_digit_code = models.CharField(max_length=50, blank=True, null=True)
 
     group_id = models.CharField(max_length=150, blank=True, null=True)
 
@@ -487,6 +487,8 @@ class Product(BaseModel):
     def set_first_inventory(self):
         inventory = ProductInventory.objects.create(product=self, inventory=0)
         if self.first_inventory:
+            if self.first_inventory < 0:
+                self.first_inventory = 0
             inventory.increase_inventory(val=self.first_inventory, first_inventory=True)
 
     def set_first_price(self):
@@ -637,7 +639,7 @@ class ProductInventory(models.Model):
             )
 
     def increase_inventory(self, val, user=None, first_inventory=False):
-        if not val > 0:
+        if not val >= 0:
             raise ValidationError('increase value most be positive number')
         else:
             with transaction.atomic():

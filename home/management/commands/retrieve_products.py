@@ -47,7 +47,7 @@ class Command(BaseCommand):
             wp_api=True,
             timeout=120
         )
-        page = 1
+        page = 5
         response_len = 20
         while response_len == 20:
             products = wcapi.get("products", params={"per_page": 20, 'page': page}).json()
@@ -144,15 +144,16 @@ class Command(BaseCommand):
                     )
                     for category in product['categories']:
                         new_product.category.add(Category.objects.get(unique_code=category['id']))
-                    pictures = product['images']
-                    if len(pictures) > 1:
-                        pic = save_product_picture_from_url(new_product.id, pictures[0]['src'])
-                        new_product.picture = pic
-                        add_product_picture_gallery_from_url(new_product.id, [item['src'] for item in pictures[1:]])
-                    else:
-                        if len(pictures) == 1:
+                    if product['images']:
+                        pictures = product['images']
+                        if len(pictures) > 1:
                             pic = save_product_picture_from_url(new_product.id, pictures[0]['src'])
                             new_product.picture = pic
+                            add_product_picture_gallery_from_url(new_product.id, [item['src'] for item in pictures[1:]])
+                        else:
+                            if len(pictures) == 1:
+                                pic = save_product_picture_from_url(new_product.id, pictures[0]['src'])
+                                new_product.picture = pic
 
                     attributes = product['attributes']
                     meta_datas = product['meta_data']
@@ -219,9 +220,9 @@ class Command(BaseCommand):
                                 sale_price=float(variation['sale_price']) if variation['sale_price'] else None,
                                 first_inventory=int(variation['stock_quantity']) if variation['stock_quantity'] else None,
                         )
-                        pic = save_product_picture_from_url(new_variation.id, variation['image']['src'])
-                        new_variation.picture = pic
-
+                        if variation['image']:
+                            pic = save_product_picture_from_url(new_variation.id, variation['image']['src'])
+                            new_variation.picture = pic
                         meta_datas = variation['meta_data']
 
                         currency = next((meta_data for meta_data in meta_datas if
