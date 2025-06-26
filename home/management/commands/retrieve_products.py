@@ -76,7 +76,7 @@ class Command(BaseCommand):
             wp_api=True,
             timeout=600
         )
-        page = 1
+        page = 50
         response_len = 20
         while response_len == 20:
             products = []
@@ -140,9 +140,16 @@ class Command(BaseCommand):
 
                         currency_price = next((meta_data for meta_data in meta_datas if
                                               meta_data["key"] == "_mnswmc_regular_price"), None)
+
                         if currency and currency['value'] != '[]':
                             currency_code = currency['value'].translate({ord(i): None for i in '[]'})
-                            new_product.currency = Currency.objects.get(unique_code=int(currency_code))
+                            try:
+                                currency_code = int(str(currency_code).split(',')[0])
+                            except (ValueError, IndexError):
+                                currency_code = None
+                            if currency_code:
+                                new_product.currency = Currency.objects.get(unique_code=currency_code)
+
 
                         if brand_name and brand_name['options'][0]:
                             new_product_brand = Brand.objects.get(name=brand_name['options'][0])
@@ -151,10 +158,16 @@ class Command(BaseCommand):
                                 new_product_brand.made_in = made_in['options'][0]
                                 new_product_brand.save()
 
+                        try:
+                            currency_price = float(currency_price['value']) if currency_price else 0
+                        except (ValueError, IndexError):
+                            currency_price = 0
+
+
                         if profit_margin:
                             new_product.profit_margin = float(profit_margin['value']) if profit_margin['value'] else None
                         if currency_price:
-                            new_product.currency_price = float(currency_price['value']) if currency_price['value'] else None
+                            new_product.currency_price = currency_price
                         new_product.save()
 
                         for product_attribute in product_attributes:
@@ -221,7 +234,12 @@ class Command(BaseCommand):
 
                         if currency and currency['value'] != '[]':
                             currency_code = currency['value'].translate({ord(i): None for i in '[]'})
-                            new_product.currency = Currency.objects.get(unique_code=int(currency_code))
+                            try:
+                                currency_code = int(str(currency_code).split(',')[0])
+                            except (ValueError, IndexError):
+                                currency_code = None
+                            if currency_code:
+                                new_product.currency = Currency.objects.get(unique_code=currency_code)
 
                         if brand_name and brand_name['options'][0]:
                             new_product_brand = Brand.objects.get(name=brand_name['options'][0])
@@ -230,8 +248,13 @@ class Command(BaseCommand):
                                 new_product_brand.made_in = made_in['options'][0]
                                 new_product_brand.save()
 
+                        try:
+                            currency_price = float(currency_price['value']) if currency_price else 0
+                        except (ValueError, IndexError):
+                            currency_price = 0
+
                         new_product.profit_margin = float(profit_margin['value']) if profit_margin else 0
-                        new_product.currency_price = float(currency_price['value']) if currency_price else 0
+                        new_product.currency_price = currency_price
                         new_product.save()
 
                         for product_attribute in product_attributes:
@@ -290,14 +313,25 @@ class Command(BaseCommand):
                                                   meta_data["key"] == "_mnswmc_profit_margin"), None)
                             currency_price = next((meta_data for meta_data in meta_datas if
                                                    meta_data["key"] == "_mnswmc_regular_price"), None)
-                            if currency and currency['value'] != '':
+
+                            if currency and currency['value'] != '[]':
                                 currency_code = currency['value'].translate({ord(i): None for i in '[]'})
-                                new_variation.currency = Currency.objects.get(unique_code=int(currency_code))
+                                try:
+                                    currency_code = int(str(currency_code).split(',')[0])
+                                except (ValueError, IndexError):
+                                    currency_code = None
+                                if currency_code:
+                                    new_variation.currency = Currency.objects.get(unique_code=currency_code)
+
+                            try:
+                                currency_price = float(currency_price['value']) if currency_price else 0
+                            except (ValueError, IndexError):
+                                currency_price = 0
 
                             if profit_margin:
                                 new_variation.profit_margin = float(profit_margin['value']) if profit_margin['value'] else 0
                             if currency_price:
-                                new_variation.currency_price = float(currency_price['value']) if currency_price['value'] else 0
+                                new_variation.currency_price =  currency_price
                             new_variation.save()
                             print('variation >>>>>> product added')
 
