@@ -17,7 +17,7 @@ from django.core.files.base import ContentFile
 
 def save_product_picture_from_url(product_id, image_url):
     print('image >', image_url)
-    response = requests.get(image_url)
+    response = requests.get(image_url, timeout=120)
     if response.status_code == 200:
         current_product = Product.objects.get(id=product_id)
         file_name = image_url.split('/')[-1]
@@ -30,7 +30,7 @@ def add_product_picture_gallery_from_url(product_id, image_urls):
         print('gallery >', image_url)
         for attempt in range(3):  # ۳ بار تلاش مجدد
             try:
-                response = requests.get(image_url, timeout=10)
+                response = requests.get(image_url, timeout=120)
                 if response.status_code == 200:
                     product = Product.objects.get(id=product_id)
                     gallery = ProductGallery.objects.create(product=product)
