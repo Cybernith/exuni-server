@@ -14,7 +14,7 @@ from django.core.files.base import ContentFile
 
 
 def save_product_picture_from_url(product_id, image_url):
-    print('image', image_url)
+    print('image >>', image_url)
     response = requests.get(image_url)
     if response.status_code == 200:
         current_product = Product.objects.get(id=product_id)
