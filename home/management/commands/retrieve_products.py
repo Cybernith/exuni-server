@@ -25,7 +25,7 @@ def save_product_picture_from_url(product_id, image_url):
 
 def add_product_picture_gallery_from_url(product_id, image_urls):
     for image_url in image_urls:
-        print('galery >>', image_url)
+        print('galery >', image_url)
         response = requests.get(image_url)
         # counter = 1
         if response.status_code == 200:
