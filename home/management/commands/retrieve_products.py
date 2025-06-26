@@ -17,12 +17,25 @@ from django.core.files.base import ContentFile
 
 def save_product_picture_from_url(product_id, image_url):
     print('image >', image_url)
-    response = requests.get(image_url, timeout=120)
-    if response.status_code == 200:
-        current_product = Product.objects.get(id=product_id)
-        file_name = image_url.split('/')[-1]
-        current_product.picture.save(file_name, ContentFile(response.content), save=True)
-        return current_product.picture
+    for attempt in range(3):  # حداکثر ۳ تلاش
+        try:
+            response = requests.get(image_url, timeout=120)
+            if response.status_code == 200:
+                product = Product.objects.get(id=product_id)
+                file_name = image_url.split('/')[-1]
+                product.picture.save(file_name, ContentFile(response.content), save=True)
+                return product.picture  # موفقیت‌آمیز
+            else:
+                print(f"❌ دریافت تصویر موفق نبود: {image_url} با کد {response.status_code}")
+                break
+        except RequestException as e:
+            print(f"❌ خطا در دانلود تصویر {image_url}: {e}")
+            if attempt < 2:
+                print("⏳ ۳ ثانیه صبر و تلاش مجدد...")
+                time.sleep(3)
+            else:
+                print("❌ پس از ۳ تلاش، دانلود تصویر انجام نشد.")
+    return None
 
 
 def add_product_picture_gallery_from_url(product_id, image_urls):
@@ -64,10 +77,10 @@ class Command(BaseCommand):
             timeout=600
         )
         page = 1
-        response_len = 5
-        while response_len == 5:
-            products = wcapi.get("products", params={"per_page": 5, 'page': page}).json()
-            print(products)
+        response_len = 20
+        while response_len == 20:
+            products = wcapi.get("products", params={"per_page": 20, 'page': page}).json()
+            print('fetch product done')
             for product in products:
                 if product['type'] == 'simple':
                     new_product = Product.objects.create(
@@ -277,7 +290,7 @@ class Command(BaseCommand):
                         #             ProductPropertyTerm.objects.get(name=term)
                         #         )
 
-            print(f'{5 + page} product retrieved')
+            print(f'{20 * page} product retrieved')
             page += 1
             response_len = len(products)
 
