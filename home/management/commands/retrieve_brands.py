@@ -16,11 +16,12 @@ from server.settings import WC_C_KEY, WC_C_SECRET
 
 
 def save_brand_logo_from_url(brand_id, image_url):
-    response = requests.get(image_url)
-    if response.status_code == 200:
-        brand = Brand.objects.get(id=brand_id)
-        file_name = image_url.split('/')[-1]
-        brand.logo.save(file_name, ContentFile(response.content), save=True)
+    if image_url:
+        response = requests.get(image_url)
+        if response.status_code == 200:
+            brand = Brand.objects.get(id=brand_id)
+            file_name = image_url.split('/')[-1]
+            brand.logo.save(file_name, ContentFile(response.content), save=True)
 
 
 class Command(BaseCommand):
@@ -33,7 +34,9 @@ class Command(BaseCommand):
             consumer_key=WC_C_KEY,
             consumer_secret=WC_C_SECRET,
             version="wc/v3",
-            wp_api=True
+            wp_api=True,
+            timeout=120
+
         )
         page = 1
         response_len = 100
@@ -49,9 +52,9 @@ class Command(BaseCommand):
             response_len = len(response)
 
         response = wcapi.get("products/brands").json()
-        print(response)
         for b in response:
             brand = Brand.objects.filter(slug=b['slug'])
+            print('brand added')
             if brand and b['image']:
                 save_brand_logo_from_url(brand_id=brand.first().id, image_url=b['image']['src'])
 

@@ -7,20 +7,32 @@ class Command(BaseCommand):
     help = 'insert currencies'
     currencies = [
         {
-            'name': 'یوان چین',
-            'code': '282',
-            'exchange_rate_to_toman': 13000,
+            'name': 'دربی(DERBY)',
+            'code': '145657',
+            'exchange_rate_to_toman': 1,
 
         },
         {
-            'name': 'تومان',
-            'code': '18495',
-            'exchange_rate_to_toman': 1.1,
+            'name': 'نئودرم(NEUDERM)',
+            'code': '145656',
+            'exchange_rate_to_toman': 1,
 
         },
         {
-            'name': 'تومان پارس حیان',
-            'code': '125677',
+            'name': 'الارو(Ellaro)',
+            'code': '145655',
+            'exchange_rate_to_toman': 1,
+
+        },
+        {
+            'name': 'شون مراقبت پوستی(schon skin care)',
+            'code': '145654',
+            'exchange_rate_to_toman': 1,
+
+        },
+        {
+            'name': 'مای مراقبت پوستی ( my skin care)',
+            'code': '145644',
             'exchange_rate_to_toman': 1,
 
         },
@@ -31,15 +43,33 @@ class Command(BaseCommand):
 
         },
         {
-            'name': 'دلار',
-            'code': '23058',
-            'exchange_rate_to_toman': 49000,
+            'name': ' پارس حیان',
+            'code': '125677',
+            'exchange_rate_to_toman': 1,
 
         },
         {
             'name': 'درهم امارات',
             'code': '48794',
             'exchange_rate_to_toman': 20000,
+
+        },
+        {
+            'name': 'دلار',
+            'code': '23058',
+            'exchange_rate_to_toman': 79000,
+
+        },
+        {
+            'name': 'تومان',
+            'code': '18495',
+            'exchange_rate_to_toman': 1.4,
+
+        },
+        {
+            'name': 'یوان چین',
+            'code': '282',
+            'exchange_rate_to_toman': 13600,
 
         },
     ]
@@ -52,6 +82,7 @@ class Command(BaseCommand):
                 name=currency['name'],
                 exchange_rate_to_toman=currency['exchange_rate_to_toman'],
             )
+            print('currency added')
 
 
 

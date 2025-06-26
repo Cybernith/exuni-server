@@ -215,7 +215,7 @@ class Category(BaseModel):
     unique_code = models.IntegerField(unique=True)
     parent_unique_code = models.IntegerField(blank=True, null=True)
     name = models.CharField(max_length=255)
-    parent = models.ForeignKey('self', on_delete=models.PROTECT, related_name='children', blank=True, null=True)
+    parent = models.ForeignKey('self', on_delete=models.CASCADE, related_name='children', blank=True, null=True)
     picture = models.ImageField(upload_to=custom_upload_to, null=True, blank=True, default=None)
 
     class Meta(BaseModel.Meta):
