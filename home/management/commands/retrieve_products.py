@@ -76,7 +76,7 @@ class Command(BaseCommand):
             wp_api=True,
             timeout=600
         )
-        page = 20
+        page = 40
         response_len = 20
         while response_len == 20:
             products = []
@@ -150,13 +150,15 @@ class Command(BaseCommand):
                             if currency_code:
                                 new_product.currency = Currency.objects.get(unique_code=currency_code)
 
-
-                        if brand_name and brand_name['options'][0]:
-                            new_product_brand = Brand.objects.get(name=brand_name['options'][0])
-                            new_product.brand = new_product_brand
-                            if made_in and not new_product_brand.made_in:
-                                new_product_brand.made_in = made_in['options'][0]
-                                new_product_brand.save()
+                        try:
+                            if brand_name and brand_name['options'][0]:
+                                new_product_brand = Brand.objects.get(name=brand_name['options'][0])
+                                new_product.brand = new_product_brand
+                                if made_in and not new_product_brand.made_in:
+                                    new_product_brand.made_in = made_in['options'][0]
+                                    new_product_brand.save()
+                        except IndexError:
+                            new_product.brand = None
 
                         try:
                             currency_price = float(currency_price['value']) if currency_price else 0
@@ -241,12 +243,15 @@ class Command(BaseCommand):
                             if currency_code:
                                 new_product.currency = Currency.objects.get(unique_code=currency_code)
 
-                        if brand_name and brand_name['options'][0]:
-                            new_product_brand = Brand.objects.get(name=brand_name['options'][0])
-                            new_product.brand = new_product_brand
-                            if made_in['options']:
-                                new_product_brand.made_in = made_in['options'][0]
-                                new_product_brand.save()
+                        try:
+                            if brand_name and brand_name['options'][0]:
+                                new_product_brand = Brand.objects.get(name=brand_name['options'][0])
+                                new_product.brand = new_product_brand
+                                if made_in and not new_product_brand.made_in:
+                                    new_product_brand.made_in = made_in['options'][0]
+                                    new_product_brand.save()
+                        except IndexError:
+                            new_product.brand = None
 
                         try:
                             currency_price = float(currency_price['value']) if currency_price else 0
