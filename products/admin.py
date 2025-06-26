@@ -124,5 +124,5 @@ class ProductInventoryAdmin(admin.ModelAdmin):
 @admin.register(ProductInventoryHistory)
 class ProductInventoryHistoryAdmin(admin.ModelAdmin):
     list_display = ['inventory', 'previous_quantity', 'new_quantity', 'timestamp', 'changed_by']
-    list_filter = ['inventory', 'timestamp', 'changed_by']
+    list_filter = ['inventory', 'timestamp', 'changed_by', 'timestamp']
     search_fields = ['inventory']
