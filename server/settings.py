@@ -21,9 +21,9 @@ from server.configs import Databases, RequestLogs
 
 DEV_MODE = False
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SERVER_URL = 'http://127.0.0.1:7000' if DEV_MODE else 'http://exuni.shop'
-FRONT_URL = 'http://127.0.0.1:8080' if DEV_MODE else 'http://app.exuni.shop'
-FRONT_MEDIA_URL = 'http://127.0.0.1:8080/media/uploads/' if DEV_MODE else 'http://exuni.shop/media/uploads/'
+SERVER_URL = 'http://127.0.0.1:7000' if DEV_MODE else 'https://exuni.shop'
+FRONT_URL = 'http://127.0.0.1:8080' if DEV_MODE else 'https://app.exuni.shop'
+FRONT_MEDIA_URL = 'http://127.0.0.1:8080/media/uploads/' if DEV_MODE else 'https://exuni.shop/media/uploads/'
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/2.0/howto/deployment/checklist/

@@ -5,9 +5,9 @@ from server.gateway_configs import ZARINPAL_MERCHANT_ID, GATEWAY_BASE_URL, GATEW
 
 
 class ZarinpalGateway:
-    GATEWAY_BASE_URL = GATEWAY_DEVELOPMENT_URL
+    GATEWAY_BASE_URL = GATEWAY_BASE_URL
     MERCHANT_ID = ZARINPAL_MERCHANT_ID
-    GATEWAY_START_PAY_URL = GATEWAY_DEVELOPMENT_START_PAY_URL
+    GATEWAY_START_PAY_URL = GATEWAY_START_PAY_URL
 
     def __init__(self, amount, description, callback_url, payment_id=None, email=None, mobile=None):
         self.amount = amount
