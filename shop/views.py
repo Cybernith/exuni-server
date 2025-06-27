@@ -907,8 +907,9 @@ class OrderMoveToCartAPIView(APIView):
                 payment = order.bank_payment
             except ShopOrder.bank_payment.RelatedObjectDoesNotExist:
                 payment = None
-
-            if payment and payment.status == Payment.SUCCESS:
+            if payment and payment.status == Payment.INITIATED:
+                payment.delete()
+            elif payment and payment.status == Payment.SUCCESS:
                 exuni_transaction = order.customer.exuni_wallet.increase_balance(
                     amount=(payment.amount + payment.used_amount_from_wallet),
                     description=f'ویرایش سفارش {order.exuni_tracking_code} بعد از پرداخت',
