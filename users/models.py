@@ -152,7 +152,7 @@ class User(AbstractUser, BaseModel):
         max_length=150,
         unique=True,
         error_messages={
-            'unique': "این نام کاربری از قبل در اکسونی ثبت شده"
+            'unique': "این نام از قبل در اکسونی ثبت شده"
         },
     )
 
