@@ -1,0 +1,24 @@
+/* برای هر ردیف */
+.djn-items > .inline-related {
+    border-left: 5px solid #3b82f6;
+    padding-left: 20px;
+    margin-bottom: 10px;
+    background-color: #f0f9ff;
+    border-radius: 6px;
+    transition: background-color 0.3s ease;
+}
+
+/* عمق یا level باید به شکلی تعریف بشه */
+.djn-items.depth-1 > .inline-related {
+    background-color: #f0f9ff;
+    border-color: #3b82f6;
+    padding-left: 20px;
+}
+
+.djn-items.depth-2 > .inline-related {
+    background-color: #ecfdf5;
+    border-color: #10b981;
+    padding-left: 40px;
+}
+
+/* و ... ادامه بده تا level6 */
