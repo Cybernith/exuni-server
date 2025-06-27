@@ -84,7 +84,6 @@ LOCATION_FIELD = {
     'provider.google.map.type': 'ROADMAP',
 }
 ALLOWED_HOSTS = ['*']
-SECURE_SSL_REDIRECT = True
 
 MIDDLEWARE = [
 
