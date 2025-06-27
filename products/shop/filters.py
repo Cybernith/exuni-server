@@ -83,7 +83,8 @@ def category_tree_filter(queryset, name, value):
 
 def top_viewed_filter(queryset, name, value):
     order_by = '-view_count' if value else 'view_count'
-    return queryset.annotate(view_count=Count('views_log')).order_by(order_by, '-id')
+    return queryset.order_out_of_stock_inventory_last(
+    ).annotate(view_count=Count('views_log')).order_by(order_by, '-id')
 
 
 def top_rated_filter(queryset, name, value):
