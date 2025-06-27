@@ -83,7 +83,7 @@ LOCATION_FIELD = {
     'provider.google.api_libraries': '',
     'provider.google.map.type': 'ROADMAP',
 }
-ALLOWED_HOSTS = ['exuni.ir', 'www.exuni.ir', '185.97.117.183']
+ALLOWED_HOSTS = ['*']
 SECURE_SSL_REDIRECT = True
 
 MIDDLEWARE = [
