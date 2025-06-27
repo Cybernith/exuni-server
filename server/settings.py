@@ -18,6 +18,7 @@ import sys
 
 from server.configs import Databases, RequestLogs
 
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 DEV_MODE = False
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
