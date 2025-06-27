@@ -36,9 +36,11 @@ class StartZarinpalPaymentApiView(APIView):
 
         order = get_object_or_404(ShopOrder, id=order_id, customer=get_current_user())
 
-        payment_status = getattr(order, 'bank_payment', None)
-        if payment_status and payment_status.status not in ['ca', 'pe']:
-            return Response({'message': 'this order already have open payment'}, status=status.HTTP_400_BAD_REQUEST)
+        payment = getattr(order, 'bank_payment', None)
+        if payment and payment.status == 'su':
+            return Response({'message': 'this order already have payment'}, status=status.HTTP_400_BAD_REQUEST)
+        elif payment and payment.status != 'su':
+            payment.delete()
 
         if request.data.get('use_wallet', False):
             payment = order.pay_with_wallet()
