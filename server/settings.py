@@ -32,7 +32,7 @@ FRONT_MEDIA_URL = 'http://127.0.0.1:8080/media/uploads/' if DEV_MODE else 'https
 SECRET_KEY = '$+%$*+x%$g#+@4%a*0^)oew9rewz)n-&=cd&-yh0fzjh2=vh(d'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 DATA_UPLOAD_MAX_MEMORY_SIZE = 100000000
 # Application definition
 
@@ -83,7 +83,8 @@ LOCATION_FIELD = {
     'provider.google.api_libraries': '',
     'provider.google.map.type': 'ROADMAP',
 }
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['exuni.ir', 'www.exuni.ir', '185.97.117.183']
+SECURE_SSL_REDIRECT = True
 
 MIDDLEWARE = [
 
@@ -270,16 +271,6 @@ LOGGING = {
 TELEGRAM_BOT_TOKEN = ''
 TELEGRAM_REPORT_CHANNEL_ID = ''
 
-if not DEBUG:
-    LOGGING["handlers"]["telegram"] = {
-        "level": "ERROR",
-        "class": "server.logs.SyncTelegramLoggingHandler",
-        "bot_token": TELEGRAM_BOT_TOKEN,
-        "chat_id": TELEGRAM_REPORT_CHANNEL_ID,
-        "formatter": "telegram",
-    }
-
-    LOGGING["loggers"]["django"]["handlers"].append("telegram")
 
 RECAPTCHA_PRIVATE_KEY = '6Lda3sYaAAAAANqk8giZj98V7vKmB-FRGWp0PNE7'
 
