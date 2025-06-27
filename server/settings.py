@@ -33,7 +33,7 @@ SECRET_KEY = '$+%$*+x%$g#+@4%a*0^)oew9rewz)n-&=cd&-yh0fzjh2=vh(d'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
-DATA_UPLOAD_MAX_MEMORY_SIZE = 100000000
+DATA_UPLOAD_MAX_MEMORY_SIZE = 1000000000
 # Application definition
 
 INSTALLED_APPS = [
