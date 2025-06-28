@@ -34,7 +34,7 @@ FRONT_MEDIA_URL = 'http://127.0.0.1:8080/media/uploads/' if DEV_MODE else 'https
 SECRET_KEY = '$+%$*+x%$g#+@4%a*0^)oew9rewz)n-&=cd&-yh0fzjh2=vh(d'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 DATA_UPLOAD_MAX_MEMORY_SIZE = 1000000000
 # Application definition
 
