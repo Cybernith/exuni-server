@@ -36,7 +36,7 @@ class ZarinpalGateway:
         res_data = response.json()
 
         if res_data['data'] and res_data['data']['code'] == 100 and \
-                res_data['data']['authority'].startswith('S'):
+                res_data['data']['authority'].startswith('A'):
             authority = res_data['data']['authority']
             return {
                 'authority': authority,
