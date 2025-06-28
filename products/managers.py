@@ -111,7 +111,7 @@ class ProductQuerySet(models.QuerySet):
 
 class ProductManager(models.Manager):
     def get_queryset(self):
-        return ProductQuerySet(self.model, using=self._db).shop_products()
+        return ProductQuerySet(self.model, using=self._db)
 
     def out_of_stock_inventory_at_last(self):
         return self.get_queryset().order_out_of_stock_inventory_last()
