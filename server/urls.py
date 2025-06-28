@@ -51,7 +51,7 @@ urlpatterns = [
     url(r'^finance/', include('financial_management.urls')),
     url(r'^api/', include('shop.shop_api_urls')),
 
-    path('admin/', admin.site.urls),
+    path('adminToken-g2hj34ghj32g44570ghg4/', admin.site.urls),
     path('nested_admin/', include('nested_admin.urls')),
     path('schema/shop/', SpectacularAPIView.as_view(permission_classes=[AllowAny]), name='schema-shop'),
     path('schema/shop/swagger/', SpectacularSwaggerView.as_view(url_name='schema-shop', permission_classes=[AllowAny]),
