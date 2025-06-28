@@ -142,9 +142,8 @@ class RelatedProductsApiView(generics.ListAPIView):
 
         if cache_queryset:
             return cache_queryset
-
         try:
-            product = Product.objects.shop_products().prefetch_related('properties', 'avails').get(id=product_id)
+            product = Product.objects.shop_products()
         except Product.DoesNotExist:
             return Product.objects.none()
 
