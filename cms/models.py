@@ -24,7 +24,7 @@ class HeaderElement(BaseModel, DateTimeRangeModel):
     description = models.TextField(blank=True, null=True)
     mobile_image = models.ImageField(upload_to=custom_upload_to)
     desktop_image = models.ImageField(upload_to=custom_upload_to)
-    link = models.URLField(max_length=100)
+    link = models.TextField(max_length=255)
     discount_code = models.ForeignKey(
         'subscription.DiscountCode',
         related_name='header_elements',
@@ -67,7 +67,7 @@ class PopUpElement(BaseModel, DateTimeRangeModel):
         default=3,
         validators=[MaxValueValidator(60), MinValueValidator(1)]
     )
-    link = models.URLField(max_length=100)
+    link = models.TextField(max_length=255)
     discount_code = models.ForeignKey(
         'subscription.DiscountCode',
         related_name='pop_up_elements',
@@ -150,7 +150,7 @@ class BannerContentItem(BaseModel):
     description = models.TextField(blank=True, null=True)
     mobile_image = models.ImageField(upload_to=custom_upload_to)
     desktop_image = models.ImageField(upload_to=custom_upload_to)
-    link = models.URLField(max_length=100)
+    link = models.TextField(max_length=255)
     discount_code = models.ForeignKey(
         'subscription.DiscountCode',
         related_name='banner_content_item',
