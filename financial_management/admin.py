@@ -4,11 +4,10 @@ import nested_admin
 from financial_management.models import Wallet, Transaction, WalletLedger, AuditAction, FinancialAuditLog, Payment, \
     AffiliateOrderPayment, DiscountConditionCategory, DiscountConditionBrand, DiscountConditionProduct, \
     DiscountConditionUser, DiscountConditionPriceOver, DiscountConditionPriceLimit, DiscountCondition, Discount, \
-    DiscountAction, DiscountUsage
+    DiscountAction, DiscountUsage, AuditSeverity
 from helpers.functions import datetime_to_str
 
 admin.site.register(WalletLedger)
-admin.site.register(FinancialAuditLog)
 admin.site.register(AffiliateOrderPayment)
 
 
@@ -261,7 +260,7 @@ class PaymentAdmin(admin.ModelAdmin):
     # Readonly fields for certain statuses
     def get_readonly_fields(self, request, obj=None):
         if obj and obj.status in [Payment.SUCCESS, Payment.FAILED, Payment.EXPIRED, Payment.CANCELLED]:
-            return self.readonly_fields + ('amount', 'user', 'business', 'shop_order')
+            return self.readonly_fields + ('amount', 'user', 'business')
         return self.readonly_fields
 
 class DiscountConditionCategoryInline(nested_admin.NestedStackedInline):
@@ -317,3 +316,171 @@ class DiscountAdmin(nested_admin.NestedModelAdmin):
     list_display = ('name', 'is_active', 'start_date', 'end_date')
     search_fields = ('name',)
     inlines = [DiscountConditionInline, DiscountActionInline]
+
+
+
+class LogMobileNumberFilter(admin.SimpleListFilter):
+    title = 'Mobile Number'
+    parameter_name = 'mobile'
+
+    def lookups(self, request, model_admin):
+        return [
+            ('exact', 'Exact Match'),
+            ('contains', 'Contains'),
+        ]
+
+    def queryset(self, request, queryset):
+        value = request.GET.get('mobile_number')
+        if not value:
+            return queryset
+
+        if self.value() == 'exact':
+            return queryset.filter(user__mobile_number=value)
+        elif self.value() == 'contains':
+            return queryset.filter(user__mobile_number__icontains=value)
+        return queryset
+
+
+class LogMobileNumberExactFilter(admin.SimpleListFilter):
+    title = 'Mobile (Exact)'
+    parameter_name = 'mobile_number'
+
+    def lookups(self, request, model_admin):
+        mobiles = set()
+        for log in FinancialAuditLog.objects.all().select_related('user'):
+            if log.user and log.user.mobile_number:
+                mobiles.add((log.user.mobile_number, log.user.mobile_number))
+        return sorted(mobiles, key=lambda x: x[1])
+
+    def queryset(self, request, queryset):
+        if self.value():
+            return queryset.filter(user__mobile_number=self.value())
+        return queryset
+
+
+@admin.register(FinancialAuditLog)
+class FinancialAuditLogAdmin(admin.ModelAdmin):
+    list_display = (
+        'get_jalali_created_at',
+        'user_info',
+        'receiver_info',
+        'action_display',
+        'severity_display',
+        'transaction_info',
+        'payment_info',
+        'ip_address',
+    )
+
+    list_filter = (
+        'action',
+        'severity',
+        LogMobileNumberFilter,
+        LogMobileNumberExactFilter,
+    )
+
+    search_fields = (
+        'user__mobile_number',
+        'user__first_name',
+        'user__last_name',
+        'receiver__mobile_number',
+        'receiver__first_name',
+        'receiver__last_name',
+        'transaction__id',
+        'payment__id',
+        'ip_address',
+    )
+
+    readonly_fields = (
+        'get_jalali_created_at',
+        'user_info',
+        'receiver_info',
+        'transaction_info',
+        'payment_info',
+        'action_display',
+        'severity_display',
+    )
+
+    fieldsets = (
+        ('Audit Information', {
+            'fields': (
+                'action_display',
+                'severity_display',
+                'extra_info',
+            )
+        }),
+        ('User Information', {
+            'fields': (
+                'user_info',
+                'receiver_info',
+                'ip_address',
+                'user_agent',
+            )
+        }),
+        ('Related Objects', {
+            'fields': (
+                'transaction_info',
+                'payment_info',
+            ),
+            'classes': ('collapse',)
+        }),
+        ('System Information', {
+            'fields': (
+                'get_jalali_created_at',
+            ),
+            'classes': ('collapse',)
+        }),
+    )
+
+    def user_info(self, obj):
+        if obj.user:
+            return f"{obj.user.mobile_number} ({obj.user.get_full_name()})"
+        return "-"
+
+    user_info.short_description = 'User'
+
+    def receiver_info(self, obj):
+        if obj.receiver:
+            return f"{obj.receiver.mobile_number} ({obj.receiver.get_full_name()})"
+        return "-"
+
+    receiver_info.short_description = 'Receiver'
+
+    def transaction_info(self, obj):
+        if obj.transaction:
+            return f"Transaction #{obj.transaction.id} ({obj.transaction.get_type_display()})"
+        return "-"
+
+    transaction_info.short_description = 'Transaction'
+
+    def payment_info(self, obj):
+        if obj.payment:
+            return f"Payment #{obj.payment.id} ({obj.payment.get_status_display()})"
+        return "-"
+
+    payment_info.short_description = 'Payment'
+
+    def action_display(self, obj):
+        return dict(AuditAction.choices).get(obj.action, obj.action)
+
+    action_display.short_description = 'Action'
+
+    def severity_display(self, obj):
+        return dict(AuditSeverity.choices).get(obj.severity, obj.severity)
+
+    severity_display.short_description = 'Severity'
+
+    def get_jalali_created_at(self, obj):
+        if obj.created_at:
+            return datetime_to_str(obj.created_at)
+
+    get_jalali_created_at.short_description = 'Created At'
+
+    def get_queryset(self, request):
+        queryset = super().get_queryset(request)
+        queryset = queryset.select_related(
+            'user',
+            'receiver',
+            'transaction',
+            'payment'
+        )
+        return queryset
