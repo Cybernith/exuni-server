@@ -207,7 +207,7 @@ class Payment(models.Model):
     def __str__(self):
         return f"پرداخت {self.reference_id or 'بدون شناسه'} توسط {self.user.name}"
 
-    @transition(field='status', source=INITIATED, target=PENDING)
+    @transition(field='status', source='*', target=PENDING)
     def mark_as_pending(self, user=None):
         print(f'{user} pending')
         self.status = self.PENDING
