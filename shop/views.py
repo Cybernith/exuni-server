@@ -824,9 +824,9 @@ class CancelShopOrderView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        if shop_order.status not in [ShopOrder.PAID, ShopOrder.PENDING]:
+        if shop_order.status not in [ShopOrder.PENDING]:
             return Response(
-                {'message': 'سفارش فقط در وضعیت در انتظار پرداخت یا پرداخت شده قابل حذف است'},
+                {'message': 'سفارش فقط در وضعیت در انتظار پرداخت  قابل لغو است'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
@@ -886,9 +886,9 @@ class OrderMoveToCartAPIView(APIView):
         except ShopOrder.DoesNotExist:
             return Response({'message': 'سفارش یافت نشد.'}, status=status.HTTP_404_NOT_FOUND)
 
-        if order.status not in [ShopOrder.PAID, ShopOrder.PENDING]:
+        if order.status not in [ShopOrder.PENDING]:
             return Response(
-                {'message': 'سفارش فقط در وضعیت در انتظار پرداخت یا پرداخت شده قابل حذف است'},
+                {'message': 'سفارش فقط در وضعیت در انتظار پرداخت قابل ویرایش است است'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 

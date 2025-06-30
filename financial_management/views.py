@@ -40,7 +40,8 @@ class StartZarinpalPaymentApiView(APIView):
         if payment and payment.status == 'su':
             return Response({'message': 'this order already have payment'}, status=status.HTTP_400_BAD_REQUEST)
         elif payment and payment.status != 'su':
-            payment.delete()
+            payment.status = 'ca'
+            payment.save()
 
         if request.data.get('use_wallet', False):
             payment = order.pay_with_wallet()
