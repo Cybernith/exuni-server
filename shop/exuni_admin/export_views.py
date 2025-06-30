@@ -128,3 +128,35 @@ class ShopOrderDetailExportView(AdminShopOrderListView, BaseExportView):
 
         return context
 
+
+class OrderPostDetailExportView(AdminShopOrderListView, BaseExportView):
+    template_name = 'export/sample_form_export.html'
+    filename = 'post'
+
+    context = {
+        'title': 'پست',
+    }
+    pagination_class = None
+
+    def get_queryset(self):
+        return self.filterset_class(self.request.GET, queryset=super().get_queryset()).qs
+
+    def get(self, request, export_type, *args, **kwargs):
+        return self.export(request, export_type, *args, **kwargs)
+
+    def get_context_data(self, user, print_document=False, **kwargs):
+        qs = self.get_queryset()
+        context = {
+            'forms': qs.filter(status='pr'),
+            'user': user,
+            'print_document': print_document
+        }
+
+        template_prefix = self.get_template_prefix()
+        context['form_content_template'] = 'export/order_post_details.html'.format(template_prefix)
+        context['right_header_template'] = 'export/sample_head.html'
+
+        context.update(self.context)
+
+        return context
+
