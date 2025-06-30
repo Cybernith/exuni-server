@@ -115,7 +115,7 @@ class ShopOrderDetailExportView(AdminShopOrderListView, BaseExportView):
     def get_context_data(self, user, print_document=False, **kwargs):
         qs = self.get_queryset()
         context = {
-            'forms': qs.first(),
+            'forms': qs.filter(status='pr'),
             'user': user,
             'print_document': print_document
         }
