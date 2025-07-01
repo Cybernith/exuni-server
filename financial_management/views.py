@@ -337,7 +337,7 @@ class StartZarinpalWalletTopUPApiView(APIView):
         callback_url = SERVER_URL + reverse('financial_management:zarinpal_top_up_wallet_callback')
         gateway = ZarinpalGateway(
             amount=top_up_amount,
-            description=f'شارژ کیف پول {user.name}',
+            description=f'شارژ کیف پول {user.mobile_number}',
             callback_url=callback_url
         )
         try:
