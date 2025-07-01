@@ -24,7 +24,12 @@ class Wallet(models.Model):
         if not self.user and not self.business:
             raise ValidationError("حداقل یکی از فیلدهای 'کاربر' یا 'کسب و کار' باید مقدار داشته باشد.")
 
-    def reduce_balance(self, amount: Decimal, description: str = 'خرید از کیف پول', transaction_type=None, **kwargs):
+    def reduce_balance(self, shop_order=None, amount=Decimal, description=None, transaction_id=None,
+                       transaction_type=None, **kwargs):
+
+        if description == None:
+            description = 'خرید از کیف پول'
+
         if amount <= 0:
             raise ValidationError('مقدار برداشت باید یک عدد مثبت باشد.')
 
@@ -49,7 +54,10 @@ class Wallet(models.Model):
 
             transition = Transaction.objects.create(
                 wallet=wallet,
+                shop_order=shop_order,
                 amount=amount,
+                description=description,
+                transaction_id=transaction_id,
                 type=transaction_type or Transaction.BUY,
                 status=Transaction.SUCCESS,
                 **kwargs

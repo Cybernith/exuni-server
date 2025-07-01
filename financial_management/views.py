@@ -39,6 +39,13 @@ def generate_top_up_wallet_code_with_mobile(mobile_number):
     return prefix + mobile_number + random_chars
 
 
+def generate_pay_from_wallet_code_with_mobile(mobile_number):
+    prefix = "PFW"
+    random_chars_len = 20 - len(prefix) - len(mobile_number)
+    random_chars = ''.join(random.choices(string.ascii_uppercase, k=random_chars_len))
+    return prefix + mobile_number + random_chars
+
+
 class StartZarinpalPaymentApiView(APIView):
     permission_classes = [IsAuthenticated]
     throttle_classes = [PaymentRateThrottle]
@@ -55,7 +62,8 @@ class StartZarinpalPaymentApiView(APIView):
             payment.save()
 
         if request.data.get('use_wallet', False):
-            payment = order.pay_with_wallet()
+            transaction_id = generate_pay_from_wallet_code_with_mobile(order.customer.mobile_number)
+            payment = order.pay_with_wallet(transaction_id=transaction_id)
             if not payment:
                 return Response({'payment_url': '/payment/result?status=success'})
         else:
@@ -63,11 +71,16 @@ class StartZarinpalPaymentApiView(APIView):
 
         callback_url = SERVER_URL + reverse('financial_management:zarinpal_callback')
 
+        description = f'پرداخت سفارش {order.id} کاربر {order.customer.mobile_number}'
+        if request.data.get('use_wallet', False):
+            description = f'پرداخت سفارش {order.id} کاربر {order.customer.mobile_number} مبلغ {payment.used_amount_from_wallet} از کیف پول با شناسه {transaction_id} '
+
+        request.data.get('use_wallet', False)
         gateway = ZarinpalGateway(
             amount=payment.amount,
             mobile=payment.shop_order.customer.mobile_number,
             payment_id=order.id,
-            description=f'پرداخت سفارش {order.id} کاربر {order.customer.mobile_number}',
+            description=description,
             callback_url=callback_url
         )
 
@@ -122,8 +135,10 @@ class ZarinpalCallbackApiView(APIView):
             if payment.used_amount_from_wallet > 0:
                 wallet = payment.user.exuni_wallet
                 wallet.reduce_balance(
+                    transaction_id=payment.transaction_id,
                     amount=payment.used_amount_from_wallet,
-                    description=f"پرداخت سفارش {order.exuni_tracking_code}"
+                    shop_order=order,
+                    description=f"پرداخت قسمتی از مبلغ سفارش {order.id}"
                 )
                 wallet.refresh_from_db()
             payment.zarinpal_ref_id = result['data'].get('ref_id')
@@ -321,7 +336,6 @@ class DiscountCheckAPIView(APIView):
 
 class StartZarinpalWalletTopUPApiView(APIView):
     permission_classes = [IsAuthenticated]
-    throttle_classes = [PaymentRateThrottle]
 
     def post(self, request):
         user = get_current_user()

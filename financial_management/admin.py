@@ -24,7 +24,6 @@ class TransactionAdmin(admin.ModelAdmin):
         'amount',
         'status_display',
         'shop_order_info',
-        'transaction_for_display',
     )
 
     list_filter = (
@@ -51,7 +50,6 @@ class TransactionAdmin(admin.ModelAdmin):
                 'type',
                 'amount',
                 'status',
-                'transaction_for',
             )
         }),
         ('Related Information', {
@@ -94,10 +92,6 @@ class TransactionAdmin(admin.ModelAdmin):
 
     status_display.short_description = 'Status'
 
-    def transaction_for_display(self, obj):
-        return dict(obj.TRANSACTION_TYPE).get(obj.transaction_for, obj.transaction_for)
-
-    transaction_for_display.short_description = 'Transaction For'
 
     def get_jalali_created_at(self, obj):
         if obj.created_at:

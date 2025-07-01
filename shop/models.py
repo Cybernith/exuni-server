@@ -331,7 +331,7 @@ class ShopOrder(BaseModel):
             exuni_tracking_code = random.randint(1000000000, 9999999999)
         return str(exuni_tracking_code)
 
-    def pay_with_wallet(self):
+    def pay_with_wallet(self, transaction_id=None):
         assert not self.status == self.PAID
         final_price = self.final_amount
         wallet = self.customer.exuni_wallet
@@ -349,13 +349,17 @@ class ShopOrder(BaseModel):
                 used_amount_from_wallet=used_from_wallet,
                 gateway='zarinpal',
                 status=Payment.INITIATED,
+                transaction_id=transaction_id,
                 created_at=timezone.now()
             )
             payment.mark_as_pending(user=self.customer)
             return payment
 
         else:
-            wallet.reduce_balance(amount=used_from_wallet, description=f"پرداخت سفارش {self.exuni_tracking_code}")
+            wallet.reduce_balance(
+                shop_order=self, amount=used_from_wallet, transaction_id=transaction_id,
+                description=f"پرداخت سفارش {self.exuni_tracking_code}"
+            )
             wallet.refresh_from_db()
             self.mark_as_paid()
             return None
