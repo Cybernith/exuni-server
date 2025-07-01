@@ -9,9 +9,37 @@ from financial_management.models import Wallet, Transaction, WalletLedger, Audit
     DiscountAction, DiscountUsage, AuditSeverity
 from helpers.functions import datetime_to_str, add_separator
 
-admin.site.register(WalletLedger)
 admin.site.register(AffiliateOrderPayment)
 
+
+@admin.register(WalletLedger)
+class WalletLedgerAdmin(admin.ModelAdmin):
+    list_display = [
+        'wallet_info',
+        'transaction',
+        'amount',
+        'balance_before',
+        'balance_after',
+        'is_credit',
+        'description',
+        'get_jalali_created_at',
+    ]
+
+    def get_jalali_created_at(self, obj):
+        if obj.created_at:
+            return datetime_to_str(obj.created_at)
+
+    def wallet_info(self, obj):
+        if obj.wallet.user:
+            return f"User: {obj.wallet.user.mobile_number}"
+        return f"Business: {obj.wallet.business.name}"
+
+    wallet_info.short_description = 'Wallet Owner'
+
+    search_fields = (
+        'wallet__user__mobile_number',
+        'description',
+    )
 
 
 @admin.register(Transaction)
