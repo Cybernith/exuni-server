@@ -1,3 +1,4 @@
+import time
 from decimal import Decimal
 from django.shortcuts import redirect
 from django.shortcuts import get_object_or_404
@@ -27,6 +28,16 @@ import hashlib
 import json
 from django.core.cache import cache
 
+import random
+import string
+
+
+def generate_top_up_wallet_code_with_mobile(mobile_number):
+    prefix = "TW"
+    random_chars_len = 20 - len(prefix) - len(mobile_number)
+    random_chars = ''.join(random.choices(string.ascii_uppercase, k=random_chars_len))
+    return prefix + mobile_number + random_chars
+
 
 class StartZarinpalPaymentApiView(APIView):
     permission_classes = [IsAuthenticated]
@@ -54,7 +65,9 @@ class StartZarinpalPaymentApiView(APIView):
 
         gateway = ZarinpalGateway(
             amount=payment.amount,
-            description=f'پرداخت سفارش {order.id}',
+            mobile=payment.shop_order.customer.mobile_number,
+            payment_id=order.id,
+            description=f'پرداخت سفارش {order.id} کاربر {order.customer.mobile_number}',
             callback_url=callback_url
         )
 
@@ -93,12 +106,19 @@ class ZarinpalCallbackApiView(APIView):
 
         gateway = ZarinpalGateway(
             amount=payment.amount,
-            description=f'تایید پرداخت سفارش {order.id}',
+            description=f'تایید پرداخت سفارش {order.id} کاربر {order.customer.mobile_number}',
             callback_url=''
         )
+        result = {'data': {'code': 'start'}}
+        counter = 0
+        while result['data'].get('code') not in [100, 101]:
+            print('verify', flush=True)
+            if counter != 3:
+                result = gateway.verify_payment(authority)
+                counter += 1
+                time.sleep(1)
 
-        result = gateway.verify_payment(authority)
-        if result.get('data') and result['data'].get('code') == 100:
+        if result.get('data') and result['data'].get('code') in [100, 101]:
             if payment.used_amount_from_wallet > 0:
                 wallet = payment.user.exuni_wallet
                 wallet.reduce_balance(
@@ -106,6 +126,10 @@ class ZarinpalCallbackApiView(APIView):
                     description=f"پرداخت سفارش {order.exuni_tracking_code}"
                 )
                 wallet.refresh_from_db()
+            payment.zarinpal_ref_id = result['data'].get('ref_id')
+            payment.card_pan = result['data'].get('card_pan')
+            payment.fee = result['data'].get('fee')
+            payment.save()
             payment.mark_as_success_payment(user=payment.user)
             FinancialLogger.log(
                 user=payment.user,
@@ -311,13 +335,14 @@ class StartZarinpalWalletTopUPApiView(APIView):
         if not top_up_amount:
             return Response({'message': 'amount should be positive'},
                             status=status.HTTP_400_BAD_REQUEST)
-
+        transaction_id = generate_top_up_wallet_code_with_mobile(user.mobile_number)
         payment = Payment.objects.create(
             user=user,
             amount=top_up_amount,
             gateway='zarinpal',
             status=Payment.INITIATED,
             type=Payment.FOR_TOP_UP_WALLET,
+            transaction_id=transaction_id,
             created_at=timezone.now()
         )
         payment.mark_as_pending(user=user)
@@ -333,11 +358,12 @@ class StartZarinpalWalletTopUPApiView(APIView):
             service.execute()
         except Exception as e:
             return Response({'message': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
         callback_url = SERVER_URL + reverse('financial_management:zarinpal_top_up_wallet_callback')
         gateway = ZarinpalGateway(
             amount=top_up_amount,
             description=f'شارژ کیف پول {user.mobile_number}',
+            mobile=user.mobile_number,
+            payment_id=transaction_id,
             callback_url=callback_url
         )
         try:
@@ -378,8 +404,20 @@ class ZarinpalTopUpWalletCallbackApiView(APIView):
             callback_url=''
         )
 
-        result = gateway.verify_payment(authority)
-        if result.get('data') and result['data'].get('code') == 100:
+        result = {'data': {'code': 'start'}}
+        counter = 0
+        while result['data'].get('code') not in [100, 101]:
+            print('verify', flush=True)
+            if counter != 3:
+                result = gateway.verify_payment(authority)
+                counter += 1
+                time.sleep(1)
+
+        if result.get('data') and result['data'].get('code') in [100, 101]:
+            payment.zarinpal_ref_id = result['data'].get('ref_id')
+            payment.card_pan = result['data'].get('card_pan')
+            payment.fee = result['data'].get('fee')
+            payment.save()
             payment.mark_as_success_payment(user=payment.user)
             FinancialLogger.log(
                 user=payment.user,
@@ -394,6 +432,7 @@ class ZarinpalTopUpWalletCallbackApiView(APIView):
             service = WalletTopUpService(
                 user=payment.user,
                 amount=payment.amount,
+                transaction_id=payment.transaction_id,
                 ip=request.META.get('REMOTE_ADDR'),
                 agent=request.META.get('HTTP_USER_AGENT')
             )

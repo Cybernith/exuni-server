@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django.contrib import admin
 import nested_admin
 
@@ -5,7 +7,7 @@ from financial_management.models import Wallet, Transaction, WalletLedger, Audit
     AffiliateOrderPayment, DiscountConditionCategory, DiscountConditionBrand, DiscountConditionProduct, \
     DiscountConditionUser, DiscountConditionPriceOver, DiscountConditionPriceLimit, DiscountCondition, Discount, \
     DiscountAction, DiscountUsage, AuditSeverity
-from helpers.functions import datetime_to_str
+from helpers.functions import datetime_to_str, add_separator
 
 admin.site.register(WalletLedger)
 admin.site.register(AffiliateOrderPayment)
@@ -16,6 +18,7 @@ admin.site.register(AffiliateOrderPayment)
 class TransactionAdmin(admin.ModelAdmin):
     list_display = (
         'get_jalali_created_at',
+        'transaction_id',
         'wallet_info',
         'type_display',
         'amount',
@@ -193,7 +196,9 @@ class PaymentAdmin(admin.ModelAdmin):
         'get_type_display',
         'user',
         'business',
-        'amount',
+        'payment_amount',
+        'gateway_amount',
+        'transaction_id',
         'used_amount_from_wallet',
         'gateway',
         'reference_id',
@@ -214,6 +219,9 @@ class PaymentAdmin(admin.ModelAdmin):
                 'used_amount_from_wallet',
                 'gateway',
                 'reference_id',
+                'zarinpal_ref_id',
+                'card_pan',
+                'fee',
                 'created_at',
                 'paid_at',
             )
@@ -249,6 +257,13 @@ class PaymentAdmin(admin.ModelAdmin):
     # Make status and type human-readable in list view
     def get_status_display(self, obj):
         return dict(Payment.STATUS_CHOICES).get(obj.status, obj.status)
+
+    def payment_amount(self, obj):
+        return add_separator(obj.amount)
+
+    def gateway_amount(self, obj):
+        if obj.fee:
+            return add_separator(obj.amount + Decimal(obj.fee / 10))
 
     get_status_display.short_description = 'Status'
 

@@ -25,6 +25,7 @@ class ZarinpalGateway:
             'callback_url': self.callback_url,
             'description': self.description,
             'order_id': self.payment_id,
+            'mobile': self.mobile,
         }
         if self.email:
             data['metadata'] = {'email': self.email}
