@@ -122,6 +122,7 @@ class Transaction(models.Model):
     TRANSACTION_STATUS = (
         (PENDING, 'بلاتکلیف'),
         (SUCCESS, 'موفق'),
+        (CANCELED, 'لغو سفارش'),
         (FAILED, 'ناموفق'),
     )
     shop_order = models.ForeignKey('shop.ShopOrder', related_name='transaction', on_delete=models.CASCADE,
@@ -224,6 +225,12 @@ class Payment(models.Model):
     def mark_as_pending(self, user=None):
         print(f'{user} pending')
         self.status = self.PENDING
+        self.save()
+
+    @transition(field='status', source='*', target=CANCELLED)
+    def mark_as_canceled(self, user=None):
+        print(f'{user} canceling')
+        self.status = self.CANCELLED
         self.save()
 
     @transition(field='status', source=PENDING, target=SUCCESS)

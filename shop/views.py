@@ -908,7 +908,10 @@ class OrderMoveToCartAPIView(APIView):
             except ShopOrder.bank_payment.RelatedObjectDoesNotExist:
                 payment = None
             if payment and payment.status == Payment.INITIATED:
-                payment.delete()
+                #payment.delete()
+                payment.status = 'ca'
+                payment.save()
+
             elif payment and payment.status == Payment.SUCCESS:
                 exuni_transaction = order.customer.exuni_wallet.increase_balance(
                     amount=(payment.amount + payment.used_amount_from_wallet),
