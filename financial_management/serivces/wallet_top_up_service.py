@@ -61,6 +61,9 @@ class WalletTopUpRequestService(BaseWalletService):
                 transaction=None,
                 ip_address=self.ip,
                 user_agent=self.agent,
-                extra_info={"amount": str(self.amount)}
+                extra_info={
+                    "amount": str(self.amount),
+                    "authority": self.authority
+                }
             )
             return 'request log registered'

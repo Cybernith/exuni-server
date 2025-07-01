@@ -88,6 +88,19 @@ class StartZarinpalPaymentApiView(APIView):
             result = gateway.request_payment()
             payment.reference_id = result['authority']
             payment.save()
+            FinancialLogger.log(
+                user=payment.user,
+                action=AuditAction.PAYMENT_REQUEST,
+                severity=AuditSeverity.INFO,
+                payment=payment,
+                ip_address=self.kwargs.get("ip"),
+                user_agent=self.kwargs.get("agent"),
+                extra_info={
+                    "amount": str(payment.amount),
+                    "authority": result['authority'],
+                }
+            )
+
             return Response({'payment_url': result['payment_url']})
 
         except Exception as exception:

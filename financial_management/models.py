@@ -118,6 +118,7 @@ class Transaction(models.Model):
     PENDING = 'pending'
     SUCCESS = 'success'
     FAILED = 'failed'
+    CANCELED = 'canceled'
 
     TRANSACTION_STATUS = (
         (PENDING, 'بلاتکلیف'),
@@ -268,6 +269,7 @@ class AuditAction(models.TextChoices):
     WITHDRAW_REQUESTED = "wallet_withdraw_wallet_request", "Wallet Withdrawal Requested"
     WITHDRAW_SUCCESS = "wallet_withdraw_wallet__success", "Wallet Withdraw Success"
     TRANSFER = "wallet_transfer", "Wallet Transfer"
+    PAYMENT_REQUEST = "payment_request", "request payment for Order"
     PAYMENT_ORDER = "payment_order", "Payment for Order"
     REFUND_PAYMENT_ORDER = "refund_payment_order", "Refund Payment for Order"
     INVESTMENT = "wallet_investment", "Investment Made"
