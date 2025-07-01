@@ -28,16 +28,19 @@ class GlobalAutoCompleteSearchAPIView(APIView):
             category_names=StringAgg('category__name', delimiter=' ', distinct=True),
             search_vector=(
                     SearchVector('name', weight='A') +
+                    SearchVector('sixteen_digit_code', weight='B') +
                     SearchVector('brand__name', weight='B') +
                     SearchVector('category_names', weight='B')
             ),
             rank=SearchRank(F('search_vector'), search_query),
             trigram_name=TrigramSimilarity('name', query_value),
+            trigram_sixteen_digit_code=TrigramSimilarity('sixteen_digit_code', query_value),
             trigram_brand=TrigramSimilarity('brand__name', query_value),
             trigram_category=TrigramSimilarity('category_names', query_value),
         ).annotate(
             similarity=Greatest(
                 F('trigram_name') * 2,
+                F('trigram_sixteen_digit_code') * 2,
                 F('trigram_brand'),
                 F('trigram_category')
             )
