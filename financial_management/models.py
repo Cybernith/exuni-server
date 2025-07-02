@@ -207,7 +207,7 @@ class Payment(models.Model):
     used_amount_from_wallet = DECIMAL()
     gateway = models.CharField(max_length=30, blank=True, null=True)
     reference_id = models.CharField(max_length=100, blank=True, null=True)
-    zarinpal_ref_id = models.IntegerField(blank=True, null=True)
+    zarinpal_ref_id = models.CharField(max_length=255, blank=True, null=True)
     card_pan = models.CharField(max_length=100, blank=True, null=True)
     transaction_id = models.CharField(max_length=100, blank=True, null=True)
     fee = models.IntegerField(blank=True, null=True)
