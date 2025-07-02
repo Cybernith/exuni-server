@@ -712,10 +712,11 @@ class ApiProductDetailSerializers(serializers.ModelSerializer):
 
     def get_user_rate(self, obj):
         user = get_current_user()
-        if user.is_authenticated:
-            rate = Rate.objects.filter(customer=user, product=obj).first()
-            return rate.level if rate else None
-        return None
+        if user:
+            if user.is_authenticated:
+                rate = Rate.objects.filter(customer=user, product=obj).first()
+                return rate.level if rate else None
+            return None
 
     def get_brand(self, obj):
         return {'id': obj.brand.id, 'name': obj.brand.name, 'logo': obj.brand.logo.url if obj.brand.logo  else None}\
