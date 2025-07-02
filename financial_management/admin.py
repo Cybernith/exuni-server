@@ -430,6 +430,7 @@ class FinancialAuditLogAdmin(admin.ModelAdmin):
         'receiver__last_name',
         'transaction__id',
         'payment__id',
+        'action',
         'ip_address',
     )
 

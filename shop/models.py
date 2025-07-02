@@ -342,16 +342,27 @@ class ShopOrder(BaseModel):
         gateway_amount = final_price - used_from_wallet
 
         if gateway_amount > 0:
-            payment = Payment.objects.create(
-                shop_order=self,
-                user=self.customer,
-                amount=gateway_amount,
-                used_amount_from_wallet=used_from_wallet,
-                gateway='zarinpal',
-                status=Payment.INITIATED,
-                transaction_id=transaction_id,
-                created_at=timezone.now()
-            )
+            if hasattr(self, 'bank_payment'):
+                payment = self.bank_payment
+                assert not payment.status == 'su'
+
+                payment.amount = gateway_amount
+                payment.used_amount_from_wallet = used_from_wallet
+                payment.status = Payment.INITIATED
+                payment.transaction_id = transaction_id
+                payment.created_at = timezone.now()
+                payment.save()
+            else:
+                payment = Payment.objects.create(
+                    shop_order=self,
+                    user=self.customer,
+                    amount=gateway_amount,
+                    used_amount_from_wallet=used_from_wallet,
+                    gateway='zarinpal',
+                    status=Payment.INITIATED,
+                    transaction_id=transaction_id,
+                    created_at=timezone.now()
+                )
             payment.mark_as_pending(user=self.customer)
             return payment
 

@@ -11,7 +11,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from financial_management.loggers.financial_logger import FinancialLogger
-from financial_management.models import Payment, AuditAction, AuditSeverity, Discount, DiscountAction
+from financial_management.models import Payment, AuditAction, AuditSeverity, Discount, DiscountAction, Transaction
 from financial_management.serializers import DiscountResultSerializer
 from financial_management.serivces.discount_evaluator import evaluate_discount
 from financial_management.serivces.wallet_top_up_service import WalletTopUpRequestService, WalletTopUpService
@@ -65,6 +65,19 @@ class StartZarinpalPaymentApiView(APIView):
             transaction_id = generate_pay_from_wallet_code_with_mobile(order.customer.mobile_number)
             payment = order.pay_with_wallet(transaction_id=transaction_id)
             if not payment:
+                FinancialLogger.log(
+                    user=order.customer,
+                    action=AuditAction.PAYMENT_ORDER_FROM_WALLET,
+                    severity=AuditSeverity.INFO,
+                    transaction=Transaction.objects.get(transaction_id=transaction_id),
+                    ip_address=self.kwargs.get("ip"),
+                    user_agent=self.kwargs.get("agent"),
+                    extra_info={
+                        "amount": str(order.final_amount),
+                        "order": str(order.id),
+                    }
+                )
+
                 return Response({'payment_url': '/payment/result?status=success'})
         else:
             payment = order.pay()
@@ -98,6 +111,8 @@ class StartZarinpalPaymentApiView(APIView):
                 extra_info={
                     "amount": str(payment.amount),
                     "authority": result['authority'],
+                    "order": str(order.id),
+                    "used_from_wallet": str(payment.used_amount_from_wallet),
                 }
             )
 
@@ -125,7 +140,11 @@ class ZarinpalCallbackApiView(APIView):
                 payment=payment,
                 ip_address=self.kwargs.get("ip"),
                 user_agent=self.kwargs.get("agent"),
-                extra_info={"amount": str(payment.amount)}
+                extra_info={
+                    "amount": str(payment.amount),
+                    "order": str(order.id),
+                    "authority": payment.reference_id,
+                }
             )
 
             return redirect(f'{FRONT_URL}/payment/fail?orderId={order.id}')
@@ -147,12 +166,26 @@ class ZarinpalCallbackApiView(APIView):
         if result.get('data') and result['data'].get('code') in [100, 101]:
             if payment.used_amount_from_wallet > 0:
                 wallet = payment.user.exuni_wallet
+
                 wallet.reduce_balance(
                     transaction_id=payment.transaction_id,
                     amount=payment.used_amount_from_wallet,
                     shop_order=order,
                     description=f"پرداخت قسمتی از مبلغ سفارش {order.id}"
                 )
+                FinancialLogger.log(
+                    user=order.customer,
+                    action=AuditAction.PAYMENT_ORDER_FROM_WALLET,
+                    severity=AuditSeverity.INFO,
+                    transaction=Transaction.objects.get(transaction_id=payment.transaction_id),
+                    ip_address=self.kwargs.get("ip"),
+                    user_agent=self.kwargs.get("agent"),
+                    extra_info={
+                        "amount": str(payment.used_amount_from_wallet),
+                        "order": str(order.id),
+                    }
+                )
+
                 wallet.refresh_from_db()
             payment.zarinpal_ref_id = result['data'].get('ref_id')
             payment.card_pan = result['data'].get('card_pan')
@@ -166,8 +199,14 @@ class ZarinpalCallbackApiView(APIView):
                 payment=payment,
                 ip_address=self.kwargs.get("ip"),
                 user_agent=self.kwargs.get("agent"),
-                extra_info={"amount": str(payment.amount)}
+                extra_info={
+                    "amount": str(payment.amount),
+                    "order": str(order.id),
+                    "authority": payment.reference_id,
+                }
             )
+
+
             if order.discount_code:
                 order.discount_code.use()
             order.mark_as_paid()
@@ -179,11 +218,16 @@ class ZarinpalCallbackApiView(APIView):
             FinancialLogger.log(
                 user=payment.user,
                 action=AuditAction.PAYMENT_FAILED,
-                severity=AuditSeverity.INFO,
+                severity=AuditSeverity.WARNING,
                 payment=payment,
                 ip_address=self.kwargs.get("ip"),
                 user_agent=self.kwargs.get("agent"),
-                extra_info={"amount": str(payment.amount)}
+                extra_info={
+                    "amount": str(payment.amount),
+                    "order": str(order.id),
+                    "authority": payment.reference_id,
+                    "verify": False,
+                }
             )
             return redirect(f'{FRONT_URL}/payment/fail?orderId={order.id}')
 
@@ -374,17 +418,6 @@ class StartZarinpalWalletTopUPApiView(APIView):
         )
         payment.mark_as_pending(user=user)
 
-        service = WalletTopUpRequestService(
-            user=user,
-            amount=top_up_amount,
-            ip=request.META.get('REMOTE_ADDR'),
-            agent=request.META.get('HTTP_USER_AGENT')
-        )
-
-        try:
-            service.execute()
-        except Exception as e:
-            return Response({'message': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         callback_url = SERVER_URL + reverse('financial_management:zarinpal_top_up_wallet_callback')
         gateway = ZarinpalGateway(
             amount=top_up_amount,
@@ -395,6 +428,19 @@ class StartZarinpalWalletTopUPApiView(APIView):
         )
         try:
             result = gateway.request_payment()
+            service = WalletTopUpRequestService(
+                user=user,
+                amount=top_up_amount,
+                authority=result['authority'],
+                ip=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT')
+            )
+
+            try:
+                service.execute()
+            except Exception as e:
+                return Response({'message': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
             payment.reference_id = result['authority']
             payment.save()
             return Response({'payment_url': result['payment_url']})
@@ -421,7 +467,11 @@ class ZarinpalTopUpWalletCallbackApiView(APIView):
                 payment=payment,
                 ip_address=request.META.get('REMOTE_ADDR'),
                 user_agent=request.META.get('HTTP_USER_AGENT'),
-                extra_info={"amount": str(payment.amount)}
+                extra_info={
+                    "amount": str(payment.amount),
+                    "authority": payment.reference_id,
+                    "type": 'top up wallet',
+                }
             )
             return redirect(f'{FRONT_URL}/payment/fail?top_up_wallet=true&amount={payment.amount}')
 
@@ -434,7 +484,6 @@ class ZarinpalTopUpWalletCallbackApiView(APIView):
         result = {'data': {'code': 'start'}}
         counter = 0
         while result['data'].get('code') not in [100, 101]:
-            print('verify', flush=True)
             if counter != 3:
                 result = gateway.verify_payment(authority)
                 counter += 1
@@ -448,7 +497,7 @@ class ZarinpalTopUpWalletCallbackApiView(APIView):
             payment.mark_as_success_payment(user=payment.user)
             FinancialLogger.log(
                 user=payment.user,
-                action=AuditAction.PAYMENT_ORDER,
+                action=AuditAction.PAYMENT_FOR_TOP_UP_WALLET,
                 severity=AuditSeverity.INFO,
                 payment=payment,
                 ip_address=request.META.get('REMOTE_ADDR'),
@@ -461,7 +510,7 @@ class ZarinpalTopUpWalletCallbackApiView(APIView):
                 amount=payment.amount,
                 transaction_id=payment.transaction_id,
                 ip=request.META.get('REMOTE_ADDR'),
-                agent=request.META.get('HTTP_USER_AGENT')
+                user_agent=request.META.get('HTTP_USER_AGENT')
             )
 
             try:
@@ -475,10 +524,15 @@ class ZarinpalTopUpWalletCallbackApiView(APIView):
             FinancialLogger.log(
                 user=payment.user,
                 action=AuditAction.PAYMENT_FAILED,
-                severity=AuditSeverity.INFO,
+                severity=AuditSeverity.WARNING,
                 payment=payment,
                 ip_address=request.META.get('REMOTE_ADDR'),
                 user_agent=request.META.get('HTTP_USER_AGENT'),
-                extra_info={"amount": str(payment.amount)}
+                extra_info={
+                    "amount": str(payment.amount),
+                    "authority": payment.reference_id,
+                    "type": 'top up wallet',
+                    "verify": False,
+                }
             )
             return redirect(f'{FRONT_URL}/payment/fail?top_up_wallet=true&amount={payment.amount}')

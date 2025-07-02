@@ -271,6 +271,8 @@ class AuditAction(models.TextChoices):
     TRANSFER = "wallet_transfer", "Wallet Transfer"
     PAYMENT_REQUEST = "payment_request", "request payment for Order"
     PAYMENT_ORDER = "payment_order", "Payment for Order"
+    PAYMENT_FOR_TOP_UP_WALLET = "payment_for_top_up_wallet", "Payment for top up wallet"
+    PAYMENT_ORDER_FROM_WALLET = "payment_order_from_wallet", "Payment Order from wallet"
     REFUND_PAYMENT_ORDER = "refund_payment_order", "Refund Payment for Order"
     INVESTMENT = "wallet_investment", "Investment Made"
     BALANCE_UPDATED = "wallet_balance_updated", "Balance Updated"
