@@ -1,3 +1,4 @@
+import datetime
 import time
 from decimal import Decimal
 from django.shortcuts import redirect
@@ -16,7 +17,7 @@ from financial_management.serializers import DiscountResultSerializer
 from financial_management.serivces.discount_evaluator import evaluate_discount
 from financial_management.serivces.wallet_top_up_service import WalletTopUpRequestService, WalletTopUpService
 from financial_management.zarinpal import ZarinpalGateway
-from helpers.functions import get_current_user
+from helpers.functions import get_current_user, date_to_str
 from products.models import Product
 from server.gateway_configs import TRUSTED_GATEWAY_IP, GATEWAY_SECRET_PAYMENT_TOKEN
 from server.settings import SERVER_URL, SECRET_KEY, FRONT_URL
@@ -78,7 +79,11 @@ class StartZarinpalPaymentApiView(APIView):
                     }
                 )
 
-                return Response({'payment_url': '/payment/result?status=success'})
+                return Response(
+                    {
+                        'payment_url': f'/payment/result?status=success&type=wallet&payment_date={date_to_str(datetime.date.today())}&amount={order.final_amount}&order_id={order.id}'
+                    }
+                )
         else:
             payment = order.pay()
 
@@ -212,7 +217,7 @@ class ZarinpalCallbackApiView(APIView):
             if order.discount_code:
                 order.discount_code.use()
             order.mark_as_paid()
-            return redirect(f'{FRONT_URL}/payment/success?orderId={order.id}')
+            return redirect(f'{FRONT_URL}/payment/success?type=gateway&orderId={order.id}')
         else:
             payment.used_amount_from_wallet = 0
             payment.save()

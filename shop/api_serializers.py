@@ -3,7 +3,7 @@ from django.utils import timezone
 from rest_framework import serializers
 
 from financial_management.models import DiscountCondition, Discount, DiscountAction, DiscountConditionPriceLimit, \
-    DiscountConditionPriceOver, DiscountConditionBrand, DiscountConditionProduct, DiscountConditionCategory
+    DiscountConditionPriceOver, DiscountConditionBrand, DiscountConditionProduct, DiscountConditionCategory, Payment
 from helpers.functions import get_current_user
 from products.models import Product, Brand, ProductGallery, Avail, ProductProperty, ProductPropertyTerm, \
     ProductAttributeTerm, ProductAttribute
@@ -768,12 +768,22 @@ class ApiOrderStatusHistorySerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class ApiOrderPaymentSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        read_only_fields = ('created_at', 'updated_at')
+        model = Payment
+        fields = '__all__'
+
+
 class ApiOrderListSerializer(serializers.ModelSerializer):
     customer = UserSimpleSerializer(read_only=True)
     items = ApiOrderItemSerializer(many=True, read_only=True)
     history = ApiOrderStatusHistorySerializer(many=True, read_only=True)
     status_display = serializers.CharField(source='get_status_display', read_only=True)
     final_amount = serializers.ReadOnlyField()
+    bank_payment = ApiOrderPaymentSerializer()
+    shipment_address = ApiShipmentAddressRetrieveSerializer(read_only=True)
 
     class Meta:
         read_only_fields = ('created_at', 'updated_at')
