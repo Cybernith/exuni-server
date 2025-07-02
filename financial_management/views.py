@@ -154,8 +154,15 @@ class ZarinpalCallbackApiView(APIView):
             description=f'تایید پرداخت سفارش {order.id} کاربر {order.customer.mobile_number}',
             callback_url=''
         )
-        result = gateway.verify_payment(authority)
-        if result.get('data') and result['data'].get('code') in [100, 101, '100', '101']:
+        result = {'data': {'code': 'start'}}
+        counter = 0
+        while result['data'].get('code') not in [100, 101]:
+            if counter != 3:
+                result = gateway.verify_payment(authority)
+                counter += 1
+                time.sleep(1)
+
+        if result.get('data') and result['data'].get('code') in [100, 101]:
             if payment.used_amount_from_wallet > 0:
                 wallet = payment.user.exuni_wallet
 
@@ -473,8 +480,15 @@ class ZarinpalTopUpWalletCallbackApiView(APIView):
             callback_url=''
         )
 
-        result = gateway.verify_payment(authority)
-        if result.get('data') and result['data'].get('code') in [100, 101, '100', '101']:
+        result = {'data': {'code': 'start'}}
+        counter = 0
+        while result['data'].get('code') not in [100, 101]:
+            if counter != 3:
+                result = gateway.verify_payment(authority)
+                counter += 1
+                time.sleep(1)
+
+        if result.get('data') and result['data'].get('code') in [100, 101]:
             payment.zarinpal_ref_id = result['data'].get('ref_id')
             payment.card_pan = result['data'].get('card_pan')
             payment.fee = result['data'].get('fee')
