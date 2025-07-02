@@ -1,6 +1,6 @@
 from rest_framework import generics
 from rest_framework.pagination import LimitOffsetPagination
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
 
 from helpers.auth import BasicObjectPermission
 
@@ -10,7 +10,7 @@ from shop.models import ShopOrder
 
 
 class AdminShopOrderListView(generics.ListAPIView):
-    permission_classes = (IsAuthenticated, BasicObjectPermission)
+    permission_classes = (IsAuthenticated, BasicObjectPermission, IsAdminUser)
     permission_codename = "get.shop_order"
 
     serializer_class = ApiCustomerShopOrderSimpleSerializer

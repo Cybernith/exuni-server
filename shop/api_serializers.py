@@ -748,7 +748,7 @@ class CartAddSerializer(serializers.Serializer):
 
 
 class ApiOrderItemSerializer(serializers.ModelSerializer):
-    product = ApiProductsListSerializers(read_only=True)
+    product = ApiProductDetailSerializers(read_only=True)
 
     class Meta:
         read_only_fields = ('created_at', 'updated_at')
