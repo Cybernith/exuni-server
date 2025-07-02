@@ -618,6 +618,7 @@ class ApiProductDetailSerializers(serializers.ModelSerializer):
     offer_percentage = serializers.SerializerMethodField()
     active_discounts = serializers.SerializerMethodField()
     attributes = ShopProductAttributeSerializer(many=True, read_only=True)
+    variation_of_name = serializers.CharField(source='variation_of.name', read_only=True)
 
     class Meta:
         model = Product
@@ -655,6 +656,7 @@ class ApiProductDetailSerializers(serializers.ModelSerializer):
             'offer_percentage',
             'active_discounts',
             'attributes',
+            'variation_of_name',
         ]
 
     def get_active_discounts(self, obj):
@@ -709,7 +711,7 @@ class ApiProductDetailSerializers(serializers.ModelSerializer):
         return obj.picture.url if obj.picture else None
 
     def get_user_rate(self, obj):
-        user = self.context['request'].user
+        user = get_current_user()
         if user.is_authenticated:
             rate = Rate.objects.filter(customer=user, product=obj).first()
             return rate.level if rate else None
