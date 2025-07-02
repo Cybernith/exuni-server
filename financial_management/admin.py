@@ -224,6 +224,8 @@ class PaymentAdmin(admin.ModelAdmin):
         'used_amount_from_wallet',
         'gateway',
         'reference_id',
+        'callback_called',
+        'is_verified',
         'created_at',
         'paid_at',
     )

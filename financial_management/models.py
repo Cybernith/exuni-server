@@ -213,6 +213,8 @@ class Payment(models.Model):
     fee = models.IntegerField(blank=True, null=True)
     created_at = models.DateTimeField(blank=True, null=True)
     paid_at = models.DateTimeField(blank=True, null=True)
+    callback_called = models.BooleanField(default=False)
+    is_verified = models.BooleanField(default=False)
 
     class Meta:
         constraints = [

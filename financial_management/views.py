@@ -130,6 +130,8 @@ class ZarinpalCallbackApiView(APIView):
         callback_status = request.query_params.get('Status')
         payment = get_object_or_404(Payment, reference_id=authority)
         order = payment.shop_order
+        payment.callback_called = True
+        payment.save()
 
         if callback_status != 'OK':
             payment.mark_as_failed_payment(user=payment.user)
@@ -157,10 +159,10 @@ class ZarinpalCallbackApiView(APIView):
         result = {'data': {'code': 'start'}}
         counter = 0
         while result['data'].get('code') not in [100, 101]:
-            if counter != 3:
+            if counter != 5:
                 result = gateway.verify_payment(authority)
                 counter += 1
-                time.sleep(1)
+                time.sleep(counter)
 
         if result.get('data') and result['data'].get('code') in [100, 101]:
             if payment.used_amount_from_wallet > 0:
@@ -189,6 +191,7 @@ class ZarinpalCallbackApiView(APIView):
             payment.zarinpal_ref_id = result['data'].get('ref_id')
             payment.card_pan = result['data'].get('card_pan')
             payment.fee = result['data'].get('fee')
+            payment.is_verified = True
             payment.save()
             payment.mark_as_success_payment(user=payment.user)
             FinancialLogger.log(
