@@ -377,7 +377,7 @@ class Product(BaseModel):
 
     @property
     def is_freeze(self):
-        return self.inventory <= self.min_inventory
+        return self.current_inventory.inventory <= self.min_inventory
 
     @property
     def is_expired_closed(self):

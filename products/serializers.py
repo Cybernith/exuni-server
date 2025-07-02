@@ -201,7 +201,6 @@ class NoContentProductSimpleSerializer(serializers.ModelSerializer):
 
 class ProductSerializer(serializers.ModelSerializer):
     created_by = UserSimpleSerializer(read_only=True)
-    gallery = ProductGallerySerializer(many=True, read_only=True)
     avails = AvailSerializer(many=True, read_only=True)
     properties = ProductPropertySerializer(many=True, read_only=True)
     category = CategorySerializer(many=True, read_only=True)
@@ -217,15 +216,7 @@ class ProductSerializer(serializers.ModelSerializer):
     inventory = serializers.SerializerMethodField()
 
     def get_inventory(self, obj: Product):
-        items = StoreReceiptItem.objects.filter(product=obj).annotate(
-            product_count=Sum((F('number_of_box') * F('number_of_products_per_box')), output_field=IntegerField()),
-        ).aggregate(
-            Sum('product_count'),
-        )
-
-        # calculate sale products
-
-        return obj.first_inventory + change_to_num(items['product_count__sum'])
+        return obj.current_inventory.inventory
 
     class Meta:
         read_only_fields = ('created_at', 'updated_at')
