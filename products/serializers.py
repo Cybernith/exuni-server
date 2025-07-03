@@ -67,7 +67,7 @@ class AvailTreeRootSerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'explanation', 'image')
 
     def get_image(self, obj):
-        return 'http://exuni.shop' + obj.image.url if obj.image else None
+        return 'https://admin.exuni.ir' + obj.image.url if obj.image else None
 
 
 class FeatureTreeRootSerializer(serializers.ModelSerializer):
@@ -78,7 +78,7 @@ class FeatureTreeRootSerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'explanation', 'image')
 
     def get_image(self, obj):
-        return 'http://exuni.shop' + obj.image.url if obj.image else None
+        return 'https://admin.exuni.ir' + obj.image.url if obj.image else None
 
 
 class CategorizationRootSerializer(serializers.ModelSerializer):
@@ -89,7 +89,7 @@ class CategorizationRootSerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'explanation', 'image')
 
     def get_image(self, obj):
-        return 'http://exuni.shop' + obj.image.url if obj.image else None
+        return 'https://admin.exuni.ir' + obj.image.url if obj.image else None
 
 
 class ProductPropertySerializer(serializers.ModelSerializer):

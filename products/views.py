@@ -507,7 +507,7 @@ class AvailSubtreeView(APIView):
                 'id': avail.id,
                 'name': avail.name,
                 'explanation': avail.explanation,
-                'image': 'http://exuni.shop' + avail.image.url if avail.image else None,
+                'image': 'https://admin.exuni.ir' + avail.image.url if avail.image else None,
                 'children': []
             })
 
@@ -522,7 +522,7 @@ class AvailSubtreeView(APIView):
             'id': root.id,
             'name': root.name,
             'explanation': root.explanation,
-            'image': 'http://exuni.shop' + root.image.url if root.image else None,
+            'image': 'https://admin.exuni.ir' + root.image.url if root.image else None,
             'children': build_tree(root.id)
         }
 
@@ -641,7 +641,7 @@ class FeatureSubtreeView(APIView):
                 'id': feature.id,
                 'name': feature.name,
                 'explanation': feature.explanation,
-                'image': 'http://exuni.shop' + feature.image.url if feature.image else None,
+                'image': 'https://admin.exuni.ir' + feature.image.url if feature.image else None,
                 'children': []
             })
 
@@ -656,7 +656,7 @@ class FeatureSubtreeView(APIView):
             'id': root.id,
             'name': root.name,
             'explanation': root.explanation,
-            'image': 'http://exuni.shop' + root.image.url if root.image else None,
+            'image': 'https://admin.exuni.ir' + root.image.url if root.image else None,
             'children': build_tree(root.id)
         }
 
@@ -776,7 +776,7 @@ class CategorizationSubtreeView(APIView):
                 'id': categorization.id,
                 'name': categorization.name,
                 'explanation': categorization.explanation,
-                'image': 'http://exuni.shop' + categorization.image.url if categorization.image else None,
+                'image': 'https://admin.exuni.ir' + categorization.image.url if categorization.image else None,
                 'children': []
             })
 
@@ -791,7 +791,7 @@ class CategorizationSubtreeView(APIView):
             'id': root.id,
             'name': root.name,
             'explanation': root.explanation,
-            'image': 'http://exuni.shop' + root.image.url if root.image else None,
+            'image': 'https://admin.exuni.ir' + root.image.url if root.image else None,
             'children': build_tree(root.id)
         }
 
