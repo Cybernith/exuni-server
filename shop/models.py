@@ -177,6 +177,7 @@ class ShopOrder(BaseModel):
     PENDING = 'pe'
     PAID = 'pa'
     PROCESSING = 'pr'
+    PACKED = 'pc'
     SHIPPED = 'sh'
     DELIVERED = 'de'
     RETURNS = 're'
@@ -186,6 +187,7 @@ class ShopOrder(BaseModel):
         (PENDING, 'در انتظار پرداخت'),
         (PAID, 'جاری'),
         (PROCESSING, 'درحال بسته بندی'),
+        (PACKED, 'بسته بندی شد'),
         (SHIPPED, 'ارسال شده'),
         (DELIVERED, 'تحویل شده'),
         (CANCELLED, 'لغو شده'),
@@ -236,6 +238,11 @@ class ShopOrder(BaseModel):
     @transition(field='status', source=PAID, target=PROCESSING)
     def process_order(self, user=None):
         self.status = self.PROCESSING
+        self.save()
+
+    @transition(field='status', source=PROCESSING, target=PACKED)
+    def packed_order(self, user=None):
+        self.status = self.PACKED
         self.save()
 
     @transition(field='status', source=PROCESSING, target=SHIPPED)
