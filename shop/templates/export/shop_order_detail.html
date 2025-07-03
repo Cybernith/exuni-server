@@ -6,19 +6,10 @@
 <div class="row header_box">
     <div class="col-xs-3 mt-2">
         <div class="form-header">
-            <div class="row" style="font-size: x-small">
-                <div class="col-sm-12 pt-2">
-                    {% if user_name %}
-                        <span class="font-weight-bold">کاربر:</span>
-                        <span> {{ user_name }} </span>
-                    {% endif %}
-                </div>
-            </div>
 
             {% if right_header_template %}
                 {% include right_header_template with form=form %}
             {% endif %}
-
         </div>
     </div>
     <div class="col-xs-6">
@@ -53,7 +44,7 @@
             </td>
             <td>
                 <span style="font-size: x-small;" class="font-weight-bold"> خریدار : </span>
-                <span style="font-size: x-small;"> {{ form.customer.name }} {{ forms.customer.mobile_number }}</span>
+                <span style="font-size: x-small;"> {{ form.shipment_address.first_name }}  {{ form.shipment_address.last_name }} {{ forms.customer.mobile_number }}</span>
             </td>
             <td>
                 <span style="font-size: x-small" class="font-weight-bold"> تاریخ : </span>
