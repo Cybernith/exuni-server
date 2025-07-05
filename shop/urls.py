@@ -1,7 +1,8 @@
 from django.conf.urls import url
 
 from products.shop.views import CommentCreateView, ShopProductCommentListView, RateUpsertApiView
-from shop.exuni_admin.export_views import ShopOrderListExportView, ShopOrderDetailExportView, OrderPostDetailExportView
+from shop.exuni_admin.export_views import ShopOrderListExportView, ShopOrderDetailExportView, OrderPostDetailExportView, \
+    AdminOrdersListExportView
 
 from shop.exuni_admin.views import AdminShopOrderListView
 from shop.search import GlobalAutoCompleteSearchAPIView
@@ -60,5 +61,6 @@ urlpatterns = [
     url(r'^ordersExport/(?P<export_type>\S+)', ShopOrderListExportView.as_view(), name=''),
     url(r'^orderDetailExport/(?P<export_type>\S+)', ShopOrderDetailExportView.as_view(), name=''),
     url(r'^orderPostExport/(?P<export_type>\S+)', OrderPostDetailExportView.as_view(), name=''),
+    url(r'^adminOrdersList/(?P<export_type>\S+)', AdminOrdersListExportView.as_view(), name=''),
 
 ]

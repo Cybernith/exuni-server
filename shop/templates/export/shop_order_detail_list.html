@@ -4,30 +4,43 @@
     <table class="table table-bordered table-striped">
 
         <tr>
-            <th class="text-center">ردیف</th>
-            <th class="text-center">تاریخ ثبت</th>
-            <th class="text-center">وضعیت</th>
-            <th class="text-center">نام مشتری</th>
-            <th class="text-center">شمار تماس مشتری</th>
-            <th class="text-center">مبلغ</th>
-            <th class="text-center">مبلغ تخفیف</th>
-            <th class="text-center">مبلغ پس از تخفیف</th>
-            <th class="text-center">تعداد اقلام</th>
-            <th class="text-center">شناسه</th>
+            <th class="text-center font-weight-bold" style="font-size: x-small;" >ردیف</th>
+            <th class="text-center font-weight-bold" style="font-size: x-small;" >تاریخ</th>
+            <th class="text-center font-weight-bold" style="font-size: x-small;" >شماره سفارش</th>
+            <th class="text-center font-weight-bold" style="font-size: x-small;" >کد رهگیری اکسونی</th>
+            <th class="text-center font-weight-bold" style="font-size: x-small;" >وضعیت</th>
+            <th class="text-center font-weight-bold" style="font-size: x-small;" >تعداد اقلام</th>
+            <th class="text-center font-weight-bold" style="font-size: x-small;" >مبلغ سفارش</th>
+            <th class="text-center font-weight-bold" style="font-size: x-small;" >هزینه ارسال</th>
+            <th class="text-center font-weight-bold" style="font-size: x-small;" >مبلغ تخفیف</th>
+            <th class="text-center font-weight-bold" style="font-size: x-small;" >مبلغ کل</th>
+            <th class="text-center font-weight-bold" style="font-size: x-small;" >مشتری</th>
+            <th class="text-center font-weight-bold" style="font-size: x-small;" >نوع پرداخت</th>
 
         </tr>
         {% for form in forms %}
             <tr>
-                <td class="text-center">{{ forloop.counter }}</td>
-                <td class="text-center">{{ form.date_time | jDateTime }}</td>
-                <td class="text-center">{{  form.get_status_display}}</td>
-                <td class="text-center">{{  form.customer.name}}</td>
-                <td class="text-center">{{  form.customer.mobile_number}}</td>
-                <td class="text-center">{{  form.total_price | money}}</td>
-                <td class="text-center">{{  form.discount_amount | money}}</td>
-                <td class="text-center">{{  form.payable_amount | money}}</td>
-                <td class="text-center">{{  form.total_product_quantity | money}}</td>
-                <td class="text-center">{{  form.exuni_tracking_code | money}}</td>
+                <td class="text-center" style="font-size: x-small;">{{ forloop.counter }}</td>
+                <td class="text-center" style="font-size: x-small;">{{ form.date_time | jDateTime }}</td>
+                <td class="text-center" style="font-size: x-small;">{{  form.id | money}}</td>
+                <td class="text-center" style="font-size: x-small;">{{  form.exuni_tracking_code}}</td>
+                <td class="text-center" style="font-size: x-small;">{{  form.get_status_display}}</td>
+                <td class="text-center" style="font-size: x-small;">{{ form.total_product_quantity }}</td>
+                <td class="text-center" style="font-size: x-small;">{{  form.total_price | money}}</td>
+                <td class="text-center" style="font-size: x-small;">{{  form.post_price | money}}</td>
+                <td class="text-center" style="font-size: x-small;">{{  form.total_discount | money}}</td>
+                <td class="text-center" style="font-size: x-small;" >{{  form.final_amount | money}}</td>
+                <td class="text-center" style="font-size: 5px;">
+                    <span style="font-size: 8px;">
+                        {{  form.shipment_address.first_name}} {{  form.shipment_address.last_name}}
+                    </span>
+                    {{  form.customer.mobile_number }}</td>
+                <td class="text-center">
+                    <span style="font-size: 8px;">
+                        {{  form.payment_display}}
+                    </span>
+                </td>
+
             </tr>
         {% endfor %}
     </table>
