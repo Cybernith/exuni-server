@@ -2,12 +2,12 @@ import pandas
 from django.db.models import Q
 from io import BytesIO
 
-from helpers.functions import add_separator, date_to_str, datetime_to_time, datetime_to_str
+from helpers.functions import add_separator, date_to_str, datetime_to_time, datetime_to_str, get_current_user
 from reports.lists.export_views import BaseExportView
 import xlsxwriter
 from django.http import HttpResponse
 
-from shop.exuni_admin.views import AdminShopOrderListView
+from shop.exuni_admin.views import AdminShopOrderListView, AdminProcessingShopOrderListView
 
 from shop.models import ShopOrder
 
@@ -186,6 +186,40 @@ class AdminOrdersListExportView(AdminShopOrderListView, BaseExportView):
 
         template_prefix = self.get_template_prefix()
         context['form_content_template'] = 'export/shop_order_detail_list.html'.format(template_prefix)
+        context['right_header_template'] = 'export/sample_head.html'
+
+        context.update(self.context)
+
+        return context
+
+
+class AdminOrdersExportView(AdminProcessingShopOrderListView, BaseExportView):
+    template_name = 'export/sample_form_export.html'
+    filename = 'admin_orders'
+
+    context = {
+        'title': 'سفارش ها',
+    }
+    pagination_class = None
+
+    def get_queryset(self):
+        qs = self.filterset_class(self.request.GET, queryset=super().get_queryset()).qs
+        qs.update(print_by=get_current_user(), is_printed=True)
+        return qs
+
+    def get(self, request, export_type, *args, **kwargs):
+        return self.export(request, export_type, *args, **kwargs)
+
+    def get_context_data(self, user, print_document=False, **kwargs):
+        qs = self.get_queryset()
+        context = {
+            'forms': qs,
+            'user': user,
+            'print_document': print_document
+        }
+
+        template_prefix = self.get_template_prefix()
+        context['form_content_template'] = 'export/admin_orders.html'.format(template_prefix)
         context['right_header_template'] = 'export/sample_head.html'
 
         context.update(self.context)

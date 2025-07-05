@@ -13,6 +13,7 @@ class AdminShopOrderSimpleSerializer(serializers.ModelSerializer):
     items = ApiCustomerShopOrderItemSerializer(many=True, read_only=True)
     final_amount = serializers.ReadOnlyField()
     payment_display = serializers.ReadOnlyField()
+    printed_user = serializers.CharField(source='print_by.username', read_only=True)
 
     class Meta:
         model = ShopOrder

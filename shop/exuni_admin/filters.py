@@ -129,6 +129,7 @@ class AdminShopOrderFilter(filters.FilterSet):
         fields = {
             'id': ('exact', 'in'),
             'is_sent': ('exact',),
+            'is_printed': ('exact',),
             'status': ('exact',),
             'discount_code': ('exact',),
             'date_time': BASE_FIELD_FILTERS,

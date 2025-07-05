@@ -124,6 +124,8 @@ class ShopOrderAdmin(admin.ModelAdmin):
                 'status',
                 'date_time',
                 'is_sent',
+                'is_printed',
+                'print_by',
             )
         }),
         ('Pricing Information', {
