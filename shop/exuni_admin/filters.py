@@ -127,7 +127,7 @@ class AdminShopOrderFilter(filters.FilterSet):
     class Meta:
         model = ShopOrder
         fields = {
-            'id': ('exact',),
+            'id': ('exact', 'in'),
             'is_sent': ('exact',),
             'status': ('exact',),
             'discount_code': ('exact',),

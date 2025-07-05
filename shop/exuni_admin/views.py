@@ -22,3 +22,16 @@ class AdminShopOrderListView(generics.ListAPIView):
         return ShopOrder.objects.exclude(status=ShopOrder.PENDING)
 
 
+class AdminPaidShopOrderListView(generics.ListAPIView):
+    permission_classes = (IsAuthenticated, BasicObjectPermission, IsAdminUser)
+    permission_codename = "get.shop_order"
+
+    serializer_class = AdminShopOrderSimpleSerializer
+    filterset_class = AdminShopOrderFilter
+    ordering_fields = '__all__'
+    pagination_class = LimitOffsetPagination
+
+    def get_queryset(self):
+        return ShopOrder.objects.filter(status=ShopOrder.PAID)
+
+

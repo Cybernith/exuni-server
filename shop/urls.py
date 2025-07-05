@@ -4,7 +4,7 @@ from products.shop.views import CommentCreateView, ShopProductCommentListView, R
 from shop.exuni_admin.export_views import ShopOrderListExportView, ShopOrderDetailExportView, OrderPostDetailExportView, \
     AdminOrdersListExportView
 
-from shop.exuni_admin.views import AdminShopOrderListView
+from shop.exuni_admin.views import AdminShopOrderListView, AdminPaidShopOrderListView
 from shop.search import GlobalAutoCompleteSearchAPIView
 from shop.views import CurrentUserCartApiView, CartDetailView, CurrentUserWishListApiView, WishListDetailView, \
     CurrentUserComparisonApiView, ComparisonDetailView, CurrentUserShipmentAddressApiView, ShipmentAddressDetailView, \
@@ -58,6 +58,7 @@ urlpatterns = [
     url(r'^customerOrderDetail/(?P<order_id>[0-9]+)$', CustomerOrdersDetailView.as_view(), name='customerOrdersDetail'),
 
     url(r'^shopOrderList/all$', AdminShopOrderListView.as_view(), name='adminShopOrderListView'),
+    url(r'^paidShopOrderList/all$', AdminPaidShopOrderListView.as_view(), name='paidShopOrderList'),
     url(r'^ordersExport/(?P<export_type>\S+)', ShopOrderListExportView.as_view(), name=''),
     url(r'^orderDetailExport/(?P<export_type>\S+)', ShopOrderDetailExportView.as_view(), name=''),
     url(r'^orderPostExport/(?P<export_type>\S+)', OrderPostDetailExportView.as_view(), name=''),
