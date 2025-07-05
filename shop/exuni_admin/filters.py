@@ -85,6 +85,7 @@ class SmartValueOrderFilter(filters.CharFilter):
             Q(shipment_address__first_name__icontains=value) |
             Q(shipment_address__last_name__icontains=value) |
             Q(customer__mobile_number__icontains=value) |
+            Q(post_tracking_code__icontains=value) |
             Q(exuni_tracking_code__icontains=value)
         ).distinct()
 

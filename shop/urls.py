@@ -2,10 +2,10 @@ from django.conf.urls import url
 
 from products.shop.views import CommentCreateView, ShopProductCommentListView, RateUpsertApiView
 from shop.exuni_admin.export_views import ShopOrderListExportView, ShopOrderDetailExportView, OrderPostDetailExportView, \
-    AdminOrdersListExportView, AdminOrdersExportView
+    AdminOrdersListExportView, AdminOrdersExportView, AdminShippedOrdersListExportView
 
 from shop.exuni_admin.views import AdminShopOrderListView, AdminPaidShopOrderListView, BulkChangeStatusToProcessingView, \
-    BulkChangeStatusToPackedView, AdminProcessingShopOrderListView
+    BulkChangeStatusToPackedView, AdminProcessingShopOrderListView, BulkChangeStatusToShippedView
 from shop.search import GlobalAutoCompleteSearchAPIView
 from shop.views import CurrentUserCartApiView, CartDetailView, CurrentUserWishListApiView, WishListDetailView, \
     CurrentUserComparisonApiView, ComparisonDetailView, CurrentUserShipmentAddressApiView, ShipmentAddressDetailView, \
@@ -65,6 +65,8 @@ urlpatterns = [
         name='bulkChangeToProcessingStatus'),
     url(r'^bulkChangeStatusToPacked$', BulkChangeStatusToPackedView.as_view(),
         name='bulkChangeStatusToPacked'),
+    url(r'^bulkChangeStatusToShipped$', BulkChangeStatusToShippedView.as_view(),
+        name='bulkChangeStatusToShipped'),
 
 
     url(r'^adminOrdersExport/(?P<export_type>\S+)', AdminOrdersExportView.as_view(), name=''),
@@ -73,5 +75,6 @@ urlpatterns = [
     url(r'^orderDetailExport/(?P<export_type>\S+)', ShopOrderDetailExportView.as_view(), name=''),
     url(r'^orderPostExport/(?P<export_type>\S+)', OrderPostDetailExportView.as_view(), name=''),
     url(r'^adminOrdersList/(?P<export_type>\S+)', AdminOrdersListExportView.as_view(), name=''),
+    url(r'^adminShippedOrdersList/(?P<export_type>\S+)', AdminShippedOrdersListExportView.as_view(), name=''),
 
 ]

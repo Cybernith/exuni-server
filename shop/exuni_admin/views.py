@@ -88,6 +88,28 @@ class BulkChangeStatusToPackedView(APIView):
             order.save()
             updated_count += 1
         return Response({
-            'message': f'{updated_count} سفارش به وضعیت درحال بسته‌بندی تغییر کرد.',
+            'message': f'{updated_count} سفارش به وضعیت بسته‌بندی شد تغییر کرد.',
+            'updated_ids': [order.id for order in orders]
+        }, status=200)
+
+
+class BulkChangeStatusToShippedView(APIView):
+    permission_classes = (IsAuthenticated, BasicObjectPermission, IsAdminUser)
+    permission_codename = "update.shop_order"
+
+    def post(self, request):
+        order_ids = request.data.get('order_ids', [])
+        if not isinstance(order_ids, list):
+            return Response({'error': 'سفارش ها باید لیستی از شناسه‌ها باشد.'}, status=400)
+
+        orders = ShopOrder.objects.filter(id__in=order_ids, status=ShopOrder.PACKED)
+        updated_count = 0
+
+        for order in orders:
+            order.status = ShopOrder.SHIPPED
+            order.save()
+            updated_count += 1
+        return Response({
+            'message': f'{updated_count} سفارش به وضعیت ارسال شد تغییر کرد.',
             'updated_ids': [order.id for order in orders]
         }, status=200)

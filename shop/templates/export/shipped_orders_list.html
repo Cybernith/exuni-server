@@ -1,0 +1,53 @@
+{% load report_filters %}
+
+<div class="row" style="margin-top: -1px">
+    <table class="table table-bordered table-striped">
+
+        <tr>
+            <th class="text-center font-weight-bold" style="font-size: x-small;" >ردیف</th>
+            <th class="text-center font-weight-bold" style="font-size: x-small;" >تاریخ</th>
+            <th class="text-center font-weight-bold" style="font-size: x-small;" >شماره سفارش</th>
+            <th class="text-center font-weight-bold" style="font-size: x-small;" >کد رهگیری اکسونی</th>
+            <th class="text-center font-weight-bold" style="font-size: x-small;" >کد رهگیری پستی</th>
+            <th class="text-center font-weight-bold" style="font-size: x-small;" >تعداد اقلام</th>
+            <th class="text-center font-weight-bold" style="font-size: x-small;" >مبلغ سفارش</th>
+            <th class="text-center font-weight-bold" style="font-size: x-small;" >هزینه ارسال</th>
+            <th class="text-center font-weight-bold" style="font-size: x-small;" >مبلغ تخفیف</th>
+            <th class="text-center font-weight-bold" style="font-size: x-small;" >مبلغ کل</th>
+            <th class="text-center font-weight-bold" style="font-size: x-small;" >مشتری</th>
+            <th class="text-center font-weight-bold" style="font-size: x-small;" >آدرس</th>
+
+        </tr>
+        {% for form in forms %}
+            <tr>
+                <td class="text-center" style="font-size: x-small;">{{ forloop.counter }}</td>
+                <td class="text-center" style="font-size: x-small;">{{ form.date_time | jDateTime }}</td>
+                <td class="text-center" style="font-size: x-small;">{{  form.id | money}}</td>
+                <td class="text-center" style="font-size: x-small;">{{  form.exuni_tracking_code}}</td>
+                <td class="text-center" style="font-size: x-small;">{{  form.post_tracking_code}}</td>
+                <td class="text-center" style="font-size: x-small;">{{ form.total_product_quantity }}</td>
+                <td class="text-center" style="font-size: x-small;">{{  form.total_price | money}}</td>
+                <td class="text-center" style="font-size: x-small;">{{  form.post_price | money}}</td>
+                <td class="text-center" style="font-size: x-small;">{{  form.total_discount | money}}</td>
+                <td class="text-center" style="font-size: x-small;" >{{  form.final_amount | money}}</td>
+                <td class="text-center" style="font-size: 5px;">
+                    <span style="font-size: 8px;">
+                        {{  form.shipment_address.first_name}} {{  form.shipment_address.last_name}}
+                    </span>
+                    {{  form.customer.mobile_number }}
+                </td>
+                <td class="text-center">
+                    <span style="font-size: 8px;">
+                        {{ form.shipment_address.country }} -
+                        {{ form.shipment_address.state }} {{ forms.shipment_address.city }} -
+                        {{ forms.shipment_address.zip_code }} -
+                        {{ form.shipment_address.address }} -
+                        {{ form.shipment_address.house_number }} -
+                        {{ form.shipment_address.house_unit }}
+                    </span>
+                </td>
+
+            </tr>
+        {% endfor %}
+    </table>
+</div>
