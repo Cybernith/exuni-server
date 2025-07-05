@@ -1,9 +1,12 @@
+import jdatetime
 from django.db.models import Q
 from django_filters import rest_framework as filters
+import django_filters
 
 from helpers.filters import BASE_FIELD_FILTERS
 from shop.models import ShopOrder
-
+from datetime import timedelta
+from django.utils import timezone
 
 class ShopOrderStatusFilter(filters.CharFilter):
     def filter(self, qs, value):
@@ -70,13 +73,57 @@ class SmartShipmentCityFilter(filters.CharFilter):
         ).distinct()
 
 
-class ShopOrderFilter(filters.FilterSet):
+class SmartValueOrderFilter(filters.CharFilter):
+    def filter(self, qs, value):
+        if not value:
+            return qs
+        return qs.filter(
+            Q(shipment_address__city__icontains=value) |
+            Q(shipment_address__address__icontains=value) |
+            Q(shipment_address__zip_code__icontains=value) |
+            Q(shipment_address__state__icontains=value) |
+            Q(shipment_address__first_name__icontains=value) |
+            Q(shipment_address__last_name__icontains=value) |
+            Q(customer__mobile_number__icontains=value) |
+            Q(exuni_tracking_code__icontains=value)
+        ).distinct()
+
+
+class QuickDateFilter(filters.CharFilter):
+
+    def filter(self, qs, value):
+        today_jalali = jdatetime.date.today()
+
+        if value == 'today':
+            g_date = today_jalali.togregorian()
+            return qs.filter(date_time__date=g_date)
+
+        elif value == 'yesterday':
+            g_date = (today_jalali - timedelta(days=1)).togregorian()
+            return qs.filter(date_time__date=g_date)
+
+        elif value == 'this_month':
+            g_start = jdatetime.date(today_jalali.year, today_jalali.month, 1).togregorian()
+            g_end = today_jalali.togregorian()
+            return qs.filter(date_time__date__range=(g_start, g_end))
+
+        return qs
+
+
+class AdminShopOrderFilter(filters.FilterSet):
     status_contains = ShopOrderStatusFilter()
     customer_contains = CustomerFilter()
     discount_code_contains = DiscountByCodeFilter()
     product_contains = ProductFilter()
     shipment_contains = SmartShipmentCityFilter()
-
+    search_value = SmartValueOrderFilter()
+    quick_date_filter = QuickDateFilter()
+    date_from = django_filters.DateFilter(
+        field_name='date_time', lookup_expr='date__gte'
+    )
+    date_to = django_filters.DateFilter(
+        field_name='date_time', lookup_expr='date__lte'
+    )
     class Meta:
         model = ShopOrder
         fields = {

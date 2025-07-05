@@ -113,7 +113,6 @@ class ShopOrderAdmin(admin.ModelAdmin):
     readonly_fields = (
         'final_amount_display',
         'exuni_tracking_code',
-        'date_time',
         'post_date_time',
     )
 

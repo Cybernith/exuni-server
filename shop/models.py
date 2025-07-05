@@ -228,6 +228,29 @@ class ShopOrder(BaseModel):
             ('deleteOwn.shop_order', 'حذف سفارش های فروشگاه خود'),
         )
 
+    @property
+    def payment_display(self):
+        if self.status == self.PENDING:
+            return 'در انتظار پرداخت'
+        else:
+            try:
+                if self.bank_payment:
+                    payment = self.bank_payment
+                    if payment.used_amount_from_wallet > 0:
+                        return f'  مبلغ {add_separator(payment.amount)} درگاه با کد پیگیری {payment.reference_id} و مبلغ  {add_separator(payment.used_amount_from_wallet)} از کیف پول با کد پیگیری {payment.transaction_id} '
+                    else:
+                        return f'مبلغ {add_separator(payment.amount)} از درگاه با کد پیگیری {payment.reference_id}'
+            except:
+                pass
+
+            try:
+                if self.transaction.exists():
+                    return f'مبلغ {add_separator(self.transaction.first().amount)} از کیف پول با کد پیگیری {self.transaction.first().transaction_id}'
+            except:
+                pass
+
+        return 'نامشخص'
+
     # FSM status change functions
 
     @transition(field='status', source=PENDING, target=PAID)

@@ -4,8 +4,8 @@ from rest_framework.permissions import IsAuthenticated, IsAdminUser
 
 from helpers.auth import BasicObjectPermission
 
-from shop.api_serializers import ApiCustomerShopOrderSimpleSerializer
-from shop.filters import ShopOrderFilter
+from shop.exuni_admin.filters import AdminShopOrderFilter
+from shop.exuni_admin.srializers import AdminShopOrderSimpleSerializer
 from shop.models import ShopOrder
 
 
@@ -13,12 +13,12 @@ class AdminShopOrderListView(generics.ListAPIView):
     permission_classes = (IsAuthenticated, BasicObjectPermission, IsAdminUser)
     permission_codename = "get.shop_order"
 
-    serializer_class = ApiCustomerShopOrderSimpleSerializer
-    filterset_class = ShopOrderFilter
+    serializer_class = AdminShopOrderSimpleSerializer
+    filterset_class = AdminShopOrderFilter
     ordering_fields = '__all__'
     pagination_class = LimitOffsetPagination
 
     def get_queryset(self):
-        return ShopOrder.objects.all()
+        return ShopOrder.objects.exclude(status=ShopOrder.PENDING)
 
 
