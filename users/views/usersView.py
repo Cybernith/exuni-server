@@ -74,9 +74,7 @@ class SendVerificationCodeView(APIView, RecaptchaView):
 
     @staticmethod
     def is_valid_persian_mobile(phone: str) -> bool:
-        phone = re.sub(r'\D', '', phone)
-        pattern = r"^09[0-3]\d{8}$"
-        return bool(re.match(pattern, phone))
+        return True
 
     def post(self, request):
         phone = request.data.get('phone')
