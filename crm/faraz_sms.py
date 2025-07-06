@@ -25,7 +25,7 @@ class IPPanelSMSService:
         otp_code = self.generate_code()
         url = f"{IPPANEL_BASE_URL}/sms/pattern/normal/send"
         payload = {
-            "code": '6k4owz2cjxbrmt2',
+            "code": 'pensvrur5oduf3l',
             "sender": FARAZ_SMS_LINE_NUMBER,
             "recipient": phone,
             "variable": {
