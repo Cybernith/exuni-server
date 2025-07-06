@@ -15,7 +15,7 @@ class CheckTokenExpiration:
             now = datetime.datetime.now()
 
             token: Token = user.auth_token
-            if token.created < now - datetime.timedelta(hours=48):
+            if token.created < now - datetime.timedelta(days=30):
                 token.delete()
             else:
                 token.created = now
