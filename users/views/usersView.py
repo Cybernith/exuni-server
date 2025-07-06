@@ -85,7 +85,7 @@ class SendVerificationCodeView(APIView, RecaptchaView):
         phone = phone.strip()
         
         if not self.is_valid_persian_mobile(phone=phone):
-            return Response({"error": "شماره نا معتبر است"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"message": "شماره نا معتبر است"}, status=status.HTTP_400_BAD_REQUEST)
 
         result = PhoneVerification.send_verification_code(phone=phone)
         phone = result.get('phone')

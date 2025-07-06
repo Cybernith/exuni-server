@@ -20,7 +20,7 @@ class AdminShopOrderListView(generics.ListAPIView):
     pagination_class = LimitOffsetPagination
 
     def get_queryset(self):
-        return ShopOrder.objects.exclude(status=ShopOrder.PENDING)
+        return ShopOrder.objects.exclude(status=ShopOrder.PENDING).select_related('shipment_address', 'customer')
 
 
 class AdminPaidShopOrderListView(generics.ListAPIView):
@@ -33,7 +33,7 @@ class AdminPaidShopOrderListView(generics.ListAPIView):
     pagination_class = LimitOffsetPagination
 
     def get_queryset(self):
-        return ShopOrder.objects.filter(status=ShopOrder.PAID)
+        return ShopOrder.objects.filter(status=ShopOrder.PAID).select_related('shipment_address', 'customer')
 
 
 class BulkChangeStatusToProcessingView(APIView):
@@ -68,7 +68,7 @@ class AdminProcessingShopOrderListView(generics.ListAPIView):
     pagination_class = LimitOffsetPagination
 
     def get_queryset(self):
-        return ShopOrder.objects.filter(status=ShopOrder.PROCESSING)
+        return ShopOrder.objects.filter(status=ShopOrder.PROCESSING).select_related('shipment_address', 'customer')
 
 
 class BulkChangeStatusToPackedView(APIView):
