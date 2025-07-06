@@ -6,7 +6,7 @@ class CMSUserRateThrottle(UserRateThrottle):
 
 
 class CMSAnonRateThrottle(AnonRateThrottle):
-    rate = '30/min'
+    rate = '60/min'
 
 
 

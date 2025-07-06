@@ -11,33 +11,33 @@ class UserProductListRateThrottle(UserRateThrottle):
 
 
 class AnonProductListRateThrottle(AnonRateThrottle):
-    rate = '40/min'
+    rate = '60/min'
 
 
 class UserProductDetailRateThrottle(UserRateThrottle):
-    rate = '40/min'
+    rate = '60/min'
 
 
 class AnonProductDetailRateThrottle(AnonRateThrottle):
-    rate = '30/min'
+    rate = '60/min'
 
 
 class CreateCommentRateThrottle(UserRateThrottle):
-    rate = '6/hour'
+    rate = '60/min'
 
 
 class RateUpsertRateThrottle(UserRateThrottle):
-    rate = '10/hour'
+    rate = '60/min'
 
 
 class CategoryTreeThrottle(UserRateThrottle):
-    rate = '60/hour'
+    rate = '60/min'
 
 class RootCategoryThrottle(UserRateThrottle):
-    rate = '60/hour'
+    rate = '60/min'
 
 class BrandThrottle(UserRateThrottle):
-    rate = '60/hour'
+    rate = '60/min'
 
 
 class DynamicRateThrottle(BaseThrottle):

@@ -10,32 +10,32 @@ class UserSearchAutoCompleteRateThrottle(UserRateThrottle):
 
 
 class AnonSearchAutoCompleteRateThrottle(AnonRateThrottle):
-    rate = '40/min'
+    rate = '60/min'
 
 
 class AddToCardRateThrottle(UserRateThrottle):
-    rate = '20/min'
+    rate = '60/min'
 
 
 class AddToWishListRateThrottle(UserRateThrottle):
-    rate = '30/min'
+    rate = '60/min'
 
 
 class AddToComparisonRateThrottle(UserRateThrottle):
-    rate = '30/min'
+    rate = '60/min'
 
 
 class ShopOrderRateThrottle(UserRateThrottle):
-    rate = '20/min'
+    rate = '60/min'
 
 
 class ToggleWishListBtnRateThrottle(UserRateThrottle):
-    rate = '10/min'
+    rate = '60/min'
 
 
 class ToggleComparisonBtnRateThrottle(UserRateThrottle):
-    rate = '10/min'
+    rate = '60/min'
 
 
 class OrderRetrieveThrottle(UserRateThrottle):
-    rate = '10/min'
+    rate = '60/min'
