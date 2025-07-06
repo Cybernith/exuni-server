@@ -101,14 +101,7 @@ def product_comments_global_search(queryset, name, value):
 
 
 def top_selling_filter(queryset, name, value):
-    order_by = '-total_sold' if value else 'total_sold'
-
-    return queryset.annotate(
-        total_sold=Sum(
-            'shop_order_items__product_quantity',
-            filter=Q(shop_order_items__shop_order__status=ShopOrder.PAID)
-        )
-    ).order_by(order_by, '-id')
+    return queryset.filter(id__in=[1748, 2166,  2092, 1934, 1584,  2482, 1550])
 
 
 class ShopProductSimpleFilter(filters.FilterSet):

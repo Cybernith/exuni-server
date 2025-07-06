@@ -81,7 +81,7 @@ class StartZarinpalPaymentApiView(APIView):
 
                 return Response(
                     {
-                        'payment_url': f'/payment/result?status=success&type=wallet&payment_date={date_to_str(datetime.date.today())}&amount={order.final_amount}&order_id={order.id}'
+                        'payment_url': f'/payment/success?status=success&type=wallet&payment_date={date_to_str(datetime.date.today())}&amount={order.final_amount}&order_id={order.id}'
                     }
                 )
         else:
