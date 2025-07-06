@@ -217,7 +217,7 @@ class CheckVerificationAndLogin(APIView, RecaptchaView):
         )
 
         if verification_code:
-            if not User.objects.filter(mobile_number=phone, username=phone).exist():
+            if not User.objects.filter(mobile_number=phone):
                 user = User.objects.create(mobile_number=phone, username=phone)
             else:
                 user = User.objects.get(mobile_number=phone, username=phone)
