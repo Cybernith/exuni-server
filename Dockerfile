@@ -4,7 +4,7 @@ FROM python:3.8.10
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
-
+ENV TORCH_HOME=/usr/src/exuni/.torch_cache
 # Set work directory
 WORKDIR /usr/src/exuni
 
@@ -34,3 +34,4 @@ COPY . .
 #COPY .env .
 # COPY ./start.sh .
 # COPY./celery.sh .
+
