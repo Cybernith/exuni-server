@@ -23,9 +23,6 @@ RUN apt-get update && \
 
 
 RUN pip install --upgrade pip
-RUN pip install torch torchvision
-RUN python3 -c "import torch; torch.hub.load('pytorch/vision', 'resnet50', pretrained=True)"
-
 COPY ./requirements.txt .
 RUN pip install -r requirements.txt
 
