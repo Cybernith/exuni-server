@@ -7,7 +7,7 @@ ENV PYTHONUNBUFFERED=1
 
 # Set work directory
 WORKDIR /usr/src/exuni
-
+RUN python3 -c "import torch; torch.hub.load('pytorch/vision', 'resnet50', pretrained=True)"
 RUN apt update && apt install gcc
 
 

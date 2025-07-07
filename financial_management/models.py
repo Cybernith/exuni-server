@@ -127,7 +127,7 @@ class Transaction(models.Model):
         (FAILED, 'ناموفق'),
     )
     shop_order = models.ForeignKey('shop.ShopOrder', related_name='transaction', on_delete=models.CASCADE,
-                                      blank=True, null=True, unique=True)
+                                      blank=True, null=True)
     wallet = models.ForeignKey(Wallet, on_delete=models.CASCADE, related_name='transactions')
     type = models.CharField(max_length=20, choices=TRANSACTION_TYPE)
     amount = models.DecimalField(max_digits=18, decimal_places=2)

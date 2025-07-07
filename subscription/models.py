@@ -23,7 +23,7 @@ TAX = Decimal(0.1)
 class DiscountCode(BaseModel):
     code = models.CharField(max_length=31, unique=True)
 
-    users = models.ManyToManyField('users.User', null=True, blank=True)
+    users = models.ManyToManyField('users.User')
     start_at = models.DateTimeField(null=True, blank=True)
     expire_at = models.DateTimeField(null=True, blank=True)
 
