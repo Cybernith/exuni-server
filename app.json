@@ -3,10 +3,6 @@
     {
       "command": "python manage.py expire_pending_orders",
       "schedule": "0 * * * *"
-    },
-    {
-      "command": "python manage.py verified_or_expired_payments",
-      "schedule": "*/15 * * * *"
     }
   ]
 }
