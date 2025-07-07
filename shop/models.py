@@ -181,6 +181,7 @@ class ShopOrder(BaseModel):
     SHIPPED = 'sh'
     DELIVERED = 'de'
     RETURNS = 're'
+    EXPIRED = 'ex'
     CANCELLED = 'ca'
 
     STATUS_CHOICES = (
@@ -191,6 +192,7 @@ class ShopOrder(BaseModel):
         (SHIPPED, 'ارسال شده'),
         (DELIVERED, 'تحویل شده'),
         (CANCELLED, 'لغو شده'),
+        (EXPIRED, 'منقضی  شده'),
         (RETURNS, 'مرجوعی'),
     )
     status = FSMField(choices=STATUS_CHOICES, default=PENDING, protected=False)
@@ -282,6 +284,14 @@ class ShopOrder(BaseModel):
 
     @transition(field='status', source='*', target=CANCELLED)
     def cancel_order(self):
+        self.status = self.CANCELLED
+        for item in self.items.all():
+            increase_inventory(item.product.id, item.product_quantity)
+
+        self.save()
+
+    @transition(field='status', source=PENDING, target=CANCELLED)
+    def expired_order(self):
         self.status = self.CANCELLED
         for item in self.items.all():
             increase_inventory(item.product.id, item.product_quantity)
