@@ -7,7 +7,6 @@ ENV PYTHONUNBUFFERED=1
 
 # Set work directory
 WORKDIR /usr/src/exuni
-RUN python3 -c "import torch; torch.hub.load('pytorch/vision', 'resnet50', pretrained=True)"
 RUN apt update && apt install gcc
 
 
@@ -24,6 +23,9 @@ RUN apt-get update && \
 
 
 RUN pip install --upgrade pip
+RUN pip install torch torchvision
+RUN python3 -c "import torch; torch.hub.load('pytorch/vision', 'resnet50', pretrained=True)"
+
 COPY ./requirements.txt .
 RUN pip install -r requirements.txt
 
