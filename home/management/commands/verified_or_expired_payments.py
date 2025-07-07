@@ -80,7 +80,8 @@ class Command(BaseCommand):
                 )
 
                 result = gateway.verify_payment(payment.reference_id)
-
+                if not result:
+                    continue
                 if result.get('data') and result['data'].get('code') in [100, 101]:
                     payment.zarinpal_ref_id = result['data'].get('ref_id')
                     payment.card_pan = result['data'].get('card_pan')
