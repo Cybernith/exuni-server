@@ -9,6 +9,17 @@ import django_filters
 
 from shop.models import ShopOrder
 
+from django.contrib.postgres.aggregates import StringAgg
+from django.contrib.postgres.search import SearchQuery, SearchVector, SearchRank, TrigramSimilarity
+from django.db.models import Value, CharField, F, Func
+from django.db.models.functions import Greatest
+from rest_framework import status
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
+from products.models import Product, Brand, Category
+from server.settings import FRONT_MEDIA_URL
+from shop.throttles import UserSearchAutoCompleteRateThrottle, AnonSearchAutoCompleteRateThrottle
 
 class ShopProductFilter(filters.FilterSet):
     min_price = django_filters.NumberFilter(field_name='current_price__price', lookup_expr='gte')
@@ -104,6 +115,43 @@ def top_selling_filter(queryset, name, value):
     return queryset.filter(id__in=[1748, 2166,  2092, 1934, 1584,  2482, 1550])
 
 
+def search_value_filter(queryset, name, value):
+    if value:
+        query = value
+        query_value = Value(query, output_field=CharField())
+        search_query = SearchQuery(query)
+
+        product_queryset = queryset.annotate(
+            category_names=StringAgg('category__name', delimiter=' ', distinct=True),
+            search_vector=(
+                    SearchVector('name', weight='A') +
+                    SearchVector('sixteen_digit_code', weight='B') +
+                    SearchVector('brand__name', weight='B') +
+                    SearchVector('category_names', weight='B')
+            ),
+            rank=SearchRank(F('search_vector'), search_query),
+            trigram_name=TrigramSimilarity('name', query_value),
+            trigram_sixteen_digit_code=TrigramSimilarity('sixteen_digit_code', query_value),
+            trigram_brand=TrigramSimilarity('brand__name', query_value),
+            trigram_category=TrigramSimilarity('category_names', query_value),
+        ).annotate(
+            similarity=Greatest(
+                F('trigram_name') * 2,
+                F('trigram_sixteen_digit_code') * 2,
+                F('trigram_brand'),
+                F('trigram_category')
+            )
+        ).filter(
+            similarity__gt=0.1
+        ).annotate(
+            relevance=F('rank') + F('similarity')
+        ).order_by('-relevance', '-similarity', '-rank')
+
+        return product_queryset
+    else:
+        return queryset
+
+
 class ShopProductSimpleFilter(filters.FilterSet):
     min_price = django_filters.NumberFilter(field_name='price', lookup_expr='gte')
     max_price = django_filters.NumberFilter(field_name='price', lookup_expr='lte')
@@ -122,6 +170,7 @@ class ShopProductSimpleFilter(filters.FilterSet):
     top_rated = filters.BooleanFilter(method=top_rated_filter)
     top_selling = filters.BooleanFilter(method=top_selling_filter)
     global_search = filters.CharFilter(method=product_comments_global_search)
+    search_value = filters.CharFilter(method=search_value_filter)
 
     class Meta:
         model = Product

@@ -8,6 +8,7 @@ from rest_framework.views import APIView
 
 from products.models import Product, Brand, Category
 from server.settings import FRONT_MEDIA_URL
+from shop.api_serializers import ApiProductsListSerializers
 from shop.throttles import UserSearchAutoCompleteRateThrottle, AnonSearchAutoCompleteRateThrottle
 
 
@@ -94,3 +95,41 @@ class GlobalAutoCompleteSearchAPIView(APIView):
         result.extend(category_queryset)
 
         return Response({'result': result}, status=status.HTTP_200_OK)
+
+
+class GlobalSearchAPIView(APIView):
+    throttle_classes = [UserSearchAutoCompleteRateThrottle, AnonSearchAutoCompleteRateThrottle]
+
+    def get(self, request):
+        query = request.query_params.get('search_value', '').strip()
+        query_value = Value(query, output_field=CharField())
+        search_query = SearchQuery(query)
+
+        product_queryset = Product.objects.annotate(
+            category_names=StringAgg('category__name', delimiter=' ', distinct=True),
+            search_vector=(
+                    SearchVector('name', weight='A') +
+                    SearchVector('sixteen_digit_code', weight='B') +
+                    SearchVector('brand__name', weight='B') +
+                    SearchVector('category_names', weight='B')
+            ),
+            rank=SearchRank(F('search_vector'), search_query),
+            trigram_name=TrigramSimilarity('name', query_value),
+            trigram_sixteen_digit_code=TrigramSimilarity('sixteen_digit_code', query_value),
+            trigram_brand=TrigramSimilarity('brand__name', query_value),
+            trigram_category=TrigramSimilarity('category_names', query_value),
+        ).annotate(
+            similarity=Greatest(
+                F('trigram_name') * 2,
+                F('trigram_sixteen_digit_code') * 2,
+                F('trigram_brand'),
+                F('trigram_category')
+            )
+        ).filter(
+            similarity__gt=0.1
+        ).annotate(
+            relevance=F('rank') + F('similarity')
+        ).order_by('-relevance', '-similarity', '-rank')[:5]
+
+        return Response(ApiProductsListSerializers(product_queryset, many=True).data, status=status.HTTP_200_OK)
+

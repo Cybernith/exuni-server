@@ -11,7 +11,7 @@ from products.shop.views import ShopProductSimpleListView, BrandShopListView, Ca
 from products.views import AvailSubtreeView, AvailTreeSaveView, AvailRootListView, AvailDeleteView, FeatureSubtreeView, \
     FeatureDeleteView, FeatureTreeSaveView, FeatureRootListView, CategorizationSubtreeView, CategorizationDeleteView, \
     CategorizationTreeSaveView, CategorizationRootListView
-from shop.search import GlobalAutoCompleteSearchAPIView
+from shop.search import GlobalAutoCompleteSearchAPIView, GlobalSearchAPIView
 from shop.views import ToggleWishListBTNView, ToggleComparisonListBTNView, CurrentUserCartApiView, CartSyncView, \
     CartDetailView, ClearCustomerCartView, CurrentUserWishListApiView, WishlistSyncView, \
     CurrentUserComparisonApiView, ComparisonSyncView, SyncAllDataView, \
@@ -69,6 +69,7 @@ urlpatterns = [
     url(r'^currentShopHomeHighlight$', CurrentShopHomeHighlightApiView.as_view(), name='currentShopHomeHighlight'),
 
     url(r'^searchAutoCompelete$', GlobalAutoCompleteSearchAPIView.as_view(), name='globalAutoCompleteSearch'),
+    url(r'^globalSearch$', GlobalSearchAPIView.as_view(), name='globalSearchAPIView'),
     url(r'^imageSearch$', ImageSearchAPIView.as_view(), name='imageSearch'),
 
     url(r'^productsWithComments$', ShopProductWithCommentsListView.as_view(), name='productsWithComments'),
