@@ -1,6 +1,5 @@
 from django.core.management import BaseCommand
 from django.db.models import Q
-import time
 
 from financial_management.loggers.financial_logger import FinancialLogger
 from financial_management.models import Payment, AuditAction, AuditSeverity, Transaction

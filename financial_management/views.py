@@ -169,6 +169,9 @@ class ZarinpalCallbackApiView(APIView):
                 counter += 1
                 time.sleep(counter)
 
+        if result == None:
+            return redirect(f'{FRONT_URL}/payment/success?type=gateway&orderId={order.id}')
+
         if result.get('data') and result['data'].get('code') in [100, 101]:
             if payment.used_amount_from_wallet > 0:
                 wallet = payment.user.exuni_wallet

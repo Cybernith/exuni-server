@@ -1,3 +1,5 @@
+import time
+
 import requests
 
 from server.gateway_configs import ZARINPAL_MERCHANT_ID, GATEWAY_BASE_URL, GATEWAY_START_PAY_URL, \
@@ -54,6 +56,18 @@ class ZarinpalGateway:
             'authority': authority,
         }
         response = requests.post(f"{self.GATEWAY_BASE_URL}/verify.json", json=data)
-        return response.json()
-
+        try:
+            return response.json()
+        except ValueError:
+            time.sleep(2)
+            data = {
+                'merchant_id': self.MERCHANT_ID,
+                'amount': self.amount,
+                'authority': authority,
+            }
+            response = requests.post(f"{self.GATEWAY_BASE_URL}/verify.json", json=data)
+            try:
+                return response.json()
+            except ValueError:
+                return None
 
