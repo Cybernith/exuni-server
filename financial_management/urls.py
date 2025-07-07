@@ -2,7 +2,7 @@ from django.conf.urls import url
 
 from financial_management.views import StartZarinpalPaymentApiView, ZarinpalCallbackApiView, StartPaymentApiView, \
     PaymentCallbackApiView, VerifyDiscountCodeView, StartZarinpalWalletTopUPApiView, ZarinpalTopUpWalletCallbackApiView, \
-    DiscountCheckAPIView
+    DiscountCheckAPIView, WalletBalanceSumAPIView
 from products.views import ActiveDiscountsAPIView
 
 app_name = 'financial_management'
@@ -20,4 +20,5 @@ urlpatterns = [
     url(r'verifyDiscountCode$', VerifyDiscountCodeView.as_view(), name=''),
     url(r'discountCheck$', DiscountCheckAPIView.as_view(), name='discountCheck'),
     url(r'activeDiscount$', ActiveDiscountsAPIView.as_view(), name='discountCheck'),
+    url(r'walletsBalanceSum$', WalletBalanceSumAPIView.as_view(), name='walletsBalanceSum'),
 ]

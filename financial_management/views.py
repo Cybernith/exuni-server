@@ -1,18 +1,21 @@
 import datetime
 import time
 from decimal import Decimal
+
+from django.db.models import Sum
 from django.shortcuts import redirect
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django.utils import timezone
 from rest_framework import status
 from rest_framework.exceptions import ValidationError
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from financial_management.loggers.financial_logger import FinancialLogger
-from financial_management.models import Payment, AuditAction, AuditSeverity, Discount, DiscountAction, Transaction
+from financial_management.models import Payment, AuditAction, AuditSeverity, Discount, DiscountAction, Transaction, \
+    Wallet
 from financial_management.serializers import DiscountResultSerializer
 from financial_management.serivces.discount_evaluator import evaluate_discount
 from financial_management.serivces.wallet_top_up_service import WalletTopUpRequestService, WalletTopUpService
@@ -544,3 +547,12 @@ class ZarinpalTopUpWalletCallbackApiView(APIView):
                 }
             )
             return redirect(f'{FRONT_URL}/payment/fail?top_up_wallet=true&amount={payment.amount}')
+
+
+
+class WalletBalanceSumAPIView(APIView):
+    permission_classes = [IsAdminUser]  # Remove or change if needed
+
+    def get(self, request):
+        total_balance = Wallet.objects.all().aggregate(total=Sum('balance'))['total'] or 0
+        return Response({'total_balance': total_balance})
