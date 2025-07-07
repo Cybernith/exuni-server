@@ -129,7 +129,7 @@ class GlobalSearchAPIView(APIView):
             similarity__gt=0.1
         ).annotate(
             relevance=F('rank') + F('similarity')
-        ).order_by('-relevance', '-similarity', '-rank')[:5]
+        ).order_by('-relevance', '-similarity', '-rank').select_related('brand').prefetch_related('variations')
 
         return Response(ApiProductsListSerializers(product_queryset, many=True).data, status=status.HTTP_200_OK)
 
