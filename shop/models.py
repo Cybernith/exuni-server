@@ -272,7 +272,7 @@ class ShopOrder(BaseModel):
         self.status = self.PACKED
         self.save()
 
-    @transition(field='status', source=PROCESSING, target=SHIPPED)
+    @transition(field='status', source='*', target=SHIPPED)
     def ship_order(self):
         self.status = self.SHIPPED
         self.save()
@@ -292,7 +292,7 @@ class ShopOrder(BaseModel):
 
     @transition(field='status', source=PENDING, target=CANCELLED)
     def expired_order(self):
-        self.status = self.CANCELLED
+        self.status = self.EXPIRED
         for item in self.items.all():
             increase_inventory(item.product.id, item.product_quantity)
 

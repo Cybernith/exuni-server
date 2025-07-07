@@ -7,7 +7,7 @@ from reports.lists.export_views import BaseExportView
 import xlsxwriter
 from django.http import HttpResponse
 
-from shop.exuni_admin.views import AdminShopOrderListView, AdminProcessingShopOrderListView
+from shop.exuni_admin.views import AdminShopOrderListView, AdminProcessingShopOrderListView, AdminPaidShopOrderListView
 
 from shop.models import ShopOrder
 
@@ -225,7 +225,7 @@ class AdminShippedOrdersListExportView(AdminShopOrderListView, BaseExportView):
         return context
 
 
-class AdminOrdersExportView(AdminProcessingShopOrderListView, BaseExportView):
+class AdminOrdersExportView(AdminPaidShopOrderListView, BaseExportView):
     template_name = 'export/sample_form_export.html'
     filename = 'admin_orders'
 
