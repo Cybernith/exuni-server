@@ -1,6 +1,7 @@
-from django.db.models import Q
+from django.db.models import Q, Sum, F, ExpressionWrapper
 from django.http import Http404
 from rest_framework import generics, status
+from django.db.models.fields import DecimalField
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.views import APIView
@@ -124,4 +125,23 @@ class AdminOrderDetailApiView(APIView):
         return Response(serializers.data, status=status.HTTP_200_OK)
 
 
+class OrdersSumAPIView(APIView):
+    permission_classes = (IsAuthenticated, BasicObjectPermission)
+    permission_basename = 'shop_order'
 
+
+    def get(self, request):
+        total_expression = ExpressionWrapper(
+            F('total_price') + (F('bank_payment__fee') / 10),
+            output_field=DecimalField(max_digits=18, decimal_places=2)
+        )
+
+        shipped_total = ShopOrder.objects.filter(status=ShopOrder.SHIPPED, bank_payment__isnull=False).aggregate(
+            total_sum=Sum(total_expression)
+        )['total_sum'] or 0
+
+        paid_total = ShopOrder.objects.filter(status=ShopOrder.PAID, bank_payment__isnull=False).aggregate(
+            total_sum=Sum(total_expression)
+        )['total_sum'] or 0
+
+        return Response({"shipped_total": shipped_total, "paid_total": paid_total}, status=status.HTTP_200_OK)
