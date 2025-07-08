@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
-from financial_management.models import Payment, Wallet
+from financial_management.models import Payment, Wallet, Transaction
 from helpers.serializers import SModelSerializer
 from users.models import User
 
@@ -24,11 +24,17 @@ class UserSimpleSerializer(SModelSerializer):
 
 
 class PaymentSerializer(serializers.ModelSerializer):
-    customer = UserSimpleSerializer(read_only=True)
+    user = UserSimpleSerializer(read_only=True)
 
     class Meta:
-        read_only_fields = ('created_at', 'updated_at')
         model = Payment
+        fields = '__all__'
+
+
+class TransactionSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Transaction
         fields = '__all__'
 
 

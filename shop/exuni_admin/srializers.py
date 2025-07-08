@@ -1,5 +1,6 @@
 from rest_framework import serializers
 
+from financial_management.serializers import PaymentSerializer, TransactionSerializer
 from shop.api_serializers import ApiShipmentAddressRetrieveSerializer, ApiOrderStatusHistorySerializer, \
     ApiCustomerShopOrderItemSerializer
 from shop.models import ShopOrder
@@ -27,6 +28,8 @@ class AdminShopOrderDetailSerializer(serializers.ModelSerializer):
     payment_display = serializers.ReadOnlyField()
     printed_user = serializers.CharField(source='print_by.username', read_only=True)
     items = ApiCustomerShopOrderItemSerializer(many=True, read_only=True)
+    bank_payment = PaymentSerializer(read_only=True)
+    transaction = TransactionSerializer(many=True, read_only=True)
 
     class Meta:
         model = ShopOrder
