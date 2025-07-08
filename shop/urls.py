@@ -2,7 +2,7 @@ from django.conf.urls import url
 
 from products.shop.views import CommentCreateView, ShopProductCommentListView, RateUpsertApiView
 from shop.exuni_admin.export_views import ShopOrderListExportView, ShopOrderDetailExportView, OrderPostDetailExportView, \
-    AdminOrdersListExportView, AdminOrdersExportView, AdminShippedOrdersListExportView
+    AdminOrdersListExportView, AdminOrdersExportView, AdminShippedOrdersListExportView, AdminAllOrdersExportView
 
 from shop.exuni_admin.views import AdminShopOrderListView, AdminPaidShopOrderListView, BulkChangeStatusToProcessingView, \
     BulkChangeStatusToPackedView, AdminProcessingShopOrderListView, BulkChangeStatusToShippedView
@@ -70,6 +70,7 @@ urlpatterns = [
 
 
     url(r'^adminOrdersExport/(?P<export_type>\S+)', AdminOrdersExportView.as_view(), name=''),
+    url(r'^adminShopOrderListView/(?P<export_type>\S+)', AdminAllOrdersExportView.as_view(), name=''),
 
     url(r'^ordersExport/(?P<export_type>\S+)', ShopOrderListExportView.as_view(), name=''),
     url(r'^orderDetailExport/(?P<export_type>\S+)', ShopOrderDetailExportView.as_view(), name=''),
