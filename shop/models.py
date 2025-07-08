@@ -152,7 +152,7 @@ class ShipmentAddress(BaseModel):
 
 class ShippingMethod(models.Model):
     name = models.CharField(max_length=100)
-    base_price = models.PositiveIntegerField(default=55000)
+    base_price = models.PositiveIntegerField(default=68000)
 
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)

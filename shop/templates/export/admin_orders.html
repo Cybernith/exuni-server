@@ -3,293 +3,344 @@
 
 {% for form in forms %}
 
-<div class="row header_box">
-    <div class="col-xs-3 mt-2">
-        <div class="form-header">
+    <div class="row header_box">
+        <div class="col-xs-3 mt-2">
+            <div class="form-header">
 
-            {% if right_header_template %}
-                {% include right_header_template with form=form %}
-            {% endif %}
+                {% if right_header_template %}
+                    {% include right_header_template with form=form %}
+                {% endif %}
+            </div>
         </div>
-    </div>
-    <div class="col-xs-6">
-        <div class="text-center" >
-            <h4 class="font-weight-bold">
-                اکسونی
-            </h4>
+        <div class="col-xs-6">
+            <div class="text-center">
+                <h4 class="font-weight-bold">
+                    اکسونی
+                </h4>
+            </div>
+            <div class="text-center" style="font-size: 0.9em;">
+                {{ title }}
+            </div>
         </div>
-        <div class="text-center" style="font-size: 0.9em;">
-            {{ title }}
-        </div>
-    </div>
-    <div class="col-xs-3 logo">
-        {% if logo %}
+        <div class="col-xs-3">
             <img
-                    class="float-left mt-2 img-responsive"
-                    style="height: 60px;width: 60px;"
-                    src="{{ logo }}" alt=""
+                    class="float-left mt-2"
+                    style="height: 40px"
+                    src="/media/uploads/images/logo.webp" alt=""
             />
-        {% endif %}
+        </div>
     </div>
-</div>
 
 
-<div class="row">
-    <table class="table-head" style="margin-top: -1px">
-        <tbody>
-        <tr>
-            <td>
-                <span style="font-size: x-small;" class="font-weight-bold"> شماره فاکتور : </span>
-                <span style="font-size: x-small;"> {{ form.exuni_tracking_code }} </span>
-            </td>
-            <td>
-                <span style="font-size: x-small;" class="font-weight-bold"> خریدار : </span>
-                <span style="font-size: x-small;"> {{ form.shipment_address.first_name }}  {{ form.shipment_address.last_name }} {{ forms.customer.mobile_number }}</span>
-            </td>
-            <td>
-                <span style="font-size: x-small" class="font-weight-bold"> تاریخ : </span>
-                <span style="font-size: x-small"> {{ form.date_time | jDateTime }} </span>
-            </td>
+    <div class="row">
+        <table class="table-head" style="margin-top: -1px">
+            <tbody>
+            <tr>
+                <td>
+                    <span style="font-size: x-small;" class="font-weight-bold"> شماره فاکتور : </span>
+                    <span style="font-size: x-small;"> {{ form.exuni_tracking_code }} </span>
+                </td>
+                <td>
+                    <span style="font-size: x-small;" class="font-weight-bold"> خریدار : </span>
+                    <span style="font-size: x-small;"> {{ form.shipment_address.first_name }}  {{ form.shipment_address.last_name }} {{ forms.customer.mobile_number }}</span>
+                </td>
+                <td>
+                    <span style="font-size: x-small" class="font-weight-bold"> تاریخ : </span>
+                    <span style="font-size: x-small"> {{ form.date_time | jDateTime }} </span>
+                </td>
 
-        </tr>
-        </tbody>
-    </table>
+            </tr>
+            </tbody>
+        </table>
 
-</div>
-<div class="row">
-    <table class="table-head" style="margin-top: -1px">
-        <tbody>
-        <tr>
-            <td>
-                <span style="font-size: x-small;" class="font-weight-bold"> کشور : </span>
-                <span style="font-size: x-small;"> {{ form.shipment_address.country }} </span>
-            </td>
-            <td>
-                <span style="font-size: x-small;" class="font-weight-bold">استان و شهر : </span>
-                <span style="font-size: x-small;"> {{ form.shipment_address.state }} {{ forms.shipment_address.city }}</span>
-            </td>
-            <td>
-                <span style="font-size: x-small;" class="font-weight-bold">کد پستی : </span>
-                <span style="font-size: x-small;"> {{ form.shipment_address.zip_code }}</span>
-            </td>
-        </tr>
-        <tr>
-            <td colspan="3">
-                <span style="font-size: x-small;" class="font-weight-bold"> آدرس : </span>
-                <span style="font-size: x-small;">
+    </div>
+    <div class="row">
+        <table class="table-head" style="margin-top: -1px">
+            <tbody>
+            <tr>
+                <td>
+                    <span style="font-size: x-small;" class="font-weight-bold"> کشور : </span>
+                    <span style="font-size: x-small;"> {{ form.shipment_address.country }} </span>
+                </td>
+                <td>
+                    <span style="font-size: x-small;" class="font-weight-bold">استان و شهر : </span>
+                    <span style="font-size: x-small;"> {{ form.shipment_address.state }} {{ forms.shipment_address.city }}</span>
+                </td>
+                <td>
+                    <span style="font-size: x-small;" class="font-weight-bold">کد پستی : </span>
+                    <span style="font-size: x-small;"> {{ form.shipment_address.zip_code }}</span>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="3">
+                    <span style="font-size: x-small;" class="font-weight-bold"> آدرس : </span>
+                    <span style="font-size: x-small;">
                     {{ form.shipment_address.address }} -
                     {{ form.shipment_address.house_number }} -
                     {{ form.shipment_address.house_unit }}
                 </span>
-            </td>
-        </tr>
-        </tbody>
-    </table>
-
-</div>
-
-
-<div class="row">
-    <table class="table table-bordered table-striped" style="margin-top: -1px">
-        <thead>
-        <tr>
-            <th class="text-center" width="20">
-                <span style="font-size: xx-small;">ردیف</span>
-            </th>
-            <th class="text-center" width="80">
-                <span style="font-size: x-small">شناسه کالا</span>
-            </th>
-            <th class="text-center" width="60">
-                <span  style="font-size: x-small" >تصویر کالا</span>
-            </th>
-            <th class="text-center" width="80">
-                <span style="font-size: x-small" >تعداد کالا</span>
-            </th>
-            <th class="text-center">
-                <span style="font-size: x-small">نام کالا</span>
-            </th>
-            <th class="text-center">
-                <span style="font-size: x-small">مبلغ کالا</span>
-            </th>
-            <th class="text-center">
-                <span style="font-size: x-small">مبلغ کل</span>
-            </th>
-        </tr>
-        </thead>
-        <tbody>
-        {% for item in form.items.all %}
-            <tr>
-                <td class="text-center" width="20">
-                    <span style="font-size: xx-small">{{ forloop.counter }}</span>
                 </td>
-                <td class="text-center">
+            </tr>
+            </tbody>
+        </table>
+
+    </div>
+
+
+    <div class="row">
+        <table class="table table-bordered table-striped" style="margin-top: -1px">
+            <thead>
+            <tr>
+                <th class="text-center" width="20">
+                    <span style="font-size: xx-small;">ردیف</span>
+                </th>
+                <th class="text-center" width="80">
+                    <span style="font-size: x-small">شناسه کالا</span>
+                </th>
+                <th class="text-center" width="60">
+                    <span style="font-size: x-small">تصویر کالا</span>
+                </th>
+                <th class="text-center" width="80">
+                    <span style="font-size: x-small">تعداد کالا</span>
+                </th>
+                <th class="text-center">
+                    <span style="font-size: x-small">نام کالا</span>
+                </th>
+                <th class="text-center">
+                    <span style="font-size: x-small">مبلغ کالا</span>
+                </th>
+                <th class="text-center">
+                    <span style="font-size: x-small">مبلغ کل</span>
+                </th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for item in form.items.all %}
+                <tr>
+                    <td class="text-center" width="20">
+                        <span style="font-size: xx-small">{{ forloop.counter }}</span>
+                    </td>
+                    <td class="text-center">
                     <span style="font-weight: bold ">
                         {{ item.product.sixteen_digit_code  | default:'-' }}
                     </span>
-                </td>
-                <td class="text-center" width="70">
-                    <img width="80" src="{{ item.product.picture.url }}"  alt={{ item.product.name }}>
-                </td>
-                <td class="text-center">
+                    </td>
+                    <td class="text-center" width="70">
+                        <img width="80" src="{{ item.product.picture.url }}" alt={{ item.product.name }}>
+                    </td>
+                    <td class="text-center">
                         <span style="font-weight: bold ">
                             {{ item.product_quantity | money }}
                         </span>
-                </td>
-                <td class="text-center">
-                    {% if  item.product.variation_of%}
-                        <p style="font-size: x-small">
-                            {{ item.product.variation_of.name | money }}
+                    </td>
+                    <td class="text-center">
+                        {% if  item.product.variation_of %}
+                            <p style="font-size: x-small">
+                                {{ item.product.variation_of.name | money }}
+                            </p>
+                        {% endif %}
+                        <p style="font-weight: bold ">
+                            {{ item.product.name  | default:'-' }}
                         </p>
-                    {% endif %}
-                    <p style="font-weight: bold ">
-                        {{ item.product.name  | default:'-' }}
-                    </p>
-                </td>
-                <td class="text-center">
-                        <p style="font-size: small" >
+                    </td>
+                    <td class="text-center">
+                        <p style="font-size: small">
                             {{ item.price | money }}
                         </p>
-                    {% if  item.product.regular_price !=  item.price%}
-                        <div class="price-container" style="font-size: x-small">
-                            <svg class="price-svg-line" width="100%" height="100%">
-                                <line x1="0" y1="100%" x2="100%" y2="0" stroke="black" stroke-width="1" />
-                            </svg>
-                            {{ item.product.regular_price  | money }}
-                        </div>
-                    {% endif %}
+                        {% if  item.product.regular_price !=  item.price %}
+                            <div class="price-container" style="font-size: x-small">
+                                <svg class="price-svg-line" width="100%" height="100%">
+                                    <line x1="0" y1="100%" x2="100%" y2="0" stroke="black" stroke-width="1"/>
+                                </svg>
+                                {{ item.product.regular_price  | money }}
+                            </div>
+                        {% endif %}
 
-                </td>
-                <td class="text-center">
+                    </td>
+                    <td class="text-center">
                         <span style="font-size: small">
                             {{ item.price_sum | money }}
                         </span>
+                    </td>
+                </tr>
+            {% endfor %}
+            <tr>
+                <td colspan="3" rowspan="4" class="text-center">
+                    <p style="font-size: x-small; font-weight: bold">تعداد مدل محصول در سفارش : </p>
+                    <span style="font-size: small" class="mr-2">
+                        {{ form.items.count | money }}
+                    </span>
+                    <span style="font-size: x-small">
+                        محصول
+                    </span>
+
                 </td>
-            </tr>
-        {% endfor %}
-        <tr>
-            <td colspan="5" rowspan="3"></td>
-            <td class="text-center">
+                <td rowspan="4" class="text-center">
+                    <p style="font-size: x-small; font-weight: bold">جمع اقلام : </p>
+                    <span style="font-size: small" class="mr-2">
+                        {{ form.total_product_quantity | money }}
+                    </span>
+                    <span style="font-size: x-small">
+                        عدد
+                    </span>
+
+                </td>
+                <td rowspan="4">
+                    <p style="font-size: 10px; font-weight: bold">
+                        {{ form.shipment_address.first_name }}  {{ form.shipment_address.last_name }} جان، رفاقتت برامون یه دنیا می‌ارزه!
+                    </p>
+                    <p style="font-size: 8px">
+این  فقط یه سفارش نبود… یه لبخند بود، یه حس خوب که افتاد توی دل اکسونی!
+                    </p>
+                    <p style="font-size: 8px">
+ اگه این خریدت یه فیلم بود، حتماً پایانش نوشته بود: «ادامه دارد...» 😉                    </p>
+                </td>
+                <td class="text-center">
                 <span style="font-size: x-small; font-weight: bold">
                     جمع
                 </span>
-            </td>
-            <td class="text-center">
-                <span style="font-size:  small">
+                </td>
+                <td class="text-center">
+                <span style="font-size:  xx-small">
                     {{ form.total_price | money }}
                 </span>
-            </td>
+                </td>
 
-        </tr>
-        <tr>
-            <td class="text-center">
-                <span style="font-size: x-small; font-weight: bold">
+            </tr>
+            <tr>
+                <td class="text-center">
+                <span style="font-size: xx-small; font-weight: bold">
                     مبلغ تخفیف
                 </span>
-            </td>
-            <td class="text-center">
+                </td>
+                <td class="text-center">
 
-                <span style="font-size: small">
+                <span style="font-size: xx-small">
                     {{ form.discount_amount | money }}
                 </span>
-            </td>
+                </td>
 
-        </tr>
-        <tr>
-            <td class="text-center">
-                <span style="font-size: x-small; font-weight: bold">
+            </tr>
+            <tr>
+                <td class="text-center">
+                <span style="font-size: xx-small; font-weight: bold">
+                    هزینه ارسال
+                </span>
+                </td>
+                <td class="text-center">
+
+                <span style="font-size: xx-small">
+                    {{ form.shipping_method.base_price | money }}
+                </span>
+                </td>
+
+            </tr>
+            <tr>
+                <td class="text-center">
+                <span style="font-size: xx-small; font-weight: bold">
                     مبلغ نهایی
                 </span>
-            </td>
-            <td class="text-center">
-                <span style="font-size: small">
+                </td>
+                <td class="text-center">
+                <span style="font-size: xx-small">
                     {{ form.final_amount | money }}
                 </span>
-            </td>
+                </td>
 
-        </tr>
-        </tbody>
-    </table>
-</div>
-<div class="page-break"></div>
-<div class="row header_box">
-    <div class="col-xs-3 mt-2">
-        <div class="form-header">
-            {% if right_header_template %}
-                {% include right_header_template with form=form %}
-            {% endif %}
-        </div>
+            </tr>
+            </tbody>
+        </table>
     </div>
-    <div class="col-xs-6">
-        <div class="text-center">
-            <h4 class="font-weight-bold">
-                اکسونی
-            </h4>
+    <div class="page-break"></div>
+    <div class="row header_box">
+        <div class="col-xs-3 mt-2">
+            <div class="form-header">
+                {% if right_header_template %}
+                    {% include right_header_template with form=form %}
+                {% endif %}
+            </div>
         </div>
-    </div>
-    <div class="col-xs-3 logo">
-        {% if logo %}
+        <div class="col-xs-6">
+            <div class="text-center">
+                <h4 class="font-weight-bold">
+                    اکسونی
+                </h4>
+            </div>
+        </div>
+        <div class="col-xs-3">
             <img
-                    class="float-left mt-2 img-responsive"
-                    style="height: 60px;width: 60px;"
-                    src="{{ logo }}" alt=""
+                    class="float-left mt-2"
+                    style="height: 40px"
+                    src="/media/uploads/images/logo.webp" alt=""
             />
-        {% endif %}
+        </div>
     </div>
-</div>
-<div class="row">
-    <table class="table-head" style="margin-top: -1px">
-        <tbody>
-        <tr>
-            <td>
-                <span style="font-size: x-small;" class="font-weight-bold">شماره فاکتور:</span>
-                <span style="font-size: x-small;">{{ form.exuni_tracking_code }}</span>
-            </td>
-            <td>
-                <span style="font-size: x-small;" class="font-weight-bold">تاریخ ثبت سفارش:</span>
-                <span style="font-size: x-small;">{{ form.date_time | jDateTime }}</span>
-            </td>
-        </tr>
-        </tbody>
-    </table>
-</div>
+    <div class="row">
+        <table class="table-head" style="margin-top: -1px">
+            <thead>
+            <tr>
+                <td>
+                    <span style="font-size: x-small;" class="font-weight-bold">شماره فاکتور:</span>
+                    <span style="font-size: x-small;">{{ form.exuni_tracking_code }}</span>
+                </td>
+                <td>
+                    <span style="font-size: x-small;" class="font-weight-bold">تاریخ ثبت سفارش:</span>
+                    <span style="font-size: x-small;">{{ form.date_time | jDateTime }}</span>
+                </td>
+            </tr>
+            </thead>
+        </table>
+    </div>
 
-<div class="row">
-    <table class="table-head" style="margin-top: -1px; direction: rtl; width: 100%;">
-        <tbody>
+    <div class="row">
+        <table class="table-head" style="margin-top: -1px; direction: rtl; width: 100%;">
+            <thead>
             <!-- Sender Row -->
             <tr>
-                <td colspan="2" style="font-size: xx-small; font-weight: bold; text-align: center;">
-                    <span  style="font-size: xx-small; font-weight: bold; ">
+                <th colspan="2" style="font-size: x-small; font-weight: bold; text-align: center;">
+                    <span style="font-size: xx-small; font-weight: bold; ">
                                             مشخصات فرستنده
                     </span>
-                </td>
+                </th>
             </tr>
+            </thead>
+        </table>
+        <table class="table-head" style="margin-top: -1px; direction: rtl; width: 100%;">
+            <thead>
             <tr>
                 <td colspan="2" style="font-size: xx-small; padding-right: 10px;">
-                    <span style="font-size: xx-small; font-weight: bold;">نام:</span>
-                    <span style="font-size: xx-small;">فروشگاه اینترنتی اکسونی</span><br>
+                    <span style="font-size: x-small; font-weight: bold;">نام:</span>
+                    <span style="font-size: x-small;">فروشگاه اینترنتی اکسونی</span><br>
 
-                    <span style="font-size: xx-small; font-weight: bold;">تلفن:</span>
-                    <span style="font-size: xx-small;">09054785782</span><br>
+                    <span style="font-size: x-small; font-weight: bold;">تلفن:</span>
+                    <span style="font-size: x-small;">09054785782</span><br>
 
-                    <span style="font-size: xx-small; font-weight: bold;">آدرس:</span>
-                    <span style="font-size: xx-small;">شیراز، بلوار امیرکبیر، مجتمع تجاری ایرانیان پلاک f29</span><br>
+                    <span style="font-size: x-small; font-weight: bold;">آدرس:</span>
+                    <span style="font-size: x-small;">شیراز، بلوار امیرکبیر، مجتمع تجاری ایرانیان پلاک f29</span><br>
                 </td>
             </tr>
+            </thead>
+        </table>
+        <table class="table-head" style="margin-top: -1px; direction: rtl; width: 100%;">
+            <thead>
 
-            <!-- Receiver Row -->
             <tr>
-                <td colspan="2" style=" text-align: center;">
-                    <span  style="font-weight: bold; font-size: xx-large">
+                <th colspan="2" style=" text-align: center;">
+                    <span style="font-weight: bold; font-size: x-large">
                     مشخصات گیرنده
                     </span>
 
-                </td>
+                </th>
             </tr>
+            </thead>
+        </table>
+        <table class="table-head" style="margin-top: -1px; direction: rtl; width: 100%;">
+            <thead>
             <tr>
                 <td colspan="2" style="font-size: x-large; padding-right: 10px;">
                     <span style="font-size: x-large; font-weight: bold;">نام:</span>
-                    <span style="font-size: x-large;">{{ form.shipment_address.first_name }} {{ form.shipment_address.last_name }}</span> <br>
+                    <span style="font-size: x-large;">{{ form.shipment_address.first_name }} {{ form.shipment_address.last_name }}</span>
+                    <br>
                     <span style="font-size: x-large; font-weight: bold;">تلفن:</span>
                     <span style="font-size: x-large;">{{ form.customer.mobile_number }}</span> <br>
 
@@ -307,47 +358,49 @@
                     </span>
                 </td>
             </tr>
-        </tbody>
-    </table>
-</div>
+            </thead>
+        </table>
+    </div>
 
-<div class="page-break"></div>
+    <div class="page-break"></div>
 
 
 {% endfor %}
 
 
 <style>
-        div.header_box {
+    div.header_box {
         margin-top: 30px;
         padding: 5px;
         border: 1px solid black;
     }
 
-.price-container {
-    display: inline-block;
-    position: relative;
-    font-size: 18px;
-    font-weight: normal;
-    line-height: 1;
-}
-.price-svg-line {
-    position: absolute;
-    top: 0;
-    left: 0;
-    pointer-events: none;
-    z-index: 2;
-}
+    .price-container {
+        display: inline-block;
+        position: relative;
+        font-size: 18px;
+        font-weight: normal;
+        line-height: 1;
+    }
+
+    .price-svg-line {
+        position: absolute;
+        top: 0;
+        left: 0;
+        pointer-events: none;
+        z-index: 2;
+    }
 
     table.table-head {
         width: 100%;
         border: 1px solid black;
     }
+
     @media print {
 
-    .page-break {
-        page-break-before: always;
+        .page-break {
+            page-break-before: always;
+        }
     }
-}
 
 </style>
