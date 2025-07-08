@@ -111,6 +111,13 @@ class QuickDateFilter(filters.CharFilter):
         return qs
 
 
+class ToIdFilter(filters.NumberFilter):
+
+    def filter(self, qs, value):
+        if value:
+            return qs.filter(id__lte=value)
+        return qs
+
 class AdminShopOrderFilter(filters.FilterSet):
     status_contains = ShopOrderStatusFilter()
     customer_contains = CustomerFilter()
@@ -118,7 +125,7 @@ class AdminShopOrderFilter(filters.FilterSet):
     product_contains = ProductFilter()
     shipment_contains = SmartShipmentCityFilter()
     search_value = SmartValueOrderFilter()
-    quick_date_filter = QuickDateFilter()
+    to_id = ToIdFilter()
     date_from = django_filters.DateFilter(
         field_name='date_time', lookup_expr='date__gte'
     )

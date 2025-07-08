@@ -230,6 +230,7 @@ class ApiProductsListSerializers(serializers.ModelSerializer):
     regular_price_title = serializers.SerializerMethodField()
     active_discounts = serializers.SerializerMethodField()
     inventory_count = serializers.IntegerField(read_only=True)
+    variation_of_name = serializers.CharField(source='variation_of.name', read_only=True)
 
     class Meta:
         model = Product
@@ -256,6 +257,8 @@ class ApiProductsListSerializers(serializers.ModelSerializer):
             'regular_price_title',
             'active_discounts',
             'inventory_count',
+            'sixteen_digit_code',
+            'variation_of_name',
         ]
 
     def get_active_discounts(self, obj):

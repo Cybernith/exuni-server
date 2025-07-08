@@ -5,7 +5,8 @@ from shop.exuni_admin.export_views import ShopOrderListExportView, ShopOrderDeta
     AdminOrdersListExportView, AdminOrdersExportView, AdminShippedOrdersListExportView, AdminAllOrdersExportView
 
 from shop.exuni_admin.views import AdminShopOrderListView, AdminPaidShopOrderListView, BulkChangeStatusToProcessingView, \
-    BulkChangeStatusToPackedView, AdminProcessingShopOrderListView, BulkChangeStatusToShippedView
+    BulkChangeStatusToPackedView, AdminProcessingShopOrderListView, BulkChangeStatusToShippedView, \
+    AdminOrderDetailApiView
 from shop.search import GlobalAutoCompleteSearchAPIView
 from shop.views import CurrentUserCartApiView, CartDetailView, CurrentUserWishListApiView, WishListDetailView, \
     CurrentUserComparisonApiView, ComparisonDetailView, CurrentUserShipmentAddressApiView, ShipmentAddressDetailView, \
@@ -71,11 +72,13 @@ urlpatterns = [
 
     url(r'^adminOrdersExport/(?P<export_type>\S+)', AdminOrdersExportView.as_view(), name=''),
     url(r'^adminShopOrderListView/(?P<export_type>\S+)', AdminAllOrdersExportView.as_view(), name=''),
+    url(r'^adminOrderDetail/(?P<pk>[0-9]+)$', AdminOrderDetailApiView.as_view(), name='adminOrderDetail'),
 
     url(r'^ordersExport/(?P<export_type>\S+)', ShopOrderListExportView.as_view(), name=''),
     url(r'^orderDetailExport/(?P<export_type>\S+)', ShopOrderDetailExportView.as_view(), name=''),
     url(r'^orderPostExport/(?P<export_type>\S+)', OrderPostDetailExportView.as_view(), name=''),
     url(r'^adminOrdersList/(?P<export_type>\S+)', AdminOrdersListExportView.as_view(), name=''),
     url(r'^adminShippedOrdersList/(?P<export_type>\S+)', AdminShippedOrdersListExportView.as_view(), name=''),
+
 
 ]

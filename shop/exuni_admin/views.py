@@ -1,4 +1,6 @@
-from rest_framework import generics
+from django.db.models import Q
+from django.http import Http404
+from rest_framework import generics, status
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.views import APIView
@@ -6,7 +8,7 @@ from rest_framework.response import Response
 from helpers.auth import BasicObjectPermission
 
 from shop.exuni_admin.filters import AdminShopOrderFilter
-from shop.exuni_admin.srializers import AdminShopOrderSimpleSerializer
+from shop.exuni_admin.srializers import AdminShopOrderSimpleSerializer, AdminShopOrderDetailSerializer
 from shop.models import ShopOrder
 
 
@@ -98,8 +100,28 @@ class BulkChangeStatusToShippedView(APIView):
     permission_codename = "update.shop_order"
 
     def post(self, request):
-        ShopOrder.objects.filter(status=ShopOrder.PAID).update(status=ShopOrder.SHIPPED)
+        to_id = request.data.get('to_id', 1)
+        ShopOrder.objects.filter(Q(status=ShopOrder.PAID) & Q(id__lte=to_id)).update(status=ShopOrder.SHIPPED)
 
         return Response({
             'message': 'به وضعیت ارسال شد تغییر کرد.',
         }, status=200)
+
+
+class AdminOrderDetailApiView(APIView):
+    permission_classes = (IsAuthenticated, BasicObjectPermission)
+    permission_basename = 'shop_order'
+
+    def get_object(self, pk):
+        try:
+            return ShopOrder.objects.select_related('shipment_address', 'customer').prefetch_related('history', 'items').get(pk=pk)
+        except ShopOrder.DoesNotExist:
+            raise Http404
+
+    def get(self, request, pk):
+        query = self.get_object(pk)
+        serializers = AdminShopOrderDetailSerializer(query)
+        return Response(serializers.data, status=status.HTTP_200_OK)
+
+
+
