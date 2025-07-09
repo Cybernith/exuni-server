@@ -7,9 +7,12 @@ from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from helpers.auth import BasicObjectPermission
+from products.models import Product
+from products.shop.filters import ShopProductSimpleFilter
 
 from shop.exuni_admin.filters import AdminShopOrderFilter
-from shop.exuni_admin.srializers import AdminShopOrderSimpleSerializer, AdminShopOrderDetailSerializer
+from shop.exuni_admin.srializers import AdminShopOrderSimpleSerializer, AdminShopOrderDetailSerializer, \
+    AdminProductsListSerializers
 from shop.models import ShopOrder
 
 
@@ -145,3 +148,12 @@ class OrdersSumAPIView(APIView):
         )['total_sum'] or 0
 
         return Response({"shipped_total": shipped_total, "paid_total": paid_total}, status=status.HTTP_200_OK)
+
+
+class AdminShopProductSimpleListView(generics.ListAPIView):
+    serializer_class = AdminProductsListSerializers
+    filterset_class = ShopProductSimpleFilter
+    pagination_class = LimitOffsetPagination
+
+    def get_queryset(self):
+        return Product.objects.all().select_related('brand').order_by('id')

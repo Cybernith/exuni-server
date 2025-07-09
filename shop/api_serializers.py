@@ -253,6 +253,7 @@ class ApiProductsListSerializers(serializers.ModelSerializer):
             'length',
             'width',
             'height',
+            'status',
             'price_title',
             'regular_price_title',
             'active_discounts',

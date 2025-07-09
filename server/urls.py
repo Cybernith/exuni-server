@@ -23,6 +23,8 @@ from rest_framework.schemas import get_schema_view
 from rest_framework_swagger.renderers import SwaggerUIRenderer, OpenAPIRenderer
 
 from helpers.views.TestApiView import TestApiView
+from products.torob.views import TorobProductAPIView
+from server.health_check_view import health_check
 from users.views.auth_views import ObtainAuthTokenView
 from server import settings
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
@@ -57,6 +59,8 @@ urlpatterns = [
     path('schema/shop/swagger/', SpectacularSwaggerView.as_view(url_name='schema-shop', permission_classes=[AllowAny]),
          name='swagger-ui-shop'),
 
+    url(r'^torob_api/v3/products$', TorobProductAPIView.as_view(), name='torobApi'),
+    path('v2/health-check', health_check),
 ]
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

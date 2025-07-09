@@ -46,14 +46,14 @@ class ProductVariationInline(NestedStackedInline):
 class ProductAdmin(NestedModelAdmin):
     list_display = [
         'id', 'picture_preview', 'name', 'sixteen_digit_code', 'product_type', 'regular_price', 'price',
-        'offer_percentage', 'calculate_current_inventory', 'brand'
+        'offer_percentage', 'calculate_current_inventory', 'brand', 'status'
     ]
     list_filter = ['status', 'product_type', 'brand', 'sixteen_digit_code']
     search_fields = ['id', 'name', 'product_id', 'sixteen_digit_code']
     inlines = [ProductVariationInline]
     fields = [
         'id', 'picture', 'picture_preview', 'name', 'sixteen_digit_code', 'product_type',
-        'regular_price', 'price', 'category', 'currency',
+        'regular_price', 'price', 'category', 'currency', 'status',
         'brand', 'price_title', 'regular_price_title', 'calculate_current_inventory'
     ]
     readonly_fields = ['id', 'picture_preview', 'price_title', 'regular_price_title', 'calculate_current_inventory']

@@ -4,5 +4,19 @@
       "command": "python manage.py expire_pending_orders",
       "schedule": "0 * * * *"
     }
-  ]
+  ],
+  "healthchecks": {
+    "web": [
+      {
+        "type": "startup",
+        "name": "web check",
+        "description": "Checking if the app responds to the healthcheck endpoint",
+        "path": "/v2/health-check",
+        "attempts": 10,
+        "interval": "30s",
+        "wait": 10,
+        "initialDelay": 30
+      }
+    ]
+  }
 }

@@ -6,7 +6,7 @@ from shop.exuni_admin.export_views import ShopOrderListExportView, ShopOrderDeta
 
 from shop.exuni_admin.views import AdminShopOrderListView, AdminPaidShopOrderListView, BulkChangeStatusToProcessingView, \
     BulkChangeStatusToPackedView, AdminProcessingShopOrderListView, BulkChangeStatusToShippedView, \
-    AdminOrderDetailApiView, OrdersSumAPIView
+    AdminOrderDetailApiView, OrdersSumAPIView, AdminShopProductSimpleListView
 from shop.search import GlobalAutoCompleteSearchAPIView
 from shop.views import CurrentUserCartApiView, CartDetailView, CurrentUserWishListApiView, WishListDetailView, \
     CurrentUserComparisonApiView, ComparisonDetailView, CurrentUserShipmentAddressApiView, ShipmentAddressDetailView, \
@@ -69,6 +69,8 @@ urlpatterns = [
     url(r'^bulkChangeStatusToShipped$', BulkChangeStatusToShippedView.as_view(),
         name='bulkChangeStatusToShipped'),
     url(r'^ordersSum$', OrdersSumAPIView.as_view(),
+        name='ordersSum'),
+    url(r'^adminProducts$', AdminShopProductSimpleListView.as_view(),
         name='ordersSum'),
 
 

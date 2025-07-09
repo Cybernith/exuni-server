@@ -171,6 +171,10 @@ class ShopProductSimpleFilter(filters.FilterSet):
         field_name='brand__id',
         lookup_expr='in'
     )
+    currency_in = filters.BaseInFilter(
+        field_name='currency__id',
+        lookup_expr='in'
+    )
     category_in = filters.BaseInFilter(
         field_name='category__id',
         lookup_expr='in'
@@ -188,6 +192,7 @@ class ShopProductSimpleFilter(filters.FilterSet):
             'id': ('exact',),
             'name': BASE_FIELD_FILTERS,
             'brand': ('exact',),
+            'currency': ('exact',),
         }
 
 
