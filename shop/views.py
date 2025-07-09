@@ -832,6 +832,12 @@ class CancelShopOrderView(APIView):
 
         previous_status = shop_order.status
         try:
+            if hasattr(shop_order, 'bank_payment'):
+                if shop_order.bank_payment.status not in [Payment.EXPIRED, Payment.CANCELLED, Payment.FAILED]:
+                    return Response(
+                        {'message': 'لطفا دقایقی تا اعتبار سنجی از بانک صبر کنید'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
             shop_order.cancel_order()
         except Exception as e:
             return Response(
@@ -892,7 +898,15 @@ class OrderMoveToCartAPIView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
+        if hasattr(order, 'bank_payment'):
+            if order.bank_payment.status not in [Payment.EXPIRED, Payment.CANCELLED, Payment.FAILED]:
+                return Response(
+                    {'message': 'لطفا دقایقی تا اعتبار سنجی از بانک صبر کنید'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
         with transaction.atomic():
+            order.expired_order()
             for item in order.items.all():
                 cart_item, created = Cart.objects.get_or_create(
                     customer=request.user,
@@ -908,7 +922,6 @@ class OrderMoveToCartAPIView(APIView):
             except ShopOrder.bank_payment.RelatedObjectDoesNotExist:
                 payment = None
             if payment and payment.status == Payment.INITIATED:
-                #payment.delete()
                 payment.status = 'ca'
                 payment.save()
 

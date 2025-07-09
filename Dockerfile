@@ -25,7 +25,7 @@ RUN apt-get update && \
 RUN pip install --upgrade pip
 COPY ./requirements.txt .
 COPY ./torob_requirements.txt .
-RUN pip install -r requirements.txt
+RUN pip install --default-timeout=100 -r requirements.txt
 RUN pip install -r torob_requirements.txt
 
 
