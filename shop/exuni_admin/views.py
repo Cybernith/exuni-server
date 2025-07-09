@@ -132,7 +132,7 @@ class OrdersSumAPIView(APIView):
 
     def get(self, request):
         total_expression = ExpressionWrapper(
-            F('total_price') + (F('bank_payment__fee') / 10) + F('post_price'),
+            F('total_price') + F('post_price'),
             output_field=DecimalField(max_digits=18, decimal_places=2)
         )
 
