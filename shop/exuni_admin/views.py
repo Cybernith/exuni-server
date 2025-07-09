@@ -136,11 +136,11 @@ class OrdersSumAPIView(APIView):
             output_field=DecimalField(max_digits=18, decimal_places=2)
         )
 
-        shipped_total = ShopOrder.objects.filter(status=ShopOrder.SHIPPED, bank_payment__isnull=False).aggregate(
+        shipped_total = ShopOrder.objects.filter(status=ShopOrder.SHIPPED).aggregate(
             total_sum=Sum(total_expression)
         )['total_sum'] or 0
 
-        paid_total = ShopOrder.objects.filter(status=ShopOrder.PAID, bank_payment__isnull=False).aggregate(
+        paid_total = ShopOrder.objects.filter(status=ShopOrder.PAID).aggregate(
             total_sum=Sum(total_expression)
         )['total_sum'] or 0
 
