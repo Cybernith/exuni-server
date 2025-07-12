@@ -31,7 +31,7 @@ class TorobProductSerializer(serializers.ModelSerializer):
         ]
 
     def get_page_unique(self, obj):
-        return str(obj.id)
+        return str(obj.product_id or obj.id)
 
     def get_page_url(self, obj):
         return f'https://exuni.ir/products/{obj.id}'
