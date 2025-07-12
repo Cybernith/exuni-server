@@ -1,10 +1,10 @@
 from rest_framework import serializers
-
+from django.utils.timezone import localtime
 from products.models import Product
 
 
 class TorobProductSerializer(serializers.ModelSerializer):
-    page_unique = serializers.IntegerField(source='id', read_only=True)
+    page_unique = serializers.SerializerMethodField()
     product_group_id = serializers.IntegerField(source='variation_of.id', read_only=True)
     page_url = serializers.SerializerMethodField()
     title = serializers.SerializerMethodField()
@@ -30,6 +30,9 @@ class TorobProductSerializer(serializers.ModelSerializer):
             "date_added", "date_updated"
         ]
 
+    def get_page_unique(self, obj):
+        return str(obj.id)
+
     def get_page_url(self, obj):
         return f'https://exuni.ir/products/{obj.id}'
 
@@ -48,10 +51,10 @@ class TorobProductSerializer(serializers.ModelSerializer):
         return None
 
     def get_current_price(self, obj):
-        return obj.price or 0
+        return int(obj.price) or 0
 
     def get_old_price(self, obj):
-        return obj.regular_price or 0
+        return int(obj.regular_price) or 0
 
     def get_availability(self, obj):
         if hasattr(obj, 'current_inventory'):
@@ -78,10 +81,14 @@ class TorobProductSerializer(serializers.ModelSerializer):
         return links
 
     def get_date_added(self, obj):
-        return obj.created_at.isoformat()
+        if obj.created_at:
+            return localtime(obj.created_at).isoformat()
+        return None
 
     def get_date_updated(self, obj):
-        return obj.updated_at.isoformat()
+        if obj.updated_at:
+            return localtime(obj.updated_at).isoformat()
+        return None
 
     def get_spec(self, obj):
         return {}
