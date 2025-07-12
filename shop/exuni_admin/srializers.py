@@ -3,8 +3,9 @@ from rest_framework import serializers
 from financial_management.serializers import PaymentSerializer, TransactionSerializer
 from helpers.functions import get_current_user
 from products.models import Product
+from products.serializers import CategorySerializer
 from shop.api_serializers import ApiShipmentAddressRetrieveSerializer, ApiOrderStatusHistorySerializer, \
-    ApiCustomerShopOrderItemSerializer, ApiVariationListSerializers, ApiBrandListSerializer
+    ApiCustomerShopOrderItemSerializer, ApiVariationListSerializers, ApiBrandListSerializer, ApiProductGallerySerializer
 from shop.models import ShopOrder
 from shop.serializers import ShopOrderStatusHistorySerializer
 from users.serializers import UserSimpleSerializer
@@ -48,6 +49,8 @@ class AdminProductsListSerializers(serializers.ModelSerializer):
     inventory_count = serializers.IntegerField(read_only=True)
     variation_of_name = serializers.CharField(source='variation_of.name', read_only=True)
     currency_name = serializers.CharField(source='currency.name', read_only=True)
+    gallery = ApiProductGallerySerializer(many=True, read_only=True)
+    category = CategorySerializer(many=True, read_only=True)
 
     class Meta:
         model = Product
@@ -69,6 +72,9 @@ class AdminProductsListSerializers(serializers.ModelSerializer):
             'variation_of_name',
             'product_type',
             'currency_name',
+            'gallery',
+            'category',
+
         ]
 
     def get_price_title(self, obj):

@@ -179,6 +179,10 @@ class ShopProductSimpleFilter(filters.FilterSet):
         field_name='category__id',
         lookup_expr='in'
     )
+    status_in = filters.BaseInFilter(
+        field_name='status',
+        lookup_expr='in'
+    )
     category_tree = filters.CharFilter(method=category_tree_filter)
     top_viewed = filters.BooleanFilter(method=top_viewed_filter)
     top_rated = filters.BooleanFilter(method=top_rated_filter)
