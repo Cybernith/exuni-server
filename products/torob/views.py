@@ -1,4 +1,6 @@
 import re
+
+from django.db.models import Q
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -57,7 +59,7 @@ class TorobProductAPIView(APIView):
                 return Response({"error": "Invalid page_uniques found"}, status=status.HTTP_400_BAD_REQUEST)
 
             qs = Product.objects.filter(status=Product.PUBLISHED).exclude(product_type=Product.VARIABLE)
-            products = qs.filter(id__in=ids_list)
+            products = qs.filter(Q(product_id__in=ids_list) | Q(id__in=ids_list))
 
             serialized = TorobProductSerializer(products, many=True)
 
