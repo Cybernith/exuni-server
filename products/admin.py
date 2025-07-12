@@ -52,7 +52,7 @@ class ProductAdmin(NestedModelAdmin):
     search_fields = ['id', 'name', 'product_id', 'sixteen_digit_code']
     inlines = [ProductVariationInline]
     fields = [
-        'id', 'picture', 'picture_preview', 'name', 'sixteen_digit_code', 'product_type',
+        'id', 'product_id', 'picture', 'picture_preview', 'name', 'sixteen_digit_code', 'product_type',
         'regular_price', 'price', 'category', 'currency', 'status',
         'brand', 'price_title', 'regular_price_title', 'calculate_current_inventory'
     ]
