@@ -526,6 +526,8 @@ class Product(BaseModel):
 
     def save(self, *args, **kwargs):
         first_register = not self.id
+        if first_register:
+            self.product_id = self.new_id
         # if not self.product_id:
         #     self.product_id = self.new_id
         super().save(*args, **kwargs)

@@ -1,7 +1,8 @@
+
 from django.conf.urls import url
 
 from crm.views import ProductViewSummaryAPIView, RecommendedProductsAPIView
-from products.exuni_admin.views import AdminProductApiView, AdminProductDetailView
+from products.exuni_admin.views import AdminProductApiView, AdminProductDetailView, ProductCreateUpdateAPIView
 from products.lists.views import BrandListView, AvailListView, ProductPropertyListView, ProductGalleryListView, \
     ProductListView, CategoryListView, NoContentProductListView, AffiliateForSaleProductsListView
 from products.shop.views import ShopProductListView, ShopProductDetailView, RelatedProductsApiView, \
@@ -16,8 +17,10 @@ from products.views import BrandApiView, BrandDetailView, AvailApiView, AvailDet
 
 app_name = 'products'
 urlpatterns = [
-    url(r'^adminProduct$', AdminProductApiView.as_view(), name='adminProductView'),
-    url(r'^adminProduct/(?P<pk>[0-9]+)$', AdminProductDetailView.as_view(), name='adminProductDetailView'),
+    url(r'^adminProductsAll$', AdminProductApiView.as_view(), name='adminProductView'),
+    url(r'^adminProductGet/(?P<pk>[0-9]+)$', AdminProductDetailView.as_view(), name='adminProductDetailView'),
+    url(r'^adminProductCreate$', ProductCreateUpdateAPIView.as_view(), name='product-create'),
+    url(r'^adminProductUpdate/(?P<pk>[0-9]+)$', ProductCreateUpdateAPIView.as_view(), name='product-update'),
 
     url(r'^brand$', BrandApiView.as_view(), name='brandApiView'),
     url(r'^brand/(?P<pk>[0-9]+)$', BrandDetailView.as_view(), name='brandDetailView'),

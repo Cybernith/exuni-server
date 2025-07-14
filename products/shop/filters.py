@@ -116,49 +116,7 @@ def top_selling_filter(queryset, name, value):
 
 
 def search_value_filter(queryset, name, value):
-    # if value:
-    #    query = value
-    #    query_value = Value(query, output_field=CharField())
-    #    search_query = SearchQuery(query)
-    #
-    #    product_queryset = queryset.annotate(
-    #        category_names=StringAgg('category__name', delimiter=' ', distinct=True),
-    #        search_vector=(
-    #                SearchVector('name', weight='A') +
-    #                SearchVector('sixteen_digit_code', weight='B') +
-    #                SearchVector('brand__name', weight='B') +
-    #                SearchVector('category_names', weight='B')
-    #        ),
-    #        rank=SearchRank(F('search_vector'), search_query),
-    #        trigram_name=TrigramSimilarity('name', query_value),
-    #        trigram_sixteen_digit_code=TrigramSimilarity('sixteen_digit_code', query_value),
-    #        trigram_brand=TrigramSimilarity('brand__name', query_value),
-    #        trigram_category=TrigramSimilarity('category_names', query_value),
-    #    ).annotate(
-    #        similarity=Greatest(
-    #            F('trigram_name') * 2,
-    #            F('trigram_sixteen_digit_code') * 2,
-    #            F('trigram_brand'),
-    #            F('trigram_category')
-    #        )
-    #    ).filter(
-    #        similarity__gt=0.1
-    #    ).annotate(
-    #        relevance=F('rank') + F('similarity')
-    #    ).order_by('-relevance', '-similarity', '-rank')
-    #
-    #    return product_queryset
-    #else:
-    #    return queryset
-    if value:
-        return queryset.filter(
-            Q(name__icontains=value) |
-            Q(brand__name__icontains=value) |
-            Q(sixteen_digit_code__icontains=value) |
-            Q(explanation__icontains=value) |
-            Q(summary_explanation__icontains=value)
-        ).distinct()
-    else:
+    if not value:
         return queryset
 
 
