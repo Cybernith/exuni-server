@@ -74,6 +74,9 @@ class AdminProductsListSerializers(serializers.ModelSerializer):
             'currency_name',
             'gallery',
             'category',
+            'explanation',
+            'summary_explanation',
+            'how_to_use',
 
         ]
 
