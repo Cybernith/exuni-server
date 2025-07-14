@@ -3,7 +3,7 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-
+import json
 from helpers.auth import BasicObjectPermission
 from products.exuni_admin.serializers import AdminProductSerializer, AdminCreateProductSerializer
 from products.models import Product, ProductGallery
@@ -56,20 +56,27 @@ class ProductCreateUpdateAPIView(APIView):
                 status=status.HTTP_404_NOT_FOUND
             )
 
-        serializer = AdminCreateProductSerializer(product, data=request.data, partial=True, context={'request': request})
+        # Create mutable copy of request data
+        data = request.data.copy()
+
+        # Convert string values to proper types
+        if 'remove_image' in data:
+            data['remove_image'] = data['remove_image'] == 'true'
+
+        if 'deleted_gallery_images' in data:
+            try:
+                data['deleted_gallery_images'] = json.loads(data['deleted_gallery_images'])
+            except (TypeError, json.JSONDecodeError):
+                data['deleted_gallery_images'] = []
+
+        serializer = AdminCreateProductSerializer(
+            product,
+            data=data,
+            partial=True,
+            context={'request': request}
+        )
+
         if serializer.is_valid():
             updated_product = serializer.save()
-
-            if 'image' in request.FILES:
-                updated_product.picture = request.FILES['image']
-                updated_product.save()
-
-            if 'images' in request.FILES:
-                for image in request.FILES.getlist('images'):
-                    ProductGallery.objects.create(
-                        product=updated_product,
-                        picture=image
-                    )
-
             return Response(AdminCreateProductSerializer(updated_product).data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

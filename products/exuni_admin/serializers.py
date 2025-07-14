@@ -8,9 +8,7 @@ class AdminProductGallerySerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductGallery
         fields = ['id', 'picture']
-        extra_kwargs = {
-            'picture': {'required': False}
-        }
+
 
 class AdminCategorySerializer(serializers.ModelSerializer):
     class Meta:
@@ -54,13 +52,20 @@ class AdminCreateProductSerializer(serializers.ModelSerializer):
         required=False,
         allow_null=True
     )
+    remove_image = serializers.BooleanField(write_only=True, required=False, default=False)
+    deleted_gallery_images = serializers.ListField(
+        child=serializers.IntegerField(),
+        write_only=True,
+        required=False,
+        default=[]
+    )
 
     class Meta:
         model = Product
         fields = [
             'id', 'name', 'sixteen_digit_code', 'explanation',  'summary_explanation',  'how_to_use', 'regular_price',
             'price', 'currency', 'first_inventory', 'postal_weight', 'length', 'width', 'height', 'calculate_current_inventory',
-            'status', 'category_ids', 'brand', 'product_type', 'image', 'images', 'gallery'
+            'status', 'category_ids', 'brand', 'product_type', 'image', 'images', 'gallery', 'remove_image', 'deleted_gallery_images'
         ]
         extra_kwargs = {
             'sixteen_digit_code': {'required': True},
@@ -83,6 +88,8 @@ class AdminCreateProductSerializer(serializers.ModelSerializer):
         return data
 
     def create(self, validated_data):
+        validated_data.pop('remove_image')
+        validated_data.pop('deleted_gallery_images')
         image_data = validated_data.pop('image', None)
         images_data = validated_data.pop('images', [])
         category_ids = validated_data.pop('category_ids', [])
@@ -104,25 +111,38 @@ class AdminCreateProductSerializer(serializers.ModelSerializer):
         return product
 
     def update(self, instance, validated_data):
-        category_data = validated_data.pop('category', None)
-
+        remove_image = validated_data.pop('remove_image', False)
+        deleted_gallery_ids = validated_data.pop('deleted_gallery_images', [])
+        category_ids = validated_data.pop('category_ids', [])
         image_data = validated_data.pop('image', None)
         images_data = validated_data.pop('images', [])
 
+        # Update scalar fields
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
 
-        # Handle many-to-many category relationship
-        if category_data is not None:
-            instance.category.set(category_data)
+        if category_ids:
+            categories = Category.objects.filter(id__in=category_ids)
+            instance.category.set(categories)
 
-        if image_data:
+
+        # Handle main image
+        if remove_image:
+            instance.picture = None
+        elif image_data:
             instance.picture = image_data
-            instance.save()
 
-        # Handle new gallery images
+        if deleted_gallery_ids:
+            # Delete removed gallery images
+            ProductGallery.objects.filter(
+                id__in=deleted_gallery_ids,
+                product=instance
+            ).delete()
+
+        # Add new gallery images
         for image_data in images_data:
             ProductGallery.objects.create(product=instance, picture=image_data)
 
+        instance.save()
         return instance
 
