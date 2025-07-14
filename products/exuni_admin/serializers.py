@@ -16,10 +16,21 @@ class AdminCategorySerializer(serializers.ModelSerializer):
         fields = ['id', 'name']  # Or whatever fields you want to expose
 
 
+class AdminVariationSerializer(serializers.ModelSerializer):
+    calculate_current_inventory = serializers.ReadOnlyField()
+    gallery = AdminProductGallerySerializer(many=True, read_only=True)
+
+    class Meta:
+        read_only_fields = ('created_at', 'updated_at')
+        model = Product
+        fields = '__all__'
+
+
 class AdminProductSerializer(serializers.ModelSerializer):
     calculate_current_inventory = serializers.ReadOnlyField()
     gallery = AdminProductGallerySerializer(many=True, read_only=True)
     category = AdminCategorySerializer(many=True, read_only=True)
+    variations = AdminVariationSerializer(many=True, read_only=True)
 
     class Meta:
         read_only_fields = ('created_at', 'updated_at')
