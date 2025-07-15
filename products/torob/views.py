@@ -14,11 +14,10 @@ PAGE_SIZE = 100
 
 class TorobProductAPIView(APIView):
     def post(self, request):
-        token = request.headers.get("X-Torob-Token")
-        audience = request.get_host()
-
-        if verify_torob_jwt_token(token, audience):
-            return Response({"error": "Unauthorized"}, status=status.HTTP_401_UNAUTHORIZED)
+        # token = request.headers.get("X-Torob-Token")
+        # audience = request.get_host()
+        # if not token or not verify_torob_jwt_token(token, audience):
+        #     return Response({"error": "Unauthorized"}, status=status.HTTP_401_UNAUTHORIZED)
 
         data = request.data
         if "page_urls" in data:
@@ -37,7 +36,7 @@ class TorobProductAPIView(APIView):
 
             qs = Product.objects.filter(status=Product.PUBLISHED).exclude(product_type=Product.VARIABLE)
 
-            products = qs.filter(id__in=product_ids)
+            products = qs.filter(Q(product_id__in=product_ids) | Q(id__in=product_ids))
             serialized = TorobProductSerializer(products, many=True)
 
             return Response({
