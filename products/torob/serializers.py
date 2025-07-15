@@ -52,10 +52,16 @@ class TorobProductSerializer(serializers.ModelSerializer):
         return None
 
     def get_current_price(self, obj):
-        return int(obj.price) or 0
+        if obj.price:
+            return int(obj.price)
+        else:
+            return 0
 
     def get_old_price(self, obj):
-        return int(obj.regular_price) or 0
+        if obj.regular_price:
+            return int(obj.regular_price)
+        else:
+            return 0
 
     def get_availability(self, obj):
         if hasattr(obj, 'current_inventory'):
