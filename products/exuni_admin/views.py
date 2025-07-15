@@ -40,7 +40,12 @@ class ProductCreateUpdateAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
-        serializer = AdminCreateProductSerializer(data=request.data, context={'request': request})
+
+        data = request.data.copy()
+        if 'variations' in data:
+            data['variations'] = json.loads(data['variations'])
+
+        serializer = AdminCreateProductSerializer(data=data, context={'request': request})
         if serializer.is_valid():
             product = serializer.save()
 
@@ -68,6 +73,16 @@ class ProductCreateUpdateAPIView(APIView):
                 data['deleted_gallery_images'] = json.loads(data['deleted_gallery_images'])
             except (TypeError, json.JSONDecodeError):
                 data['deleted_gallery_images'] = []
+
+        # Add the same variations parsing as in post method
+        if 'variations' in data and isinstance(data['variations'], str):
+            try:
+                data['variations'] = json.loads(data['variations'])
+            except json.JSONDecodeError:
+                return Response(
+                    {'variations': 'Invalid JSON format'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
 
         serializer = AdminCreateProductSerializer(
             product,

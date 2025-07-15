@@ -156,4 +156,4 @@ class AdminShopProductSimpleListView(generics.ListAPIView):
     pagination_class = LimitOffsetPagination
 
     def get_queryset(self):
-        return Product.objects.all().select_related('brand').order_by('id')
+        return Product.objects.exclude(product_type=Product.VARIATION).select_related('brand')

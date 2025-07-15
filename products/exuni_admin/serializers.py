@@ -1,5 +1,5 @@
 from rest_framework import serializers
-
+import json
 from main.models import Currency
 from products.models import Product, ProductGallery, Category, Brand
 
@@ -15,15 +15,21 @@ class AdminCategorySerializer(serializers.ModelSerializer):
         model = Category
         fields = ['id', 'name']  # Or whatever fields you want to expose
 
+class VariationImageField(serializers.ImageField):
+    def to_internal_value(self, data):
+        return super().to_internal_value(data)
+
 
 class AdminVariationSerializer(serializers.ModelSerializer):
     calculate_current_inventory = serializers.ReadOnlyField()
-    gallery = AdminProductGallerySerializer(many=True, read_only=True)
+    picture = VariationImageField(required=False, allow_null=True)
+    remove_picture = serializers.BooleanField(write_only=True, required=False, default=False)
 
     class Meta:
         read_only_fields = ('created_at', 'updated_at')
         model = Product
-        fields = '__all__'
+        exclude = ('feature_vector',)  # Add the field name you want to exclude
+
 
 
 class AdminProductSerializer(serializers.ModelSerializer):
@@ -71,10 +77,17 @@ class AdminCreateProductSerializer(serializers.ModelSerializer):
         default=[]
     )
 
+    variations = serializers.ListField(
+        write_only=True,
+        required=False,
+        allow_null=True,
+        help_text="List of variation objects"
+    )
+
     class Meta:
         model = Product
         fields = [
-            'id', 'name', 'sixteen_digit_code', 'explanation',  'summary_explanation',  'how_to_use', 'regular_price',
+            'id', 'name', 'sixteen_digit_code', 'explanation',  'summary_explanation',  'how_to_use', 'regular_price', 'variations',
             'price', 'currency', 'first_inventory', 'postal_weight', 'length', 'width', 'height', 'calculate_current_inventory',
             'status', 'category_ids', 'brand', 'product_type', 'image', 'images', 'gallery', 'remove_image', 'deleted_gallery_images'
         ]
@@ -94,19 +107,23 @@ class AdminCreateProductSerializer(serializers.ModelSerializer):
                     {'price': 'Sale price cannot be higher than regular price'}
                 )
 
-        if data.get('product_type') == 'variable':
-            pass
         return data
 
     def create(self, validated_data):
+        variations_data = validated_data.pop('variations', [])
         validated_data.pop('remove_image')
         validated_data.pop('deleted_gallery_images')
         image_data = validated_data.pop('image', None)
         images_data = validated_data.pop('images', [])
         category_ids = validated_data.pop('category_ids', [])
-        print(category_ids, flush=True)
+        print(variations_data, flush=True)
         # Create the product
         product = Product.objects.create(**validated_data)
+
+        if variations_data:
+            self.handle_variations(product, variations_data[0])
+
+
         if category_ids:
             categories = Category.objects.filter(id__in=category_ids)
             product.category.set(categories)
@@ -122,6 +139,8 @@ class AdminCreateProductSerializer(serializers.ModelSerializer):
         return product
 
     def update(self, instance, validated_data):
+        variations_data = validated_data.pop('variations', None)
+
         remove_image = validated_data.pop('remove_image', False)
         deleted_gallery_ids = validated_data.pop('deleted_gallery_images', [])
         category_ids = validated_data.pop('category_ids', [])
@@ -131,6 +150,9 @@ class AdminCreateProductSerializer(serializers.ModelSerializer):
         # Update scalar fields
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
+
+        if variations_data is not None:
+            self.handle_variations(instance, variations_data[0])
 
         if category_ids:
             categories = Category.objects.filter(id__in=category_ids)
@@ -157,3 +179,38 @@ class AdminCreateProductSerializer(serializers.ModelSerializer):
         instance.save()
         return instance
 
+    def handle_variations(self, product, variations_data):
+
+        existing_ids = set(product.variations.values_list('id', flat=True))
+        received_ids = set()
+
+        for variation_data in variations_data:
+
+            variation_id = variation_data.get('id')
+
+            if variation_id and variation_id in existing_ids:
+                # Update existing variation
+                variation = Product.objects.get(id=variation_id)
+                serializer = AdminVariationSerializer(
+                    variation,
+                    data=variation_data,
+                    partial=True
+                )
+            else:
+                # Create new variation
+                variation_data['variation_of'] = product.id
+                variation_data['product_type'] = 'variation'
+                serializer = AdminVariationSerializer(data=variation_data)
+
+            if serializer.is_valid():
+                serializer.save()
+                received_ids.add(serializer.instance.id)
+            else:
+                raise serializers.ValidationError({
+                    'variations': serializer.errors
+                })
+
+        # Delete variations that weren't included
+        to_delete = existing_ids - received_ids
+        if to_delete:
+            Product.objects.filter(id__in=to_delete).delete()

@@ -283,8 +283,7 @@ class Product(BaseModel):
     variation_of = models.ForeignKey('self', on_delete=models.CASCADE, related_name='variations', blank=True, null=True)
     variation_title = models.CharField(max_length=150, blank=True, null=True)
 
-    product_id = models.CharField(max_length=255, unique=True,
-                                  error_messages={'unique': "کالا با این شناسه از قبل در اکسونی ثبت شده"})
+    product_id = models.CharField(max_length=255, blank=True, null=True)
     slug = models.SlugField(max_length=255, blank=True, null=True)
 
     sixteen_digit_code = models.CharField(max_length=50, blank=True, null=True)
@@ -334,7 +333,7 @@ class Product(BaseModel):
     avails = models.ManyToManyField(Avail, related_name="products_with_this_avail", blank=True)
     properties = models.ManyToManyField(ProductProperty, related_name="products_with_this_properties", blank=True)
 
-    category = models.ManyToManyField(Category, related_name='products')
+    category = models.ManyToManyField(Category, related_name='products', blank=True, null=True)
     barcode = models.CharField(max_length=150, blank=True, null=True)
 
     objects = ProductManager()
@@ -520,9 +519,8 @@ class Product(BaseModel):
                 self.name
             )
         else:
-            return "نام  {} {} {} کد {}".format(
-                self.variation_of.name, self.variation_title, self.name, self.sixteen_digit_code
-            )
+            return "نام   {} {} کد {}"
+
 
     def save(self, *args, **kwargs):
         first_register = not self.id

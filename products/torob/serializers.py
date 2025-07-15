@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from django.utils.timezone import localtime
 from products.models import Product
+from django.utils.timezone import localtime, is_aware, make_aware
 
 
 class TorobProductSerializer(serializers.ModelSerializer):
@@ -82,13 +83,21 @@ class TorobProductSerializer(serializers.ModelSerializer):
 
     def get_date_added(self, obj):
         if obj.created_at:
-            return localtime(obj.created_at).isoformat()
-        return None
+            if is_aware(obj.created_at):
+                return localtime(obj.created_at).isoformat()
+            else:
+                aware_datetime = make_aware(obj.created_at)
+                return localtime(aware_datetime).isoformat()
+        return ''
 
     def get_date_updated(self, obj):
         if obj.updated_at:
-            return localtime(obj.updated_at).isoformat()
-        return None
+            if is_aware(obj.updated_at):
+                return localtime(obj.updated_at).isoformat()
+            else:
+                aware_datetime = make_aware(obj.updated_at)
+                return localtime(aware_datetime).isoformat()
+        return ''
 
     def get_spec(self, obj):
         return {}
