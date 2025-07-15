@@ -17,7 +17,7 @@ class TorobProductAPIView(APIView):
         token = request.headers.get("X-Torob-Token")
         audience = request.get_host()
 
-        if not token or not verify_torob_jwt_token(token, audience):
+        if verify_torob_jwt_token(token, audience):
             return Response({"error": "Unauthorized"}, status=status.HTTP_401_UNAUTHORIZED)
 
         data = request.data
