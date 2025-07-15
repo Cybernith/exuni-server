@@ -24,14 +24,11 @@ class VariationImageField(serializers.ImageField):
 
 class AdminVariationSerializer(serializers.ModelSerializer):
     calculate_current_inventory = serializers.ReadOnlyField()
-    picture = VariationImageField(required=False, allow_null=True)
-    remove_picture = serializers.BooleanField(write_only=True, required=False, default=False)
 
     class Meta:
         read_only_fields = ('created_at', 'updated_at')
         model = Product
         exclude = ('feature_vector',)  # Add the field name you want to exclude
-
 
 
 class AdminProductSerializer(serializers.ModelSerializer):
@@ -166,7 +163,6 @@ class AdminCreateProductSerializer(serializers.ModelSerializer):
                     (current_inventory.inventory - new_inventory), user=get_current_user()
                 )
 
-        # Update scalar fields
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
 
@@ -178,7 +174,6 @@ class AdminCreateProductSerializer(serializers.ModelSerializer):
             instance.category.set(categories)
 
 
-        # Handle main image
         if remove_image:
             instance.picture = None
         elif image_data:
@@ -210,6 +205,18 @@ class AdminCreateProductSerializer(serializers.ModelSerializer):
             if variation_id and variation_id in existing_ids:
                 image_data = variation_data.pop('image', None)
                 variation = Product.objects.get(id=variation_id)
+                new_inventory = variation_data.pop('new_inventory', 0)
+                current_inventory = variation.current_inventory
+                if new_inventory != current_inventory.inventory:
+                    if new_inventory > current_inventory.inventory:
+                        current_inventory.increase_inventory(
+                            (new_inventory - current_inventory.inventory), user=get_current_user()
+                        )
+                    else:
+                        current_inventory.reduce_inventory(
+                            (current_inventory.inventory - new_inventory), user=get_current_user()
+                        )
+
                 serializer = AdminVariationSerializer(
                     variation,
                     data=variation_data,
@@ -222,8 +229,6 @@ class AdminCreateProductSerializer(serializers.ModelSerializer):
                 variation_data['product_type'] = 'variation'
                 new_inventory = variation_data.pop('new_inventory', 0)
                 variation_data['first_inventory'] = new_inventory
-                print(variation_data, flush=True)
-
                 serializer = AdminVariationSerializer(data=variation_data)
 
             if serializer.is_valid():
