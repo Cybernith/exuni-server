@@ -74,6 +74,11 @@ class AdminCreateProductSerializer(serializers.ModelSerializer):
         required=True,
         allow_null=True
     )
+    legend_pricing = serializers.BooleanField(
+        required=True,
+        allow_null=False,
+        write_only=True,
+    )
     remove_image = serializers.BooleanField(write_only=True, required=False, default=False)
     deleted_gallery_images = serializers.ListField(
         child=serializers.IntegerField(),
@@ -95,7 +100,7 @@ class AdminCreateProductSerializer(serializers.ModelSerializer):
             'id', 'name', 'sixteen_digit_code', 'explanation',  'summary_explanation',  'how_to_use', 'regular_price', 'variations',
             'price', 'currency', 'new_inventory', 'postal_weight', 'length', 'width', 'height', 'calculate_current_inventory',
             'status', 'category_ids', 'brand', 'product_type', 'image', 'images', 'gallery', 'remove_image', 'deleted_gallery_images',
-            'product_date', 'expired_date'
+            'product_date', 'expired_date', 'legend_pricing'
         ]
         extra_kwargs = {
             'sixteen_digit_code': {'required': True},

@@ -275,8 +275,8 @@ class Product(BaseModel):
     AMOUNT = 'amount'
 
     PROFIT_TYPES = (
-        (PERCENT, 'سود درصدی'),
-        (AMOUNT, 'سود مبلغی'),
+        (PERCENT, ' درصدی'),
+        (AMOUNT, ' مبلغی'),
     )
     status = models.CharField(max_length=7, choices=STATUSES, default=PENDING)
     product_type = models.CharField(max_length=9, choices=TYPES, default=SIMPLE)
@@ -312,6 +312,13 @@ class Product(BaseModel):
     profit_type = models.CharField(choices=PROFIT_TYPES, default=PERCENT, max_length=10)
     profit_margin = DECIMAL(null=True, blank=True)
 
+    discount_type = models.CharField(choices=PROFIT_TYPES, default=PERCENT, max_length=10)
+    discount_margin = DECIMAL(default=0)
+
+    base_price = DECIMAL(null=True, blank=True)
+    profit_amount = DECIMAL(null=True, blank=True)
+    discount_amount = DECIMAL(null=True, blank=True)
+
     taxable = models.BooleanField(default=True)
     tax_percent = DECIMAL()
 
@@ -337,6 +344,34 @@ class Product(BaseModel):
     barcode = models.CharField(max_length=150, blank=True, null=True)
 
     objects = ProductManager()
+
+
+    def set_legend_pricing(self):
+        if not self.profit_margin:
+            raise ValidationError('مقدار حاشیه سود موجود نیست')
+        if not self.base_price:
+            raise ValidationError('قیمت پایه موجود نیست')
+
+        if self.profit_type == self.PERCENT:
+            profit_amount = self.base_price / Decimal(100) * self.profit_margin
+        else:
+            profit_amount = self.profit_margin
+
+        price_with_profit = profit_amount + self.base_price
+
+        if self.discount_amount == self.PERCENT:
+            discount_amount = price_with_profit / Decimal(100) * self.discount_margin
+        else:
+            discount_amount = self.discount_margin
+
+        final_amount = price_with_profit - discount_amount
+
+        self.regular_price = price_with_profit
+        self.price = final_amount
+        self.profit_amount = profit_amount
+        self.discount_amount = discount_amount
+        self.save()
+
 
     @property
     def confirmed_comments(self):
