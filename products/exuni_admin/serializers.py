@@ -1,5 +1,7 @@
 from rest_framework import serializers
 import json
+
+from helpers.functions import get_current_user
 from main.models import Currency
 from products.models import Product, ProductGallery, Category, Brand
 
@@ -69,6 +71,10 @@ class AdminCreateProductSerializer(serializers.ModelSerializer):
         required=False,
         allow_null=True
     )
+    new_inventory = serializers.IntegerField(
+        required=True,
+        allow_null=True
+    )
     remove_image = serializers.BooleanField(write_only=True, required=False, default=False)
     deleted_gallery_images = serializers.ListField(
         child=serializers.IntegerField(),
@@ -88,7 +94,7 @@ class AdminCreateProductSerializer(serializers.ModelSerializer):
         model = Product
         fields = [
             'id', 'name', 'sixteen_digit_code', 'explanation',  'summary_explanation',  'how_to_use', 'regular_price', 'variations',
-            'price', 'currency', 'first_inventory', 'postal_weight', 'length', 'width', 'height', 'calculate_current_inventory',
+            'price', 'currency', 'new_inventory', 'postal_weight', 'length', 'width', 'height', 'calculate_current_inventory',
             'status', 'category_ids', 'brand', 'product_type', 'image', 'images', 'gallery', 'remove_image', 'deleted_gallery_images'
         ]
         extra_kwargs = {
@@ -114,9 +120,10 @@ class AdminCreateProductSerializer(serializers.ModelSerializer):
         validated_data.pop('remove_image')
         validated_data.pop('deleted_gallery_images')
         image_data = validated_data.pop('image', None)
+        new_inventory = validated_data.pop('new_inventory', 0)
+        validated_data['first_inventory'] = new_inventory
         images_data = validated_data.pop('images', [])
         category_ids = validated_data.pop('category_ids', [])
-        print(variations_data, flush=True)
         # Create the product
         product = Product.objects.create(**validated_data)
 
@@ -129,6 +136,7 @@ class AdminCreateProductSerializer(serializers.ModelSerializer):
             product.category.set(categories)
 
         if image_data:
+            print(image_data, flush=True)
             product.picture = image_data
             product.save()
 
@@ -140,12 +148,23 @@ class AdminCreateProductSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         variations_data = validated_data.pop('variations', None)
-
+        new_inventory = validated_data.pop('new_inventory', 0)
         remove_image = validated_data.pop('remove_image', False)
         deleted_gallery_ids = validated_data.pop('deleted_gallery_images', [])
         category_ids = validated_data.pop('category_ids', [])
         image_data = validated_data.pop('image', None)
         images_data = validated_data.pop('images', [])
+
+        current_inventory = instance.current_inventory
+        if new_inventory != current_inventory.inventory:
+            if new_inventory > current_inventory.inventory:
+                current_inventory.increase_inventory(
+                    (new_inventory - current_inventory.inventory), user=get_current_user()
+                )
+            else:
+                current_inventory.reduce_inventory(
+                    (current_inventory.inventory - new_inventory), user=get_current_user()
+                )
 
         # Update scalar fields
         for attr, value in validated_data.items():
@@ -189,7 +208,7 @@ class AdminCreateProductSerializer(serializers.ModelSerializer):
             variation_id = variation_data.get('id')
 
             if variation_id and variation_id in existing_ids:
-                # Update existing variation
+                image_data = variation_data.pop('image', None)
                 variation = Product.objects.get(id=variation_id)
                 serializer = AdminVariationSerializer(
                     variation,
@@ -197,14 +216,23 @@ class AdminCreateProductSerializer(serializers.ModelSerializer):
                     partial=True
                 )
             else:
-                # Create new variation
+                variation_data.pop('id')
+                image_data = variation_data.pop('image', None)
                 variation_data['variation_of'] = product.id
                 variation_data['product_type'] = 'variation'
+                new_inventory = variation_data.pop('new_inventory', 0)
+                variation_data['first_inventory'] = new_inventory
+                print(variation_data, flush=True)
+
                 serializer = AdminVariationSerializer(data=variation_data)
 
             if serializer.is_valid():
                 serializer.save()
                 received_ids.add(serializer.instance.id)
+                if image_data:
+                    serializer.instance.picture = image_data
+                    serializer.instance.save()
+
             else:
                 raise serializers.ValidationError({
                     'variations': serializer.errors

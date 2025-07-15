@@ -44,6 +44,7 @@ class ProductCreateUpdateAPIView(APIView):
         data = request.data.copy()
         if 'variations' in data:
             data['variations'] = json.loads(data['variations'])
+            print(data['variations'], flush=True)
 
         serializer = AdminCreateProductSerializer(data=data, context={'request': request})
         if serializer.is_valid():
