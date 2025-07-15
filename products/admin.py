@@ -18,7 +18,6 @@ admin.site.register(ProductAttribute)
 admin.site.register(ProductAttributeTerm)
 admin.site.register(Category)
 admin.site.register(ProductGallery)
-admin.site.register(Product)
 
 
 class ProductVariationInline(NestedStackedInline):
@@ -42,6 +41,64 @@ class ProductVariationInline(NestedStackedInline):
         return obj.calculate_current_inventory
     calculate_current_inventory.short_description = "موجودی فعلی"
 
+
+@admin.register(Product)
+class ProductAdmin(NestedModelAdmin):
+    list_display = [
+        'id', 'picture_preview', 'name', 'sixteen_digit_code', 'product_type', 'regular_price', 'price',
+        'offer_percentage', 'calculate_current_inventory', 'brand', 'status'
+    ]
+    list_filter = ['status', 'product_type', 'brand', 'sixteen_digit_code']
+    search_fields = ['id', 'name', 'product_id', 'sixteen_digit_code']
+    inlines = [ProductVariationInline]
+    fields = [
+        'id', 'variation_of', 'product_id', 'picture', 'picture_preview', 'name', 'sixteen_digit_code', 'product_type',
+        'regular_price', 'price', 'category', 'currency', 'status',
+        'brand', 'price_title', 'regular_price_title', 'calculate_current_inventory',
+        'profit_type', 'profit_margin', 'discount_type', 'discount_margin', 'base_price'
+    ]
+    readonly_fields = ['id', 'picture_preview', 'price_title', 'regular_price_title', 'calculate_current_inventory']
+    autocomplete_fields = ['brand']
+
+    def picture_preview(self, obj):
+        if obj.picture:
+            return format_html('<img src="{}" style="max-height: 100px;" />', obj.picture.url)
+        return "-"
+    picture_preview.short_description = "تصویر اصلی"
+
+    def price_title(self, obj):
+        return self.get_price_title(obj)
+    price_title.short_description = "عنوان قیمت"
+
+    def regular_price_title(self, obj):
+        return self.get_regular_price_title(obj)
+    regular_price_title.short_description = "عنوان قیمت اصلی"
+
+    def offer_percentage(self, obj):
+        return self.get_offer_percentage(obj)
+    offer_percentage.short_description = "درصد تخفیف"
+
+    def get_price_title(self, obj):
+        return 'قیمت در اکسونی'
+
+    def get_regular_price_title(self, obj):
+        if obj.brand and obj.brand.made_in:
+            if obj.brand.made_in == 'ایران':
+                return 'قیمت مصرف کننده'
+        return 'قیمت محصول'
+
+    def get_offer_percentage(self, obj):
+        if obj.regular_price and obj.price:
+            offer_percentage = round(((obj.regular_price - obj.price) / obj.regular_price) * 100)
+            return f'{offer_percentage}%'
+        return None
+
+    def calculate_current_inventory(self, obj):
+        return obj.calculate_current_inventory
+    calculate_current_inventory.short_description = "موجودی فعلی"
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).prefetch_related('brand', 'variations')
 
 @admin.register(Brand)
 class BrandAdmin(admin.ModelAdmin):

@@ -33,6 +33,7 @@ class AdminVariationSerializer(serializers.ModelSerializer):
     def get_image(self, obj):
         return obj.picture.url if obj.picture else None
 
+
 class AdminProductSerializer(serializers.ModelSerializer):
     calculate_current_inventory = serializers.ReadOnlyField()
     gallery = AdminProductGallerySerializer(many=True, read_only=True)
@@ -100,7 +101,8 @@ class AdminCreateProductSerializer(serializers.ModelSerializer):
             'id', 'name', 'sixteen_digit_code', 'explanation',  'summary_explanation',  'how_to_use', 'regular_price', 'variations',
             'price', 'currency', 'new_inventory', 'postal_weight', 'length', 'width', 'height', 'calculate_current_inventory',
             'status', 'category_ids', 'brand', 'product_type', 'image', 'images', 'gallery', 'remove_image', 'deleted_gallery_images',
-            'product_date', 'expired_date', 'legend_pricing'
+            'product_date', 'expired_date', 'legend_pricing', 'profit_type',  'profit_margin', 'discount_type',
+            'discount_margin', 'base_price'
         ]
         extra_kwargs = {
             'sixteen_digit_code': {'required': True},
@@ -121,6 +123,7 @@ class AdminCreateProductSerializer(serializers.ModelSerializer):
         return data
 
     def create(self, validated_data):
+        legend_pricing = validated_data.pop('legend_pricing', False)
         variations_data = validated_data.pop('variations', [])
         validated_data.pop('remove_image')
         validated_data.pop('deleted_gallery_images')
@@ -147,9 +150,12 @@ class AdminCreateProductSerializer(serializers.ModelSerializer):
         for image_data in images_data:
             ProductGallery.objects.create(product=product, picture=image_data)
 
+        if legend_pricing and product.product_type != 'variable':
+            product.set_legend_pricing()
         return product
 
     def update(self, instance, validated_data):
+        legend_pricing = validated_data.pop('legend_pricing', False)
         variations_data = validated_data.pop('variations', None)
         new_inventory = validated_data.pop('new_inventory', 0)
         remove_image = validated_data.pop('remove_image', False)
@@ -198,6 +204,9 @@ class AdminCreateProductSerializer(serializers.ModelSerializer):
 
         instance.save()
         instance.variations.all().update(currency=instance.currency, brand=instance.brand)
+        if legend_pricing and instance.product_type != 'variable':
+            instance.set_legend_pricing()
+
         return instance
 
     def handle_variations(self, product, variations_data):
@@ -206,6 +215,8 @@ class AdminCreateProductSerializer(serializers.ModelSerializer):
         received_ids = set()
 
         for variation_data in variations_data:
+            legend = variation_data.pop('legend_pricing', False)
+            print('legend', legend, flush=True)
 
             variation_id = variation_data.get('id')
 
@@ -242,6 +253,9 @@ class AdminCreateProductSerializer(serializers.ModelSerializer):
                 if serializer.is_valid():
                     serializer.save()
                     received_ids.add(serializer.instance.id)
+                    if legend == 'true':
+                        serializer.instance.set_legend_pricing()
+
 
                 else:
                     raise serializers.ValidationError({
@@ -265,6 +279,9 @@ class AdminCreateProductSerializer(serializers.ModelSerializer):
                     serializer.instance.currency = serializer.instance.variation_of.currency
                     serializer.instance.brand = serializer.instance.variation_of.brand
                     serializer.instance.save()
+                    if legend == 'true':
+                        serializer.instance.set_legend_pricing()
+
 
                 else:
                     raise serializers.ValidationError({

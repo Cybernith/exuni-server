@@ -359,7 +359,7 @@ class Product(BaseModel):
 
         price_with_profit = profit_amount + self.base_price
 
-        if self.discount_amount == self.PERCENT:
+        if self.discount_type == self.PERCENT:
             discount_amount = price_with_profit / Decimal(100) * self.discount_margin
         else:
             discount_amount = self.discount_margin
