@@ -94,7 +94,8 @@ class AdminCreateProductSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'name', 'sixteen_digit_code', 'explanation',  'summary_explanation',  'how_to_use', 'regular_price', 'variations',
             'price', 'currency', 'new_inventory', 'postal_weight', 'length', 'width', 'height', 'calculate_current_inventory',
-            'status', 'category_ids', 'brand', 'product_type', 'image', 'images', 'gallery', 'remove_image', 'deleted_gallery_images'
+            'status', 'category_ids', 'brand', 'product_type', 'image', 'images', 'gallery', 'remove_image', 'deleted_gallery_images',
+            'product_date', 'expired_date'
         ]
         extra_kwargs = {
             'sixteen_digit_code': {'required': True},
@@ -191,6 +192,7 @@ class AdminCreateProductSerializer(serializers.ModelSerializer):
             ProductGallery.objects.create(product=instance, picture=image_data)
 
         instance.save()
+        instance.variations.all().update(currency=instance.currency, brand=instance.brand)
         return instance
 
     def handle_variations(self, product, variations_data):
@@ -205,6 +207,7 @@ class AdminCreateProductSerializer(serializers.ModelSerializer):
             if variation_id and variation_id in existing_ids:
                 file_key = variation_data.pop('file_key', None)
                 variation = Product.objects.get(id=variation_id)
+
                 if file_key:
                     if file_key == 'remove':
                         variation.picture = None
@@ -212,7 +215,7 @@ class AdminCreateProductSerializer(serializers.ModelSerializer):
                     elif file_key != 'same':
                         request = self.context.get('request')
                         variation.picture = request.FILES[file_key]
-                        variation.save()
+                variation.save()
 
                 new_inventory = variation_data.pop('new_inventory', 0)
                 current_inventory = variation.current_inventory
@@ -254,7 +257,9 @@ class AdminCreateProductSerializer(serializers.ModelSerializer):
                     if file_key != 'remove':
                         request = self.context.get('request')
                         serializer.instance.picture = request.FILES[file_key]
-                        serializer.instance.save()
+                    serializer.instance.currency = serializer.instance.variation_of.currency
+                    serializer.instance.brand = serializer.instance.variation_of.brand
+                    serializer.instance.save()
 
                 else:
                     raise serializers.ValidationError({
