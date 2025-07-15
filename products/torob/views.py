@@ -14,12 +14,12 @@ PAGE_SIZE = 100
 
 class TorobProductAPIView(APIView):
     def post(self, request):
-        try:
-            token = request.headers.get("X-Torob-Token")
-            if not token or not verify_torob_jwt_token(token, 'admin.exuni.ir'):
-                return Response({"error": "Unauthorized"}, status=status.HTTP_401_UNAUTHORIZED)
-        except:
-            pass
+        # try:
+        #     token = request.headers.get("X-Torob-Token")
+        #     if not token or not verify_torob_jwt_token(token, 'exuni.ir'):
+        #         return Response({"error": "Unauthorized"}, status=status.HTTP_401_UNAUTHORIZED)
+        # except:
+        #     pass
 
         data = request.data
         if "page_urls" in data:
