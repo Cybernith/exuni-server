@@ -25,6 +25,7 @@ class VariationImageField(serializers.ImageField):
 
 
 class AdminVariationSerializer(serializers.ModelSerializer):
+    image = serializers.SerializerMethodField()
     calculate_current_inventory = serializers.ReadOnlyField()
 
     class Meta:
@@ -32,6 +33,8 @@ class AdminVariationSerializer(serializers.ModelSerializer):
         model = Product
         exclude = ('feature_vector',)  # Add the field name you want to exclude
 
+    def get_image(self, obj):
+        return obj.picture.url if obj.picture else None
 
 class AdminProductSerializer(serializers.ModelSerializer):
     calculate_current_inventory = serializers.ReadOnlyField()
@@ -203,7 +206,17 @@ class AdminCreateProductSerializer(serializers.ModelSerializer):
             variation_id = variation_data.get('id')
 
             if variation_id and variation_id in existing_ids:
+                file_key = variation_data.pop('file_key', None)
                 variation = Product.objects.get(id=variation_id)
+                if file_key:
+                    if file_key == 'remove':
+                        variation.picture = None
+                        variation.save()
+                    elif file_key != 'same':
+                        request = self.context.get('request')
+                        variation.picture = request.FILES[file_key]
+                        variation.save()
+
                 new_inventory = variation_data.pop('new_inventory', 0)
                 current_inventory = variation.current_inventory
                 if new_inventory != current_inventory.inventory:
@@ -224,7 +237,6 @@ class AdminCreateProductSerializer(serializers.ModelSerializer):
                 if serializer.is_valid():
                     serializer.save()
                     received_ids.add(serializer.instance.id)
-                    raise ValidationError('okoko')
 
                 else:
                     raise serializers.ValidationError({
@@ -242,7 +254,7 @@ class AdminCreateProductSerializer(serializers.ModelSerializer):
                 if serializer.is_valid():
                     serializer.save()
                     received_ids.add(serializer.instance.id)
-                    if file_key:
+                    if file_key != 'remove':
                         request = self.context.get('request')
                         serializer.instance.picture = request.FILES[file_key]
                         serializer.instance.save()
