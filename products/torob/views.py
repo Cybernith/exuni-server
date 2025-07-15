@@ -14,10 +14,12 @@ PAGE_SIZE = 100
 
 class TorobProductAPIView(APIView):
     def post(self, request):
-        # token = request.headers.get("X-Torob-Token")
-        # audience = request.get_host()
-        # if not token or not verify_torob_jwt_token(token, audience):
-        #     return Response({"error": "Unauthorized"}, status=status.HTTP_401_UNAUTHORIZED)
+        try:
+            token = request.headers.get("X-Torob-Token")
+            if not token or not verify_torob_jwt_token(token, 'admin.exuni.ir'):
+                return Response({"error": "Unauthorized"}, status=status.HTTP_401_UNAUTHORIZED)
+        except:
+            pass
 
         data = request.data
         if "page_urls" in data:
@@ -27,7 +29,7 @@ class TorobProductAPIView(APIView):
 
             product_ids = []
             for url in urls:
-                match = re.search(r"/product/(\d+)/?$", url)
+                match = re.search(r"/products/(\d+)/?$", url)
                 if match:
                     product_ids.append(match.group(1))
                 else:
