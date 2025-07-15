@@ -1,6 +1,8 @@
 from rest_framework import serializers
 import json
 
+from rest_framework.exceptions import ValidationError
+
 from helpers.functions import get_current_user
 from main.models import Currency
 from products.models import Product, ProductGallery, Category, Brand
@@ -133,12 +135,10 @@ class AdminCreateProductSerializer(serializers.ModelSerializer):
             product.category.set(categories)
 
         if image_data:
-            print(image_data, flush=True)
             product.picture = image_data
             product.save()
 
         for image_data in images_data:
-            print('ga', flush=True)
             ProductGallery.objects.create(product=product, picture=image_data)
 
         return product
@@ -203,7 +203,6 @@ class AdminCreateProductSerializer(serializers.ModelSerializer):
             variation_id = variation_data.get('id')
 
             if variation_id and variation_id in existing_ids:
-                image_data = variation_data.pop('image', None)
                 variation = Product.objects.get(id=variation_id)
                 new_inventory = variation_data.pop('new_inventory', 0)
                 current_inventory = variation.current_inventory
@@ -222,26 +221,36 @@ class AdminCreateProductSerializer(serializers.ModelSerializer):
                     data=variation_data,
                     partial=True
                 )
+                if serializer.is_valid():
+                    serializer.save()
+                    received_ids.add(serializer.instance.id)
+                    raise ValidationError('okoko')
+
+                else:
+                    raise serializers.ValidationError({
+                        'variations': serializer.errors
+                    })
+
             else:
                 variation_data.pop('id')
-                image_data = variation_data.pop('image', None)
+                file_key = variation_data.pop('file_key', None)
                 variation_data['variation_of'] = product.id
                 variation_data['product_type'] = 'variation'
                 new_inventory = variation_data.pop('new_inventory', 0)
                 variation_data['first_inventory'] = new_inventory
                 serializer = AdminVariationSerializer(data=variation_data)
+                if serializer.is_valid():
+                    serializer.save()
+                    received_ids.add(serializer.instance.id)
+                    if file_key:
+                        request = self.context.get('request')
+                        serializer.instance.picture = request.FILES[file_key]
+                        serializer.instance.save()
 
-            if serializer.is_valid():
-                serializer.save()
-                received_ids.add(serializer.instance.id)
-                if image_data:
-                    serializer.instance.picture = image_data
-                    serializer.instance.save()
-
-            else:
-                raise serializers.ValidationError({
-                    'variations': serializer.errors
-                })
+                else:
+                    raise serializers.ValidationError({
+                        'variations': serializer.errors
+                    })
 
         # Delete variations that weren't included
         to_delete = existing_ids - received_ids
