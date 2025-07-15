@@ -1,7 +1,4 @@
 from rest_framework import serializers
-import json
-
-from rest_framework.exceptions import ValidationError
 
 from helpers.functions import get_current_user
 from main.models import Currency
@@ -60,12 +57,12 @@ class AdminCreateProductSerializer(serializers.ModelSerializer):
 
     currency = serializers.PrimaryKeyRelatedField(
         queryset=Currency.objects.all(),
-        required=True
+        required=False
     )
     category_ids = serializers.ListField(
         child=serializers.IntegerField(),
         write_only=True,
-        required=True
+        required=False
     )
 
     brand = serializers.PrimaryKeyRelatedField(

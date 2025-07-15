@@ -2,6 +2,7 @@ from rest_framework import serializers
 
 from financial_management.serializers import PaymentSerializer, TransactionSerializer
 from helpers.functions import get_current_user
+from products.exuni_admin.serializers import AdminVariationSerializer
 from products.models import Product
 from products.serializers import CategorySerializer
 from shop.api_serializers import ApiShipmentAddressRetrieveSerializer, ApiOrderStatusHistorySerializer, \
@@ -51,6 +52,7 @@ class AdminProductsListSerializers(serializers.ModelSerializer):
     currency_name = serializers.CharField(source='currency.name', read_only=True)
     gallery = ApiProductGallerySerializer(many=True, read_only=True)
     category = CategorySerializer(many=True, read_only=True)
+    variations = AdminVariationSerializer(many=True, read_only=True)
 
     class Meta:
         model = Product
