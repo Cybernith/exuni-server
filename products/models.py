@@ -457,9 +457,17 @@ class Product(BaseModel):
 
     @property
     def calculate_current_inventory(self):
-        if hasattr(self, 'current_inventory'):
-            return self.current_inventory.inventory
-        raise ValueError(f"برای کالای {self.name} موجودی ثبت نشده")
+        if self.product_type in [self.SIMPLE, self.VARIATION]:
+            if hasattr(self, 'current_inventory'):
+                return self.current_inventory.inventory
+            raise ValueError(f"برای کالای {self.name} موجودی ثبت نشده")
+        else:
+            if hasattr(self, 'variations'):
+                return sum(variation.current_inventory.inventory
+                    for variation in self.variations.all()
+                        if hasattr(variation, 'current_inventory')
+                    )
+            raise ValueError(f"برای کالای {self.name} و واریانت‌های آن موجودی ثبت نشده")
 
     @property
     def final_price(self):

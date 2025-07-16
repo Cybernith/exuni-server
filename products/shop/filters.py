@@ -1,25 +1,16 @@
-from django.contrib.postgres.search import TrigramSimilarity
-from django.db.models import Q, Count, Avg, Value, FloatField, Sum
+from django.db.models import Q, Count, Avg, FloatField, Sum, When, IntegerField, OuterRef, Subquery
 from django.db.models.functions import Coalesce, Cast
+from sqlparse.sql import Case
 
 from helpers.filters import BASE_FIELD_FILTERS
-from products.models import Product, Brand, Category
 from django_filters import rest_framework as filters
 import django_filters
 
-from shop.models import ShopOrder
 
-from django.contrib.postgres.aggregates import StringAgg
-from django.contrib.postgres.search import SearchQuery, SearchVector, SearchRank, TrigramSimilarity
+from django.contrib.postgres.search import TrigramSimilarity
 from django.db.models import Value, CharField, F, Func
-from django.db.models.functions import Greatest
-from rest_framework import status
-from rest_framework.response import Response
-from rest_framework.views import APIView
 
 from products.models import Product, Brand, Category
-from server.settings import FRONT_MEDIA_URL
-from shop.throttles import UserSearchAutoCompleteRateThrottle, AnonSearchAutoCompleteRateThrottle
 
 class ShopProductFilter(filters.FilterSet):
     min_price = django_filters.NumberFilter(field_name='current_price__price', lookup_expr='gte')
@@ -142,8 +133,9 @@ def id_in_filter(queryset, name, value):
 class ShopProductSimpleFilter(filters.FilterSet):
     min_price = django_filters.NumberFilter(field_name='price', lookup_expr='gte')
     max_price = django_filters.NumberFilter(field_name='price', lookup_expr='lte')
-    min_inventory = django_filters.NumberFilter(field_name='current_inventory__inventory', lookup_expr='gte')
-    max_inventory = django_filters.NumberFilter(field_name='current_inventory__inventory', lookup_expr='lte')
+    max_inventory = filters.NumberFilter(method='filter_inventory')
+    min_inventory = filters.NumberFilter(method='filter_inventory')
+
     brand_in = filters.BaseInFilter(
         field_name='brand__id',
         lookup_expr='in'
@@ -176,6 +168,42 @@ class ShopProductSimpleFilter(filters.FilterSet):
             'brand': ('exact',),
             'currency': ('exact',),
         }
+
+    def filter_inventory(self, queryset, name, value):
+        # First handle simple products and variation parents
+        simple_products = queryset.filter(
+            Q(product_type=Product.SIMPLE) | Q(product_type=Product.VARIATION)
+        ).annotate(
+            total_inventory=F('current_inventory__inventory')
+        )
+
+        # Then handle products with variations
+        products_with_variations = queryset.filter(
+            variations__isnull=False
+        ).annotate(
+            total_inventory=Sum('variations__current_inventory__inventory')
+        )
+
+        # Combine both querysets (no union needed)
+        combined_ids = list(simple_products.values_list('id', flat=True)) + \
+                       list(products_with_variations.values_list('id', flat=True))
+
+        # Get the final filtered queryset
+        filtered_queryset = queryset.filter(id__in=combined_ids)
+
+        if name == 'min_inventory':
+            return filtered_queryset.filter(
+                Q(product_type__in=[Product.SIMPLE, Product.VARIATION],
+                  current_inventory__inventory__gte=value) |
+                Q(variations__current_inventory__inventory__gte=value)
+            ).distinct()
+        elif name == 'max_inventory':
+            return filtered_queryset.filter(
+                Q(product_type__in=[Product.SIMPLE, Product.VARIATION],
+                  current_inventory__inventory__lte=value) |
+                Q(variations__current_inventory__inventory__lte=value)
+            ).distinct()
+        return filtered_queryset
 
 
 class ShopProductWithCommentsFilter(filters.FilterSet):
