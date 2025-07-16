@@ -144,15 +144,12 @@ class ShopProductSimpleFilter(filters.FilterSet):
         field_name='currency__id',
         lookup_expr='in'
     )
-    category_in = filters.BaseInFilter(
-        field_name='category__id',
-        lookup_expr='in'
-    )
     status_in = filters.BaseInFilter(
         field_name='status',
         lookup_expr='in'
     )
     category_tree = filters.CharFilter(method=category_tree_filter)
+    category_in = filters.CharFilter(method=category_tree_filter)
     top_viewed = filters.BooleanFilter(method=top_viewed_filter)
     top_rated = filters.BooleanFilter(method=top_rated_filter)
     top_selling = filters.BooleanFilter(method=top_selling_filter)
