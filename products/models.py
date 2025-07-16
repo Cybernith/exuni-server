@@ -310,14 +310,14 @@ class Product(BaseModel):
     currency = models.ForeignKey(Currency, on_delete=models.SET_NULL, related_name='products', blank=True, null=True)
 
     profit_type = models.CharField(choices=PROFIT_TYPES, default=PERCENT, max_length=10)
-    profit_margin = DECIMAL(null=True, blank=True)
+    profit_margin = IntegerField(null=True, blank=True)
 
     discount_type = models.CharField(choices=PROFIT_TYPES, default=PERCENT, max_length=10)
-    discount_margin = DECIMAL(default=0)
+    discount_margin = IntegerField(default=0)
 
-    base_price = DECIMAL(null=True, blank=True)
-    profit_amount = DECIMAL(null=True, blank=True)
-    discount_amount = DECIMAL(null=True, blank=True)
+    base_price = IntegerField(null=True, blank=True)
+    profit_amount = IntegerField(null=True, blank=True)
+    discount_amount = IntegerField(null=True, blank=True)
 
     taxable = models.BooleanField(default=True)
     tax_percent = DECIMAL()
@@ -353,14 +353,14 @@ class Product(BaseModel):
             raise ValidationError('قیمت پایه موجود نیست')
 
         if self.profit_type == self.PERCENT:
-            profit_amount = self.base_price / Decimal(100) * self.profit_margin
+            profit_amount = self.base_price / 100 * self.profit_margin
         else:
             profit_amount = self.profit_margin
 
         price_with_profit = profit_amount + self.base_price
 
         if self.discount_type == self.PERCENT:
-            discount_amount = price_with_profit / Decimal(100) * self.discount_margin
+            discount_amount = price_with_profit / 100* self.discount_margin
         else:
             discount_amount = self.discount_margin
 

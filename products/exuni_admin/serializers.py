@@ -24,6 +24,7 @@ class VariationImageField(serializers.ImageField):
 class AdminVariationSerializer(serializers.ModelSerializer):
     image = serializers.SerializerMethodField()
     calculate_current_inventory = serializers.ReadOnlyField()
+    offer_percentage = serializers.ReadOnlyField()
 
     class Meta:
         read_only_fields = ('created_at', 'updated_at')
@@ -32,6 +33,12 @@ class AdminVariationSerializer(serializers.ModelSerializer):
 
     def get_image(self, obj):
         return obj.picture.url if obj.picture else None
+
+    def get_offer_percentage(self, obj):
+        if obj.regular_price and obj.price:
+            offer_percentage = round(((obj.regular_price - obj.price) / obj.regular_price) * 100)
+            return f'{offer_percentage}%'
+        return None
 
 
 class AdminProductSerializer(serializers.ModelSerializer):

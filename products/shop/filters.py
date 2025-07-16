@@ -1,6 +1,6 @@
 from django.contrib.postgres.search import TrigramSimilarity
 from django.db.models import Q, Count, Avg, Value, FloatField, Sum
-from django.db.models.functions import Coalesce
+from django.db.models.functions import Coalesce, Cast
 
 from helpers.filters import BASE_FIELD_FILTERS
 from products.models import Product, Brand, Category
@@ -118,6 +118,25 @@ def top_selling_filter(queryset, name, value):
 def search_value_filter(queryset, name, value):
     if not value:
         return queryset
+    search_terms = value.split()
+
+    query = Q()
+    for term in search_terms:
+        query |= Q(name__icontains=term) |\
+                 Q(brand__name__icontains=term) |\
+                 Q(sixteen_digit_code__icontains=term) |\
+                 Q(variation_of__name__icontains=term)
+
+    return queryset.filter(query).distinct()
+
+
+def id_in_filter(queryset, name, value):
+    if not value:
+        return queryset
+    search_terms = str(value)
+    return queryset.annotate(id_str=Cast('id', output_field=CharField())).filter(id_str__icontains=search_terms)
+
+
 
 
 class ShopProductSimpleFilter(filters.FilterSet):
@@ -147,6 +166,7 @@ class ShopProductSimpleFilter(filters.FilterSet):
     top_selling = filters.BooleanFilter(method=top_selling_filter)
     global_search = filters.CharFilter(method=product_comments_global_search)
     search_value = filters.CharFilter(method=search_value_filter)
+    id_in = filters.NumberFilter(method=id_in_filter)
 
     class Meta:
         model = Product
