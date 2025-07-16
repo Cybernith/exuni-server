@@ -59,28 +59,38 @@ class ShopProductFilter(filters.FilterSet):
             return queryset.filter(perperties__id__in=ids)
 
 
-def get_all_descendant_ids(category):
-    descendants = []
-    children = Category.objects.filter(parent=category)
-    for child in children:
-        descendants.append(child.id)
-        descendants.extend(get_all_descendant_ids(child))
-    return descendants
-
-
 def category_tree_filter(queryset, name, value):
+    # Parse input category IDs
     ids = [int(cat_id) for cat_id in value.split(',') if cat_id.strip()]
-    category_ids = set()
+    if not ids:
+        return queryset.none()
 
-    for cat_id in ids:
-        try:
-            category = Category.objects.get(pk=cat_id)
-            category_ids.add(category.id)
-            category_ids.update(get_all_descendant_ids(category))
-        except Category.DoesNotExist:
-            continue
+    # Get valid root categories
+    root_categories = Category.objects.filter(id__in=ids)
+    root_ids = list(root_categories.values_list('id', flat=True))
+    if not root_ids:
+        return queryset.none()
 
-    return queryset.filter(category__id__in=category_ids).distinct()
+    # Collect all relevant category IDs (roots + descendants)
+    all_ids = set(root_ids)
+    current_level_ids = set(root_ids)
+
+    # Breadth-first traversal to get all descendants
+    while current_level_ids:
+        # Get direct children of current level categories
+        children = Category.objects.filter(
+            parent_id__in=current_level_ids
+        ).exclude(id__in=all_ids).values_list('id', flat=True)
+
+        children_ids = set(children)
+        if not children_ids:
+            break
+
+        all_ids.update(children_ids)
+        current_level_ids = children_ids
+
+    # Filter the original queryset
+    return queryset.filter(category__id__in=all_ids).distinct()
 
 
 def top_viewed_filter(queryset, name, value):
