@@ -271,7 +271,9 @@ class RootCategoryListView(generics.ListAPIView):
         categories = cache.get(self.CACHE_KEY)
 
         if not categories:
-            categories = Category.objects.filter(parent=None)
+            categories = Category.objects.annotate(
+                num_children=Count('children')
+            ).filter(num_children=0)
             cache.set(self.CACHE_KEY, categories, self.CACHE_TIMEOUT)
 
         return categories

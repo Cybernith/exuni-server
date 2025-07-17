@@ -93,6 +93,14 @@ def category_tree_filter(queryset, name, value):
     return queryset.filter(category__id__in=all_ids).distinct()
 
 
+def category_in_filter(queryset, name, value):
+    ids = [int(cat_id) for cat_id in value.split(',') if cat_id.strip()]
+    if not ids:
+        return queryset.none()
+
+    return queryset.filter(category__id__in=ids).distinct()
+
+
 def top_viewed_filter(queryset, name, value):
     order_by = '-view_count' if value else 'view_count'
     return queryset.order_out_of_stock_inventory_last(
@@ -159,7 +167,7 @@ class ShopProductSimpleFilter(filters.FilterSet):
         lookup_expr='in'
     )
     category_tree = filters.CharFilter(method=category_tree_filter)
-    category_in = filters.CharFilter(method=category_tree_filter)
+    category_in = filters.CharFilter(method=category_in_filter)
     top_viewed = filters.BooleanFilter(method=top_viewed_filter)
     top_rated = filters.BooleanFilter(method=top_rated_filter)
     top_selling = filters.BooleanFilter(method=top_selling_filter)
