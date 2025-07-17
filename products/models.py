@@ -253,8 +253,10 @@ class Product(BaseModel):
     PENDING = 'pending'
     DRAFT = 'draft'
     PUBLISHED = 'publish'
+    PROCESSING = 'pr'
 
     STATUSES = (
+        (PROCESSING, 'بررسی'),
         (PENDING, 'در انتظار'),
         (DRAFT, 'پیش‌نویس'),
         (PUBLISHED, 'منتشر شده'),
@@ -567,10 +569,6 @@ class Product(BaseModel):
 
     def save(self, *args, **kwargs):
         first_register = not self.id
-        if first_register:
-            self.product_id = self.new_id
-        # if not self.product_id:
-        #     self.product_id = self.new_id
         super().save(*args, **kwargs)
         if first_register:
             self.set_first_inventory()
