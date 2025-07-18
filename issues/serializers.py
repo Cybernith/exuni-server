@@ -6,6 +6,8 @@ from users.serializers import UserSimpleSerializer
 
 
 class IssueCreateSerializer(serializers.ModelSerializer):
+    pic = serializers.ImageField(write_only=True, required=False, source='image')
+
     class Meta:
         model = Issue
         fields = [
@@ -13,7 +15,18 @@ class IssueCreateSerializer(serializers.ModelSerializer):
             'description',
             'issue_type',
             'severity',
+            'pic',
         ]
+
+        def create(self, validated_data):
+            image_data = validated_data.pop('pic', None)
+            issue = Issue.objects.create(**validated_data)
+
+            if image_data:
+                issue.image = image_data
+                issue.save()
+
+            return issue
 
 
 class IssueStatusHistorySerializer(serializers.ModelSerializer):
