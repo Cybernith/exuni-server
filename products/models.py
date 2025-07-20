@@ -303,10 +303,10 @@ class Product(BaseModel):
     shelf_code = models.CharField(max_length=20, null=True, blank=True)
     min_inventory = models.IntegerField(default=0)
 
-    price = DECIMAL(null=True, blank=True)
-    sale_price = DECIMAL(null=True, blank=True)
-    regular_price = DECIMAL(null=True, blank=True)
-    currency_price = DECIMAL(null=True, blank=True)
+    price = models.IntegerField(null=True, blank=True)
+    sale_price = models.IntegerField(null=True, blank=True)
+    regular_price = models.IntegerField(null=True, blank=True)
+    currency_price = models.IntegerField(null=True, blank=True)
 
     shipping_cost = DECIMAL()
     currency = models.ForeignKey(Currency, on_delete=models.SET_NULL, related_name='products', blank=True, null=True)
@@ -362,7 +362,7 @@ class Product(BaseModel):
         price_with_profit = profit_amount + self.base_price
 
         if self.discount_type == self.PERCENT:
-            discount_amount = price_with_profit / 100* self.discount_margin
+            discount_amount = price_with_profit / 100 * self.discount_margin
         else:
             discount_amount = self.discount_margin
 
@@ -747,7 +747,7 @@ class ProductInventoryHistory(models.Model):
 
 class ProductPrice(models.Model):
     product = models.OneToOneField(Product, related_name='current_price', on_delete=models.CASCADE)
-    price = DECIMAL()
+    price = models.IntegerField(blank=True, null=True)
     last_updated = models.DateTimeField(auto_now=True)
 
     def __str__(self):
@@ -802,8 +802,8 @@ class ProductPriceHistory(models.Model):
     )
     product = models.OneToOneField(Product, related_name='price_history', on_delete=models.CASCADE)
     action = models.CharField(max_length=1, choices=ACTION_CHOICES, default=INCREASE)
-    previous_price = DECIMAL()
-    new_price = DECIMAL()
+    previous_price = models.IntegerField(blank=True, null=True)
+    new_price = models.IntegerField(blank=True, null=True)
     changed_at = models.DateTimeField(auto_now=True)
     changed_by = models.ForeignKey('users.User', on_delete=models.SET_NULL, blank=True, null=True)
     note = EXPLANATION()
