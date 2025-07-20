@@ -60,6 +60,7 @@ class ProductStoreInventory(models.Model):
                 )
 
     def handle_inventory_in_store(self, val, user=None):
+        val = int(val)
         if not val >= 0:
             raise ValidationError('increase value most be zero or positive number')
         else:
@@ -109,7 +110,7 @@ class ProductStoreInventoryHistory(models.Model):
     changed_by = models.ForeignKey('users.User', on_delete=models.SET_NULL, blank=True, null=True)
 
     def __str__(self):
-        return f"{self.get_action_display()} موجودی {self.inventory.product}   در {self.inventory.store}"
+        return f"{self.get_action_display()} موجودی {self.inventory.product}   در {self.inventory.store} برابر {self.new_quantity}"
 
 
 class ProductStoreInventoryHandle(models.Model):

@@ -1,5 +1,6 @@
 from rest_framework import generics
 from rest_framework.pagination import LimitOffsetPagination
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
 
 from products.models import Product
 from products.shop.filters import ShopProductSimpleFilter
@@ -8,6 +9,7 @@ from store_handle.serializers import StoreHandlingProductsListSerializers
 
 
 class NoPackingHandleProductSimpleListView(generics.ListAPIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
     serializer_class = AdminProductsListSerializers
     filterset_class = ShopProductSimpleFilter
     pagination_class = LimitOffsetPagination
@@ -17,6 +19,8 @@ class NoPackingHandleProductSimpleListView(generics.ListAPIView):
 
 
 class PackingHandleProductSimpleListView(generics.ListAPIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
     serializer_class = StoreHandlingProductsListSerializers
     filterset_class = ShopProductSimpleFilter
     pagination_class = LimitOffsetPagination

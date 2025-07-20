@@ -1,4 +1,5 @@
 from django.http import Http404
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -13,6 +14,7 @@ from store_handle.serializers import ProductHandleChangeSerializer, ProductPacki
 
 
 class ProductHandleChangeDetailView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request, pk):
         product = get_object_or_404(Product, pk=pk)
@@ -21,9 +23,14 @@ class ProductHandleChangeDetailView(APIView):
         except ProductHandleChange.DoesNotExist:
             result = None
 
+        vars = list(product.variations.all().values('id', 'name', 'sixteen_digit_code', 'picture'))
+
         if result:
             serializer = ProductHandleChangeSerializer(result)
-            return Response(serializer.data, status=status.HTTP_200_OK)
+            data = serializer.data
+            data['variations'] = vars
+            data['type'] = product.product_type
+            return Response(data, status=status.HTTP_200_OK)
         else:
             return Response(
                 {
@@ -34,11 +41,14 @@ class ProductHandleChangeDetailView(APIView):
                     'width': product.width or None,
                     'height': product.height or None,
                     'aisle': product.aisle or None,
+                    'type': product.product_type,
                     'shelf_number': product.shelf_number or None,
+                    'variations': vars,
                 }, status=status.HTTP_200_OK
             )
 
     def post(self, request, pk):
+
         product = get_object_or_404(Product, pk=pk)
         data = request.data
         serializer = ProductHandleChangeSerializer(data=data)
@@ -68,6 +78,7 @@ class ProductHandleChangeDetailView(APIView):
 
 
 class ProductPackingInventoryHandleDetailView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request, pk):
         product = get_object_or_404(Product, pk=pk)
@@ -82,6 +93,23 @@ class ProductPackingInventoryHandleDetailView(APIView):
     def post(self, request, pk):
         product = get_object_or_404(Product, pk=pk)
         data = request.data
+        variations = data['variations']
+        for variation in variations:
+            variation_packing_inventory_handle = ProductPackingInventoryHandle.objects.create(
+                product=Product.objects.get(pk=variation['id']),
+                minimum_inventory=variation['minimum_inventory'],
+                inventory=variation['inventory'],
+                changed_by=get_current_user(),
+            )
+            variation_handle_change = ProductHandleChange.objects.create(
+                product=Product.objects.get(pk=variation['id']),
+                sixteen_digit_code=variation['sixteen_digit_code'],
+                name=variation['name'],
+            )
+            variation_packing_inventory_handle.apply()
+            variation_handle_change.apply()
+
+        del data['variations']
         serializer = ProductPackingInventoryHandleSerializer(data=data)
         if serializer.is_valid():
             serializer.save(changed_by=get_current_user(), product=product)

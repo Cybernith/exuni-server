@@ -52,13 +52,19 @@ class StoreHandlingProductsListSerializers(serializers.ModelSerializer):
         return obj.picture.url if obj.picture else None
 
     def get_packing_inventory(self, obj):
-        return ProductStoreInventory.objects.get(
-            product=obj, store=Store.objects.get(code=Store.PACKING)
-        ).inventory
+        try:
+            return ProductStoreInventory.objects.get(
+                product=obj, store=Store.objects.get(code=Store.PACKING)
+            ).inventory
+        except:
+            return None
 
     def get_minimum_packing_inventory(self, obj):
-        return ProductStoreInventory.objects.get(
-            product=obj, store=Store.objects.get(code=Store.PACKING)
-        ).minimum_inventory
+        try:
+            return ProductStoreInventory.objects.get(
+                product=obj, store=Store.objects.get(code=Store.PACKING)
+            ).minimum_inventory
+        except:
+            return None
 
 
