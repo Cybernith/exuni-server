@@ -40,7 +40,7 @@ class StoreFilter(filters.FilterSet):
         fields = {
             'id': ('exact',),
             'storekeeper': ('exact',),
-            'is_central': ('exact',),
+            'code': ('exact',),
             'name': BASE_FIELD_FILTERS,
             'address': BASE_FIELD_FILTERS,
         }

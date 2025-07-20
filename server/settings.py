@@ -77,6 +77,7 @@ INSTALLED_APPS = [
     'crm.apps.CrmConfig',
     'financial_management',
     'issues',
+    'store_handle',
 
 ]
 

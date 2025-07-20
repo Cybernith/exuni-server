@@ -1,0 +1,10 @@
+from django.contrib import admin
+
+from store_handle.models import ProductStoreInventory, ProductStoreInventoryHistory, ProductStoreInventoryHandle, \
+    ProductPackingInventoryHandle, ProductHandleChange
+
+admin.site.register(ProductStoreInventory)
+admin.site.register(ProductStoreInventoryHistory)
+admin.site.register(ProductStoreInventoryHandle)
+admin.site.register(ProductPackingInventoryHandle)
+admin.site.register(ProductHandleChange)

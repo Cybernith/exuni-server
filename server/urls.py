@@ -53,6 +53,7 @@ urlpatterns = [
     url(r'^finance/', include('financial_management.urls')),
     url(r'^api/', include('shop.shop_api_urls')),
     url(r'^issues/', include('issues.urls')),
+    url(r'^store_handle/', include('store_handle.urls')),
 
     path('admin/', admin.site.urls),
     path('nested_admin/', include('nested_admin.urls')),

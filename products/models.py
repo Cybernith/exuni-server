@@ -334,7 +334,7 @@ class Product(BaseModel):
     product_date = models.DateField(blank=True, null=True)
     expired_date = models.DateField(blank=True, null=True)
 
-    postal_weight = DECIMAL()
+    postal_weight = models.IntegerField(blank=True, null=True)
     length = models.IntegerField(blank=True, null=True)
     width = models.IntegerField(blank=True, null=True)
     height = models.IntegerField(blank=True, null=True)
@@ -345,8 +345,17 @@ class Product(BaseModel):
     category = models.ManyToManyField(Category, related_name='products', blank=True, null=True)
     barcode = models.CharField(max_length=150, blank=True, null=True)
 
+    aisle = models.CharField(max_length=10, null=True)
+    shelf_number = models.CharField(max_length=10, null=True)
+
+    packing_handle_done = models.BooleanField(default=False)
+    store_handle_done = models.BooleanField(default=False)
+
     objects = ProductManager()
 
+    @property
+    def shelf(self):
+        return f"{self.aisle or ''}-{self.shelf_number or ''}"
 
     def set_legend_pricing(self):
         if not self.profit_margin:
@@ -564,7 +573,7 @@ class Product(BaseModel):
                 self.name
             )
         else:
-            return "نام   {} {} کد {}"
+            return self.name
 
 
     def save(self, *args, **kwargs):
@@ -655,9 +664,18 @@ class ProductInventory(models.Model):
     inventory = models.IntegerField(default=0)
     last_updated = models.DateTimeField(auto_now=True)
 
-    def add_to_inventory(self, val):
-        self.inventory += val
+    def handle_inventory(self, val, user):
+        previous_quantity = self.inventory
+        self.inventory = val
         self.save()
+        ProductInventoryHistory.objects.create(
+            inventory=self,
+            action=ProductInventoryHistory.STORE_HANDLE,
+            amount=val,
+            previous_quantity=previous_quantity,
+            new_quantity=self.inventory,
+            changed_by=user
+        )
 
     def reduce_inventory(self, val, user=None):
         if not val > 0:
@@ -701,35 +719,19 @@ class ProductInventory(models.Model):
                 if previous_quantity <= 0 < self.inventory:
                     notify_users_if_in_stock(self.product)
 
-
     def __str__(self):
         return '{} موجودی {}'.format(self.product.name, self.inventory)
-
-    #def set_product_inventory(self):
-    #    self.inventory = self.product.first_inventory
-    #
-    #    entrance_items = StoreReceiptItem.objects.filter(product=self.product).annotate(
-    #        product_count=Sum((F('number_of_box') * F('number_of_products_per_box')), output_field=IntegerField()),
-    #    ).aggregate(
-    #        Sum('product_count'),
-    #    )
-    #
-    #    sale_items = OrderPackageItem.objects.filter(product=self.product).aggregate(
-    #        Sum('quantity'),
-    #    )
-    #
-    #    self.inventory += change_to_num(entrance_items['product_count__sum'])
-    #    self.inventory -= change_to_num(sale_items['quantity__sum'])
-    #    self.save()
 
 
 class ProductInventoryHistory(models.Model):
     INCREASE = 'i'
     DECREASE = 'd'
+    STORE_HANDLE = 's'
 
     ACTION_CHOICES = (
         (INCREASE, 'افزایش'),
         (DECREASE, 'کاهش'),
+        (STORE_HANDLE, 'انبار گردانی'),
     )
 
     inventory = models.ForeignKey(ProductInventory, related_name='history', on_delete=models.CASCADE)

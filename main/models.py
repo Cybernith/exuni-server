@@ -68,11 +68,20 @@ class Business(BaseModel):
 
 
 class Store(BaseModel):
+    CENTRAL = 'central'
+    PACKING = 'packing'
+    OTHER = 'other'
 
+    STORE_TYPES = (
+        (CENTRAL, 'انبار مرکزی '),
+        (PACKING, 'واحد پردازش سفارشات'),
+        (OTHER, 'انبار'),
+    )
+
+    code = models.CharField(max_length=10, choices=STORE_TYPES, default=OTHER)
     name = models.CharField(max_length=150)
     address = models.CharField(max_length=255, blank=True, null=True)
     storekeeper = models.ForeignKey('users.User', on_delete=models.SET_NULL, related_name='stores', blank=True, null=True)
-    is_central = models.BooleanField(default=False)
 
     class Meta(BaseModel.Meta):
         verbose_name = 'Store'
