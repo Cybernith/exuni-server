@@ -1,4 +1,4 @@
-from django.db.models import Q, Count, Avg, FloatField, Sum, When, IntegerField, OuterRef, Subquery
+from django.db.models import Q, Count, Avg, FloatField, Sum, When, IntegerField, OuterRef, Subquery, Case, Max
 from django.db.models.functions import Coalesce, Cast,  Greatest
 
 from helpers.filters import BASE_FIELD_FILTERS
@@ -130,33 +130,12 @@ def search_value_filter(queryset, name, value):
         return queryset
 
     queryset = queryset.exclude(product_type=Product.VARIATION)
-    simple_products = queryset.filter(
-        product_type=Product.SIMPLE
-    ).annotate(
-        total_inventory=F('current_inventory__inventory')
-    )
-
-    products_with_variations = queryset.filter(
-        variations__isnull=False
-    ).annotate(
-        total_inventory=Sum('variations__current_inventory__inventory')
-    )
-
-    combined_ids = list(simple_products.values_list('id', flat=True)) + \
-                   list(products_with_variations.values_list('id', flat=True))
-
-    filtered_queryset = queryset.filter(id__in=combined_ids)
-
-    filtered_queryset = filtered_queryset.filter(
-        Q(product_type__in=Product.SIMPLE, current_inventory__inventory__gte=1) |
-        Q(variations__current_inventory__inventory__gte=1)
-    )
 
     query = value
     query_value = Value(query, output_field=CharField())
     search_query = SearchQuery(query)
 
-    product_queryset = filtered_queryset.annotate(
+    product_queryset = queryset.annotate(
         category_names=StringAgg('category__name', delimiter=' ', distinct=True),
         search_vector=(
                 SearchVector('name', weight='A') +
