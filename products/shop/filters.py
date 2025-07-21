@@ -168,7 +168,9 @@ def search_value_filter(queryset, name, value):
         similarity__gt=0.1
     ).annotate(
         relevance=F('rank') + F('similarity')
-    ).order_by('-relevance', '-similarity', '-rank', '-stock').select_related('brand').prefetch_related('variations')
+    ).order_by(
+        '-relevance', '-similarity', '-rank'
+    ).order_by('-stock').select_related('brand').prefetch_related('variations')
 
     return product_queryset
 
