@@ -136,7 +136,6 @@ def search_value_filter(queryset, name, value):
     search_query = SearchQuery(query)
 
     product_queryset = queryset.annotate(
-        category_names=StringAgg('category__name', delimiter=' ', distinct=True),
         search_vector=(
                 SearchVector('name', weight='A') +
                 SearchVector('sixteen_digit_code', weight='B') +
@@ -152,11 +151,24 @@ def search_value_filter(queryset, name, value):
             F('trigram_sixteen_digit_code') * 2,
             F('trigram_brand'),
         )
+    ).annotate(
+        stock=Case(
+            When(
+                product_type=Product.SIMPLE,
+                then=F('current_inventory__inventory')
+            ),
+            When(
+                product_type=Product.VARIATION,
+                then=Sum('variations__current_inventory__inventory')
+            ),
+            default=Value(0),
+            output_field=FloatField()
+        )
     ).filter(
         similarity__gt=0.1
     ).annotate(
         relevance=F('rank') + F('similarity')
-    ).order_by('-relevance', '-similarity', '-rank').select_related('brand').prefetch_related('variations')
+    ).order_by('-relevance', '-similarity', '-rank', '-stock').select_related('brand').prefetch_related('variations')
 
     return product_queryset
 
