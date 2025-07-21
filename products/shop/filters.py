@@ -1,14 +1,15 @@
 from django.db.models import Q, Count, Avg, FloatField, Sum, When, IntegerField, OuterRef, Subquery
-from django.db.models.functions import Coalesce, Cast
-from sqlparse.sql import Case
+from django.db.models.functions import Coalesce, Cast,  Greatest
 
 from helpers.filters import BASE_FIELD_FILTERS
 from django_filters import rest_framework as filters
 import django_filters
+from django.contrib.postgres.search import SearchQuery, SearchVector, SearchRank
+from django.contrib.postgres.aggregates import StringAgg
 
 
 from django.contrib.postgres.search import TrigramSimilarity
-from django.db.models import Value, CharField, F, Func
+from django.db.models import Value, CharField, F
 
 from products.models import Product, Brand, Category
 
@@ -126,18 +127,38 @@ def top_selling_filter(queryset, name, value):
 
 def search_value_filter(queryset, name, value):
     if not value:
+        print('not', flush=True)
         return queryset
-    search_terms = value.split()
+    print(value, flush=True)
 
-    query = Q()
-    for term in search_terms:
-        query |= Q(name__icontains=term) |\
-                 Q(brand__name__icontains=term) |\
-                 Q(sixteen_digit_code__icontains=term) |\
-                 Q(variation_of__name__icontains=term)
+    query = value
+    query_value = Value(query, output_field=CharField())
+    search_query = SearchQuery(query)
 
-    return queryset.filter(query).distinct()
+    product_queryset = Product.objects.annotate(
+        category_names=StringAgg('category__name', delimiter=' ', distinct=True),
+        search_vector=(
+                SearchVector('name', weight='A') +
+                SearchVector('sixteen_digit_code', weight='B') +
+                SearchVector('brand__name', weight='B')
+        ),
+        rank=SearchRank(F('search_vector'), search_query),
+        trigram_name=TrigramSimilarity('name', query_value),
+        trigram_sixteen_digit_code=TrigramSimilarity('sixteen_digit_code', query_value),
+        trigram_brand=TrigramSimilarity('brand__name', query_value),
+    ).annotate(
+        similarity=Greatest(
+            F('trigram_name') * 2,
+            F('trigram_sixteen_digit_code') * 2,
+            F('trigram_brand'),
+        )
+    ).filter(
+        similarity__gt=0.1
+    ).annotate(
+        relevance=F('rank') + F('similarity')
+    ).order_by('-relevance', '-similarity', '-rank').select_related('brand').prefetch_related('variations')
 
+    return product_queryset
 
 def id_in_filter(queryset, name, value):
     if not value:
