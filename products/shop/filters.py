@@ -173,9 +173,9 @@ def search_value_filter(queryset, name, value):
         '-relevance', '-similarity', '-rank'
     ).select_related('brand').prefetch_related('variations')
 
-    has_stock = product_queryset.exclude(stock__lte=1)
-    no_stock = product_queryset.exclude(stock__lt=1)
-    return chain(has_stock, no_stock)
+    has_stock = product_queryset.exclude(stock__lte=1).annotate(source=Value('1', output_field=CharField()))
+    no_stock = product_queryset.exclude(stock__lt=2).annotate(source=Value('2', output_field=CharField()))
+    return has_stock.union(no_stock).order_by('source')
 
 
 def id_in_filter(queryset, name, value):
