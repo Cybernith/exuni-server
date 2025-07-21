@@ -158,7 +158,7 @@ def search_value_filter(queryset, name, value):
                 then=F('current_inventory__inventory')
             ),
             When(
-                product_type=Product.VARIATION,
+                product_type=Product.VARIABLE,
                 then=Sum('variations__current_inventory__inventory')
             ),
             default=Value(0),
