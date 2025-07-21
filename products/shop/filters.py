@@ -1,12 +1,12 @@
-from django.db.models import Q, Count, Avg, FloatField, Sum, When, IntegerField, OuterRef, Subquery, Case, Max
+from django.db.models import Q, Count, Avg, FloatField, Sum, When, IntegerField, OuterRef, Subquery, Case, Max, QuerySet
 from django.db.models.functions import Coalesce, Cast,  Greatest
 
 from helpers.filters import BASE_FIELD_FILTERS
 from django_filters import rest_framework as filters
 import django_filters
 from django.contrib.postgres.search import SearchQuery, SearchVector, SearchRank
-from django.contrib.postgres.aggregates import StringAgg
-from itertools import chain
+from django.db.models.functions import RowNumber
+from django.db.models.expressions import Window
 
 
 from django.contrib.postgres.search import TrigramSimilarity
@@ -173,9 +173,13 @@ def search_value_filter(queryset, name, value):
         '-relevance', '-similarity', '-rank'
     ).select_related('brand').prefetch_related('variations')
 
-    has_stock = product_queryset.exclude(stock__lte=1).annotate(source=Value('1', output_field=CharField()))
-    no_stock = product_queryset.exclude(stock__lt=2).annotate(source=Value('2', output_field=CharField()))
-    return has_stock.union(no_stock).order_by('source')
+    has_stock = product_queryset.exclude(stock__lte=1)
+    no_stock = product_queryset.exclude(stock__lt=2)
+
+    combined_list = list(has_stock) + list(no_stock)
+    combined_qs = QuerySet(model=Product).filter(pk__in=[obj.pk for obj in combined_list])
+
+    return combined_qs
 
 
 def id_in_filter(queryset, name, value):
