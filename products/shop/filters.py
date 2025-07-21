@@ -127,15 +127,36 @@ def top_selling_filter(queryset, name, value):
 
 def search_value_filter(queryset, name, value):
     if not value:
-        print('not', flush=True)
         return queryset
-    print(value, flush=True)
+
+    queryset = queryset.exclude(product_type=Product.VARIATION)
+    simple_products = queryset.filter(
+        product_type=Product.SIMPLE
+    ).annotate(
+        total_inventory=F('current_inventory__inventory')
+    )
+
+    products_with_variations = queryset.filter(
+        variations__isnull=False
+    ).annotate(
+        total_inventory=Sum('variations__current_inventory__inventory')
+    )
+
+    combined_ids = list(simple_products.values_list('id', flat=True)) + \
+                   list(products_with_variations.values_list('id', flat=True))
+
+    filtered_queryset = queryset.filter(id__in=combined_ids)
+
+    filtered_queryset = filtered_queryset.filter(
+        Q(product_type__in=Product.SIMPLE, current_inventory__inventory__gte=1) |
+        Q(variations__current_inventory__inventory__gte=1)
+    )
 
     query = value
     query_value = Value(query, output_field=CharField())
     search_query = SearchQuery(query)
 
-    product_queryset = Product.objects.exclude(product_type=Product.VARIATION).annotate(
+    product_queryset = filtered_queryset.annotate(
         category_names=StringAgg('category__name', delimiter=' ', distinct=True),
         search_vector=(
                 SearchVector('name', weight='A') +
@@ -159,6 +180,7 @@ def search_value_filter(queryset, name, value):
     ).order_by('-relevance', '-similarity', '-rank').select_related('brand').prefetch_related('variations')
 
     return product_queryset
+
 
 def id_in_filter(queryset, name, value):
     if not value:
