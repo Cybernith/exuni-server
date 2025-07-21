@@ -171,13 +171,22 @@ def search_value_filter(queryset, name, value):
         relevance=F('rank') + F('similarity')
     ).order_by(
         '-relevance', '-similarity', '-rank'
-    ).select_related('brand').prefetch_related('variations')
+    )
 
     has_stock = product_queryset.exclude(stock__lte=1)
     no_stock = product_queryset.exclude(stock__lt=2)
 
     combined_list = list(has_stock) + list(no_stock)
-    combined_qs = QuerySet(model=Product).filter(pk__in=[obj.pk for obj in combined_list])
+    ids_in_order = [obj.pk for obj in combined_list]
+
+    combined_qs = Product.objects.filter(
+        pk__in=ids_in_order
+    ).annotate(
+        custom_order=Case(
+            *[When(pk=pk, then=Value(i)) for i, pk in enumerate(ids_in_order)],
+            output_field=IntegerField()
+        )
+    ).order_by('custom_order')
 
     return combined_qs
 
@@ -187,8 +196,6 @@ def id_in_filter(queryset, name, value):
         return queryset
     search_terms = str(value)
     return queryset.annotate(id_str=Cast('id', output_field=CharField())).filter(id_str__icontains=search_terms)
-
-
 
 
 class ShopProductSimpleFilter(filters.FilterSet):
