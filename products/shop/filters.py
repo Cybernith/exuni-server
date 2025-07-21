@@ -6,6 +6,7 @@ from django_filters import rest_framework as filters
 import django_filters
 from django.contrib.postgres.search import SearchQuery, SearchVector, SearchRank
 from django.contrib.postgres.aggregates import StringAgg
+from itertools import chain
 
 
 from django.contrib.postgres.search import TrigramSimilarity
@@ -170,9 +171,11 @@ def search_value_filter(queryset, name, value):
         relevance=F('rank') + F('similarity')
     ).order_by(
         '-relevance', '-similarity', '-rank'
-    ).order_by('-stock').select_related('brand').prefetch_related('variations')
+    ).select_related('brand').prefetch_related('variations')
 
-    return product_queryset
+    has_stock = product_queryset.exclude(stock__lte=1)
+    no_stock = product_queryset.exclude(stock__lt=1)
+    return chain(has_stock, no_stock)
 
 
 def id_in_filter(queryset, name, value):
