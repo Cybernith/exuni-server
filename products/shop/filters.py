@@ -188,7 +188,7 @@ def search_value_filter(queryset, name, value):
         )
     ).order_by('custom_order')
 
-    return combined_qs
+    return combined_qs.select_related('brand').prefetch_related('variations')
 
 
 def id_in_filter(queryset, name, value):
