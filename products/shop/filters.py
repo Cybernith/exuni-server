@@ -135,7 +135,7 @@ def search_value_filter(queryset, name, value):
     query_value = Value(query, output_field=CharField())
     search_query = SearchQuery(query)
 
-    product_queryset = Product.objects.annotate(
+    product_queryset = Product.objects.exclude(product_type=Product.VARIATION).annotate(
         category_names=StringAgg('category__name', delimiter=' ', distinct=True),
         search_vector=(
                 SearchVector('name', weight='A') +
