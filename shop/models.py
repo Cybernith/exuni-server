@@ -183,6 +183,7 @@ class ShopOrder(BaseModel):
     RETURNS = 're'
     EXPIRED = 'ex'
     CANCELLED = 'ca'
+    EDITED = 'ed'
 
     STATUS_CHOICES = (
         (PENDING, 'در انتظار پرداخت'),
@@ -194,6 +195,7 @@ class ShopOrder(BaseModel):
         (CANCELLED, 'لغو شده'),
         (EXPIRED, 'منقضی  شده'),
         (RETURNS, 'مرجوعی'),
+        (EDITED, 'ویرایش شده'),
     )
     status = FSMField(choices=STATUS_CHOICES, default=PENDING, protected=False)
     customer = models.ForeignKey('users.User', related_name='shop_order', on_delete=models.PROTECT)
@@ -293,6 +295,14 @@ class ShopOrder(BaseModel):
     @transition(field='status', source=PENDING, target=CANCELLED)
     def expired_order(self):
         self.status = self.EXPIRED
+        for item in self.items.all():
+            increase_inventory(item.product.id, item.product_quantity)
+
+        self.save()
+
+    @transition(field='status', source=PENDING, target=EDITED)
+    def edit_order(self):
+        self.status = self.EDITED
         for item in self.items.all():
             increase_inventory(item.product.id, item.product_quantity)
 

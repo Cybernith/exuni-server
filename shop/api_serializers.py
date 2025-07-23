@@ -661,6 +661,7 @@ class ApiProductDetailSerializers(serializers.ModelSerializer):
             'active_discounts',
             'attributes',
             'variation_of_name',
+            'variation_title',
         ]
 
     def get_active_discounts(self, obj):
