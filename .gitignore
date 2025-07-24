@@ -23,7 +23,7 @@ db.sqlite3
 .git.bfg-report
 bfg.jar
 
-
+**.ps1
 tmp_test.py
 venv
 senv

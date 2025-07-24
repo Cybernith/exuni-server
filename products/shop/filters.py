@@ -123,7 +123,7 @@ def product_comments_global_search(queryset, name, value):
 
 
 def top_selling_filter(queryset, name, value):
-    return queryset.filter(id__in=[1748, 2166,  2092, 1934, 1584,  2482, 1550])
+    return queryset.filter(id__in=[6772, 3443, 6739, 3237, 2166,  2386, 1934,3831, 1584,  2482, 1550])
 
 
 def search_value_filter(queryset, name, value):
