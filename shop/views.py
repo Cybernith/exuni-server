@@ -886,12 +886,6 @@ class OrderMoveToCartAPIView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        if hasattr(order, 'bank_payment'):
-            if order.bank_payment.status not in [Payment.EXPIRED, Payment.CANCELLED, Payment.FAILED]:
-                return Response(
-                    {'message': 'لطفا دقایقی تا اعتبار سنجی از بانک صبر کنید'},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
 
         with transaction.atomic():
             order.edit_order()
