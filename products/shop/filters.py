@@ -1,5 +1,5 @@
 from django.db.models import Q, Count, Avg, FloatField, Sum, When, IntegerField, OuterRef, Subquery, Case, Max, QuerySet
-from django.db.models.functions import Coalesce, Cast,  Greatest
+from django.db.models.functions import Coalesce, Cast, Greatest, Length
 
 from helpers.filters import BASE_FIELD_FILTERS
 from django_filters import rest_framework as filters
@@ -198,6 +198,33 @@ def id_in_filter(queryset, name, value):
     return queryset.annotate(id_str=Cast('id', output_field=CharField())).filter(id_str__icontains=search_terms)
 
 
+def sku_filter(queryset, name, value):
+    if not value:
+        return queryset
+    sku = str(value)
+    return queryset.filter(sixteen_digit_code__icontains=sku)
+
+
+def name_search_products(queryset, name, value):
+    query = value
+    query_value = Value(query, output_field=CharField())
+    search_query = SearchQuery(query)
+
+    return queryset.annotate(
+        search_vector=SearchVector('name', weight='A'),
+        rank=SearchRank(F('search_vector'), search_query),
+        trigram_similarity=TrigramSimilarity('name', query_value),
+    ).annotate(
+        relevance=F('rank') + F('trigram_similarity')
+    ).filter(
+        trigram_similarity__gt=0.3
+    ).order_by(
+        '-relevance',
+        '-trigram_similarity',
+        '-rank'
+    )
+
+
 class ShopProductSimpleFilter(filters.FilterSet):
     min_price = django_filters.NumberFilter(field_name='price', lookup_expr='gte')
     max_price = django_filters.NumberFilter(field_name='price', lookup_expr='lte')
@@ -223,13 +250,16 @@ class ShopProductSimpleFilter(filters.FilterSet):
     top_selling = filters.BooleanFilter(method=top_selling_filter)
     global_search = filters.CharFilter(method=product_comments_global_search)
     search_value = filters.CharFilter(method=search_value_filter)
+    name_search = filters.CharFilter(method=name_search_products)
     id_in = filters.NumberFilter(method=id_in_filter)
+    sku = filters.NumberFilter(method=sku_filter)
 
     class Meta:
         model = Product
         fields = {
             'id': ('exact',),
             'name': BASE_FIELD_FILTERS,
+            'sixteen_digit_code': BASE_FIELD_FILTERS,
             'brand': ('exact',),
             'currency': ('exact',),
         }
