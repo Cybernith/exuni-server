@@ -521,29 +521,42 @@ class ShopOrderRegistrationView(APIView):
                 )
 
                 order_items = []
+                inventory_shortage_info = []
+
                 for item in cart_items:
                     product = product_map[item.product.id]
 
                     if product.current_inventory.inventory < item.quantity:
-                        raise ValidationError(f'موجودی کافی برای "{product.name}" وجود ندارد.')
+                        item.quantity = product.current_inventory.inventory
+                        inventory_shortage_info.append(
+                            {'name': product.name, 'quantity': product.current_inventory.inventory}
+                        )
+                    if item.quantity > 0:
+                        order_items.append(ShopOrderItem(
+                            shop_order=shop_order,
+                            product=product,
+                            price=product.last_price,
+                            product_quantity=item.quantity,
+                        ))
 
-                    order_items.append(ShopOrderItem(
-                        shop_order=shop_order,
-                        product=product,
-                        price=product.last_price,
-                        product_quantity=item.quantity,
-                    ))
-
-                    reduce_inventory(product.id, item.quantity)
+                        reduce_inventory(product.id, item.quantity)
 
                 ShopOrderItem.objects.bulk_create(order_items)
 
                 cart_items.delete()
                 shop_order.set_constants()
+                inventory_info = 'ok'
+                if len(inventory_shortage_info) > 0:
+                    product_inventory_shortage_info = ''
+                    for info in inventory_shortage_info:
+                        product_inventory_shortage_info += ' - {} برابر {}'.format(info['name'], info['quantity'])
+                    inventory_info = 'موجودی کالاهای {} می‌باشد. سبد خرید کاربر با توجه به موجودی فعلی، به‌روزرسانی و ویرایش شد.'.format(product_inventory_shortage_info)
 
                 return Response({
                     'message': 'ثبت اولیه سفارش با موفقیت انجام شد',
                     'order_id': shop_order.id,
+                    'inventory_info': inventory_info,
+                    'inventory_shortage_info': inventory_shortage_info,
                     'exuni_tracking_code': shop_order.exuni_tracking_code
                 }, status=status.HTTP_201_CREATED)
 
