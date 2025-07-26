@@ -545,6 +545,7 @@ class ShopOrderRegistrationView(APIView):
 
                 cart_items.delete()
                 shop_order.set_constants()
+                # handle inventory shortage
                 inventory_info = 'ok'
                 if len(inventory_shortage_info) > 0:
                     product_inventory_shortage_info = ''
