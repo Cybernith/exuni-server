@@ -524,7 +524,7 @@ class ShopOrderRegistrationView(APIView):
                 for item in cart_items:
                     product = product_map[item.product.id]
 
-                    if product.inventory < item.quantity:
+                    if product.current_inventory.inventory < item.quantity:
                         raise ValidationError(f'موجودی کافی برای "{product.name}" وجود ندارد.')
 
                     order_items.append(ShopOrderItem(
