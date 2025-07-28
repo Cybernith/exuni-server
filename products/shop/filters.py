@@ -227,16 +227,12 @@ def name_search_products(queryset, name, value):
         ),
         rank=SearchRank(F('search_vector'), search_query),
         trigram_name=TrigramSimilarity('name', query_value),
-    ).annotate(
-        similarity=Greatest(
-            F('trigram_name'),
-        )
     ).filter(
-        similarity__gt=0.2
+        trigram_name__gt=0.2
     ).annotate(
-        relevance=F('rank') + F('similarity')
+        relevance=F('rank') + F('trigram_name')
     ).order_by(
-        '-relevance', '-similarity', '-rank'
+        '-relevance', '-trigram_name', '-rank'
     )
     return product_queryset.distinct()
 
