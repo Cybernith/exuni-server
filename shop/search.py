@@ -1,6 +1,6 @@
 from django.contrib.postgres.aggregates import StringAgg
 from django.contrib.postgres.search import SearchQuery, SearchVector, SearchRank, TrigramSimilarity
-from django.db.models import Value, CharField, F, Func
+from django.db.models import Value, CharField, F, Func, Case, When, FloatField, Sum
 from django.db.models.functions import Greatest
 from rest_framework import status
 from rest_framework.response import Response
@@ -16,16 +16,31 @@ class GlobalAutoCompleteSearchAPIView(APIView):
     throttle_classes = [UserSearchAutoCompleteRateThrottle, AnonSearchAutoCompleteRateThrottle]
 
     def get(self, request):
-        query = request.query_params.get('search_value', '').strip()
+        query = request.query_params.get('search_value', '')
         if len(query) < 3:
             return Response({'result': []}, status=status.HTTP_400_BAD_REQUEST)
 
+        query = query.strip()
         result = []
 
         query_value = Value(query, output_field=CharField())
         search_query = SearchQuery(query)
 
-        product_queryset = Product.objects.annotate(
+        products = Product.objects.exclude(product_type=Product.VARIATION).annotate(
+        stock=Case(
+            When(
+                product_type=Product.SIMPLE,
+                then=F('current_inventory__inventory')
+            ),
+            When(
+                product_type=Product.VARIABLE,
+                then=Sum('variations__current_inventory__inventory')
+            ),
+            default=Value(0),
+            output_field=FloatField()
+        )).exclude(stock__lt=1)
+
+        product_queryset = products.annotate(
             category_names=StringAgg('category__name', delimiter=' ', distinct=True),
             search_vector=(
                     SearchVector('name', weight='A') +
@@ -46,7 +61,7 @@ class GlobalAutoCompleteSearchAPIView(APIView):
                 F('trigram_category')
             )
         ).filter(
-            similarity__gt=0.1
+            similarity__gt=0.2
         ).annotate(
             relevance=F('rank') + F('similarity')
         ).annotate(
@@ -59,7 +74,7 @@ class GlobalAutoCompleteSearchAPIView(APIView):
             )
         ).values(
             'id', 'name', 'type', 'picture_url'
-        ).order_by('-relevance', '-similarity', '-rank')[:5]
+        ).order_by('-relevance', '-similarity', '-rank')[:15]
 
         result.extend(product_queryset)
 

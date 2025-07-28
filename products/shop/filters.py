@@ -103,6 +103,14 @@ def category_in_filter(queryset, name, value):
     return queryset.filter(category__id__in=ids).distinct()
 
 
+def brand_in_filter(queryset, name, value):
+    ids = [int(brand_id) for brand_id in value.split(',') if brand_id.strip()]
+    if not ids:
+        return queryset.none()
+
+    return queryset.filter(brand_id__in=ids).distinct()
+
+
 def top_viewed_filter(queryset, name, value):
     order_by = '-view_count' if value else 'view_count'
     return queryset.order_out_of_stock_inventory_last(
@@ -166,15 +174,15 @@ def search_value_filter(queryset, name, value):
             output_field=FloatField()
         )
     ).filter(
-        similarity__gt=0.1
+        similarity__gt=0.2
     ).annotate(
         relevance=F('rank') + F('similarity')
     ).order_by(
         '-relevance', '-similarity', '-rank'
     )
 
-    has_stock = product_queryset.exclude(stock__lte=1)
-    no_stock = product_queryset.exclude(stock__lt=2)
+    has_stock = product_queryset.exclude(stock__lt=1)
+    no_stock = product_queryset.exclude(stock__gte=1)
 
     combined_list = list(has_stock) + list(no_stock)
     ids_in_order = [obj.pk for obj in combined_list]
@@ -202,27 +210,35 @@ def sku_filter(queryset, name, value):
     if not value:
         return queryset
     sku = str(value)
-    return queryset.filter(sixteen_digit_code__icontains=sku)
+    return queryset.filter(sixteen_digit_code__icontains=sku).distinct()
 
 
 def name_search_products(queryset, name, value):
+    if not value:
+        return queryset
+
     query = value
     query_value = Value(query, output_field=CharField())
     search_query = SearchQuery(query)
 
-    return queryset.annotate(
-        search_vector=SearchVector('name', weight='A'),
+    product_queryset = queryset.annotate(
+        search_vector=(
+                SearchVector('name', weight='A')
+        ),
         rank=SearchRank(F('search_vector'), search_query),
-        trigram_similarity=TrigramSimilarity('name', query_value),
+        trigram_name=TrigramSimilarity('name', query_value),
     ).annotate(
-        relevance=F('rank') + F('trigram_similarity')
+        similarity=Greatest(
+            F('trigram_name'),
+        )
     ).filter(
-        trigram_similarity__gt=0.3
+        similarity__gt=0.2
+    ).annotate(
+        relevance=F('rank') + F('similarity')
     ).order_by(
-        '-relevance',
-        '-trigram_similarity',
-        '-rank'
+        '-relevance', '-similarity', '-rank'
     )
+    return product_queryset.distinct()
 
 
 class ShopProductSimpleFilter(filters.FilterSet):
@@ -230,11 +246,6 @@ class ShopProductSimpleFilter(filters.FilterSet):
     max_price = django_filters.NumberFilter(field_name='price', lookup_expr='lte')
     max_inventory = filters.NumberFilter(method='filter_inventory')
     min_inventory = filters.NumberFilter(method='filter_inventory')
-
-    brand_in = filters.BaseInFilter(
-        field_name='brand__id',
-        lookup_expr='in'
-    )
     currency_in = filters.BaseInFilter(
         field_name='currency__id',
         lookup_expr='in'
@@ -244,6 +255,7 @@ class ShopProductSimpleFilter(filters.FilterSet):
         lookup_expr='in'
     )
     category_tree = filters.CharFilter(method=category_tree_filter)
+    brand_in = filters.CharFilter(method=brand_in_filter)
     category_in = filters.CharFilter(method=category_in_filter)
     top_viewed = filters.BooleanFilter(method=top_viewed_filter)
     top_rated = filters.BooleanFilter(method=top_rated_filter)
