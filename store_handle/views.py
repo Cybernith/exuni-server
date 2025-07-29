@@ -24,7 +24,12 @@ class ProductHandleChangeDetailView(APIView):
             result = None
 
         vars = list(product.variations.all().values('id', 'name', 'sixteen_digit_code', 'picture'))
-
+        for var in vars:
+            inventory = ProductStoreInventory.objects.filter(product_id=var['id'], store=Store.objects.get(code=Store.PACKING))
+            if inventory.exists():
+                inventory = inventory.first()
+                var['inventory'] = inventory.inventory
+                var['minimum_inventory'] = inventory.minimum_inventory
         if result:
             serializer = ProductHandleChangeSerializer(result)
             data = serializer.data
@@ -34,6 +39,7 @@ class ProductHandleChangeDetailView(APIView):
         else:
             return Response(
                 {
+                    'image': product.picture.url if product.picture else None,
                     'sixteen_digit_code': product.sixteen_digit_code or None,
                     'name': product.name,
                     'postal_weight': product.postal_weight or None,
@@ -97,14 +103,15 @@ class ProductPackingInventoryHandleDetailView(APIView):
         for variation in variations:
             variation_packing_inventory_handle = ProductPackingInventoryHandle.objects.create(
                 product=Product.objects.get(pk=variation['id']),
-                minimum_inventory=variation['minimum_inventory'],
-                inventory=variation['inventory'],
+                minimum_inventory=variation.get('minimum_inventory', 0),
+                inventory=variation.get('inventory', 0),
                 changed_by=get_current_user(),
             )
+            var = Product.objects.get(pk=variation['id'])
             variation_handle_change = ProductHandleChange.objects.create(
-                product=Product.objects.get(pk=variation['id']),
-                sixteen_digit_code=variation['sixteen_digit_code'],
-                name=variation['name'],
+                product=var,
+                sixteen_digit_code=variation.get('sixteen_digit_code', var.id),
+                name=variation.get('name'),
             )
             variation_packing_inventory_handle.apply()
             variation_handle_change.apply()

@@ -260,7 +260,7 @@ class ShopProductSimpleFilter(filters.FilterSet):
     search_value = filters.CharFilter(method=search_value_filter)
     name_search = filters.CharFilter(method=name_search_products)
     id_in = filters.NumberFilter(method=id_in_filter)
-    sku = filters.NumberFilter(method=sku_filter)
+    sku = filters.CharFilter(method=sku_filter)
 
     class Meta:
         model = Product
