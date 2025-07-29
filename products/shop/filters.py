@@ -270,6 +270,7 @@ class ShopProductSimpleFilter(filters.FilterSet):
             'sixteen_digit_code': BASE_FIELD_FILTERS,
             'brand': ('exact',),
             'currency': ('exact',),
+            'supplier': ('exact',),
         }
 
     def filter_inventory(self, queryset, name, value):
