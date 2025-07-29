@@ -166,9 +166,16 @@ class ZarinpalCallbackApiView(APIView):
             )
 
             return redirect(f'{FRONT_URL}/payment/fail?orderId={order.id}')
+        # calculate fee
+        amount = round(payment.amount)
+        fee = (amount / 100 * 0.5) + 350
+        if fee > 12350:
+            fee = 12350
+        fee = round(fee)
+        amount += fee
 
         gateway = ZarinpalGateway(
-            amount=payment.amount,
+            amount=amount,
             description=f'تایید پرداخت سفارش {order.id} کاربر {order.customer.mobile_number}',
             callback_url=''
         )
@@ -207,13 +214,6 @@ class ZarinpalCallbackApiView(APIView):
                 wallet.refresh_from_db()
             payment.zarinpal_ref_id = result['data'].get('ref_id')
             payment.card_pan = result['data'].get('card_pan')
-            # calculate fee
-            amount = round(payment.amount)
-            fee = (amount / 100 * 0.5) + 350
-            if fee > 12350:
-                fee = 12350
-            fee = round(fee)
-            amount += fee
 
             payment.fee = fee
             payment.is_verified = True
