@@ -96,17 +96,8 @@ class StartZarinpalPaymentApiView(APIView):
         if request.data.get('use_wallet', False):
             description = f'پرداخت سفارش {order.id} کاربر {order.customer.mobile_number} مبلغ {payment.used_amount_from_wallet} از کیف پول با شناسه {transaction_id} '
 
-
-        amount = round(payment.amount)
-        fee = (amount / 100 * 0.5) + 350
-        if fee > 12350:
-            fee = 12350
-        fee = round(fee)
-        amount += fee
-
-        request.data.get('use_wallet', False)
         gateway = ZarinpalGateway(
-            amount=amount,
+            amount=payment.payable_amount,
             mobile=payment.shop_order.customer.mobile_number,
             payment_id=order.id,
             description=description,
@@ -125,7 +116,7 @@ class StartZarinpalPaymentApiView(APIView):
                 ip_address=self.kwargs.get("ip"),
                 user_agent=self.kwargs.get("agent"),
                 extra_info={
-                    "amount": str(payment.amount),
+                    "amount": str(payment.payable_amount),
                     "authority": result['authority'],
                     "order": str(order.id),
                     "used_from_wallet": str(payment.used_amount_from_wallet),
@@ -159,23 +150,16 @@ class ZarinpalCallbackApiView(APIView):
                 ip_address=self.kwargs.get("ip"),
                 user_agent=self.kwargs.get("agent"),
                 extra_info={
-                    "amount": str(payment.amount),
+                    "amount": str(payment.payable_amount),
                     "order": str(order.id),
                     "authority": payment.reference_id,
                 }
             )
 
             return redirect(f'{FRONT_URL}/payment/fail?orderId={order.id}')
-        # calculate fee
-        amount = round(payment.amount)
-        fee = (amount / 100 * 0.5) + 350
-        if fee > 12350:
-            fee = 12350
-        fee = round(fee)
-        amount += fee
 
         gateway = ZarinpalGateway(
-            amount=amount,
+            amount=payment.payable_amount,
             description=f'تایید پرداخت سفارش {order.id} کاربر {order.customer.mobile_number}',
             callback_url=''
         )
@@ -214,8 +198,6 @@ class ZarinpalCallbackApiView(APIView):
                 wallet.refresh_from_db()
             payment.zarinpal_ref_id = result['data'].get('ref_id')
             payment.card_pan = result['data'].get('card_pan')
-
-            payment.fee = fee
             payment.is_verified = True
             payment.save()
             payment.mark_as_success_payment(user=payment.user)
@@ -227,7 +209,7 @@ class ZarinpalCallbackApiView(APIView):
                 ip_address=self.kwargs.get("ip"),
                 user_agent=self.kwargs.get("agent"),
                 extra_info={
-                    "amount": str(payment.amount),
+                    "amount": str(payment.payable_amount),
                     "order": str(order.id),
                     "authority": payment.reference_id,
                 }
@@ -250,7 +232,7 @@ class ZarinpalCallbackApiView(APIView):
                 ip_address=self.kwargs.get("ip"),
                 user_agent=self.kwargs.get("agent"),
                 extra_info={
-                    "amount": str(payment.amount),
+                    "amount": str(payment.payable_amount),
                     "order": str(order.id),
                     "authority": payment.reference_id,
                     "verify": False,

@@ -394,11 +394,12 @@ class ShopOrder(BaseModel):
         gateway_amount = final_price - used_from_wallet
 
         if gateway_amount > 0:
+            fee = (round(gateway_amount) / 100 * 0.5) + 350
             if hasattr(self, 'bank_payment'):
                 payment = self.bank_payment
                 assert not payment.status == 'su'
-
-                payment.amount = gateway_amount
+                payment.amount = round(gateway_amount)
+                payment.fee = fee
                 payment.used_amount_from_wallet = used_from_wallet
                 payment.status = Payment.INITIATED
                 payment.transaction_id = transaction_id
@@ -409,6 +410,7 @@ class ShopOrder(BaseModel):
                     shop_order=self,
                     user=self.customer,
                     amount=gateway_amount,
+                    fee=fee,
                     used_amount_from_wallet=used_from_wallet,
                     gateway='zarinpal',
                     status=Payment.INITIATED,
@@ -442,11 +444,15 @@ class ShopOrder(BaseModel):
                     self.bank_payment.mark_as_pending(user=self.customer)
                     return self.bank_payment
         except:
+            amount = round(self.final_amount)
+            fee = (amount / 100 * 0.5) + 350
+
             payment = Payment.objects.create(
                 shop_order=self,
                 user=self.customer,
                 type=Payment.FOR_SHOP_ORDER,
-                amount=self.final_amount,
+                amount=amount,
+                fee=fee,
                 gateway='zarinpal',
                 status=Payment.INITIATED,
                 created_at=timezone.now()
@@ -455,7 +461,6 @@ class ShopOrder(BaseModel):
             payment.mark_as_pending(user=self.customer)
             self.save()
             return payment
-
 
     def __str__(self):
         return "سفارش {} {}".format(self.exuni_tracking_code, self.customer.name)

@@ -256,6 +256,10 @@ class Payment(models.Model):
         self.save()
         print(f'{user} payment expired')
 
+    @property
+    def payable_amount(self):
+        return round(self.amount or 0) + round(self.fee or 0)
+
 
 class AffiliateOrderPayment(models.Model):
     payment = models.ForeignKey(Payment, on_delete=models.CASCADE, related_name='affiliate_orders')

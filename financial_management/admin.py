@@ -219,6 +219,7 @@ class PaymentAdmin(admin.ModelAdmin):
         'user',
         'business',
         'payment_amount',
+        'fee',
         'gateway_amount',
         'transaction_id',
         'used_amount_from_wallet',
@@ -287,7 +288,7 @@ class PaymentAdmin(admin.ModelAdmin):
 
     def gateway_amount(self, obj):
         if obj.fee:
-            return add_separator(obj.amount + Decimal(obj.fee / 10))
+            return add_separator(obj.payable_amount)
 
     get_status_display.short_description = 'Status'
 
