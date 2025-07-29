@@ -31,6 +31,7 @@ class StoreHandlingProductsListSerializers(serializers.ModelSerializer):
     image = serializers.SerializerMethodField()
     packing_inventory = serializers.SerializerMethodField()
     minimum_packing_inventory = serializers.SerializerMethodField()
+    is_variable = serializers.SerializerMethodField()
     variations = AdminVariationSerializer(many=True, read_only=True)
 
     class Meta:
@@ -44,9 +45,13 @@ class StoreHandlingProductsListSerializers(serializers.ModelSerializer):
             'minimum_packing_inventory',
             'packing_inventory',
             'aisle',
+            'is_variable',
             'shelf_number',
 
         ]
+
+    def get_is_variable(self, obj):
+        return obj.product_type == Product.VARIABLE
 
     def get_image(self, obj):
         return obj.picture.url if obj.picture else None
