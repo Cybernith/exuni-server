@@ -96,9 +96,17 @@ class StartZarinpalPaymentApiView(APIView):
         if request.data.get('use_wallet', False):
             description = f'پرداخت سفارش {order.id} کاربر {order.customer.mobile_number} مبلغ {payment.used_amount_from_wallet} از کیف پول با شناسه {transaction_id} '
 
+
+        amount = payment.amount
+        fee = (amount / 100 * 0.5) + 350
+        if fee > 12350:
+            fee = 12350
+        fee = round(fee)
+        amount += fee
+
         request.data.get('use_wallet', False)
         gateway = ZarinpalGateway(
-            amount=payment.amount,
+            amount=amount,
             mobile=payment.shop_order.customer.mobile_number,
             payment_id=order.id,
             description=description,
@@ -199,7 +207,15 @@ class ZarinpalCallbackApiView(APIView):
                 wallet.refresh_from_db()
             payment.zarinpal_ref_id = result['data'].get('ref_id')
             payment.card_pan = result['data'].get('card_pan')
-            payment.fee = result['data'].get('fee')
+            # calculate fee
+            amount = payment.amount
+            fee = (amount / 100 * 0.5) + 350
+            if fee > 12350:
+                fee = 12350
+            fee = round(fee)
+            amount += fee
+
+            payment.fee = fee
             payment.is_verified = True
             payment.save()
             payment.mark_as_success_payment(user=payment.user)
