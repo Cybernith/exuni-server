@@ -97,7 +97,7 @@ class StartZarinpalPaymentApiView(APIView):
             description = f'پرداخت سفارش {order.id} کاربر {order.customer.mobile_number} مبلغ {payment.used_amount_from_wallet} از کیف پول با شناسه {transaction_id} '
 
 
-        amount = payment.amount
+        amount = round(payment.amount)
         fee = (amount / 100 * 0.5) + 350
         if fee > 12350:
             fee = 12350
@@ -208,7 +208,7 @@ class ZarinpalCallbackApiView(APIView):
             payment.zarinpal_ref_id = result['data'].get('ref_id')
             payment.card_pan = result['data'].get('card_pan')
             # calculate fee
-            amount = payment.amount
+            amount = round(payment.amount)
             fee = (amount / 100 * 0.5) + 350
             if fee > 12350:
                 fee = 12350
