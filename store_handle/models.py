@@ -200,6 +200,7 @@ class ProductHandleChange(models.Model):
     height = models.FloatField(blank=True, null=True)
     aisle = models.CharField(max_length=10, null=True)
     shelf_number = models.CharField(max_length=10, null=True)
+    expired_date = models.DateField(blank=True, null=True)
     timestamp = models.DateTimeField(auto_now=True)
     changed_by = models.ForeignKey('users.User', on_delete=models.SET_NULL, blank=True, null=True)
     is_applied = models.BooleanField(default=False)
@@ -224,6 +225,8 @@ class ProductHandleChange(models.Model):
             product.aisle = self.aisle
         if self.shelf_number:
             product.shelf_number = self.shelf_number
+        if self.expired_date:
+            product.expired_date = self.expired_date
         product.save()
         self.is_applied = True
         self.save()

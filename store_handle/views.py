@@ -23,7 +23,7 @@ class ProductHandleChangeDetailView(APIView):
         except ProductHandleChange.DoesNotExist:
             result = None
 
-        vars = list(product.variations.all().values('id', 'name', 'sixteen_digit_code', 'picture',
+        vars = list(product.variations.all().values('id', 'name', 'sixteen_digit_code', 'picture', 'expired_date',
                                                     'postal_weight', 'length', 'width', 'height', 'shelf_number', 'aisle')
                     )
         for var in vars:
@@ -51,6 +51,7 @@ class ProductHandleChangeDetailView(APIView):
                     'aisle': product.aisle or None,
                     'type': product.product_type,
                     'shelf_number': product.shelf_number or None,
+                    'expired_date': product.expired_date or None,
                     'variations': vars,
                 }, status=status.HTTP_200_OK
             )
@@ -120,6 +121,7 @@ class ProductPackingInventoryHandleDetailView(APIView):
                 height=variation.get('height'),
                 width=variation.get('width'),
                 length=variation.get('length'),
+                expired_date=variation.get('expired_date'),
                 postal_weight=variation.get('postal_weight'),
             )
             variation_packing_inventory_handle.apply()
