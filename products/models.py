@@ -334,10 +334,10 @@ class Product(BaseModel):
     product_date = models.DateField(blank=True, null=True)
     expired_date = models.DateField(blank=True, null=True)
 
-    postal_weight = models.IntegerField(blank=True, null=True)
-    length = models.IntegerField(blank=True, null=True)
-    width = models.IntegerField(blank=True, null=True)
-    height = models.IntegerField(blank=True, null=True)
+    postal_weight = models.FloatField(blank=True, null=True)
+    length = models.FloatField(blank=True, null=True)
+    width = models.FloatField(blank=True, null=True)
+    height = models.FloatField(blank=True, null=True)
 
     avails = models.ManyToManyField(Avail, related_name="products_with_this_avail", blank=True)
     properties = models.ManyToManyField(ProductProperty, related_name="products_with_this_properties", blank=True)
