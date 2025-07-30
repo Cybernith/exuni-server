@@ -23,7 +23,9 @@ class ProductHandleChangeDetailView(APIView):
         except ProductHandleChange.DoesNotExist:
             result = None
 
-        vars = list(product.variations.all().values('id', 'name', 'sixteen_digit_code', 'picture'))
+        vars = list(product.variations.all().values('id', 'name', 'sixteen_digit_code', 'picture',
+                                                    'postal_weight', 'length', 'width', 'height', 'shelf_number', 'aisle')
+                    )
         for var in vars:
             inventory = ProductStoreInventory.objects.filter(product_id=var['id'], store=Store.objects.get(code=Store.PACKING))
             if inventory.exists():
@@ -108,10 +110,17 @@ class ProductPackingInventoryHandleDetailView(APIView):
                 changed_by=get_current_user(),
             )
             var = Product.objects.get(pk=variation['id'])
+
             variation_handle_change = ProductHandleChange.objects.create(
                 product=var,
                 sixteen_digit_code=variation.get('sixteen_digit_code', var.id),
                 name=variation.get('name'),
+                shelf_number=variation.get('shelf_number'),
+                aisle=variation.get('aisle'),
+                height=variation.get('height'),
+                width=variation.get('width'),
+                length=variation.get('length'),
+                postal_weight=variation.get('postal_weight'),
             )
             variation_packing_inventory_handle.apply()
             variation_handle_change.apply()
