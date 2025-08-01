@@ -120,14 +120,6 @@ class AdminCreateProductSerializer(serializers.ModelSerializer):
         }
 
 
-    def validate(self, data):
-        if 'price' in data and 'regular_price' in data:
-            if data['price'] > data['regular_price']:
-                raise serializers.ValidationError(
-                    {'price': 'Sale price cannot be higher than regular price'}
-                )
-
-        return data
 
     def create(self, validated_data):
         legend_pricing = validated_data.pop('legend_pricing', False)
@@ -139,11 +131,8 @@ class AdminCreateProductSerializer(serializers.ModelSerializer):
         validated_data['first_inventory'] = new_inventory
         images_data = validated_data.pop('images', [])
         category_ids = validated_data.pop('category_ids', [])
-        # Create the product
         product = Product.objects.create(**validated_data)
 
-        if variations_data:
-            self.handle_variations(product, variations_data[0])
 
 
         if category_ids:
@@ -159,6 +148,11 @@ class AdminCreateProductSerializer(serializers.ModelSerializer):
 
         if legend_pricing and product.product_type != 'variable':
             product.set_legend_pricing()
+
+        if variations_data:
+
+            self.handle_variations(product, variations_data[0])
+
         return product
 
     def update(self, instance, validated_data):
@@ -185,8 +179,6 @@ class AdminCreateProductSerializer(serializers.ModelSerializer):
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
 
-        if variations_data is not None:
-            self.handle_variations(instance, variations_data[0])
 
         if category_ids:
             categories = Category.objects.filter(id__in=category_ids)
@@ -211,8 +203,12 @@ class AdminCreateProductSerializer(serializers.ModelSerializer):
 
         instance.save()
         instance.variations.all().update(currency=instance.currency, brand=instance.brand)
+
         if legend_pricing and instance.product_type != 'variable':
             instance.set_legend_pricing()
+
+        if variations_data is not None:
+            self.handle_variations(instance, variations_data[0])
 
         return instance
 
@@ -241,7 +237,7 @@ class AdminCreateProductSerializer(serializers.ModelSerializer):
                         # ProductGallery.objects.create(product=variation.variation_of, picture=pic)
 
                 variation.save()
-
+                variation.update(currency=product.currency, brand=product.brand)
                 new_inventory = variation_data.pop('new_inventory', 0)
                 current_inventory = variation.current_inventory
                 if new_inventory != current_inventory.inventory:
@@ -281,6 +277,8 @@ class AdminCreateProductSerializer(serializers.ModelSerializer):
                 serializer = AdminVariationSerializer(data=variation_data)
                 if serializer.is_valid():
                     serializer.save()
+                    serializer.instance.update(currency=product.currency, brand=product.brand)
+
                     received_ids.add(serializer.instance.id)
                     if file_key != 'remove':
                         request = self.context.get('request')

@@ -310,6 +310,7 @@ class Product(BaseModel):
 
     shipping_cost = DECIMAL()
     currency = models.ForeignKey(Currency, on_delete=models.SET_NULL, related_name='products', blank=True, null=True)
+    current_currency_rate = models.FloatField(default=1)
 
     profit_type = models.CharField(choices=PROFIT_TYPES, default=PERCENT, max_length=10)
     profit_margin = IntegerField(null=True, blank=True)
@@ -317,7 +318,7 @@ class Product(BaseModel):
     discount_type = models.CharField(choices=PROFIT_TYPES, default=PERCENT, max_length=10)
     discount_margin = IntegerField(default=0)
 
-    base_price = IntegerField(null=True, blank=True)
+    base_price = models.FloatField(null=True, blank=True)
     profit_amount = IntegerField(null=True, blank=True)
     discount_amount = IntegerField(null=True, blank=True)
 
@@ -331,8 +332,8 @@ class Product(BaseModel):
     summary_explanation = models.TextField(blank=True, null=True)
     how_to_use = models.TextField(blank=True, null=True)
 
-    product_date = models.DateField(blank=True, null=True)
-    expired_date = models.DateField(blank=True, null=True)
+    product_date = models.CharField(max_length=255, blank=True, null=True)
+    expired_date = models.CharField(max_length=255, blank=True, null=True)
 
     postal_weight = models.FloatField(blank=True, null=True)
     length = models.FloatField(blank=True, null=True)
@@ -358,17 +359,27 @@ class Product(BaseModel):
         return f"{self.aisle or ''}-{self.shelf_number or ''}"
 
     def set_legend_pricing(self):
-        if not self.profit_margin:
-            raise ValidationError('مقدار حاشیه سود موجود نیست')
+        print('legend ', self.name, flush=True)
         if not self.base_price:
             raise ValidationError('قیمت پایه موجود نیست')
 
+        currency_rate = 1
+        if self.currency:
+            currency_rate = round(self.currency.exchange_rate_to_toman)
+        elif self.variation_of:
+            if self.variation_of.currency:
+                currency_rate = round(self.variation_of.currency.exchange_rate_to_toman, 4)
+
+        if not self.profit_margin:
+            self.profit_margin = 0
+
+        base_price_with_rate = self.base_price * currency_rate
         if self.profit_type == self.PERCENT:
-            profit_amount = self.base_price / 100 * self.profit_margin
+            profit_amount = base_price_with_rate / 100 * self.profit_margin
         else:
             profit_amount = self.profit_margin
 
-        price_with_profit = profit_amount + self.base_price
+        price_with_profit = profit_amount + base_price_with_rate
 
         if self.discount_type == self.PERCENT:
             discount_amount = price_with_profit / 100 * self.discount_margin
@@ -377,11 +388,17 @@ class Product(BaseModel):
 
         final_amount = price_with_profit - discount_amount
 
+        self.current_currency_rate = currency_rate
         self.regular_price = price_with_profit
         self.price = final_amount
         self.profit_amount = profit_amount
         self.discount_amount = discount_amount
         self.save()
+        if hasattr(self, 'current_price'):
+            self.current_price.change_price(final_amount)
+        else:
+            ProductPrice.objects.create(product=self, price=final_amount)
+
 
 
     @property
@@ -426,10 +443,7 @@ class Product(BaseModel):
 
     @property
     def is_expired_closed(self):
-        if self.expired_date:
-            return self.expired_date.__le__(datetime.date.today() - relativedelta(months=2))
-        else:
-            return False
+        return False
 
     @property
     def content_production_completed(self):
@@ -793,6 +807,28 @@ class ProductPrice(models.Model):
                 note=note
             )
 
+    def change_price(self, val, user=None, note=''):
+        with transaction.atomic():
+            now = datetime.datetime.now()
+            previous_price = self.price
+            new_price = val
+            self.last_updated = now
+            self.price = new_price
+            self.save()
+            change_type = ProductPriceHistory.INCREASE
+            if val < previous_price:
+                change_type = ProductPriceHistory.DECREASE
+
+            ProductPriceHistory.objects.create(
+                product=self.product,
+                action=change_type,
+                previous_price=previous_price,
+                new_price=new_price,
+                changed_by=user,
+                changed_at=now,
+                note=note
+            )
+
 
 class ProductPriceHistory(models.Model):
     INCREASE = 'i'
@@ -802,7 +838,7 @@ class ProductPriceHistory(models.Model):
         (INCREASE, 'افزایش'),
         (DECREASE, 'کاهش'),
     )
-    product = models.OneToOneField(Product, related_name='price_history', on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, related_name='price_history', on_delete=models.CASCADE)
     action = models.CharField(max_length=1, choices=ACTION_CHOICES, default=INCREASE)
     previous_price = models.IntegerField(blank=True, null=True)
     new_price = models.IntegerField(blank=True, null=True)

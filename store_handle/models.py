@@ -200,7 +200,7 @@ class ProductHandleChange(models.Model):
     height = models.FloatField(blank=True, null=True)
     aisle = models.CharField(max_length=10, null=True)
     shelf_number = models.CharField(max_length=10, null=True)
-    expired_date = models.DateField(blank=True, null=True)
+    expired_date = models.CharField(max_length=255, blank=True, null=True)
     timestamp = models.DateTimeField(auto_now=True)
     changed_by = models.ForeignKey('users.User', on_delete=models.SET_NULL, blank=True, null=True)
     is_applied = models.BooleanField(default=False)
