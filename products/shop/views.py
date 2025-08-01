@@ -3,6 +3,7 @@ from django.core.cache import cache
 from django.db.models import Q, Count, F, Prefetch
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, status, viewsets
+from rest_framework.exceptions import ValidationError
 from rest_framework.pagination import LimitOffsetPagination, PageNumberPagination
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
@@ -88,6 +89,8 @@ class ShopProductDetailView(generics.RetrieveAPIView):
 
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
+        if instance.status != Product.PUBLISHED:
+            raise ValidationError('محصول در انتظار تایید است')
         serializer = self.get_serializer(instance)
         save_product_view_log(request=request, product=instance)
         return Response(serializer.data)

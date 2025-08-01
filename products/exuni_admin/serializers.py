@@ -236,8 +236,9 @@ class AdminCreateProductSerializer(serializers.ModelSerializer):
                         variation.save()
                     elif file_key != 'same':
                         request = self.context.get('request')
-                        variation.picture = request.FILES[file_key]
-                        ProductGallery.objects.create(product=variation.variation_of, picture=request.FILES[file_key])
+                        pic = request.FILES.get(file_key)
+                        variation.picture = pic
+                        # ProductGallery.objects.create(product=variation.variation_of, picture=pic)
 
                 variation.save()
 
@@ -283,9 +284,10 @@ class AdminCreateProductSerializer(serializers.ModelSerializer):
                     received_ids.add(serializer.instance.id)
                     if file_key != 'remove':
                         request = self.context.get('request')
-                        serializer.instance.picture = request.FILES[file_key]
-                        ProductGallery.objects.create(product=serializer.instance.variation_of,
-                                                      picture=request.FILES[file_key])
+                        pic = request.FILES.get(file_key)
+                        serializer.instance.picture = pic
+                        #ProductGallery.objects.create(product=serializer.instance.variation_of,
+                        #                              picture=pic)
                     serializer.instance.currency = serializer.instance.variation_of.currency
                     serializer.instance.brand = serializer.instance.variation_of.brand
                     serializer.instance.save()
