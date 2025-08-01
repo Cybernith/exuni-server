@@ -223,7 +223,6 @@ class AdminCreateProductSerializer(serializers.ModelSerializer):
 
         for variation_data in variations_data:
             legend = variation_data.pop('legend_pricing', False)
-            print('legend', legend, flush=True)
 
             variation_id = variation_data.get('id')
 
@@ -238,6 +237,8 @@ class AdminCreateProductSerializer(serializers.ModelSerializer):
                     elif file_key != 'same':
                         request = self.context.get('request')
                         variation.picture = request.FILES[file_key]
+                        ProductGallery.objects.create(product=variation.variation_of, picture=request.FILES[file_key])
+
                 variation.save()
 
                 new_inventory = variation_data.pop('new_inventory', 0)
@@ -283,6 +284,8 @@ class AdminCreateProductSerializer(serializers.ModelSerializer):
                     if file_key != 'remove':
                         request = self.context.get('request')
                         serializer.instance.picture = request.FILES[file_key]
+                        ProductGallery.objects.create(product=serializer.instance.variation_of,
+                                                      picture=request.FILES[file_key])
                     serializer.instance.currency = serializer.instance.variation_of.currency
                     serializer.instance.brand = serializer.instance.variation_of.brand
                     serializer.instance.save()
