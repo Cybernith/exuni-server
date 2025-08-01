@@ -548,6 +548,9 @@ class Comment(BaseModel):
             ('deleteOwn.comment', 'حذف کامنت های خود'),
         )
 
+    def __str__(self):
+        return " {} {}".format(self.customer.username, self.text)
+
 
 class Rate(BaseModel):
     ONE_STAR = 1
