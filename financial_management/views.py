@@ -416,9 +416,12 @@ class StartZarinpalWalletTopUPApiView(APIView):
             return Response({'message': 'amount should be positive'},
                             status=status.HTTP_400_BAD_REQUEST)
         transaction_id = generate_top_up_wallet_code_with_mobile(user.mobile_number)
+        fee = (round(top_up_amount) / 100 * 0.5) + 350
+
         payment = Payment.objects.create(
             user=user,
             amount=top_up_amount,
+            fee=fee,
             gateway='zarinpal',
             status=Payment.INITIATED,
             type=Payment.FOR_TOP_UP_WALLET,
@@ -429,7 +432,7 @@ class StartZarinpalWalletTopUPApiView(APIView):
 
         callback_url = SERVER_URL + reverse('financial_management:zarinpal_top_up_wallet_callback')
         gateway = ZarinpalGateway(
-            amount=top_up_amount,
+            amount=payment.payable_amount,
             description=f'شارژ کیف پول {user.mobile_number}',
             mobile=user.mobile_number,
             payment_id=transaction_id,
@@ -485,7 +488,7 @@ class ZarinpalTopUpWalletCallbackApiView(APIView):
             return redirect(f'{FRONT_URL}/payment/fail?top_up_wallet=true&amount={payment.amount}')
 
         gateway = ZarinpalGateway(
-            amount=payment.amount,
+            amount=payment.payable_amount,
             description=f'شارژ کیف پول {payment.user}',
             callback_url=''
         )
@@ -501,7 +504,6 @@ class ZarinpalTopUpWalletCallbackApiView(APIView):
         if result.get('data') and result['data'].get('code') in [100, 101]:
             payment.zarinpal_ref_id = result['data'].get('ref_id')
             payment.card_pan = result['data'].get('card_pan')
-            payment.fee = result['data'].get('fee')
             payment.save()
             payment.mark_as_success_payment(user=payment.user)
             FinancialLogger.log(
@@ -511,7 +513,7 @@ class ZarinpalTopUpWalletCallbackApiView(APIView):
                 payment=payment,
                 ip_address=request.META.get('REMOTE_ADDR'),
                 user_agent=request.META.get('HTTP_USER_AGENT'),
-                extra_info={"amount": str(payment.amount)}
+                extra_info={"amount": str(payment.payable_amount)}
             )
 
             service = WalletTopUpService(
@@ -549,7 +551,7 @@ class ZarinpalTopUpWalletCallbackApiView(APIView):
 
 
 class WalletBalanceSumAPIView(APIView):
-    permission_classes = [IsAdminUser]  # Remove or change if needed
+    permission_classes = [IsAdminUser]
 
     def get(self, request):
         total_balance = Wallet.objects.all().aggregate(total=Sum('balance'))['total'] or 0
