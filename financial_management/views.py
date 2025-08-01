@@ -136,9 +136,9 @@ class ZarinpalCallbackApiView(APIView):
         authority = request.query_params.get('Authority')
         callback_status = request.query_params.get('Status')
         payment = get_object_or_404(Payment, reference_id=authority)
-        order = payment.shop_order
         payment.callback_called = True
         payment.save()
+        order = payment.shop_order
 
         if callback_status != 'OK':
             payment.mark_as_failed_payment(user=payment.user)
@@ -157,6 +157,20 @@ class ZarinpalCallbackApiView(APIView):
             )
 
             return redirect(f'{FRONT_URL}/payment/fail?orderId={order.id}')
+        FinancialLogger.log(
+            user=payment.user,
+            action=AuditAction.MANUAL_ADJUSTMENT,
+            severity=AuditSeverity.INFO,
+            payment=payment,
+            ip_address=self.kwargs.get("ip"),
+            user_agent=self.kwargs.get("agent"),
+            extra_info={
+                "amount": str(payment.payable_amount),
+                "order": str(order.id),
+                "authority": payment.reference_id,
+                "info": 'callback called',
+            }
+        )
 
         gateway = ZarinpalGateway(
             amount=payment.payable_amount,
