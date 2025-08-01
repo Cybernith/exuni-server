@@ -210,9 +210,14 @@ def sku_filter(queryset, name, value):
     if not value:
         return queryset
     sku = str(value)
-    return queryset.filter(
-        Q(sixteen_digit_code__icontains=sku) | Q(variations__sixteen_digit_code__icontains=sku)
+    result = queryset.filter(
+        Q(sixteen_digit_code__iendswith=sku) | Q(variations__sixteen_digit_code__iendswith=sku)
     ).distinct()
+    if not result.count() > 0:
+        result = queryset.filter(
+            Q(sixteen_digit_code__icontains=sku) | Q(variations__sixteen_digit_code__icontains=sku)
+        ).distinct()
+    return result
 
 
 def name_search_products(queryset, name, value):
