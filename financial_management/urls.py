@@ -1,5 +1,6 @@
 from django.conf.urls import url
 
+from financial_management.software_development_profit.views import SoftwareDevelopmentProfitReport
 from financial_management.views import StartZarinpalPaymentApiView, ZarinpalCallbackApiView, StartPaymentApiView, \
     PaymentCallbackApiView, VerifyDiscountCodeView, StartZarinpalWalletTopUPApiView, ZarinpalTopUpWalletCallbackApiView, \
     DiscountCheckAPIView, WalletBalanceSumAPIView
@@ -21,4 +22,5 @@ urlpatterns = [
     url(r'discountCheck$', DiscountCheckAPIView.as_view(), name='discountCheck'),
     url(r'activeDiscount$', ActiveDiscountsAPIView.as_view(), name='discountCheck'),
     url(r'walletsBalanceSum$', WalletBalanceSumAPIView.as_view(), name='walletsBalanceSum'),
+    url(r'softwareDevelopmentProfit$', SoftwareDevelopmentProfitReport.as_view(), name='softwareDevelopmentProfit'),
 ]
