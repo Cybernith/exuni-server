@@ -374,7 +374,7 @@ class ShopOrder(BaseModel):
     @property
     def final_amount(self):
         return max(
-            (self.total_price - self.total_discount) - self.get_discount_code_amount() + self.post_price, Decimal(0)
+            round(round(self.total_price) - round(self.total_discount)) - round(self.get_discount_code_amount()) + round(self.post_price), 0
         )
 
     def create_exuni_tracking_code(self):
@@ -440,9 +440,9 @@ class ShopOrder(BaseModel):
 
         try:
             if self.bank_payment and self.bank_payment.status != 'su':
-                    self.save()
-                    self.bank_payment.mark_as_pending(user=self.customer)
-                    return self.bank_payment
+                self.save()
+                self.bank_payment.mark_as_pending(user=self.customer)
+                return self.bank_payment
         except:
             amount = round(self.final_amount)
             fee = (amount / 100 * 0.5) + 350
