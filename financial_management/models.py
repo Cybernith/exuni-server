@@ -294,7 +294,7 @@ class AuditSeverity(models.TextChoices):
 
 
 class FinancialAuditLog(models.Model):
-    user = models.ForeignKey('users.User', on_delete=models.SET_NULL, null=True, related_name='pay_logs')
+    user = models.ForeignKey('users.User', on_delete=models.SET_NULL, null=True, blank=True, related_name='pay_logs')
     receiver = models.ForeignKey('users.User', on_delete=models.SET_NULL, null=True, related_name='receive_logs')
     transaction = models.ForeignKey(Transaction, on_delete=models.SET_NULL, null=True, blank=True)
     payment = models.ForeignKey(Payment, on_delete=models.SET_NULL, null=True, blank=True)
