@@ -401,9 +401,10 @@ class LogMobileNumberExactFilter(admin.SimpleListFilter):
 @admin.register(FinancialAuditLog)
 class FinancialAuditLogAdmin(admin.ModelAdmin):
     def amount(self, obj):
-        if obj.extra_info:
+        try:
             return obj.extra_info['amount']
-        return "-"
+        except ValueError:
+            return "-"
 
     list_display = (
         'get_jalali_created_at',
