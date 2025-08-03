@@ -394,7 +394,10 @@ class ShopOrder(BaseModel):
         gateway_amount = final_price - used_from_wallet
 
         if gateway_amount > 0:
-            fee = (round(gateway_amount) / 100 * 0.5) + 350
+            fee = round(round(gateway_amount) / 100 * 0.5) + 350
+            if fee > 12350:
+                fee = 12350
+
             if hasattr(self, 'bank_payment'):
                 payment = self.bank_payment
                 assert not payment.status == 'su'
@@ -445,7 +448,9 @@ class ShopOrder(BaseModel):
                 return self.bank_payment
         except:
             amount = round(self.final_amount)
-            fee = (amount / 100 * 0.5) + 350
+            fee = round(amount / 100 * 0.5) + 350
+            if fee > 12350:
+                fee = 12350
 
             payment = Payment.objects.create(
                 shop_order=self,
