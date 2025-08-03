@@ -403,7 +403,7 @@ class FinancialAuditLogAdmin(admin.ModelAdmin):
     def amount(self, obj):
         try:
             return obj.extra_info['amount']
-        except ValueError:
+        except KeyError:
             return "-"
 
     list_display = (
