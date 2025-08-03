@@ -458,6 +458,8 @@ class StartZarinpalWalletTopUPApiView(APIView):
                             status=status.HTTP_400_BAD_REQUEST)
         transaction_id = generate_top_up_wallet_code_with_mobile(user.mobile_number)
         fee = (int(top_up_amount) / 100 * 0.5) + 350
+        if fee > 12350:
+            fee = 12350
 
         payment = Payment.objects.create(
             user=user,

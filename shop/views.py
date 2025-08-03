@@ -572,7 +572,9 @@ class CustomerOrdersView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        orders = ShopOrder.objects.filter(customer=get_current_user())
+        orders = ShopOrder.objects.filter(customer=get_current_user()).select_related(
+            'shipment_address'
+        ).prefetch_related('items', 'history', 'bank_payment')
         serializers = ApiOrderListSerializer(orders, many=True)
         return Response(serializers.data, status=status.HTTP_200_OK)
 
