@@ -258,7 +258,7 @@ class Payment(models.Model):
 
     @property
     def payable_amount(self):
-        return round(self.amount or 0) + round(self.fee or 0)
+        return int(self.amount or 0) + int(self.fee or 0)
 
 
 class AffiliateOrderPayment(models.Model):

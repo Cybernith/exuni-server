@@ -508,6 +508,17 @@ class ZarinpalTopUpWalletCallbackApiView(APIView):
     def get(self, request):
         authority = request.query_params.get('Authority')
         callback_status = request.query_params.get('Status')
+        FinancialLogger.log(
+            user=None,
+            action=AuditAction.MANUAL_ADJUSTMENT,
+            severity=AuditSeverity.INFO,
+            ip_address=self.kwargs.get("ip"),
+            user_agent=self.kwargs.get("agent"),
+            extra_info={
+                "authority": authority,
+                "info": 'top up callback called',
+            }
+        )
 
         payment = get_object_or_404(Payment, reference_id=authority)
 
