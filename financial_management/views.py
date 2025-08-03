@@ -147,11 +147,26 @@ class ZarinpalCallbackApiView(APIView):
         )
 
         callback_status = request.query_params.get('Status')
-        payment = get_object_or_404(Payment, reference_id=authority)
-        payment.callback_called = True
-        payment.save()
-        order = payment.shop_order
+        try:
+            payment = get_object_or_404(Payment, reference_id=authority)
+            payment.callback_called = True
+            payment.save()
+            order = payment.shop_order
 
+        except Exception as e:
+            FinancialLogger.log(
+                user=None,
+                action=AuditAction.MANUAL_ADJUSTMENT,
+                severity=AuditSeverity.WARNING,
+                ip_address=self.kwargs.get("ip"),
+                user_agent=self.kwargs.get("agent"),
+                extra_info={
+                    "authority": authority,
+                    "info": 'error {}'.format(str(e)),
+                }
+            )
+        payment = get_object_or_404(Payment, reference_id=authority)
+        order = payment.shop_order
         if callback_status != 'OK':
             payment.mark_as_failed_payment(user=payment.user)
             FinancialLogger.log(
