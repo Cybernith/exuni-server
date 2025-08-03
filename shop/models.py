@@ -374,7 +374,7 @@ class ShopOrder(BaseModel):
     @property
     def final_amount(self):
         return max(
-            round(round(self.total_price) - round(self.total_discount)) - round(self.get_discount_code_amount()) + round(self.post_price), 0
+            int(int(self.total_price) - int(self.total_discount)) - int(self.get_discount_code_amount()) + int(self.post_price), 0
         )
 
     def create_exuni_tracking_code(self):
@@ -389,19 +389,19 @@ class ShopOrder(BaseModel):
         wallet = self.customer.exuni_wallet
 
         wallet_amount = wallet.balance
-        used_from_wallet = min(round(wallet_amount), round(final_price))
+        used_from_wallet = min(int(wallet_amount), int(final_price))
 
-        gateway_amount = round(final_price) - used_from_wallet
+        gateway_amount = int(final_price) - used_from_wallet
 
         if gateway_amount > 0:
-            fee = round(round(gateway_amount) / 100 * 0.5) + 350
+            fee = int(int(gateway_amount) / 100 * 0.5) + 350
             if fee > 12350:
                 fee = 12350
 
             if hasattr(self, 'bank_payment'):
                 payment = self.bank_payment
                 assert not payment.status == 'su'
-                payment.amount = round(gateway_amount)
+                payment.amount = int(gateway_amount)
                 payment.fee = fee
                 payment.used_amount_from_wallet = used_from_wallet
                 payment.status = Payment.INITIATED
@@ -447,8 +447,8 @@ class ShopOrder(BaseModel):
                 self.bank_payment.mark_as_pending(user=self.customer)
                 return self.bank_payment
         except:
-            amount = round(self.final_amount)
-            fee = round(amount / 100 * 0.5) + 350
+            amount = int(self.final_amount)
+            fee = int(amount / 100 * 0.5) + 350
             if fee > 12350:
                 fee = 12350
 
