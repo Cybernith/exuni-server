@@ -389,9 +389,9 @@ class ShopOrder(BaseModel):
         wallet = self.customer.exuni_wallet
 
         wallet_amount = wallet.balance
-        used_from_wallet = min(wallet_amount, final_price)
+        used_from_wallet = min(round(wallet_amount), round(final_price))
 
-        gateway_amount = final_price - used_from_wallet
+        gateway_amount = round(final_price) - used_from_wallet
 
         if gateway_amount > 0:
             fee = round(round(gateway_amount) / 100 * 0.5) + 350
