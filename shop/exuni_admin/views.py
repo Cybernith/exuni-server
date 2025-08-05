@@ -63,7 +63,7 @@ class BulkChangeStatusToProcessingView(APIView):
             filters &= Q(id=order_id)
 
         if is_printed != 'all':
-            filters &= Q(is_printed=is_printed)
+            filters &= Q(is_printed=is_printed != 'false')
 
         if date:
             try:
@@ -132,9 +132,10 @@ class BulkChangeStatusToShippedView(APIView):
         from_id = request.data.get('from_id')
         is_printed = request.data.get('is_printed', 'all')
         order_id = request.data.get('id')
+        packager = request.data.get('packager')
         date = request.data.get('date')
 
-        filters = Q(status=ShopOrder.PAID)
+        filters = Q(status__in=[ShopOrder.PAID, ShopOrder.PROCESSING])
 
         if to_id and from_id:
             filters &= Q(id__lte=to_id) & Q(id__gte=from_id)
@@ -142,8 +143,11 @@ class BulkChangeStatusToShippedView(APIView):
         if order_id:
             filters &= Q(id=order_id)
 
+        if packager:
+            filters &= Q(packager__id=packager)
+
         if is_printed != 'all':
-            filters &= Q(is_printed=is_printed)
+            filters &= Q(is_printed=is_printed != 'false')
 
         if date:
             try:
