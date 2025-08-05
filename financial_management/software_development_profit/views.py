@@ -40,7 +40,7 @@ class SoftwareDevelopmentProfitReport(APIView):
             filtered_qs = filtered_qs.filter(date_time__date__lte=to_date)
 
         orders = filtered_qs.prefetch_related('items')
-        order_qs = order_qs.prefetch_related('items')
+        order_qs = order_qs.prefetch_related('items').select_related('product', 'product__currency')
 
         paginator = LimitOffsetPagination()
         paginated_orders = paginator.paginate_queryset(orders, request)

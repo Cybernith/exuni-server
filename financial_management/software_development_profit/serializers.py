@@ -1,4 +1,4 @@
-from django.db.models import Sum, ExpressionWrapper, F, DecimalField
+from django.db.models import Sum, ExpressionWrapper, F, DecimalField, Q
 from rest_framework.fields import FloatField
 
 from helpers.models import DECIMAL
@@ -19,8 +19,7 @@ class SoftwareDevelopmentShopOrderSimpleSerializer(serializers.ModelSerializer):
 
     def get_amount_sum(self, obj):
         currency_ids = [14, 15, 17]
-        #filtered_items = obj.items.filter(product__currency_id__in=currency_ids)
-        filtered_items = obj.items.all()
+        filtered_items = obj.items.filter(Q(product__currency_id__in=currency_ids) | Q(product__currency__isnull=True))
         return filtered_items.aggregate(
             total=Sum(
                 ExpressionWrapper(
