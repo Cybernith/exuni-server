@@ -215,8 +215,20 @@ class ShopOrder(BaseModel):
     discount_amount = DECIMAL(default=0)
 
     total_discount = DECIMAL(default=0)
+
     is_printed = models.BooleanField(default=False)
     print_by = models.ForeignKey('users.User', related_name='prints', on_delete=models.SET_NULL, blank=True, null=True)
+
+    packager = models.ForeignKey(
+        'users.User',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='packaged_orders',
+        limit_choices_to={'is_staff': True},
+        verbose_name="ادمین بسته‌بند"
+    )
+    packaged_at = models.DateTimeField(null=True, blank=True)
 
     objects = ShopOrderManager()
 
@@ -266,6 +278,7 @@ class ShopOrder(BaseModel):
 
     @transition(field='status', source=PAID, target=PROCESSING)
     def process_order(self, user=None):
+        self.packager = user
         self.status = self.PROCESSING
         self.save()
 

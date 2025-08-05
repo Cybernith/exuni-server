@@ -118,6 +118,38 @@ class ToIdFilter(filters.NumberFilter):
             return qs.filter(id__lte=value)
         return qs
 
+class FromIdFilter(filters.NumberFilter):
+
+    def filter(self, qs, value):
+        if value:
+            return qs.filter(id__gte=value)
+        return qs
+
+
+class JalaliDateFilter(filters.CharFilter):
+    def filter(self, qs, value):
+        if value:
+            try:
+                parts = value.split('-')
+                if len(parts) != 3:
+                    return qs.none()
+
+                j_date = jdatetime.date(
+                    year=int(parts[0]),
+                    month=int(parts[1]),
+                    day=int(parts[2])
+                )
+
+                g_date = j_date.togregorian()
+
+                return qs.filter(date_time__date=g_date)
+
+            except Exception as e:
+                return qs.none()
+
+        return qs
+
+
 class AdminShopOrderFilter(filters.FilterSet):
     status_contains = ShopOrderStatusFilter()
     customer_contains = CustomerFilter()
@@ -126,6 +158,9 @@ class AdminShopOrderFilter(filters.FilterSet):
     shipment_contains = SmartShipmentCityFilter()
     search_value = SmartValueOrderFilter()
     to_id = ToIdFilter()
+    from_id = FromIdFilter()
+    date = JalaliDateFilter()
+
     date_from = django_filters.DateFilter(
         field_name='date_time', lookup_expr='date__gte'
     )

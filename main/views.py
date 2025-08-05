@@ -315,7 +315,7 @@ class PackingAdminApiView(APIView):
     permission_basename = 'user'
 
     def get(self, request):
-        query = User.objects.filter(user_type=User.PACKING_ADMIN)
+        query = User.objects.filter(user_type__in=[User.PACKING_ADMIN, User.STORE_KEEPER])
         serializers = UserSimpleSerializer(query, many=True, context={'request': request})
         return Response(serializers.data, status=status.HTTP_200_OK)
 

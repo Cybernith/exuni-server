@@ -10,6 +10,7 @@ from django.http import HttpResponse
 from shop.exuni_admin.views import AdminShopOrderListView, AdminProcessingShopOrderListView, AdminPaidShopOrderListView
 
 from shop.models import ShopOrder
+from users.models import User
 
 
 class ShopOrderListExportView(AdminShopOrderListView, BaseExportView):
@@ -243,12 +244,18 @@ class AdminOrdersExportView(AdminPaidShopOrderListView, BaseExportView):
         return self.export(request, export_type, *args, **kwargs)
 
     def get_context_data(self, user, print_document=False, **kwargs):
+        admin = self.request.GET.get('admin')
+        if not admin:
+            raise Exception('admin needed')
+        packing_admin = User.objects.get(id=admin)
         qs = self.get_queryset()
         context = {
             'forms': qs,
             'user': user,
+            'packing_admin': packing_admin.name,
             'print_document': print_document
         }
+        qs.update(packager=packing_admin)
 
         template_prefix = self.get_template_prefix()
         context['form_content_template'] = 'export/admin_orders.html'.format(template_prefix)

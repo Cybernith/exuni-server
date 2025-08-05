@@ -1,3 +1,4 @@
+import jdatetime
 from django.db.models import Q, Sum, F, ExpressionWrapper
 from django.http import Http404
 from rest_framework import generics, status
@@ -47,21 +48,44 @@ class BulkChangeStatusToProcessingView(APIView):
     permission_codename = "update.shop_order"
 
     def post(self, request):
-        order_ids = request.data.get('order_ids', [])
-        if not isinstance(order_ids, list):
-            return Response({'error': 'سفارش ها باید لیستی از شناسه‌ها باشد.'}, status=400)
+        to_id = request.data.get('to_id')
+        from_id = request.data.get('from_id')
+        is_printed = request.data.get('is_printed', 'all')
+        order_id = request.data.get('id')
+        date = request.data.get('date')
 
-        orders = ShopOrder.objects.filter(id__in=order_ids, status=ShopOrder.PAID)
-        updated_count = 0
+        filters = Q(status=ShopOrder.PAID)
 
-        for order in orders:
-            order.status = ShopOrder.PROCESSING
-            order.save()
-            updated_count += 1
+        if to_id and from_id:
+            filters &= Q(id__lte=to_id) & Q(id__gte=from_id)
+
+        if order_id:
+            filters &= Q(id=order_id)
+
+        if is_printed != 'all':
+            filters &= Q(is_printed=is_printed)
+
+        if date:
+            try:
+                parts = date.split('-')
+                if len(parts) == 3:
+                    j_date = jdatetime.date(
+                        year=int(parts[0]),
+                        month=int(parts[1]),
+                        day=int(parts[2])
+                    )
+                    g_date = j_date.togregorian()
+                    filters &= Q(date_time__date=g_date)
+            except Exception:
+                pass
+
+        orders = ShopOrder.objects.filter(filters)
+        updated_count = orders.update(status=ShopOrder.PROCESSING)
+
         return Response({
-            'message': f'{updated_count} سفارش به وضعیت درحال بسته‌بندی تغییر کرد.',
-            'updated_ids': [order.id for order in orders]
+            'message': f'{updated_count} سفارش به وضعیت در حال بسته بندی تغییر کرد.'
         }, status=200)
+
 
 
 class AdminProcessingShopOrderListView(generics.ListAPIView):
@@ -104,11 +128,42 @@ class BulkChangeStatusToShippedView(APIView):
     permission_codename = "update.shop_order"
 
     def post(self, request):
-        to_id = request.data.get('to_id', 1)
-        ShopOrder.objects.filter(Q(status=ShopOrder.PAID) & Q(id__lte=to_id)).update(status=ShopOrder.SHIPPED)
+        to_id = request.data.get('to_id')
+        from_id = request.data.get('from_id')
+        is_printed = request.data.get('is_printed', 'all')
+        order_id = request.data.get('id')
+        date = request.data.get('date')
+
+        filters = Q(status=ShopOrder.PAID)
+
+        if to_id and from_id:
+            filters &= Q(id__lte=to_id) & Q(id__gte=from_id)
+
+        if order_id:
+            filters &= Q(id=order_id)
+
+        if is_printed != 'all':
+            filters &= Q(is_printed=is_printed)
+
+        if date:
+            try:
+                parts = date.split('-')
+                if len(parts) == 3:
+                    j_date = jdatetime.date(
+                        year=int(parts[0]),
+                        month=int(parts[1]),
+                        day=int(parts[2])
+                    )
+                    g_date = j_date.togregorian()
+                    filters &= Q(date_time__date=g_date)
+            except Exception:
+                pass
+
+        orders = ShopOrder.objects.filter(filters)
+        updated_count = orders.update(status=ShopOrder.SHIPPED)
 
         return Response({
-            'message': 'به وضعیت ارسال شد تغییر کرد.',
+            'message': f'{updated_count} سفارش به وضعیت ارسال شد تغییر کرد.'
         }, status=200)
 
 

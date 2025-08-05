@@ -18,6 +18,7 @@ class AdminShopOrderSimpleSerializer(serializers.ModelSerializer):
     final_amount = serializers.ReadOnlyField()
     payment_display = serializers.ReadOnlyField()
     printed_user = serializers.CharField(source='print_by.username', read_only=True)
+    packager_name = serializers.CharField(source='packager.name', read_only=True)
 
     class Meta:
         model = ShopOrder

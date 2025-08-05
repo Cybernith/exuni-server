@@ -89,6 +89,7 @@ class ShopOrderAdmin(admin.ModelAdmin):
         'post_price',
         'final_amount_display',
         'get_jalali_date_time',
+        'packager',
         'is_sent',
     )
 

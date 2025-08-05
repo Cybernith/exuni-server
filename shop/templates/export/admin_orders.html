@@ -11,8 +11,12 @@
                     {% include right_header_template with form=form %}
                 {% endif %}
                 <div>
-                    <span style=" font-size: x-small" class="font-weight-bold">ردیف چاپ: </span>
-                    <span dir="ltr" style=" font-size: x-small">{{ forloop.counter }} </span>
+                    <span style=" font-size: x-small" >مسئول بسته‌بندی: </span>
+                    <span dir="ltr" style="font-weight: bold; font-size: small">{{ packing_admin }} </span>
+                </div>
+                <div>
+                    <span style=" font-size: x-small" >ردیف چاپ: </span>
+                    <span dir="ltr" style="font-weight: bold; font-size: small"> {{ forloop.counter|add:"700" }} </span>
                 </div>
 
             </div>
@@ -77,7 +81,7 @@
                 </td>
                 <td>
                     <span style="font-size: x-small;" class="font-weight-bold">کد پستی : </span>
-                    <span style="font-size: x-small;"> {{ form.shipment_address.zip_code }}</span>
+                    <span style="font-size: x-small;"> {{ form.shipment_address.zip_code | default:'-'}}</span>
                 </td>
             </tr>
             <tr>
@@ -85,8 +89,8 @@
                     <span style="font-size: x-small;" class="font-weight-bold"> آدرس : </span>
                     <span style="font-size: x-small;">
                     {{ form.shipment_address.address }} -
-                    {{ form.shipment_address.house_number }} -
-                    {{ form.shipment_address.house_unit }}
+                    {{ form.shipment_address.house_number | default:'' }}
+                    {{ form.shipment_address.house_unit | default:'' }}
                 </span>
                 </td>
             </tr>
@@ -272,8 +276,12 @@
                     {% include right_header_template with form=form %}
                 {% endif %}
                 <div>
-                    <span style=" font-size: x-small" class="font-weight-bold">ردیف چاپ: </span>
-                    <span dir="ltr" style=" font-size: x-small">{{ forloop.counter }} </span>
+                    <span style=" font-size: x-small" >مسئول بسته‌بندی: </span>
+                    <span dir="ltr" style="font-weight: bold; font-size: small">{{ packing_admin }} </span>
+                </div>
+                <div>
+                    <span style=" font-size: x-small" >ردیف چاپ: </span>
+                    <span dir="ltr" style="font-weight: bold; font-size: small"> {{ forloop.counter|add:"700" }} </span>
                 </div>
 
             </div>
@@ -361,6 +369,9 @@
             <thead>
             <tr>
                 <td colspan="2" style="font-size: x-large; padding-right: 10px;">
+                    <span style="font-size: x-large; font-weight: bold;">شناسه پستی:</span>
+                    <span style="font-size: x-large;">{{ form.id }}</span>
+                    <br>
                     <span style="font-size: x-large; font-weight: bold;">نام:</span>
                     <span style="font-size: x-large;">{{ form.shipment_address.first_name }} {{ form.shipment_address.last_name }}</span>
                     <br>
@@ -368,15 +379,15 @@
                     <span style="font-size: x-large;">{{ form.customer.mobile_number }}</span> <br>
 
                     <span style="font-size: x-large; font-weight: bold;">کد پستی:</span>
-                    <span style="font-size: x-large;">{{ form.shipment_address.zip_code }}</span> <br>
+                    <span style="font-size: x-large;">{{ form.shipment_address.zip_code |default:"-"}}</span> <br>
 
                     <span style="font-size: x-large; font-weight: bold;">آدرس:</span>
                     <span style="font-size: x-large;">ایران،
                     {{ form.shipment_address.state }}،
                     {{ form.shipment_address.city }}،
-                    {{ form.shipment_address.address }} -
-                    {{ form.shipment_address.house_number }} -
-                    {{ form.shipment_address.house_unit }}
+                    {{ form.shipment_address.address }}
+                    {{ form.shipment_address.house_number |default:""}}
+                    {{ form.shipment_address.house_unit |default:""}}
 
                     </span>
                 </td>
