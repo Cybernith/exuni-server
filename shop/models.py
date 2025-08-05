@@ -297,6 +297,22 @@ class ShopOrder(BaseModel):
         self.status = self.EXPIRED
         for item in self.items.all():
             increase_inventory(item.product.id, item.product_quantity)
+            with transaction.atomic():
+                cart_item, created = Cart.objects.get_or_create(
+                    customer=self.customer,
+                    product=item.product,
+                    defaults={'quantity': item.product_quantity}
+                )
+                if not created:
+                    cart_item.quantity += item.product_quantity
+                    cart_item.save()
+
+            try:
+                payment = self.bank_payment
+            except:
+                payment = None
+            if payment and payment.status in [Payment.INITIATED, Payment.PENDING]:
+                payment.mark_as_expired_payment()
 
         self.save()
 

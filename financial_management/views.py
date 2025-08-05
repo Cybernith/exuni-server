@@ -57,6 +57,8 @@ class StartZarinpalPaymentApiView(APIView):
     def post(self, request, order_id):
 
         order = get_object_or_404(ShopOrder, id=order_id, customer=get_current_user())
+        if order.status == ShopOrder.EXPIRED:
+            return Response({'message': 'سفارش منقضی شده و آیتم ها به سبد خرید انتقال پیدا کرد'}, status=status.HTTP_400_BAD_REQUEST)
 
         payment = getattr(order, 'bank_payment', None)
         if payment and payment.status == 'su':

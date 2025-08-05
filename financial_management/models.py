@@ -250,7 +250,7 @@ class Payment(models.Model):
         self.save()
         print(f'{user} payment failed')
 
-    @transition(field='status', source=PENDING, target=EXPIRED)
+    @transition(field='status', source=[PENDING, INITIATED], target=EXPIRED)
     def mark_as_expired_payment(self, user=None):
         self.status = self.EXPIRED
         self.save()
