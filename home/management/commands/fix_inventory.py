@@ -14,7 +14,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         with db_transaction.atomic():
             ProductInventory.objects.all().update(inventory=0)
-            packing_inventories = ProductStoreInventory.objects.select_related('product').filter(store_id=3)
+            packing_inventories = ProductStoreInventory.objects.select_related('product').filter(store_id=1)
             product_inventories = {
                 inv.product_id: inv for inv in ProductInventory.objects.select_related('product').all()
             }
