@@ -252,22 +252,9 @@ class AdminOrdersExportView(AdminPaidShopOrderListView, BaseExportView):
         context = {
             'forms': qs,
             'user': user,
-            'packing_admin': packing_admin.name,
+            'packing_admin': packing_admin.first_name,
             'print_document': print_document
         }
-        for form in context['forms']:
-            form.sorted_items_list = sorted(
-                form.items.all(),
-                key=lambda item: (
-                    int(item.product.shelf.split('-')[0].strip()) if item.product.shelf and
-                                                                     item.product.shelf.split('-')[
-                                                                         0].strip().isdigit() else float('inf'),
-                    int(item.product.shelf.split('-')[1].strip()) if item.product.shelf and len(
-                        item.product.shelf.split('-')) > 1 and item.product.shelf.split('-')[
-                                                                         1].strip().isdigit() else float('inf')
-                )
-            )
-
         qs.update(packager=packing_admin)
 
         template_prefix = self.get_template_prefix()

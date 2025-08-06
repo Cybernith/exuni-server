@@ -11,11 +11,11 @@
                     {% include right_header_template with form=form %}
                 {% endif %}
                 <div>
-                    <span style=" font-size: x-small" >مسئول بسته‌بندی: </span>
+                    <span style=" font-size: x-small">مسئول بسته‌بندی: </span>
                     <span dir="ltr" style="font-weight: bold; font-size: small">{{ packing_admin }} </span>
                 </div>
                 <div>
-                    <span style=" font-size: x-small" >ردیف چاپ: </span>
+                    <span style=" font-size: x-small">ردیف چاپ: </span>
                     <span dir="ltr" style="font-weight: bold; font-size: small"> {{ forloop.counter|add:"700" }} </span>
                 </div>
 
@@ -81,7 +81,7 @@
                 </td>
                 <td>
                     <span style="font-size: x-small;" class="font-weight-bold">کد پستی : </span>
-                    <span style="font-size: x-small;"> {{ form.shipment_address.zip_code | default:'-'}}</span>
+                    <span style="font-size: x-small;"> {{ form.shipment_address.zip_code | default:'-' }}</span>
                 </td>
             </tr>
             <tr>
@@ -105,8 +105,15 @@
             <thead>
             <tr>
                 <th class="text-center" width="20">
-                    <span style="font-size: xx-small;">ردیف</span>
+                    <span style="font-size: xx-small;">ترتیب</span>
                 </th>
+                <th class="text-center" width="20">
+                    <span style="font-size: x-small">ستون</span>
+                </th>
+                <th class="text-center" width="20">
+                    <span style="font-size: x-small">ردیف</span>
+                </th>
+
                 <th class="text-center" width="80">
                     <span style="font-size: x-small">شناسه کالا</span>
                 </th>
@@ -125,9 +132,6 @@
                 <th class="text-center">
                     <span style="font-size: x-small">مبلغ کل</span>
                 </th>
-                <th class="text-center" width="70">
-                    <span style="font-size: x-small" >قفسه</span>
-                </th>
 
             </tr>
             </thead>
@@ -137,6 +141,17 @@
                     <td class="text-center" width="20">
                         <span style="font-size: xx-small">{{ forloop.counter }}</span>
                     </td>
+                    <td class="text-center">
+                        <span style="font-size: small">
+                            {{ item.product.shelf_number }}
+                        </span>
+                    </td>
+                    <td class="text-center">
+                        <span style="font-size: small">
+                            {{ item.product.aisle }}
+                        </span>
+                    </td>
+
                     <td class="text-center">
                     <span style="font-weight: bold ">
                         {{ item.product.sixteen_digit_code  | default:'-' }}
@@ -181,15 +196,10 @@
                             {{ item.price_sum | money }}
                         </span>
                     </td>
-                    <td class="text-center">
-                        <span style="font-size: small">
-                            {{ item.product.shelf }}
-                        </span>
-                    </td>
                 </tr>
             {% endfor %}
             <tr>
-                <td colspan="3" rowspan="4" class="text-center">
+                <td colspan="5" rowspan=4 class="text-center">
                     <p style="font-size: x-small; font-weight: bold">تعداد مدل محصول در سفارش : </p>
                     <span style="font-size: small" class="mr-2">
                         {{ form.items.count | money }}
@@ -285,11 +295,11 @@
                     {% include right_header_template with form=form %}
                 {% endif %}
                 <div>
-                    <span style=" font-size: x-small" >مسئول بسته‌بندی: </span>
+                    <span style=" font-size: x-small">مسئول بسته‌بندی: </span>
                     <span dir="ltr" style="font-weight: bold; font-size: small">{{ packing_admin }} </span>
                 </div>
                 <div>
-                    <span style=" font-size: x-small" >ردیف چاپ: </span>
+                    <span style=" font-size: x-small">ردیف چاپ: </span>
                     <span dir="ltr" style="font-weight: bold; font-size: small"> {{ forloop.counter|add:"700" }} </span>
                 </div>
 
@@ -388,15 +398,15 @@
                     <span style="font-size: x-large;">{{ form.customer.mobile_number }}</span> <br>
 
                     <span style="font-size: x-large; font-weight: bold;">کد پستی:</span>
-                    <span style="font-size: x-large;">{{ form.shipment_address.zip_code |default:"-"}}</span> <br>
+                    <span style="font-size: x-large;">{{ form.shipment_address.zip_code |default:"-" }}</span> <br>
 
                     <span style="font-size: x-large; font-weight: bold;">آدرس:</span>
                     <span style="font-size: x-large;">ایران،
                     {{ form.shipment_address.state }}،
                     {{ form.shipment_address.city }}،
                     {{ form.shipment_address.address }}
-                    {{ form.shipment_address.house_number |default:""}}
-                    {{ form.shipment_address.house_unit |default:""}}
+                    {{ form.shipment_address.house_number |default:"" }}
+                    {{ form.shipment_address.house_unit |default:"" }}
 
                     </span>
                 </td>
