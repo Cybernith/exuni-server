@@ -1,7 +1,10 @@
 from django.core.management import BaseCommand
 from django.db import transaction as db_transaction
+from django.db.models import Q, Prefetch
 
 from products.models import ProductInventory, ProductInventoryHistory
+from shop.helpers import reduce_inventory
+from shop.models import ShopOrder, ShopOrderItem
 from store_handle.models import ProductStoreInventory
 
 
@@ -45,6 +48,12 @@ class Command(BaseCommand):
             ProductInventory.objects.bulk_update(updated_inventories, ['inventory'])
             ProductInventoryHistory.objects.bulk_create(history_logs)
 
-
-
-
+            print('sync inventories', flush=True
+                  )
+            orders_must_reduce = ShopOrder.objects.filter(
+                Q(id__gte=4167) | Q(status=ShopOrder.PENDING)).prefetch_related(
+                Prefetch('items', queryset=ShopOrderItem.objects.select_related('product'))
+            )
+            for order in orders_must_reduce:
+                for item in order.items.all():
+                    reduce_inventory(item.product.id, item.product_quantity)
