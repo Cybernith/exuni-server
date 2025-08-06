@@ -48,8 +48,7 @@ class Command(BaseCommand):
             ProductInventory.objects.bulk_update(updated_inventories, ['inventory'])
             ProductInventoryHistory.objects.bulk_create(history_logs)
 
-            print('sync inventories', flush=True
-                  )
+            print('sync inventories', flush=True)
             orders_must_reduce = ShopOrder.objects.filter(
                 Q(id__gte=4167) | Q(status=ShopOrder.PENDING)).prefetch_related(
                 Prefetch('items', queryset=ShopOrderItem.objects.select_related('product'))
@@ -57,3 +56,5 @@ class Command(BaseCommand):
             for order in orders_must_reduce:
                 for item in order.items.all():
                     reduce_inventory(item.product.id, item.product_quantity)
+                    print(' reduced', flush=True)
+
