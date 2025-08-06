@@ -3,11 +3,13 @@ from django.db.models import Q
 from io import BytesIO
 
 from helpers.functions import add_separator, date_to_str, datetime_to_time, datetime_to_str, get_current_user
+from products.models import Product
 from reports.lists.export_views import BaseExportView
 import xlsxwriter
 from django.http import HttpResponse
 
-from shop.exuni_admin.views import AdminShopOrderListView, AdminProcessingShopOrderListView, AdminPaidShopOrderListView
+from shop.exuni_admin.views import AdminShopOrderListView, AdminProcessingShopOrderListView, AdminPaidShopOrderListView, \
+    AdminShopProductSimpleListView
 
 from shop.models import ShopOrder
 from users.models import User
@@ -299,4 +301,35 @@ class AdminAllOrdersExportView(AdminShopOrderListView, BaseExportView):
 
         return context
 
+
+class MinusListExportView(AdminShopProductSimpleListView, BaseExportView):
+    template_name = 'export/sample_form_export.html'
+    filename = 'orders'
+
+    context = {
+        'title': ' کالا های منفی',
+    }
+    pagination_class = None
+
+    def get_queryset(self):
+        return self.filterset_class(self.request.GET, queryset=super().get_queryset()).qs
+
+    def get(self, request, export_type, *args, **kwargs):
+        return self.export(request, export_type, *args, **kwargs)
+
+    def get_context_data(self, user, print_document=False, **kwargs):
+        qs = Product.objects.prefetch_related('current_inventory').filter(current_inventory__inventory__lt=0)
+        context = {
+            'forms': qs,
+            'user': user,
+            'print_document': print_document
+        }
+
+        template_prefix = self.get_template_prefix()
+        context['form_content_template'] = 'export/minus.html'
+        context['right_header_template'] = 'export/sample_head.html'
+
+        context.update(self.context)
+
+        return context
 

@@ -1,0 +1,35 @@
+{% load report_filters %}
+
+<div class="row" style="margin-top: -1px">
+    <table class="table table-bordered table-striped">
+
+        <tr>
+            <th class="text-center font-weight-bold" style="font-size: x-small;">ردیف</th>
+            <th class="text-center font-weight-bold">تصویر</th>
+            <th class="text-center font-weight-bold" style="font-size: x-small;">sku</th>
+            <th class="text-center font-weight-bold" style="font-size: x-small;">نام</th>
+            <th class="text-center font-weight-bold" style="font-size: x-small;">تعداد</th>
+            <th class="text-center font-weight-bold" style="font-size: x-small;">تایید</th>
+
+
+        </tr>
+        {% for form in forms %}
+            <tr>
+                <td class="text-center" style="font-size: x-small;">{{ forloop.counter }}</td>
+                <td class="text-center" style="font-size: x-small;">
+                    {% if form.picture %}
+                        <img width="80" src="{{ form.picture.url }}" alt={{ form.name }}>
+                    {% endif %}
+                </td>
+                <td class="text-center" style="font-size: x-small;">{{ form.sixteen_digit_code }}</td>
+                <td class="text-center" style="font-size: x-small;">
+                    {{ form.variation_of.name }}
+                    -
+                    {{ form.name }}
+                </td>
+                <td class="text-center" style="font-size: x-small;">{{ form.current_inventory.inventory }}</td>
+                <td></td>
+            </tr>
+        {% endfor %}
+    </table>
+</div>
