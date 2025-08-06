@@ -4,6 +4,8 @@
     <table class="table table-bordered table-striped">
 
         <tr>
+            <th class="text-center font-weight-bold" style="font-size: x-small;">ترتیب</th>
+            <th class="text-center font-weight-bold" style="font-size: x-small;">ستون</th>
             <th class="text-center font-weight-bold" style="font-size: x-small;">ردیف</th>
             <th class="text-center font-weight-bold">تصویر</th>
             <th class="text-center font-weight-bold" style="font-size: x-small;">sku</th>
@@ -16,6 +18,8 @@
         {% for form in forms %}
             <tr>
                 <td class="text-center" style="font-size: x-small;">{{ forloop.counter }}</td>
+                <td class="text-center" style="font-size: x-small;">{{ form.shelf_number }}</td>
+                <td class="text-center" style="font-size: x-small;">{{ form.aisle }}</td>
                 <td class="text-center" style="font-size: x-small;">
                     {% if form.picture %}
                         <img width="80" src="{{ form.picture.url }}" alt={{ form.name }}>
