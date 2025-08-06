@@ -12,7 +12,7 @@ def reduce_inventory(product_id, val, user=None):
             inventory = ProductInventory.objects.select_for_update().get(product_id=product_id)
 
             if inventory.inventory < val:
-                raise ValidationError(f' موجودی کالا{inventory.product.name}  کافی نیست')
+                print('_________________________')
 
             previous_quantity = inventory.inventory
             inventory.inventory = F('inventory') - val
