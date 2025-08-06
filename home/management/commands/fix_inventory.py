@@ -23,9 +23,8 @@ class Command(BaseCommand):
                 print(product.name, ' >> inventory changed to = ', packing.inventory, flush=True)
 
             orders_must_reduce = ShopOrder.objects.filter(
-                Q(id__gte=4167) & Q(status__in=[ShopOrder.PENDING, ShopOrder.PROCESSING, ShopOrder.PAID])).prefetch_related(
-                Prefetch('items', queryset=ShopOrderItem.objects.select_related('product'))
-            )
+                Q(id__gte=4167) & Q(status__in=[ShopOrder.PENDING, ShopOrder.PROCESSING, ShopOrder.PAID])
+            ).prefetch_related('items')
             for order in orders_must_reduce:
                 for item in order.items.all():
                     reduce_inventory(item.product.id, item.product_quantity)
