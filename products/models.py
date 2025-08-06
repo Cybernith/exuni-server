@@ -356,7 +356,7 @@ class Product(BaseModel):
 
     @property
     def shelf(self):
-        return f"{self.aisle or ''}-{self.shelf_number or ''}"
+        return f"{self.shelf_number or ''} - {self.aisle or ''}"
 
     def set_legend_pricing(self):
         print('legend ', self.name, flush=True)

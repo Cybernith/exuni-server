@@ -232,6 +232,31 @@ class ShopOrder(BaseModel):
 
     objects = ShopOrderManager()
 
+    @property
+    def sorted_items(self):
+        def parse_part(part):
+            part = part.strip()
+            # چک کن آیا عدد صحیح هست (می‌تونه منفی هم باشه)
+            if part.lstrip('-').isdigit():
+                return int(part)
+            return float('inf')
+
+        def safe_shelf_key(item):
+            shelf = getattr(getattr(item, 'product', None), 'shelf', None)
+            if not shelf:
+                return (float('inf'), float('inf'))
+
+            parts = shelf.split('-')
+            part1 = parse_part(parts[1]) if len(parts) > 0 else float('inf')
+            part2 = parse_part(parts[0]) if len(parts) > 1 else float('inf')
+            return (part1, part2)
+
+        sorted_list = sorted(self.items.all(), key=safe_shelf_key)
+        print("Sorted shelves:", [item.product.shelf for item in sorted_list])  # تست چاپ
+        return sorted_list
+
+
+
     class Meta(BaseModel.Meta):
         verbose_name = 'ShopOrder'
         permission_basename = 'shop_order'
