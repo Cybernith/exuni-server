@@ -234,27 +234,34 @@ class ShopOrder(BaseModel):
 
     @property
     def sorted_items(self):
-        def parse_part(part):
-            part = part.strip()
-            # چک کن آیا عدد صحیح هست (می‌تونه منفی هم باشه)
-            if part.lstrip('-').isdigit():
-                return int(part)
-            return float('inf')
+        try:
+            def parse_shelf_number(sn):
+                sn = sn.strip()
+                if sn.isdigit():
+                    return (0, int(sn))
+                return (1, sn.upper())
 
-        def safe_shelf_key(item):
-            shelf = getattr(getattr(item, 'product', None), 'shelf', None)
-            if not shelf:
-                return (float('inf'), float('inf'))
+            def parse_aisle(aisle_str):
+                aisle_str = aisle_str.strip()
+                if aisle_str.isdigit():
+                    return int(aisle_str)
+                return float('inf')
 
-            parts = shelf.split('-')
-            part1 = parse_part(parts[1]) if len(parts) > 0 else float('inf')
-            part2 = parse_part(parts[0]) if len(parts) > 1 else float('inf')
-            return (part1, part2)
+            def safe_key(item):
+                product = getattr(item, 'product', None)
+                if not product:
+                    return (float('inf'), float('inf'))
 
-        sorted_list = sorted(self.items.all(), key=safe_shelf_key)
-        print("Sorted shelves:", [item.product.shelf for item in sorted_list])  # تست چاپ
-        return sorted_list
+                shelf_number = getattr(product, 'shelf_number', '').strip()
+                aisle = getattr(product, 'aisle', '').strip()
 
+                return (parse_shelf_number(shelf_number), parse_aisle(aisle))
+
+            sorted_list = sorted(self.items.all(), key=safe_key)
+            print("Sorted shelves and aisle:", [(item.product.shelf_number, item.product.aisle) for item in sorted_list])
+            return sorted_list
+        except:
+            return self.items.all()
 
 
     class Meta(BaseModel.Meta):

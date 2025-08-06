@@ -56,7 +56,8 @@ class ProductAdmin(NestedModelAdmin):
         'regular_price', 'price', 'category', 'currency', 'status',
         'brand', 'price_title', 'regular_price_title', 'calculate_current_inventory',
         'profit_type', 'profit_margin', 'discount_type', 'discount_margin', 'base_price', 'packing_handle_done',
-        'postal_weight', 'width'
+        'postal_weight', 'width',
+        'aisle', 'shelf_number',
 
     ]
     readonly_fields = ['id', 'picture_preview', 'price_title', 'regular_price_title', 'calculate_current_inventory']
