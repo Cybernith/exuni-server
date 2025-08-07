@@ -126,6 +126,14 @@ class FromIdFilter(filters.NumberFilter):
         return qs
 
 
+class IsShirazFilter(filters.CharFilter):
+
+    def filter(self, qs, value):
+        if value == 'shiraz':
+            return qs.filter(shipment_address__city='شیراز')
+        return qs
+
+
 class JalaliDateFilter(filters.CharFilter):
     def filter(self, qs, value):
         if value:
@@ -159,6 +167,7 @@ class AdminShopOrderFilter(filters.FilterSet):
     search_value = SmartValueOrderFilter()
     to_id = ToIdFilter()
     from_id = FromIdFilter()
+    is_shiraz = IsShirazFilter()
     date = JalaliDateFilter()
 
     date_from = django_filters.DateFilter(
