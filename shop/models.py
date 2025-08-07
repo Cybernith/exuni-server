@@ -234,34 +234,33 @@ class ShopOrder(BaseModel):
 
     @property
     def sorted_items(self):
-        try:
-            def parse_shelf_number(sn):
-                sn = sn.strip()
-                if sn.isdigit():
-                    return (0, int(sn))
-                return (1, sn.upper())
+        def parse_shelf_number(sn):
+            sn = sn.strip()
+            if sn.isdigit():
+                return (0, int(sn))
+            return (1, sn.upper())
 
-            def parse_aisle(aisle_str):
-                aisle_str = aisle_str.strip()
-                if aisle_str.isdigit():
-                    return int(aisle_str)
-                return float('inf')
+        def parse_aisle(aisle_str):
+            aisle_str = aisle_str.strip()
+            if aisle_str.isdigit():
+                return int(aisle_str)
+            return float('inf')
 
-            def safe_key(item):
+        def safe_key(item):
+            try:
                 product = getattr(item, 'product', None)
                 if not product:
-                    return (float('inf'), float('inf'))
-
+                    raise ValueError("No product")
                 shelf_number = getattr(product, 'shelf_number', '').strip()
                 aisle = getattr(product, 'aisle', '').strip()
-
                 return (parse_shelf_number(shelf_number), parse_aisle(aisle))
+            except Exception:
+                return (float('inf'), float('inf'))
 
-            sorted_list = sorted(self.items.all(), key=safe_key)
-            print("Sorted shelves and aisle:", [(item.product.shelf_number, item.product.aisle) for item in sorted_list])
-            return sorted_list
-        except:
-            return self.items.all()
+        sorted_list = sorted(self.items.all(), key=safe_key)
+        return sorted_list
+
+
 
 
     class Meta(BaseModel.Meta):
