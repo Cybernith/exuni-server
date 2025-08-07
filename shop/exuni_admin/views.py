@@ -53,7 +53,6 @@ class BulkChangeStatusToProcessingView(APIView):
         is_printed = request.data.get('is_printed', 'all')
         order_id = request.data.get('id')
         date = request.data.get('date')
-        is_shiraz = request.data.get('is_shiraz')
 
         filters = Q(status=ShopOrder.PAID)
 
@@ -65,9 +64,6 @@ class BulkChangeStatusToProcessingView(APIView):
 
         if is_printed != 'all':
             filters &= Q(is_printed=is_printed != 'false')
-
-        if is_shiraz != 'shiraz':
-            filters &= Q(shipment_address__city='شیراز')
 
         if date:
             try:
