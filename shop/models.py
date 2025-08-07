@@ -289,7 +289,7 @@ class ShopOrder(BaseModel):
         for item in self.items.all().select_related('product'):
             for quantity in [i + 1 for i in range(int(item.product_quantity))]:
                 packer.add_item(Item(
-                    name=f"{item.product.variation_of.name} {item.product.name} ←  {quantity}",
+                    name=f"{item.product.variation_of.name if item.product.variation_of else ' ' } {item.product.name} ←  {quantity}",
                     width=item.product.width or 3,
                     height=item.product.height or 12,
                     depth=item.product.length or 3,
