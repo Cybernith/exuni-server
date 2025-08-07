@@ -71,7 +71,7 @@ def money(value):
 
 @register.filter(is_safe=True)
 def whole_money(value):
-    return add_separator(int(value))
+    return add_separator(round(value))
 
 @register.filter(is_safe=True)
 def reverse_list(value):
