@@ -4,7 +4,7 @@ from decimal import Decimal
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator, RegexValidator
 from django.db import models, transaction, IntegrityError
-from django.db.models import Q, Sum, F, DecimalField
+from django.db.models import Q, Sum, F, DecimalField, FloatField
 from django.db.models.functions import Round, Least, TruncMinute
 from django.utils import timezone
 
@@ -18,6 +18,9 @@ from django_fsm import FSMField, transition
 from location_field.models.plain import PlainLocationField
 
 from shop.helpers import increase_inventory
+from py3dbp import Packer, Bin, Item
+
+from store_handle.models import ShippingBox
 
 
 class Cart(BaseModel):
@@ -255,13 +258,71 @@ class ShopOrder(BaseModel):
                 aisle = getattr(product, 'aisle', '').strip()
                 return (parse_shelf_number(shelf_number), parse_aisle(aisle))
             except Exception:
-                return (float('inf'), float('inf'))
+                return ((float('inf'), float('inf')), float('inf'))
 
         sorted_list = sorted(self.items.all(), key=safe_key)
         return sorted_list
 
+    @property
+    def postal_weight(self):
+        return round(
+            self.items.aggregate(
+                total_weight=Sum(F('product__postal_weight'), output_field=FloatField())
+            )['total_weight'] or 0, 3
+        )
 
+    @property
+    def find_best_box_for_items(self):
+        packer = Packer()
 
+        boxes_data = ShippingBox.objects.filter(available=True)
+
+        for box in boxes_data:
+            packer.add_bin(Bin(
+                name=box.name,
+                width=box.width,
+                height=box.height,
+                depth=box.length,
+                max_weight=box.max_postal_weight or 10000
+            ))
+
+        for item in self.items.all().select_related('product'):
+            for quantity in [i + 1 for i in range(int(item.product_quantity))]:
+                packer.add_item(Item(
+                    name=f"{item.product.variation_of.name} {item.product.name} ←  {quantity}",
+                    width=item.product.width or 3,
+                    height=item.product.height or 12,
+                    depth=item.product.length or 3,
+                    weight=item.product.postal_weight or 1,
+                ))
+
+        packer.pack(distribute_items=False)
+
+        fitting_bins = [b for b in packer.bins if len(b.unfitted_items) == 0]
+
+        if not fitting_bins:
+            return None
+
+        best_bin = min(fitting_bins, key=lambda b: b.width * b.height * b.depth)
+
+        packing_plan = []
+        for item in best_bin.items:
+            packing_plan.append({
+                'item': item.name,
+                'position': (item.position[0], item.position[1], item.position[2]),
+                'size': (item.width, item.height, item.depth),
+                'rotation_type': item.rotation_type,
+                'placement': ShippingBox.describe_rotation(item.rotation_type),
+            })
+
+        return {
+            'box': best_bin.name,
+            'items_weight': self.postal_weight,
+            'box_dimensions': (best_bin.width, best_bin.height, best_bin.depth),
+            'packing_plan': packing_plan,
+            'used_volume': sum(item.width * item.height * item.depth for item in best_bin.items),
+            'total_volume': best_bin.width * best_bin.height * best_bin.depth
+        }
 
     class Meta(BaseModel.Meta):
         verbose_name = 'ShopOrder'

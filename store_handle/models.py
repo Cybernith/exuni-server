@@ -242,3 +242,32 @@ class ProductHandleChange(models.Model):
 
     def __str__(self):
         return self.product.name if self.product else None
+
+
+class ShippingBox(models.Model):
+    name = models.CharField(max_length=150)
+    code = models.CharField(max_length=150, blank=True, null=True)
+    max_postal_weight = models.FloatField(blank=True, null=True)
+    postal_weight = models.FloatField(blank=True, null=True)
+    foam_weight = models.FloatField(blank=True, null=True)
+    length = models.FloatField(blank=True, null=True)
+    width = models.FloatField(blank=True, null=True)
+    height = models.FloatField(blank=True, null=True)
+    aisle = models.CharField(max_length=10, null=True)
+    shelf_number = models.CharField(max_length=10, null=True)
+    available = models.BooleanField(default=True)
+
+    @staticmethod
+    def describe_rotation(rotation_type: int) -> str:
+        return {
+            0: "ایستاده روی کف (بدون چرخش)",
+            1: "خوابیده از پهلو روی عرض",
+            2: "خوابیده از پشت روی طول",
+            3: "خوابیده از پشت روی عرض",
+            4: "خوابیده از پهلو روی طول",
+            5: "خوابیده از بالا روی کف (برعکس)"
+        }.get(rotation_type, "نامشخص")
+
+    @property
+    def weight(self):
+        return (self.foam_weight or 0) + (self.postal_weight or 0)

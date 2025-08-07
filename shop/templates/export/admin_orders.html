@@ -72,6 +72,62 @@
             <tbody>
             <tr>
                 <td>
+                    <span style="font-size: x-small; font-weight: bold">
+                        جعبه :
+                    </span>
+                    <span style="font-size: x-small;" class="mr-2">
+                        کـد
+                    </span>
+                    <span style="font-size: medium;" class="mr-2">
+                            {{ form.find_best_box_for_items.box }}
+                    </span>
+
+                </td>
+                <td>
+                    <span style="font-size: x-small; font-weight: bold" class="mr-4">
+                        ابعاد  جعبه :
+                    </span>
+
+                    <span style="font-size: x-small;" class="mr-2">
+                        {% for i in form.find_best_box_for_items.box_dimensions %}
+                            {{ i | money }}
+                            {% if forloop.counter < 3 %}
+                                ⨉
+                            {% endif %}
+                        {% endfor %}
+                    </span>
+
+                </td>
+                <td>
+                    <span style="font-size: x-small; font-weight: bold" class="mr-4">
+                        حجم استفاده شده :
+                    </span>
+
+                    <span style="font-size: x-small;" class="mr-2">
+                        {{ form.find_best_box_for_items.used_volume | whole_money }} از {{ form.find_best_box_for_items.total_volume | whole_money }}
+                    </span>
+
+                </td>
+                <td>
+                    <span style="font-size: x-small; font-weight: bold" class="mr-4">
+                        وزن تقریبی :
+                    </span>
+
+                    <span style="font-size: x-small;" class="mr-2">
+                        {{ form.find_best_box_for_items.items_weight }}
+                    </span>
+
+                </td>
+
+            </tr>
+            </tbody>
+        </table>
+    </div>
+    <div class="row">
+        <table class="table-head" style="margin-top: -1px">
+            <tbody>
+            <tr>
+                <td>
                     <span style="font-size: x-small;" class="font-weight-bold"> کشور : </span>
                     <span style="font-size: x-small;"> ایران </span>
                 </td>
@@ -99,7 +155,6 @@
 
     </div>
 
-
     <div class="row">
         <table class="table table-bordered table-striped" style="margin-top: -1px">
             <thead>
@@ -107,11 +162,8 @@
                 <th class="text-center" width="20">
                     <span style="font-size: xx-small;">ترتیب</span>
                 </th>
-                <th class="text-center" width="20">
-                    <span style="font-size: x-small">ستون</span>
-                </th>
-                <th class="text-center" width="20">
-                    <span style="font-size: x-small">ردیف</span>
+                <th class="text-center" colspan="2">
+                    <span style="font-size: x-small">قفسه کالا</span>
                 </th>
 
                 <th class="text-center" width="80">
@@ -141,20 +193,28 @@
                     <td class="text-center" width="20">
                         <span style="font-size: xx-small">{{ forloop.counter }}</span>
                     </td>
-                    <td class="text-center">
+                    <td class="text-center" width="20">
                         <span style="font-size: small">
                             {{ item.product.shelf_number }}
                         </span>
+                        <p style="font-size: xx-small">
+                            ستون
+                        </p>
                     </td>
-                    <td class="text-center">
+                    <td class="text-center" width="20">
                         <span style="font-size: small">
                             {{ item.product.aisle }}
                         </span>
+                        <p style="font-size: xx-small">
+                            ردیف
+                        </p>
+
                     </td>
 
                     <td class="text-center">
-                    <span style="font-weight: bold ">
-                        {{ item.product.sixteen_digit_code  | default:'-' }}
+                    <span style="font-weight: normal ">
+                        {{ item.product.sixteen_digit_code|slice:":-4" }}<b
+                            style="font-size: 14px">{{ item.product.sixteen_digit_code|slice:"-4:" }}</b>
                     </span>
                     </td>
                     <td class="text-center" width="70">
@@ -165,6 +225,7 @@
                     <td class="text-center">
                         <span style="font-weight: bold ">
                             {{ item.product_quantity | money }}
+                            عدد
                         </span>
                     </td>
                     <td class="text-center">
@@ -221,14 +282,15 @@
                 </td>
                 <td rowspan="4">
                     <p style="font-size: 9px; font-weight: bold">
-                        {{ form.shipment_address.first_name }} {{ form.shipment_address.last_name }} جان، اکسونی فقط یه
-                        فروشگاه نیست،
+                        {{ form.shipment_address.first_name }} {{ form.shipment_address.last_name }} جان، ممنون واسه صبر
+                        و شکیبایی شما
                     </p>
                     <p style="font-size: 8px">
-                        یه مسیر مشترکه که با حضور شما معنا پیدا می‌کنه.!
+                        ⚙️ بسته‌بندی هوشمند با تکنولوژی پیشرفته آغاز شد
                     </p>
                     <p style="font-size: 8px">
-                        ما قدر لحظه‌ای که انتخاب‌مون کردید رو می‌دونیم، و از ته دل دوست داریم این فقط شروع ماجرا باشه…
+                        از الان سفارش ها با نهایت سرعت و دقت در حال آماده‌سازیه 😊
+
                     </p>
                 </td>
                 <td class="text-center">
@@ -287,6 +349,84 @@
             </tbody>
         </table>
     </div>
+    <div class="row">
+        <table class="table table-bordered table-striped" style="margin-top: -1px">
+            <thead>
+            <tr>
+                <th class="text-center">
+                    <span style="font-size: x-small">
+                            ترتیب چیدمان
+                    </span>
+                </th>
+                <th class="text-center">
+                    <span style="font-size: x-small">
+                            محصول (نحوه چیدمان)
+                    </span>
+                </th>
+                <th class="text-center">
+                    <span style="font-size: x-small">
+                            ابعاد
+                    </span>
+                </th>
+                <th class="text-center">
+                    <span style="font-size: x-small">
+                            وزن تقریبی
+                    </span>
+                </th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for item in form.find_best_box_for_items.packing_plan %}
+                <tr>
+                    <td class="text-center">
+                        <span style="font-size: xx-small">
+                            {{ forloop.counter }}
+                        </span>
+                    </td>
+                    <td class="text-center">
+                        <span style="font-size: xx-small">
+                            {{ item.item }}
+                        </span>
+                        ←
+
+                        <span style="font-size: xx-small">
+                            {{ item.placement }}
+                        </span>
+
+                    </td>
+                    <td class="text-center">
+                        <span style="font-size: xx-small">
+                        {% for i in item.size %}
+                            {{ i | money }}
+                            {% if forloop.counter < 3 %}
+                                ⨉
+                            {% endif %}
+                        {% endfor %}
+                        </span>
+                        <span style="font-size: 8px">
+                            سانت
+                        </span>
+
+                    </td>
+                    <td class="text-center">
+                        <span style="font-size: xx-small">
+                            1 ± {{ item.weight | roundMoney }}
+                        </span>
+                        <span style="font-size: 8px">
+                            گرم
+                        </span>
+                    </td>
+
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+
+    </div>
+
+
+
+
     <div class="page-break"></div>
     <div class="row header_box">
         <div class="col-xs-3 mt-2">
@@ -341,7 +481,62 @@
             </thead>
         </table>
     </div>
+    <div class="row">
+        <table class="table-head" style="margin-top: -1px">
+            <tbody>
+            <tr>
+                <td>
+                    <span style="font-size: x-small; font-weight: bold">
+                        جعبه :
+                    </span>
+                    <span style="font-size: x-small;" class="mr-2">
+                        کـد
+                    </span>
+                    <span style="font-size: medium;" class="mr-2">
+                            {{ form.find_best_box_for_items.box }}
+                    </span>
 
+                </td>
+                <td>
+                    <span style="font-size: x-small; font-weight: bold" class="mr-4">
+                        ابعاد  جعبه :
+                    </span>
+
+                    <span style="font-size: x-small;" class="mr-2">
+                        {% for i in form.find_best_box_for_items.box_dimensions %}
+                            {{ i | money }}
+                            {% if forloop.counter < 3 %}
+                                ⨉
+                            {% endif %}
+                        {% endfor %}
+                    </span>
+
+                </td>
+                <td>
+                    <span style="font-size: x-small; font-weight: bold" class="mr-4">
+                        حجم استفاده شده :
+                    </span>
+
+                    <span style="font-size: x-small;" class="mr-2">
+                        {{ form.find_best_box_for_items.used_volume | whole_money }} از {{ form.find_best_box_for_items.total_volume | whole_money }}
+                    </span>
+
+                </td>
+                <td>
+                    <span style="font-size: x-small; font-weight: bold" class="mr-4">
+                        وزن تقریبی :
+                    </span>
+
+                    <span style="font-size: x-small;" class="mr-2">
+                        {{ form.find_best_box_for_items.items_weight }}
+                    </span>
+
+                </td>
+
+            </tr>
+            </tbody>
+        </table>
+    </div>
     <div class="row">
         <table class="table-head" style="margin-top: -1px; direction: rtl; width: 100%;">
             <thead>
