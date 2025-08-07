@@ -40,7 +40,8 @@ class AdminPaidShopOrderListView(generics.ListAPIView):
     pagination_class = LimitOffsetPagination
 
     def get_queryset(self):
-        return ShopOrder.objects.filter(status=ShopOrder.PAID).select_related('shipment_address', 'customer')
+        return ShopOrder.objects.filter(status=ShopOrder.PAID).select_related(
+            'shipment_address', 'customer', 'packager', 'print_by').prefetch_related('items__product')
 
 
 class BulkChangeStatusToProcessingView(APIView):
