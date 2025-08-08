@@ -15,7 +15,7 @@ class Command(BaseCommand):
         year, month, day = map(int, '1404-05-1'.split('-'))
         jdate = jdatetime.date(year, month, day)
         start = jdate.togregorian()
-        payments = Payment.objects.filter(status='pe', created_at__date__lte=end, created_at__date__gte=start)[:500]
-        customer_ids = payments.values_list('user_id', flat=True).distinct()
+        payments = Payment.objects.filter(status='pe', created_at__date__lte=end, created_at__date__gte=start)
+        customer_ids = payments.values_list('user_id', flat=True).distinct()[:500]
 
         print(len(customer_ids))
