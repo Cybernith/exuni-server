@@ -828,12 +828,6 @@ class CancelShopOrderView(APIView):
     def post(self, request, pk):
         shop_order = get_object_or_404(ShopOrder, pk=pk)
 
-        if hasattr(shop_order, 'bank_payment'):
-            return Response(
-                {'message': 'لطفا کمی صبر کنید'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
         if not (shop_order.customer == get_current_user()):
             return Response(
                 {'message': 'دسترسی غیرمجاز'},
@@ -897,15 +891,8 @@ class OrderMoveToCartAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def delete(self, request, pk):
-
         try:
             order = ShopOrder.objects.prefetch_related('items').get(pk=pk, customer=get_current_user())
-            if hasattr(order, 'bank_payment'):
-                return Response(
-                    {'message': 'لطفا کمی صبر کنید'},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-
         except ShopOrder.DoesNotExist:
             return Response({'message': 'سفارش یافت نشد.'}, status=status.HTTP_404_NOT_FOUND)
 

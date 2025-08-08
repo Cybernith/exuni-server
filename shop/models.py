@@ -499,7 +499,7 @@ class ShopOrder(BaseModel):
     @property
     def final_amount(self):
         return max(
-            int(int(self.total_price) - int(self.total_discount)) - int(self.get_discount_code_amount()) + int(self.post_price), 0
+            (self.total_price - self.total_discount) - self.get_discount_code_amount() + self.post_price, Decimal(0)
         )
 
     def create_exuni_tracking_code(self):
@@ -514,20 +514,16 @@ class ShopOrder(BaseModel):
         wallet = self.customer.exuni_wallet
 
         wallet_amount = wallet.balance
-        used_from_wallet = min(int(wallet_amount), int(final_price))
+        used_from_wallet = min(wallet_amount, final_price)
 
-        gateway_amount = int(final_price) - used_from_wallet
+        gateway_amount = final_price - used_from_wallet
 
         if gateway_amount > 0:
-            fee = int(int(gateway_amount) / 100 * 0.5) + 350
-            if fee > 12350:
-                fee = 12350
-
             if hasattr(self, 'bank_payment'):
                 payment = self.bank_payment
                 assert not payment.status == 'su'
-                payment.amount = int(gateway_amount)
-                payment.fee = fee
+
+                payment.amount = gateway_amount
                 payment.used_amount_from_wallet = used_from_wallet
                 payment.status = Payment.INITIATED
                 payment.transaction_id = transaction_id
@@ -538,7 +534,6 @@ class ShopOrder(BaseModel):
                     shop_order=self,
                     user=self.customer,
                     amount=gateway_amount,
-                    fee=fee,
                     used_amount_from_wallet=used_from_wallet,
                     gateway='zarinpal',
                     status=Payment.INITIATED,
@@ -568,21 +563,15 @@ class ShopOrder(BaseModel):
 
         try:
             if self.bank_payment and self.bank_payment.status != 'su':
-                self.save()
-                self.bank_payment.mark_as_pending(user=self.customer)
-                return self.bank_payment
+                    self.save()
+                    self.bank_payment.mark_as_pending(user=self.customer)
+                    return self.bank_payment
         except:
-            amount = int(self.final_amount)
-            fee = int(amount / 100 * 0.5) + 350
-            if fee > 12350:
-                fee = 12350
-
             payment = Payment.objects.create(
                 shop_order=self,
                 user=self.customer,
                 type=Payment.FOR_SHOP_ORDER,
-                amount=amount,
-                fee=fee,
+                amount=self.final_amount,
                 gateway='zarinpal',
                 status=Payment.INITIATED,
                 created_at=timezone.now()

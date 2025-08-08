@@ -57,8 +57,6 @@ class StartZarinpalPaymentApiView(APIView):
     def post(self, request, order_id):
 
         order = get_object_or_404(ShopOrder, id=order_id, customer=get_current_user())
-        if order.status == ShopOrder.EXPIRED:
-            return Response({'message': 'سفارش منقضی شده و آیتم ها به سبد خرید انتقال پیدا کرد'}, status=status.HTTP_400_BAD_REQUEST)
 
         payment = getattr(order, 'bank_payment', None)
         if payment and payment.status == 'su':
@@ -98,8 +96,9 @@ class StartZarinpalPaymentApiView(APIView):
         if request.data.get('use_wallet', False):
             description = f'پرداخت سفارش {order.id} کاربر {order.customer.mobile_number} مبلغ {payment.used_amount_from_wallet} از کیف پول با شناسه {transaction_id} '
 
+        request.data.get('use_wallet', False)
         gateway = ZarinpalGateway(
-            amount=payment.payable_amount,
+            amount=payment.amount,
             mobile=payment.shop_order.customer.mobile_number,
             payment_id=order.id,
             description=description,
@@ -118,7 +117,7 @@ class StartZarinpalPaymentApiView(APIView):
                 ip_address=self.kwargs.get("ip"),
                 user_agent=self.kwargs.get("agent"),
                 extra_info={
-                    "amount": str(payment.payable_amount),
+                    "amount": str(payment.amount),
                     "authority": result['authority'],
                     "order": str(order.id),
                     "used_from_wallet": str(payment.used_amount_from_wallet),
@@ -136,39 +135,12 @@ class ZarinpalCallbackApiView(APIView):
 
     def get(self, request):
         authority = request.query_params.get('Authority')
-        FinancialLogger.log(
-            user=None,
-            action=AuditAction.MANUAL_ADJUSTMENT,
-            severity=AuditSeverity.INFO,
-            ip_address=self.kwargs.get("ip"),
-            user_agent=self.kwargs.get("agent"),
-            extra_info={
-                "authority": authority,
-                "info": 'callback called',
-            }
-        )
-
         callback_status = request.query_params.get('Status')
-        try:
-            payment = get_object_or_404(Payment, reference_id=authority)
-            payment.callback_called = True
-            payment.save()
-            order = payment.shop_order
-
-        except Exception as e:
-            FinancialLogger.log(
-                user=None,
-                action=AuditAction.MANUAL_ADJUSTMENT,
-                severity=AuditSeverity.WARNING,
-                ip_address=self.kwargs.get("ip"),
-                user_agent=self.kwargs.get("agent"),
-                extra_info={
-                    "authority": authority,
-                    "info": 'error {}'.format(str(e)),
-                }
-            )
         payment = get_object_or_404(Payment, reference_id=authority)
         order = payment.shop_order
+        payment.callback_called = True
+        payment.save()
+
         if callback_status != 'OK':
             payment.mark_as_failed_payment(user=payment.user)
             FinancialLogger.log(
@@ -179,30 +151,16 @@ class ZarinpalCallbackApiView(APIView):
                 ip_address=self.kwargs.get("ip"),
                 user_agent=self.kwargs.get("agent"),
                 extra_info={
-                    "amount": str(payment.payable_amount),
+                    "amount": str(payment.amount),
                     "order": str(order.id),
                     "authority": payment.reference_id,
                 }
             )
 
             return redirect(f'{FRONT_URL}/payment/fail?orderId={order.id}')
-        FinancialLogger.log(
-            user=payment.user,
-            action=AuditAction.MANUAL_ADJUSTMENT,
-            severity=AuditSeverity.INFO,
-            payment=payment,
-            ip_address=self.kwargs.get("ip"),
-            user_agent=self.kwargs.get("agent"),
-            extra_info={
-                "amount": str(payment.payable_amount),
-                "order": str(order.id),
-                "authority": payment.reference_id,
-                "info": 'callback called',
-            }
-        )
 
         gateway = ZarinpalGateway(
-            amount=payment.payable_amount,
+            amount=payment.amount,
             description=f'تایید پرداخت سفارش {order.id} کاربر {order.customer.mobile_number}',
             callback_url=''
         )
@@ -241,6 +199,7 @@ class ZarinpalCallbackApiView(APIView):
                 wallet.refresh_from_db()
             payment.zarinpal_ref_id = result['data'].get('ref_id')
             payment.card_pan = result['data'].get('card_pan')
+            payment.fee = result['data'].get('fee')
             payment.is_verified = True
             payment.save()
             payment.mark_as_success_payment(user=payment.user)
@@ -252,7 +211,7 @@ class ZarinpalCallbackApiView(APIView):
                 ip_address=self.kwargs.get("ip"),
                 user_agent=self.kwargs.get("agent"),
                 extra_info={
-                    "amount": str(payment.payable_amount),
+                    "amount": str(payment.amount),
                     "order": str(order.id),
                     "authority": payment.reference_id,
                 }
@@ -275,7 +234,7 @@ class ZarinpalCallbackApiView(APIView):
                 ip_address=self.kwargs.get("ip"),
                 user_agent=self.kwargs.get("agent"),
                 extra_info={
-                    "amount": str(payment.payable_amount),
+                    "amount": str(payment.amount),
                     "order": str(order.id),
                     "authority": payment.reference_id,
                     "verify": False,
@@ -459,14 +418,9 @@ class StartZarinpalWalletTopUPApiView(APIView):
             return Response({'message': 'amount should be positive'},
                             status=status.HTTP_400_BAD_REQUEST)
         transaction_id = generate_top_up_wallet_code_with_mobile(user.mobile_number)
-        fee = (int(top_up_amount) / 100 * 0.5) + 350
-        if fee > 12350:
-            fee = 12350
-
         payment = Payment.objects.create(
             user=user,
             amount=top_up_amount,
-            fee=fee,
             gateway='zarinpal',
             status=Payment.INITIATED,
             type=Payment.FOR_TOP_UP_WALLET,
@@ -477,7 +431,7 @@ class StartZarinpalWalletTopUPApiView(APIView):
 
         callback_url = SERVER_URL + reverse('financial_management:zarinpal_top_up_wallet_callback')
         gateway = ZarinpalGateway(
-            amount=payment.payable_amount,
+            amount=top_up_amount,
             description=f'شارژ کیف پول {user.mobile_number}',
             mobile=user.mobile_number,
             payment_id=transaction_id,
@@ -512,17 +466,6 @@ class ZarinpalTopUpWalletCallbackApiView(APIView):
     def get(self, request):
         authority = request.query_params.get('Authority')
         callback_status = request.query_params.get('Status')
-        FinancialLogger.log(
-            user=None,
-            action=AuditAction.MANUAL_ADJUSTMENT,
-            severity=AuditSeverity.INFO,
-            ip_address=self.kwargs.get("ip"),
-            user_agent=self.kwargs.get("agent"),
-            extra_info={
-                "authority": authority,
-                "info": 'top up callback called',
-            }
-        )
 
         payment = get_object_or_404(Payment, reference_id=authority)
 
@@ -544,7 +487,7 @@ class ZarinpalTopUpWalletCallbackApiView(APIView):
             return redirect(f'{FRONT_URL}/payment/fail?top_up_wallet=true&amount={payment.amount}')
 
         gateway = ZarinpalGateway(
-            amount=payment.payable_amount,
+            amount=payment.amount,
             description=f'شارژ کیف پول {payment.user}',
             callback_url=''
         )
@@ -560,6 +503,7 @@ class ZarinpalTopUpWalletCallbackApiView(APIView):
         if result.get('data') and result['data'].get('code') in [100, 101]:
             payment.zarinpal_ref_id = result['data'].get('ref_id')
             payment.card_pan = result['data'].get('card_pan')
+            payment.fee = result['data'].get('fee')
             payment.save()
             payment.mark_as_success_payment(user=payment.user)
             FinancialLogger.log(
@@ -569,7 +513,7 @@ class ZarinpalTopUpWalletCallbackApiView(APIView):
                 payment=payment,
                 ip_address=request.META.get('REMOTE_ADDR'),
                 user_agent=request.META.get('HTTP_USER_AGENT'),
-                extra_info={"amount": str(payment.payable_amount)}
+                extra_info={"amount": str(payment.amount)}
             )
 
             service = WalletTopUpService(
@@ -607,7 +551,7 @@ class ZarinpalTopUpWalletCallbackApiView(APIView):
 
 
 class WalletBalanceSumAPIView(APIView):
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAdminUser]  # Remove or change if needed
 
     def get(self, request):
         total_balance = Wallet.objects.all().aggregate(total=Sum('balance'))['total'] or 0
