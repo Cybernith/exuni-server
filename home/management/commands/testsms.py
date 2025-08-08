@@ -1,32 +1,37 @@
 import jdatetime
 
-from financial_management.models import Wallet, Payment
+from financial_management.models import Wallet
 from helpers.sms import Sms
 from django.core.management import BaseCommand
-
-from users.models import User
 
 
 class Command(BaseCommand):
     help = 'expired pending orders'
 
     def handle(self, *args, **options):
-        year, month, day = map(int, '1404-05-17'.split('-'))
-        jdate = jdatetime.date(year, month, day)
-        end = jdate.togregorian()
-
-        year, month, day = map(int, '1404-05-1'.split('-'))
+        from shop.models import ShopOrder
+        year, month, day = map(int, '1404-05-06'.split('-'))
         jdate = jdatetime.date(year, month, day)
         start = jdate.togregorian()
-        payments = Payment.objects.filter(status='pe', created_at__date__lte=end, created_at__date__gte=start)
-        customer_ids = payments.values_list('user_id', flat=True).distinct()[:500]
-        for customer in User.objects.filter(id__in=customer_ids):
+
+        year, month, day = map(int, '1404-05-12'.split('-'))
+        jdate = jdatetime.date(year, month, day)
+        end = jdate.togregorian()
+        shop_orders = ShopOrder.objects.filter(status__in=['pa', 'pr'], date_time__date__lte=end, date_time__date__gte=start).select_related('shipment_address')
+
+        for order in shop_orders:
+            detail = order.shipment_address
             sms_lines = [
                 "اکسونی ",
-                " {} همراه همیشگی ما".format(customer.username),
-                "اختلال پرداخت و ویرایش سفارش‌ها برطرف شد!",
-                "همین الان سفارشت رو ثبت کن ",
-                "یه سر به کیف پولت تو اکسونی بزن، شاید سورپرایز شدی 😉",
+                "{} {}  عزیز".format(detail.first_name or '', detail.last_name or ''),
+                "با ۱۰ روز صبر شما پردازش و بسته بندی اکسونی هوشمند شد!",
+                "این صبر دلیلی برای سرعت، دقت و پردازش بهینه سفارشات شماست",
+                "از امروز ارسال سفارشات اکسونی روزانه شد",
+                "به پاس شکیبایی شما",
+                "مبلغ : 500,000 + ریال",
+                "به کیف پول شما واریز شد",
+                "از امروز سفارشات در حال ارسال است",
             ]
             sms_text = "\n".join(sms_lines)
-            Sms.send(phone=customer.username, message=sms_text)
+            Sms.send(phone=order.customer.username, message=sms_text)
+
