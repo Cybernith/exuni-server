@@ -72,62 +72,6 @@
             <tbody>
             <tr>
                 <td>
-                    <span style="font-size: x-small; font-weight: bold">
-                        جعبه :
-                    </span>
-                    <span style="font-size: x-small;" class="mr-2">
-                        کـد
-                    </span>
-                    <span style="font-size: medium;" class="mr-2">
-                            {{ form.find_best_box_for_items.box }}
-                    </span>
-
-                </td>
-                <td>
-                    <span style="font-size: x-small; font-weight: bold" class="mr-4">
-                        ابعاد  جعبه :
-                    </span>
-
-                    <span style="font-size: x-small;" class="mr-2">
-                        {% for i in form.find_best_box_for_items.box_dimensions %}
-                            {{ i | money }}
-                            {% if forloop.counter < 3 %}
-                                ⨉
-                            {% endif %}
-                        {% endfor %}
-                    </span>
-
-                </td>
-                <td>
-                    <span style="font-size: x-small; font-weight: bold" class="mr-4">
-                        وزن تقریبی محصولات در جعبه:
-                    </span>
-
-                    <span style="font-size: x-small;" class="mr-2">
-                        {{ form.find_best_box_for_items.items_weight }}
-                    </span>
-
-                </td>
-                <td>
-                    <span style="font-size: x-small; font-weight: bold" class="mr-4">
-                        حجم استفاده شده :
-                    </span>
-
-                    <span style="font-size: x-small;" class="mr-2">
-                        {{ form.find_best_box_for_items.used_volume | whole_money }} از {{ form.find_best_box_for_items.total_volume | whole_money }}
-                    </span>
-
-                </td>
-
-            </tr>
-            </tbody>
-        </table>
-    </div>
-    <div class="row">
-        <table class="table-head" style="margin-top: -1px">
-            <tbody>
-            <tr>
-                <td>
                     <span style="font-size: x-small;" class="font-weight-bold"> کشور : </span>
                     <span style="font-size: x-small;"> ایران </span>
                 </td>
@@ -401,63 +345,6 @@
                 </td>
             </tr>
             </thead>
-        </table>
-    </div>
-    <div class="row">
-        <table class="table-head" style="margin-top: -1px">
-            <tbody>
-            <tr>
-                <td>
-                    <span style="font-size: x-small; font-weight: bold">
-                        جعبه :
-                    </span>
-                    <span style="font-size: x-small;" class="mr-2">
-                        کـد
-                    </span>
-                    <span style="font-size: medium;" class="mr-2">
-                            {{ form.find_best_box_for_items.box }}
-                    </span>
-
-                </td>
-                <td>
-                    <span style="font-size: x-small; font-weight: bold" class="mr-4">
-                        ابعاد  جعبه :
-                    </span>
-
-                    <span style="font-size: x-small;" class="mr-2">
-                        {% for i in form.find_best_box_for_items.box_dimensions %}
-                            {{ i | money }}
-                            {% if forloop.counter < 3 %}
-                                ⨉
-                            {% endif %}
-                        {% endfor %}
-                    </span>
-
-                </td>
-                <td>
-                    <span style="font-size: x-small; font-weight: bold" class="mr-4">
-                        وزن تقریبی محصولات در جعبه:
-                    </span>
-
-                    <span style="font-size: x-small;" class="mr-2">
-                        {{ form.find_best_box_for_items.items_weight }}
-                    </span>
-
-                </td>
-
-                <td>
-                    <span style="font-size: x-small; font-weight: bold" class="mr-4">
-                        حجم استفاده شده :
-                    </span>
-
-                    <span style="font-size: x-small;" class="mr-2">
-                        {{ form.find_best_box_for_items.used_volume | whole_money }} از {{ form.find_best_box_for_items.total_volume | whole_money }}
-                    </span>
-
-                </td>
-
-            </tr>
-            </tbody>
         </table>
     </div>
     <div class="row">
