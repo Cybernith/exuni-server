@@ -18,13 +18,6 @@ class Command(BaseCommand):
         jdate = jdatetime.date(year, month, day)
         end = jdate.togregorian()
         shop_orders = ShopOrder.objects.filter(status__in=['pa', 'pr'], date_time__date__lte=end, date_time__date__gte=start).select_related('shipment_address', 'packager')
-        customer_ids = shop_orders.values_list('customer_id', flat=True).distinct()
-
-        for wallet in Wallet.objects.filter(user__id__in=customer_ids):
-            wallet.increase_balance(amount=50000, description='هدیه ۱۰ روز صبر  منجر به هوشمندسازی پردازش و بسته‌بندی سفارشات اکسونی')
-
-        messages = []
-        numbers = []
         for order in shop_orders:
             detail = order.shipment_address
             sms_lines = [
@@ -40,6 +33,4 @@ class Command(BaseCommand):
                 " مشاده کیف پول : exuni.ir/profile"
             ]
             sms_text = "\n".join(sms_lines)
-            messages.append(sms_text)
-            numbers.append(order.customer.username)
-        Sms.send_like_to_like(numbers, messages)
+            Sms.send(phone=order.customer.username, message=sms_text)
