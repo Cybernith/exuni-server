@@ -8,6 +8,7 @@ from django.db.models import Q, Sum, F, DecimalField, FloatField
 from django.db.models.functions import Round, Least, TruncMinute
 from django.utils import timezone
 
+from crm.sms_dispatch import SMSHandler
 from financial_management.models import Payment, Discount, DiscountAction, DiscountUsage
 from financial_management.serivces.discount_evaluator import evaluate_discount
 from helpers.functions import datetime_to_str, add_separator
@@ -365,8 +366,11 @@ class ShopOrder(BaseModel):
 
     @transition(field='status', source=PENDING, target=PAID)
     def mark_as_paid(self):
+        from crm.sms_dispatch import SMSHandler
         self.status = self.PAID
         self.save()
+        sms_sender = SMSHandler()
+        sms_sender.send_order_confirmation(self.id)
 
     @transition(field='status', source=PAID, target=PROCESSING)
     def process_order(self, user=None):

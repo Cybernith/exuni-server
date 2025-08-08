@@ -193,7 +193,7 @@ class User(AbstractUser, BaseModel):
 
     @property
     def name(self):
-        return "{} {}".format(self.first_name, self.last_name)
+        return "{} {}".format(self.first_name or ' ', self.last_name or ' ')
 
     @property
     def export_name(self):

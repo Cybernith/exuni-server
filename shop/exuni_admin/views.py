@@ -7,6 +7,8 @@ from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.views import APIView
 from rest_framework.response import Response
+
+from crm.sms_dispatch import SMSHandler
 from helpers.auth import BasicObjectPermission
 from products.models import Product
 from products.shop.filters import ShopProductSimpleFilter
@@ -82,6 +84,9 @@ class BulkChangeStatusToProcessingView(APIView):
 
         orders = ShopOrder.objects.filter(filters)
         updated_count = orders.update(status=ShopOrder.PROCESSING)
+        order_ids = list(orders.values_list('id', flat=True))
+        send_sms = SMSHandler()
+        send_sms.send_orders_packing_start(orders=order_ids)
 
         return Response({
             'message': f'{updated_count} سفارش به وضعیت در حال بسته بندی تغییر کرد.'

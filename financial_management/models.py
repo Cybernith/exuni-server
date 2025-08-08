@@ -68,7 +68,7 @@ class Wallet(models.Model):
             self, amount: Decimal, description: str = 'شارژ کیف پول', transaction_type=None, order=None, **kwargs
     ):
         if amount <= 0:
-            raise ValidationError('مقدار برداشت باید یک عدد مثبت باشد.')
+            raise ValidationError('مقدار باید یک عدد مثبت باشد.')
 
         with db_transaction.atomic():
             wallet = Wallet.objects.select_for_update().get(pk=self.pk)
