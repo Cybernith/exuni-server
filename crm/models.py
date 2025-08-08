@@ -222,15 +222,6 @@ class Notification(models.Model):
     type = models.CharField(max_length=2, choices=TYPES, default=SEND_BY_SYSTEM)
     sort = models.CharField(max_length=2, choices=SORTS, default=ACTIVITIES)
 
-    product = models.ForeignKey('products.Product', related_name='notifications',
-                                on_delete=models.CASCADE, blank=True, null=True)
-    order = models.ForeignKey('shop.ShopOrder', related_name='notifications',
-                              on_delete=models.CASCADE, blank=True, null=True)
-    order_item = models.ForeignKey('shop.ShopOrderItem', related_name='notifications',
-                                   on_delete=models.CASCADE, blank=True, null=True)
-
-    # discount
-
     send_datetime = models.DateTimeField(blank=True, null=True)
     notification_title = models.CharField(max_length=255, blank=True, null=True)
     notification_btn_title = models.CharField(max_length=255, blank=True, null=True)
@@ -241,34 +232,17 @@ class Notification(models.Model):
     send_sms = models.BooleanField(default=False)
     sms_text = models.CharField(max_length=500, blank=True, null=True)
 
-    receivers = models.ManyToManyField('users.User', related_name='user_in_notification')
-
     def __str__(self):
         return "{} ({})".format(self.notification_title, self.id)
 
-    def create_user_notifications(self):
-        notifications = [
-            UserNotification(notification=self, user=receiver, notification_status=UserNotification.NOT_READ)
-            for receiver in self.receivers.all()
-        ]
-        UserNotification.objects.bulk_create(notifications)
+    def create_user_notifications(self, user):
+        UserNotification.objects.create(notification=self, user=user, notification_status=UserNotification.NOT_READ)
 
         def mark_as_sent():
             self.is_sent = True
             self.save(update_fields=["is_sent"])
 
         transaction.on_commit(mark_as_sent)
-
-    def send_bulk_sms(self):
-        phones = [user.mobile_number for user in self.receivers.all()]
-        Sms.bulk_send(phones=phones, message=self.sms_text)
-        self.crmUserNotifications.update(sms_status=UserNotification.SENT)
-
-    def save(self, *args, **kwargs):
-        is_new = self._state.adding
-        super().save(*args, **kwargs)
-        if is_new:
-            transaction.on_commit(lambda: self.create_user_notifications())
 
 
 class UserNotification(models.Model):
@@ -290,6 +264,12 @@ class UserNotification(models.Model):
 
     notification = models.ForeignKey(Notification, on_delete=models.CASCADE, related_name='crmUserNotifications')
     user = models.ForeignKey('users.User', on_delete=models.CASCADE, related_name='crmNotifications')
+    product = models.ForeignKey('products.Product', related_name='notifications',
+                                on_delete=models.CASCADE, blank=True, null=True)
+    order = models.ForeignKey('shop.ShopOrder', related_name='notifications',
+                              on_delete=models.CASCADE, blank=True, null=True)
+    order_item = models.ForeignKey('shop.ShopOrderItem', related_name='notifications',
+                                   on_delete=models.CASCADE, blank=True, null=True)
 
     notification_status = models.CharField(choices=STATUSES, max_length=2, blank=True, null=True)
     sms_status = models.CharField(choices=STATUSES, max_length=2, blank=True, null=True)
