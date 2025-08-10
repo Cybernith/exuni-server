@@ -54,7 +54,7 @@ class ShopProductSimpleListView(generics.ListAPIView):
     pagination_class = LimitOffsetPagination
 
     def get_queryset(self):
-        return Product.objects.shop_products().select_related('brand')
+        return Product.objects.shop_products().select_related('brand').prefetch_related('variations')
 
 
 class ShopProductWithCommentsListView(generics.ListAPIView):
@@ -85,7 +85,7 @@ class ShopProductDetailView(generics.RetrieveAPIView):
     throttle_classes = [UserProductDetailRateThrottle, AnonProductDetailRateThrottle]
     lookup_field = 'id'
 
-    queryset = Product.objects.annotate(view_count=Count('views_log'))
+    queryset = Product.objects.annotate(view_count=Count('views_log')).exclude(price=0)
 
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()

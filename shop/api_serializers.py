@@ -224,7 +224,7 @@ class ApiProductsListSerializers(serializers.ModelSerializer):
     is_in_user_comparison = serializers.SerializerMethodField()
     offer_percentage = serializers.SerializerMethodField()
     calculate_current_inventory = serializers.ReadOnlyField()
-    variations = ApiVariationListSerializers(read_only=True, many=True)
+    variations = serializers.SerializerMethodField()
     brand = ApiBrandListSerializer(read_only=True)
     price_title = serializers.SerializerMethodField()
     regular_price_title = serializers.SerializerMethodField()
@@ -261,6 +261,11 @@ class ApiProductsListSerializers(serializers.ModelSerializer):
             'sixteen_digit_code',
             'variation_of_name',
         ]
+
+    def get_variations(self, obj):
+        variations = obj.variations.filter(price__gt=0)
+        return ApiVariationListSerializers(variations, many=True, context=self.context).data
+
 
     def get_active_discounts(self, obj):
         now = timezone.now()
@@ -616,7 +621,7 @@ class ApiProductDetailSerializers(serializers.ModelSerializer):
     comments = serializers.SerializerMethodField()
     user_rate = serializers.SerializerMethodField()
     comments_count = serializers.ReadOnlyField()
-    variations = ApiVariationListSerializers(read_only=True, many=True)
+    variations = serializers.SerializerMethodField()
     price_title = serializers.SerializerMethodField()
     regular_price_title = serializers.SerializerMethodField()
     offer_percentage = serializers.SerializerMethodField()
@@ -663,6 +668,10 @@ class ApiProductDetailSerializers(serializers.ModelSerializer):
             'variation_of_name',
             'variation_title',
         ]
+
+    def get_variations(self, obj):
+        variations = obj.variations.filter(price__gt=0)
+        return ApiVariationListSerializers(variations, many=True, context=self.context).data
 
     def get_active_discounts(self, obj):
         now = timezone.now()
