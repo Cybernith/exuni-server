@@ -58,6 +58,11 @@ class StartZarinpalPaymentApiView(APIView):
 
         order = get_object_or_404(ShopOrder, id=order_id, customer=get_current_user())
 
+        if order.status == ShopOrder.EXPIRED:
+            order.update(status=ShopOrder.PENDING)
+            order.reduce_items_inventory()
+
+
         payment = getattr(order, 'bank_payment', None)
         if payment and payment.status == 'su':
             return Response({'message': 'this order already have payment'}, status=status.HTTP_400_BAD_REQUEST)
@@ -138,6 +143,10 @@ class ZarinpalCallbackApiView(APIView):
         callback_status = request.query_params.get('Status')
         payment = get_object_or_404(Payment, reference_id=authority)
         order = payment.shop_order
+        if order.status == ShopOrder.EXPIRED:
+            order.update(status=ShopOrder.PENDING)
+            order.reduce_items_inventory()
+
         payment.callback_called = True
         payment.save()
 

@@ -18,7 +18,7 @@ from django_fsm import FSMField, transition
 
 from location_field.models.plain import PlainLocationField
 
-from shop.helpers import increase_inventory
+from shop.helpers import increase_inventory, reduce_inventory
 from py3dbp import Packer, Bin, Item
 
 from store_handle.models import ShippingBox
@@ -362,7 +362,16 @@ class ShopOrder(BaseModel):
 
         return 'نامشخص'
 
-    # FSM status change functions
+    def increase_items_inventory(self):
+        for item in self.items.all():
+            increase_inventory(item.product.id, item.product_quantity)
+
+    def reduce_items_inventory(self):
+        for item in self.items.all():
+            if item.product.current_inventory.inventory < item.product_quantity:
+                item.update(product_quantity=item.product.current_inventory.inventory)
+            reduce_inventory(item.product.id, item.product_quantity)
+
 
     @transition(field='status', source=PENDING, target=PAID)
     def mark_as_paid(self):
