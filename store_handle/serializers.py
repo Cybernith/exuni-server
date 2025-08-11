@@ -49,6 +49,7 @@ class StoreHandlingProductsListSerializers(serializers.ModelSerializer):
             'is_variable',
             'variation_of',
             'shelf_number',
+            'price',
 
         ]
 
