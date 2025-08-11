@@ -527,7 +527,7 @@ class ShopOrderRegistrationView(APIView):
                     product = product_map[item.product.id]
 
                     if product.current_inventory.inventory < item.quantity and\
-                            item.quantity > 0 and product.last_price > 0:
+                            item.quantity > 0 and product.price > 0:
                         item.quantity = product.current_inventory.inventory
                         inventory_shortage_info.append(
                             {'name': product.name, 'quantity': product.current_inventory.inventory}
@@ -535,7 +535,7 @@ class ShopOrderRegistrationView(APIView):
                         order_items.append(ShopOrderItem(
                             shop_order=shop_order,
                             product=product,
-                            price=product.last_price,
+                            price=product.price,
                             product_quantity=item.quantity,
                         ))
 
@@ -564,8 +564,6 @@ class ShopOrderRegistrationView(APIView):
         except ValidationError as validation_error:
             return Response({'message': str(validation_error)}, status=status.HTTP_400_BAD_REQUEST)
 
-        except Exception as exception:
-            return Response({'message': f'خطا در ثبت سفارش: {str(exception)}'}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class CustomerOrdersView(APIView):
