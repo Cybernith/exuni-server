@@ -54,6 +54,7 @@ urlpatterns = [
     url(r'^api/', include('shop.shop_api_urls')),
     url(r'^issues/', include('issues.urls')),
     url(r'^store_handle/', include('store_handle.urls')),
+    url(r'^file_handler/', include('file_handler.urls')),
 
     path('admin/', admin.site.urls),
     path('nested_admin/', include('nested_admin.urls')),

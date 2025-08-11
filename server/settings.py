@@ -78,6 +78,7 @@ INSTALLED_APPS = [
     'financial_management',
     'issues',
     'store_handle',
+    'file_handler',
 
 ]
 

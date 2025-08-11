@@ -394,6 +394,9 @@ class ShopOrder(BaseModel):
 
     @transition(field='status', source='*', target=SHIPPED)
     def ship_order(self):
+        from crm.sms_dispatch import SMSHandler
+        sms_sender = SMSHandler()
+        sms_sender.send_orders_shipped([self.id])
         self.status = self.SHIPPED
         self.save()
 
@@ -497,7 +500,6 @@ class ShopOrder(BaseModel):
             price_sum=Sum(F('product_quantity') * F('price'), output_field=DecimalField()),
         ).aggregate(Sum('price_sum'), Sum('product_quantity'))
         self.total_price = items['price_sum__sum']
-        print('in constant', self.total_price, flush=True)
         self.total_product_quantity = items['product_quantity__sum']
         self.shipping_method = default_shipping_method
         self.post_price = default_shipping_method.calculate(self)

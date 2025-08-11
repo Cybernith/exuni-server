@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
-from file_handler.models import UploadedFile
+from file_handler.models import UploadedFile, ExtractedPostReportItem, ExtractedPostReport
+from shop.api_serializers import ApiCustomerShopOrderItemSerializer, ApiCustomerShopOrderSimpleSerializer
 
 
 class UploadedFileSerializer(serializers.ModelSerializer):
@@ -15,3 +16,43 @@ class ExtractPostReportCreateSerializer(serializers.Serializer):
     post_tracking_code = serializers.IntegerField()
     order = serializers.IntegerField()
 
+
+class ExtractedPostReportItemSerializer(serializers.ModelSerializer):
+    shop_order = ApiCustomerShopOrderSimpleSerializer(read_only=True)
+    status_display = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ExtractedPostReportItem
+        fields = [
+            'id',
+            'status',
+            'status_display',
+            'post_tracking_code',
+            'shop_order',
+            'price',
+            'created_at'
+        ]
+        read_only_fields = ['created_at']
+
+    def get_status_display(self, obj):
+        return obj.get_status_display()
+
+
+class ExtractedPostReportSerializer(serializers.ModelSerializer):
+    items_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ExtractedPostReport
+        fields = [
+            'id',
+            'name',
+            'date',
+            'uploaded_file',
+            'created_at',
+            'updated_at',
+            'items_count'
+        ]
+        read_only_fields = ['created_at', 'updated_at', 'items_count']
+
+    def get_items_count(self, obj):
+        return obj.items.filter(status=ExtractedPostReportItem.ORDER_NOT_AVAILABLE).count()

@@ -1,8 +1,12 @@
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, status
 from rest_framework.parsers import MultiPartParser, FormParser
-from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.views import APIView
+
+
+from rest_framework.response import Response
+
 
 from file_handler.models import UploadedFile, ExtractedPostReport, ExtractedPostReportItem
 from file_handler.serializers import UploadedFileSerializer, ExtractPostReportCreateSerializer
@@ -13,17 +17,20 @@ from shop.models import ShopOrder
 
 
 class UploadedFileListCreateView(generics.ListCreateAPIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
     queryset = UploadedFile.objects.all().order_by("-uploaded_at")
     serializer_class = UploadedFileSerializer
     parser_classes = (MultiPartParser, FormParser)
 
 
 class UploadedFileRetrieveView(generics.RetrieveAPIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
     queryset = UploadedFile.objects.all()
     serializer_class = UploadedFileSerializer
 
 
 class UploadedFileWithResponseByTypeView(generics.ListCreateAPIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
     serializer_class = UploadedFileSerializer
     parser_classes = (MultiPartParser, FormParser)
 
@@ -53,6 +60,7 @@ class UploadedFileWithResponseByTypeView(generics.ListCreateAPIView):
 
 
 class ExtractPostReportCreateView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
 
     def post(self, request):
         notif = []
@@ -75,6 +83,7 @@ class ExtractPostReportCreateView(APIView):
         )
 
         rows_created = 0
+        order_shipped = 0
 
         post_tracking_code_idx = post_tracking_code_col - 1
         order_idx = order_col - 1
@@ -86,7 +95,7 @@ class ExtractPostReportCreateView(APIView):
                 print("code_value:", code_value, flush=True)
 
                 if pd.isna(code_value) or pd.isna(order_value):
-                    notif.append(f'{code_value} ساختار کد معتبر سفارش نیست')
+                    notif.append(f'{code_value} ساختار کد سفارش معتبر  نیست')
                     continue
 
                 order_num = extract_number_from_string(str(order_value))
@@ -97,15 +106,24 @@ class ExtractPostReportCreateView(APIView):
                 shop_order = ShopOrder.objects.filter(id=order_num).first()
                 if not shop_order:
                     notif.append(f'{order_value} سفارش معتبر نیست')
-                    continue
+                    ExtractedPostReportItem.objects.create(
+                        status=ExtractedPostReportItem.ORDER_NOT_AVAILABLE,
+                        extracted_report=report,
+                        post_tracking_code=str(code_value)
+                    )
+                    rows_created += 1
 
-                ExtractedPostReportItem.objects.create(
-                    extracted_report=report,
-                    shop_order=shop_order,
-                    post_tracking_code=str(code_value)
+                else:
+                    ExtractedPostReportItem.objects.create(
+                        status=ExtractedPostReportItem.FOR_ORDER,
+                        extracted_report=report,
+                        shop_order=shop_order,
+                        post_tracking_code=str(code_value)
+                    )
+                    shop_order.update(post_tracking_code=str(code_value))
+                    shop_order.ship_order()
+                    order_shipped += 1
 
-                )
-                rows_created += 1
 
             except Exception as e:
                 notif.append(f'{str(e)} ارور منطق')
@@ -113,6 +131,8 @@ class ExtractPostReportCreateView(APIView):
 
         return Response({
             'report_id': report.id,
-            'items_created': rows_created,
+            'items_created': rows_created + order_shipped,
+            'rows_created': rows_created,
+            'order_shipped': order_shipped,
             'notifications': notif,
         }, status=status.HTTP_201_CREATED)

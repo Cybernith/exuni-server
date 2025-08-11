@@ -155,11 +155,15 @@ class ProductPackingInventoryHandleDetailView(APIView):
 
 
 class ProductStoreInventoryHandleCreateAPIView(generics.CreateAPIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
     queryset = ProductStoreInventoryHandle.objects.all()
     serializer_class = ProductStoreInventoryHandleSerializer
 
 
 class ProductStoreInventoryUpdateAPIView(generics.UpdateAPIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
     queryset = ProductStoreInventoryHandle.objects.all()
     serializer_class = StoreInventoryUpdateSerializer
     lookup_field = 'pk'

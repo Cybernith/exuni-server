@@ -37,7 +37,7 @@ class ExtractedPostReport(models.Model):
         UploadedFile,
         on_delete=models.CASCADE,
         related_name='extracted_post_report',
-        limit_choices_to={'type': UploadedFile.POST_REPORT}
+        limit_choices_to={'file_type': UploadedFile.POST_REPORT}
     )
 
     created_at = models.DateTimeField(auto_now_add=True)
@@ -48,6 +48,15 @@ class ExtractedPostReport(models.Model):
 
 
 class ExtractedPostReportItem(models.Model):
+    FOR_ORDER = 'f'
+    ORDER_NOT_AVAILABLE = 'n'
+
+    TYPES = (
+        (FOR_ORDER, ' سفارش'),
+        (ORDER_NOT_AVAILABLE, ' نا معلوم'),
+    )
+
+    status = models.CharField(choices=TYPES, max_length=1, default=ORDER_NOT_AVAILABLE)
     extracted_report = models.ForeignKey(
         ExtractedPostReport,
         on_delete=models.CASCADE,
@@ -56,11 +65,13 @@ class ExtractedPostReportItem(models.Model):
     shop_order = models.ForeignKey(
         'shop.ShopOrder',
         on_delete=models.CASCADE,
-        related_name='post_report_items'
+        related_name='post_report_items',
+        blank=True,
+        null=True,
     )
     post_tracking_code = models.CharField(max_length=100)
     created_at = models.DateTimeField(auto_now_add=True)
     price = models.IntegerField(default=0)
 
     def __str__(self):
-        return f"Item {self.post_tracking_code} for Order {self.shop_order.id}"
+        return f" {self.post_tracking_code}"
