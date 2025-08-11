@@ -535,7 +535,7 @@ class ShopOrderRegistrationView(APIView):
                         order_items.append(ShopOrderItem(
                             shop_order=shop_order,
                             product=product,
-                            price=product.last_price,
+                            price=product.price,
                             product_quantity=item.quantity,
                         ))
 
