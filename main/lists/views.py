@@ -32,7 +32,7 @@ class StoreListView(generics.ListAPIView):
     pagination_class = LimitOffsetPagination
 
     def get_queryset(self):
-        return Store.objects.all()
+        return Store.objects.exclude(id=1)
 
 
 class CurrencyListView(generics.ListAPIView):
