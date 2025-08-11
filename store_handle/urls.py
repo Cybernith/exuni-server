@@ -1,6 +1,7 @@
 from django.conf.urls import url
 
-from store_handle.lists.views import NoPackingHandleProductSimpleListView, PackingHandleProductSimpleListView
+from store_handle.lists.views import NoPackingHandleProductSimpleListView, PackingHandleProductSimpleListView, \
+    WaitForStoreHandleProductSimpleListView, StoreHandleProductSimpleListView
 from store_handle.views import ProductHandleChangeDetailView, ProductPackingInventoryHandleDetailView
 
 app_name = 'store_handle'
@@ -12,5 +13,10 @@ urlpatterns = [
         name='noPackingHandleProducts'),
     url(r'^packingHandleProducts$', PackingHandleProductSimpleListView.as_view(),
         name='packingHandleProducts'),
+
+    url(r'^waitForStoreHandleProducts$', WaitForStoreHandleProductSimpleListView.as_view(),
+        name='waitForStoreHandleProducts'),
+    url(r'^storeHandleProducts$', StoreHandleProductSimpleListView.as_view(),
+        name='storeHandleProducts'),
 
 ]

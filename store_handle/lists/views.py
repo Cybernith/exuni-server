@@ -27,3 +27,25 @@ class PackingHandleProductSimpleListView(generics.ListAPIView):
 
     def get_queryset(self):
         return Product.objects.filter(packing_handle_done=True, product_type__in=[Product.SIMPLE, Product.VARIABLE])
+
+
+class StoreHandleProductSimpleListView(generics.ListAPIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    serializer_class = StoreHandlingProductsListSerializers
+    filterset_class = ShopProductSimpleFilter
+    pagination_class = LimitOffsetPagination
+
+    def get_queryset(self):
+        return Product.objects.filter(store_handle_done=False, product_type__in=[Product.SIMPLE, Product.VARIATION])
+
+
+class WaitForStoreHandleProductSimpleListView(generics.ListAPIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    serializer_class = StoreHandlingProductsListSerializers
+    filterset_class = ShopProductSimpleFilter
+    pagination_class = LimitOffsetPagination
+
+    def get_queryset(self):
+        return Product.objects.filter(store_handle_done=False, product_type__in=[Product.SIMPLE, Product.VARIATION])

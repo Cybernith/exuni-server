@@ -33,6 +33,7 @@ class StoreHandlingProductsListSerializers(serializers.ModelSerializer):
     minimum_packing_inventory = serializers.SerializerMethodField()
     is_variable = serializers.SerializerMethodField()
     variations = AdminVariationSerializer(many=True, read_only=True)
+    variation_of = AdminVariationSerializer(read_only=True)
 
     class Meta:
         model = Product
@@ -46,6 +47,7 @@ class StoreHandlingProductsListSerializers(serializers.ModelSerializer):
             'packing_inventory',
             'aisle',
             'is_variable',
+            'variation_of',
             'shelf_number',
 
         ]
