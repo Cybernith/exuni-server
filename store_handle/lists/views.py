@@ -5,7 +5,7 @@ from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from products.models import Product
 from products.shop.filters import ShopProductSimpleFilter
 from shop.exuni_admin.srializers import AdminProductsListSerializers
-from store_handle.serializers import StoreHandlingProductsListSerializers
+from store_handle.serializers import StoreHandlingProductsListSerializers, HandleDoneProductsListSerializers
 
 
 class NoPackingHandleProductSimpleListView(generics.ListAPIView):
@@ -32,12 +32,12 @@ class PackingHandleProductSimpleListView(generics.ListAPIView):
 class StoreHandleProductSimpleListView(generics.ListAPIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
-    serializer_class = StoreHandlingProductsListSerializers
+    serializer_class = HandleDoneProductsListSerializers
     filterset_class = ShopProductSimpleFilter
     pagination_class = LimitOffsetPagination
 
     def get_queryset(self):
-        return Product.objects.filter(store_handle_done=False, product_type__in=[Product.SIMPLE, Product.VARIATION])
+        return Product.objects.filter(store_handle_done=True, product_type__in=[Product.SIMPLE, Product.VARIATION])
 
 
 class WaitForStoreHandleProductSimpleListView(generics.ListAPIView):

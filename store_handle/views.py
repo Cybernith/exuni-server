@@ -8,9 +8,11 @@ from django.shortcuts import get_object_or_404
 from helpers.functions import get_current_user
 from main.models import Store
 from products.models import Product
-from store_handle.models import ProductHandleChange, ProductPackingInventoryHandle, ProductStoreInventory
+from store_handle.models import ProductHandleChange, ProductPackingInventoryHandle, ProductStoreInventory, \
+    ProductStoreInventoryHandle
 from store_handle.serializers import ProductHandleChangeSerializer, ProductPackingInventoryHandleSerializer, \
-    ProductStoreInventorySerializer
+    ProductStoreInventorySerializer, ProductStoreInventoryHandleSerializer, StoreInventoryUpdateSerializer
+from rest_framework import generics
 
 
 class ProductHandleChangeDetailView(APIView):
@@ -151,3 +153,13 @@ class ProductPackingInventoryHandleDetailView(APIView):
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
+class ProductStoreInventoryHandleCreateAPIView(generics.CreateAPIView):
+    queryset = ProductStoreInventoryHandle.objects.all()
+    serializer_class = ProductStoreInventoryHandleSerializer
+
+
+class ProductStoreInventoryUpdateAPIView(generics.UpdateAPIView):
+    queryset = ProductStoreInventoryHandle.objects.all()
+    serializer_class = StoreInventoryUpdateSerializer
+    lookup_field = 'pk'
