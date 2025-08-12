@@ -231,28 +231,6 @@ class PaymentAdmin(admin.ModelAdmin):
         'paid_at',
     )
 
-    # Fields to display in the form (add/edit)
-    fieldsets = (
-        (None, {
-            'fields': (
-                'type',
-                'status',
-                'user',
-                'business',
-                'shop_order',
-                'amount',
-                'used_amount_from_wallet',
-                'gateway',
-                'reference_id',
-                'zarinpal_ref_id',
-                'card_pan',
-                'fee',
-                'created_at',
-                'paid_at',
-            )
-        }),
-    )
-
     # Filter options
     list_filter = (
         'status',
