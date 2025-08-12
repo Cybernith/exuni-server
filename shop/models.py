@@ -373,6 +373,11 @@ class ShopOrder(BaseModel):
             reduce_inventory(item.product.id, item.product_quantity)
 
 
+    @transition(field='status', source='*', target=PENDING)
+    def mark_as_pending(self):
+        self.status = self.PENDING
+        self.save()
+
     @transition(field='status', source=PENDING, target=PAID)
     def mark_as_paid(self):
         from crm.sms_dispatch import SMSHandler

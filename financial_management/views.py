@@ -59,7 +59,7 @@ class StartZarinpalPaymentApiView(APIView):
         order = get_object_or_404(ShopOrder, id=order_id, customer=get_current_user())
 
         if order.status == ShopOrder.EXPIRED:
-            order.update(status=ShopOrder.PENDING)
+            order.mark_as_pending()
             order.reduce_items_inventory()
 
 
@@ -67,8 +67,7 @@ class StartZarinpalPaymentApiView(APIView):
         if payment and payment.status == 'su':
             return Response({'message': 'this order already have payment'}, status=status.HTTP_400_BAD_REQUEST)
         elif payment and payment.status != 'su':
-            payment.status = 'ca'
-            payment.save()
+            payment.delete()
 
         if request.data.get('use_wallet', False):
             transaction_id = generate_pay_from_wallet_code_with_mobile(order.customer.mobile_number)
@@ -144,7 +143,7 @@ class ZarinpalCallbackApiView(APIView):
         payment = get_object_or_404(Payment, reference_id=authority)
         order = payment.shop_order
         if order.status == ShopOrder.EXPIRED:
-            order.update(status=ShopOrder.PENDING)
+            order.mark_as_pending()
             order.reduce_items_inventory()
 
         payment.callback_called = True
