@@ -571,6 +571,13 @@ class ShopOrder(BaseModel):
 
     def pay(self):
         assert not self.status == self.PAID
+        payment = getattr(self, 'bank_payment', None)
+        if payment and payment.status == 'su':
+            raise ValidationError('this order already have success payment')
+        elif payment and payment.status != 'su':
+            payment.delete()
+            self.bank_payment = None
+            self.save()
 
         discount_code = self.discount_code
         if discount_code:
@@ -578,25 +585,19 @@ class ShopOrder(BaseModel):
 
         self.set_constants()
 
-        try:
-            if self.bank_payment and self.bank_payment.status != 'su':
-                    self.save()
-                    self.bank_payment.mark_as_pending(user=self.customer)
-                    return self.bank_payment
-        except:
-            payment = Payment.objects.create(
-                shop_order=self,
-                user=self.customer,
-                type=Payment.FOR_SHOP_ORDER,
-                amount=self.final_amount,
-                gateway='zarinpal',
-                status=Payment.INITIATED,
-                created_at=timezone.now()
-            )
+        payment = Payment.objects.create(
+            shop_order=self,
+            user=self.customer,
+            type=Payment.FOR_SHOP_ORDER,
+            amount=self.final_amount,
+            gateway='zarinpal',
+            status=Payment.INITIATED,
+            created_at=timezone.now()
+        )
 
-            payment.mark_as_pending(user=self.customer)
-            self.save()
-            return payment
+        payment.mark_as_pending(user=self.customer)
+        self.save()
+        return payment
 
     def __str__(self):
         return "سفارش {} {}".format(self.exuni_tracking_code, self.customer.name)

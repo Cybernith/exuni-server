@@ -26,7 +26,7 @@ class GlobalAutoCompleteSearchAPIView(APIView):
         query_value = Value(query, output_field=CharField())
         search_query = SearchQuery(query)
 
-        products = Product.objects.exclude(product_type=Product.VARIATION).annotate(
+        products = Product.objects.exclude(product_type=Product.VARIATION).filter(status=Product.PUBLISHED).annotate(
         stock=Case(
             When(
                 product_type=Product.SIMPLE,

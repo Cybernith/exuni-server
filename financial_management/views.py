@@ -65,9 +65,11 @@ class StartZarinpalPaymentApiView(APIView):
 
         payment = getattr(order, 'bank_payment', None)
         if payment and payment.status == 'su':
-            return Response({'message': 'this order already have payment'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'message': 'this order already have success payment'}, status=status.HTTP_400_BAD_REQUEST)
         elif payment and payment.status != 'su':
             payment.delete()
+            order.bank_payment = None
+            order.save()
 
         if request.data.get('use_wallet', False):
             transaction_id = generate_pay_from_wallet_code_with_mobile(order.customer.mobile_number)
