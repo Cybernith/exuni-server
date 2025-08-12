@@ -82,7 +82,6 @@ class ProductQuerySet(models.QuerySet):
         return (
             self.filter(
                 status=Product.PUBLISHED,
-                price__gt=0,
                 product_type__in=[Product.SIMPLE, Product.VARIABLE]
             )
             .annotate(
