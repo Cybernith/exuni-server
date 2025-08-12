@@ -54,7 +54,7 @@ class ShopProductSimpleListView(generics.ListAPIView):
     pagination_class = LimitOffsetPagination
 
     def get_queryset(self):
-        return Product.objects.shop_products().select_related('brand', 'variation_of').prefetch_related('variations', 'gallery', 'products_in_wish_list', 'products_in_comparison')
+        return Product.objects.shop_products().select_related('brand', 'variation_of').prefetch_related('variations', 'gallery')
 
 
 class ShopProductWithCommentsListView(generics.ListAPIView):
