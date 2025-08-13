@@ -18,7 +18,6 @@ class ExtractPostReportCreateSerializer(serializers.Serializer):
 
 
 class ExtractedPostReportItemSerializer(serializers.ModelSerializer):
-    shop_order = ApiCustomerShopOrderSimpleSerializer(read_only=True)
     status_display = serializers.SerializerMethodField()
 
     class Meta:
@@ -28,8 +27,6 @@ class ExtractedPostReportItemSerializer(serializers.ModelSerializer):
             'status',
             'status_display',
             'post_tracking_code',
-            'shop_order',
-            'price',
             'created_at'
         ]
         read_only_fields = ['created_at']
