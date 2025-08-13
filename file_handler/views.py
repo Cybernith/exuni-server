@@ -88,6 +88,8 @@ class ExtractPostReportCreateView(APIView):
         post_tracking_code_idx = post_tracking_code_col - 1
         order_idx = order_col - 1
 
+        shop_orders_to_update = []
+
         for idx, row in df.iterrows():
             try:
                 code_value = row.iloc[post_tracking_code_idx]
@@ -95,7 +97,7 @@ class ExtractPostReportCreateView(APIView):
                 print("code_value:", code_value, flush=True)
 
                 if pd.isna(code_value) or pd.isna(order_value):
-                    notif.append(f'{code_value} ساختار کد سفارش معتبر  نیست')
+                    notif.append(f'{code_value} ساختار کد سفارش معتبر نیست')
                     continue
 
                 order_num = extract_number_from_string(str(order_value))
@@ -112,7 +114,6 @@ class ExtractPostReportCreateView(APIView):
                         post_tracking_code=str(code_value)
                     )
                     rows_created += 1
-
                 else:
                     ExtractedPostReportItem.objects.create(
                         status=ExtractedPostReportItem.FOR_ORDER,
@@ -120,14 +121,19 @@ class ExtractPostReportCreateView(APIView):
                         shop_order=shop_order,
                         post_tracking_code=str(code_value)
                     )
-                    shop_order.update(post_tracking_code=str(code_value))
-                    shop_order.ship_order()
+                    shop_order.post_tracking_code = str(code_value)
+                    shop_orders_to_update.append(shop_order)
                     order_shipped += 1
-
 
             except Exception as e:
                 notif.append(f'{str(e)} ارور منطق')
                 continue
+
+        for order in shop_orders_to_update:
+            order.post_tracking_code = str(order.post_tracking_code)
+            order.status = ShopOrder.SHIPPED
+
+        ShopOrder.objects.bulk_update(shop_orders_to_update, ['post_tracking_code', 'status'])
 
         return Response({
             'report_id': report.id,
