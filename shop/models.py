@@ -362,16 +362,71 @@ class ShopOrder(BaseModel):
 
         return 'نامشخص'
 
-    def increase_items_inventory(self):
-        for item in self.items.all():
-            increase_inventory(item.product.id, item.product_quantity)
+    def increase_items_inventory(self, user=None):
+        from products.models import ProductInventory, ProductInventoryHistory
 
-    def reduce_items_inventory(self):
-        for item in self.items.all():
-            if item.product.current_inventory.inventory < item.product_quantity:
-                item.update(product_quantity=item.product.current_inventory.inventory)
-            reduce_inventory(item.product.id, item.product_quantity)
+        with transaction.atomic():
+            items = list(self.items.all())
+            product_ids = [item.product_id for item in items]
 
+            inventories = {
+                inv.product_id: inv
+                for inv in ProductInventory.objects.select_for_update().filter(product_id__in=product_ids)
+            }
+
+            for item in items:
+                inv = inventories[item.product_id]
+
+                previous_quantity = inv.inventory
+                inv.inventory = F("inventory") + item.product_quantity
+                inv.save(update_fields=["inventory"])
+                inv.refresh_from_db()
+
+                ProductInventoryHistory.objects.create(
+                    inventory=inv,
+                    action=ProductInventoryHistory.INCREASE,
+                    amount=item.product_quantity,
+                    previous_quantity=previous_quantity,
+                    new_quantity=inv.inventory,
+                    changed_by=user
+                )
+
+    def reduce_items_inventory(self, user=None):
+        from products.models import ProductInventory, ProductInventoryHistory
+
+        with transaction.atomic():
+            items = list(self.items.select_related("product__current_inventory"))
+            product_ids = [item.product_id for item in items]
+
+            inventories = {
+                inv.product_id: inv
+                for inv in ProductInventory.objects.select_for_update().filter(product_id__in=product_ids)
+            }
+
+            for item in items:
+                inv = inventories[item.product_id]
+
+                if inv.inventory < item.product_quantity:
+                    item.product_quantity = inv.inventory
+                    item.save(update_fields=["product_quantity"])
+
+                if item.product_quantity <= 0:
+                    item.delete()
+                    continue
+
+                previous_quantity = inv.inventory
+                inv.inventory = F("inventory") - item.product_quantity
+                inv.save(update_fields=["inventory"])
+                inv.refresh_from_db()
+
+                ProductInventoryHistory.objects.create(
+                    inventory=inv,
+                    action=ProductInventoryHistory.DECREASE,
+                    amount=item.product_quantity,
+                    previous_quantity=previous_quantity,
+                    new_quantity=inv.inventory,
+                    changed_by=user
+                )
 
     @transition(field='status', source='*', target=PENDING)
     def mark_as_pending(self):
@@ -418,28 +473,9 @@ class ShopOrder(BaseModel):
 
         self.save()
 
-    @transition(field='status', source=PENDING, target=CANCELLED)
+    @transition(field='status', source=PENDING, target=EXPIRED)
     def expired_order(self):
         self.status = self.EXPIRED
-        for item in self.items.all():
-            increase_inventory(item.product.id, item.product_quantity)
-            with transaction.atomic():
-                cart_item, created = Cart.objects.get_or_create(
-                    customer=self.customer,
-                    product=item.product,
-                    defaults={'quantity': item.product_quantity}
-                )
-                if not created:
-                    cart_item.quantity += item.product_quantity
-                    cart_item.save()
-
-            try:
-                payment = self.bank_payment
-            except:
-                payment = None
-            if payment and payment.status in [Payment.INITIATED, Payment.PENDING]:
-                payment.mark_as_expired_payment()
-
         self.save()
 
     @transition(field='status', source=PENDING, target=EDITED)
@@ -447,7 +483,6 @@ class ShopOrder(BaseModel):
         self.status = self.EDITED
         for item in self.items.all():
             increase_inventory(item.product.id, item.product_quantity)
-
         self.save()
 
     def apply_discounts_to_order(self):
@@ -527,6 +562,7 @@ class ShopOrder(BaseModel):
 
     def pay_with_wallet(self, transaction_id=None):
         assert not self.status == self.PAID
+        self.set_constants()
         final_price = self.final_amount
         wallet = self.customer.exuni_wallet
 

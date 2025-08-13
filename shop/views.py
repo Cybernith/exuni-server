@@ -23,7 +23,7 @@ from financial_management.loggers.financial_logger import FinancialLogger
 from financial_management.models import Payment, Transaction, AuditAction, AuditSeverity
 from helpers.auth import BasicObjectPermission
 from helpers.functions import get_current_user
-from products.models import Product
+from products.models import Product, ProductInventoryHistory, ProductInventory
 from shop.api_serializers import ApiCartRetrieveSerializer, ApiWishListRetrieveSerializer, \
     ApiComparisonRetrieveSerializer, ApiShipmentAddressRetrieveSerializer, ApiCustomerShopOrderSimpleSerializer, \
     CartAddSerializer, ApiOrderListSerializer, ApiOrderStatusHistorySerializer
@@ -510,8 +510,14 @@ class ShopOrderRegistrationView(APIView):
         try:
             with transaction.atomic():
                 product_ids = list(cart_items.values_list('product_id', flat=True))
-                locked_products = Product.objects.filter(id__in=product_ids).select_for_update()
-                product_map = {product.id: product for product in locked_products}
+
+                inventories = (
+                    ProductInventory.objects
+                    .select_for_update()
+                    .filter(product_id__in=product_ids)
+                    .select_related('product')
+                )
+                inventory_map = {inv.product_id: inv for inv in inventories}
 
                 shop_order = ShopOrder.objects.create(
                     customer=customer,
@@ -524,34 +530,51 @@ class ShopOrderRegistrationView(APIView):
                 inventory_shortage_info = []
 
                 for item in cart_items:
-                    product = product_map[item.product.id]
+                    inv = inventory_map[item.product.id]
+                    product = inv.product
+                    quantity = item.quantity
 
-                    if product.current_inventory.inventory < item.quantity:
-                        item.quantity = product.current_inventory.inventory
-                        inventory_shortage_info.append(
-                            {'name': product.name, 'quantity': product.current_inventory.inventory}
-                        )
-                    if item.quantity > 0 and product.price > 0:
+                    if inv.inventory <= 0:
+                        inventory_shortage_info.append({'name': product.name, 'quantity': 0})
+                        continue
+
+                    if inv.inventory < quantity:
+                        inventory_shortage_info.append({'name': product.name, 'quantity': inv.inventory})
+                        quantity = inv.inventory
+
+                    if quantity > 0 and product.price > 1000:
                         order_items.append(ShopOrderItem(
                             shop_order=shop_order,
                             product=product,
                             price=product.price,
-                            product_quantity=item.quantity,
+                            product_quantity=quantity,
                         ))
 
-                        reduce_inventory(product.id, item.quantity)
+                        prev_quantity = inv.inventory
+                        inv.inventory = F('inventory') - quantity
+                        inv.save()
+
+                        ProductInventoryHistory.objects.create(
+                            inventory=inv,
+                            action=ProductInventoryHistory.DECREASE,
+                            amount=quantity,
+                            previous_quantity=prev_quantity,
+                            new_quantity=prev_quantity - quantity,
+                            changed_by=customer
+                        )
 
                 ShopOrderItem.objects.bulk_create(order_items)
 
                 cart_items.delete()
                 shop_order.set_constants()
-                # handle inventory shortage
+
                 inventory_info = 'ok'
-                if len(inventory_shortage_info) > 0:
-                    product_inventory_shortage_info = ''
-                    for info in inventory_shortage_info:
-                        product_inventory_shortage_info += ' - {} برابر {}'.format(info['name'], info['quantity'])
-                    inventory_info = 'موجودی کالاهای {} می‌باشد. سبد خرید کاربر با توجه به موجودی فعلی، به‌روزرسانی و ویرایش شد.'.format(product_inventory_shortage_info)
+                if inventory_shortage_info:
+                    shortage_text = ''.join(
+                        f' - {info["name"]} برابر {info["quantity"]}'
+                        for info in inventory_shortage_info
+                    )
+                    inventory_info = f'موجودی کالاهای {shortage_text} می‌باشد. سبد خرید با توجه به موجودی فعلی ویرایش شد.'
 
                 return Response({
                     'message': 'ثبت اولیه سفارش با موفقیت انجام شد',
@@ -563,7 +586,6 @@ class ShopOrderRegistrationView(APIView):
 
         except ValidationError as validation_error:
             return Response({'message': str(validation_error)}, status=status.HTTP_400_BAD_REQUEST)
-
         except Exception as exception:
             return Response({'message': f'خطا در ثبت سفارش: {str(exception)}'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -785,29 +807,58 @@ class UserOrdersListView(generics.ListAPIView):
 class AddToCartAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
+    @transaction.atomic
     def post(self, request):
         serializer = CartAddSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
         product_id = serializer.validated_data['product_id']
         quantity = serializer.validated_data['quantity']
-        user = get_current_user()
 
-        cart_item, created = Cart.objects.get_or_create(
-            customer=user,
-            product_id=product_id,
-            defaults={'quantity': quantity}
+        product = Product.objects.get(id=product_id)
+
+        inventory = (
+            ProductInventory.objects
+                .select_for_update()
+                .get(product=product)
         )
 
-        if not created:
-            cart_item.quantity = quantity
-            cart_item.save()
+        available_stock = inventory.inventory
+        if available_stock <= 0:
+            raise ValidationError('موجودی محصول کافی نیست')
 
-        return Response({
-            "message": "محصول با موفقیت به سبد خرید اضافه شد.",
-            "item_id": cart_item.id,
-            "quantity": cart_item.quantity
-        }, status=status.HTTP_200_OK)
+        if available_stock < quantity:
+            quantity = available_stock
+
+        user = get_current_user()
+
+        if quantity > 0:
+            cart_item, created = Cart.objects.get_or_create(
+                customer=user,
+                product=product,
+                defaults={'quantity': quantity}
+            )
+
+            if not created:
+                cart_item.quantity = quantity
+                cart_item.save()
+
+            return Response({
+                "message": "محصول با موفقیت به سبد خرید اضافه شد.",
+                "item_id": cart_item.id,
+                "quantity": cart_item.quantity
+            }, status=status.HTTP_200_OK)
+
+        else:
+            deleted_count, _ = Cart.objects.filter(
+                customer=user,
+                product=product
+            ).delete()
+            if deleted_count > 0:
+                return Response(status=status.HTTP_204_NO_CONTENT)
+            return Response({
+                "message": "محصول در سبد خرید یافت نشد."
+            }, status=status.HTTP_404_NOT_FOUND)
 
 
 class CustomerOrdersSearchView(APIView):
@@ -826,65 +877,62 @@ class CancelShopOrderView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, pk):
-        shop_order = get_object_or_404(ShopOrder, pk=pk)
+        with transaction.atomic():
+            shop_order = (
+                ShopOrder.objects
+                .select_related('customer', 'bank_payment')
+                .prefetch_related('items')
+                .filter(pk=pk)
+                .first()
+            )
+            if not shop_order:
+                return Response({'message': 'سفارش یافت نشد'}, status=status.HTTP_404_NOT_FOUND)
 
-        if not (shop_order.customer == get_current_user()):
-            return Response(
-                {'message': 'دسترسی غیرمجاز'},
-                status=status.HTTP_403_FORBIDDEN
+            if shop_order.customer != get_current_user():
+                return Response({'message': 'دسترسی غیرمجاز'}, status=status.HTTP_403_FORBIDDEN)
+
+            if shop_order.status == ShopOrder.CANCELLED:
+                return Response({'message': 'این سفارش از قبل کنسل شده است'}, status=status.HTTP_400_BAD_REQUEST)
+
+            if shop_order.status != ShopOrder.PENDING:
+                return Response({'message': 'سفارش فقط در وضعیت در انتظار پرداخت قابل لغو است'}, status=status.HTTP_400_BAD_REQUEST)
+
+            previous_status = shop_order.status
+            shop_order.cancel_order()  # باید داخلش inventory رو با select_for_update آپدیت کنه
+
+            ShopOrderStatusHistory.objects.create(
+                shop_order=shop_order,
+                previous_status=previous_status,
+                new_status=ShopOrder.CANCELLED,
+                changed_by=request.user,
+                note=request.data.get('note', '')
             )
 
-        if shop_order.status == ShopOrder.CANCELLED:
-            return Response(
-                {'message': 'این سفارش از قبل کنسل شده است'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            payment = getattr(shop_order, 'bank_payment', None)
 
-        if shop_order.status not in [ShopOrder.PENDING]:
-            return Response(
-                {'message': 'سفارش فقط در وضعیت در انتظار پرداخت  قابل لغو است'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            if payment and payment.status == Payment.SUCCESS:
+                Payment.objects.select_for_update().filter(pk=payment.pk)
 
-        previous_status = shop_order.status
-        shop_order.cancel_order()
+                exuni_transaction = shop_order.customer.exuni_wallet.increase_balance(
+                    amount=(payment.amount + payment.used_amount_from_wallet),
+                    description=f'لغو سفارش {shop_order.exuni_tracking_code} بعد از پرداخت',
+                    transaction_type=Transaction.ORDER_REFUND,
+                    order=shop_order,
+                )
 
-        ShopOrderStatusHistory.objects.create(
-            shop_order=shop_order,
-            previous_status=previous_status,
-            new_status=ShopOrder.CANCELLED,
-            changed_by=request.user,
-            note=request.data.get('note', '')
-        )
+                FinancialLogger.log(
+                    user=get_current_user(),
+                    action=AuditAction.REFUND_PAYMENT_ORDER,
+                    severity=AuditSeverity.INFO,
+                    transaction=exuni_transaction,
+                    ip_address=request.META.get('REMOTE_ADDR'),
+                    user_agent=request.META.get('HTTP_USER_AGENT'),
+                    extra_info={"amount": str(payment.amount)}
+                )
+                payment.status = Payment.CANCELLED
+                payment.save()
 
-        try:
-            payment = shop_order.bank_payment
-        except ShopOrder.bank_payment.RelatedObjectDoesNotExist:
-            payment = None
-
-        if payment and payment.status == Payment.SUCCESS:
-            exuni_transaction = shop_order.customer.exuni_wallet.increase_balance(
-                amount=(payment.amount + payment.used_amount_from_wallet),
-                description=f'لغو سفارش {shop_order.exuni_tracking_code} بعد از پرداخت',
-                transaction_type=Transaction.ORDER_REFUND,
-                order=shop_order,
-            )
-
-            FinancialLogger.log(
-                user=get_current_user(),
-                action=AuditAction.REFUND_PAYMENT_ORDER,
-                severity=AuditSeverity.INFO,
-                transaction=exuni_transaction,
-                ip_address=request.META.get('REMOTE_ADDR'),
-                user_agent=request.META.get('HTTP_USER_AGENT'),
-                extra_info={"amount": str(payment.amount)}
-            )
-            payment.status = Payment.CANCELLED
-            payment.save()
-        return Response(
-            {'status': 'Order cancelled successfully.'},
-            status=status.HTTP_200_OK
-        )
+        return Response({'message': 'سفارش لغو شد.'}, status=status.HTTP_200_OK)
 
 
 class OrderMoveToCartAPIView(APIView):
@@ -892,7 +940,7 @@ class OrderMoveToCartAPIView(APIView):
 
     def delete(self, request, pk):
         try:
-            order = ShopOrder.objects.prefetch_related('items').get(pk=pk, customer=get_current_user())
+            order = ShopOrder.objects.select_for_update().prefetch_related('items').get(pk=pk, customer=get_current_user())
         except ShopOrder.DoesNotExist:
             return Response({'message': 'سفارش یافت نشد.'}, status=status.HTTP_404_NOT_FOUND)
 
@@ -942,7 +990,5 @@ class OrderMoveToCartAPIView(APIView):
                 )
                 payment.status = Payment.CANCELLED
                 payment.save()
-
-            order.delete()
 
         return Response({'message': 'سفارش با موفقیت حذف و آیتم‌ها به سبد خرید منتقل شدند.'}, status=status.HTTP_200_OK)

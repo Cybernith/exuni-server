@@ -4,7 +4,6 @@ from django.db.models import F, Q
 
 
 def reduce_inventory(product_id, val, user=None):
-    print('red run ', flush=True)
 
     with transaction.atomic():
         from products.models import ProductInventoryHistory, ProductInventory

@@ -2,6 +2,7 @@ import datetime
 import time
 from decimal import Decimal
 
+from django.db import transaction
 from django.db.models import Sum
 from django.shortcuts import redirect
 from django.shortcuts import get_object_or_404
@@ -55,86 +56,91 @@ class StartZarinpalPaymentApiView(APIView):
     throttle_classes = [PaymentRateThrottle]
 
     def post(self, request, order_id):
+        with transaction.atomic():
+            order = ShopOrder.objects.select_for_update().select_related("customer").prefetch_related(
+                "items__product__current_inventory"
+            ).filter(id=order_id, customer=get_current_user()).first()
 
-        order = get_object_or_404(ShopOrder, id=order_id, customer=get_current_user())
+            if not order:
+                return Response({'message': 'Order not found'}, status=status.HTTP_404_NOT_FOUND)
 
-        if order.status == ShopOrder.EXPIRED:
-            order.mark_as_pending()
-            order.reduce_items_inventory()
+            if order.status == ShopOrder.EXPIRED:
+                order.mark_as_pending()
+                order.reduce_items_inventory()
 
 
-        payment = getattr(order, 'bank_payment', None)
-        if payment and payment.status == 'su':
-            return Response({'message': 'this order already have success payment'}, status=status.HTTP_400_BAD_REQUEST)
-        elif payment and payment.status != 'su':
-            payment.delete()
-            order.bank_payment = None
-            order.save()
+            payment = getattr(order, 'bank_payment', None)
+            if payment and payment.status == 'su':
+                return Response({'message': 'this order already have success payment'}, status=status.HTTP_400_BAD_REQUEST)
+            elif payment and payment.status != 'su':
+                payment.delete()
+                order.bank_payment = None
+                order.save()
 
-        if request.data.get('use_wallet', False):
-            transaction_id = generate_pay_from_wallet_code_with_mobile(order.customer.mobile_number)
-            payment = order.pay_with_wallet(transaction_id=transaction_id)
-            if not payment:
+            if request.data.get('use_wallet', False):
+                transaction_id = generate_pay_from_wallet_code_with_mobile(order.customer.mobile_number)
+                payment = order.pay_with_wallet(transaction_id=transaction_id)
+                if not payment:
+                    FinancialLogger.log(
+                        user=order.customer,
+                        action=AuditAction.PAYMENT_ORDER_FROM_WALLET,
+                        severity=AuditSeverity.INFO,
+                        transaction=Transaction.objects.get(transaction_id=transaction_id),
+                        ip_address=self.kwargs.get("ip"),
+                        user_agent=self.kwargs.get("agent"),
+                        extra_info={
+                            "amount": str(order.final_amount),
+                            "order": str(order.id),
+                        }
+                    )
+
+                    return Response(
+                        {
+                            'payment_url': f'/payment/success?status=success&type=wallet&payment_date={date_to_str(datetime.date.today())}&amount={order.final_amount}&order_id={order.id}'
+                        }
+                    )
+            else:
+                payment = order.pay()
+
+            callback_url = SERVER_URL + reverse('financial_management:zarinpal_callback')
+
+            description = f'پرداخت سفارش {order.id} کاربر {order.customer.mobile_number}'
+            if request.data.get('use_wallet', False):
+                description = f'پرداخت سفارش {order.id} کاربر {order.customer.mobile_number} مبلغ {payment.used_amount_from_wallet} از کیف پول با شناسه {transaction_id} '
+
+            request.data.get('use_wallet', False)
+            gateway = ZarinpalGateway(
+                amount=payment.amount,
+                mobile=payment.shop_order.customer.mobile_number,
+                payment_id=order.id,
+                description=description,
+                callback_url=callback_url
+            )
+
+            try:
+                result = gateway.request_payment()
+                payment.reference_id = result['authority']
+                payment.save()
                 FinancialLogger.log(
-                    user=order.customer,
-                    action=AuditAction.PAYMENT_ORDER_FROM_WALLET,
+                    user=payment.user,
+                    action=AuditAction.PAYMENT_REQUEST,
                     severity=AuditSeverity.INFO,
-                    transaction=Transaction.objects.get(transaction_id=transaction_id),
+                    payment=payment,
                     ip_address=self.kwargs.get("ip"),
                     user_agent=self.kwargs.get("agent"),
                     extra_info={
-                        "amount": str(order.final_amount),
+                        "amount": str(payment.amount),
+                        "authority": result['authority'],
                         "order": str(order.id),
+                        "used_from_wallet": str(payment.used_amount_from_wallet),
                     }
                 )
 
-                return Response(
-                    {
-                        'payment_url': f'/payment/success?status=success&type=wallet&payment_date={date_to_str(datetime.date.today())}&amount={order.final_amount}&order_id={order.id}'
-                    }
-                )
-        else:
-            payment = order.pay()
+                return Response({'payment_url': result['payment_url']})
 
-        callback_url = SERVER_URL + reverse('financial_management:zarinpal_callback')
-
-        description = f'پرداخت سفارش {order.id} کاربر {order.customer.mobile_number}'
-        if request.data.get('use_wallet', False):
-            description = f'پرداخت سفارش {order.id} کاربر {order.customer.mobile_number} مبلغ {payment.used_amount_from_wallet} از کیف پول با شناسه {transaction_id} '
-
-        request.data.get('use_wallet', False)
-        gateway = ZarinpalGateway(
-            amount=payment.amount,
-            mobile=payment.shop_order.customer.mobile_number,
-            payment_id=order.id,
-            description=description,
-            callback_url=callback_url
-        )
-
-        try:
-            result = gateway.request_payment()
-            payment.reference_id = result['authority']
-            payment.save()
-            FinancialLogger.log(
-                user=payment.user,
-                action=AuditAction.PAYMENT_REQUEST,
-                severity=AuditSeverity.INFO,
-                payment=payment,
-                ip_address=self.kwargs.get("ip"),
-                user_agent=self.kwargs.get("agent"),
-                extra_info={
-                    "amount": str(payment.amount),
-                    "authority": result['authority'],
-                    "order": str(order.id),
-                    "used_from_wallet": str(payment.used_amount_from_wallet),
-                }
-            )
-
-            return Response({'payment_url': result['payment_url']})
-
-        except Exception as exception:
-            payment.delete()
-            return Response({'message': str(exception)}, status=status.HTTP_400_BAD_REQUEST)
+            except Exception as exception:
+                payment.delete()
+                return Response({'message': str(exception)}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class ZarinpalCallbackApiView(APIView):
@@ -144,10 +150,6 @@ class ZarinpalCallbackApiView(APIView):
         callback_status = request.query_params.get('Status')
         payment = get_object_or_404(Payment, reference_id=authority)
         order = payment.shop_order
-        if order.status == ShopOrder.EXPIRED:
-            order.mark_as_pending()
-            order.reduce_items_inventory()
-
         payment.callback_called = True
         payment.save()
 
