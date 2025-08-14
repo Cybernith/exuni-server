@@ -17,9 +17,7 @@ class ExtractedPostReportListView(generics.ListAPIView):
     pagination_class = LimitOffsetPagination
 
     def get_queryset(self):
-        return ExtractedPostReport.objects.filter(
-            items__status=ExtractedPostReportItem.ORDER_NOT_AVAILABLE
-        ).distinct()
+        return ExtractedPostReport.objects.all().prefetch_related('items', 'items__shop_order')
 
 
 class ExtractedPostReportItemListView(generics.ListAPIView):

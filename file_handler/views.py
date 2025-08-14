@@ -105,8 +105,7 @@ class ExtractPostReportCreateView(APIView):
                     notif.append(f'{code_value} ساختار کد سفارش معتبر نیست')
                     continue
 
-                shop_order = ShopOrder.objects.filter(id=order_num).first()
-                if not shop_order:
+                if not order_num or not ShopOrder.objects.filter(id=order_num).exists():
                     notif.append(f'{order_value} سفارش معتبر نیست')
                     ExtractedPostReportItem.objects.create(
                         status=ExtractedPostReportItem.ORDER_NOT_AVAILABLE,
@@ -116,6 +115,7 @@ class ExtractPostReportCreateView(APIView):
                     )
                     rows_created += 1
                 else:
+                    shop_order = ShopOrder.objects.filter(id=order_num).first()
                     ExtractedPostReportItem.objects.create(
                         status=ExtractedPostReportItem.FOR_ORDER,
                         extracted_report=report,
