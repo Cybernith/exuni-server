@@ -7,7 +7,7 @@ from shop.exuni_admin.export_views import ShopOrderListExportView, ShopOrderDeta
 
 from shop.exuni_admin.views import AdminShopOrderListView, AdminPaidShopOrderListView, BulkChangeStatusToProcessingView, \
     BulkChangeStatusToPackedView, AdminProcessingShopOrderListView, BulkChangeStatusToShippedView, \
-    AdminOrderDetailApiView, OrdersSumAPIView, AdminShopProductSimpleListView
+    AdminOrderDetailApiView, OrdersSumAPIView, AdminShopProductSimpleListView, AdminShirazProcessingShopOrderListView
 from shop.search import GlobalAutoCompleteSearchAPIView
 from shop.views import CurrentUserCartApiView, CartDetailView, CurrentUserWishListApiView, WishListDetailView, \
     CurrentUserComparisonApiView, ComparisonDetailView, CurrentUserShipmentAddressApiView, ShipmentAddressDetailView, \
@@ -63,6 +63,7 @@ urlpatterns = [
     url(r'^shopOrderList/all$', AdminShopOrderListView.as_view(), name='adminShopOrderListView'),
     url(r'^paidShopOrderList/all$', AdminPaidShopOrderListView.as_view(), name='paidShopOrderList'),
     url(r'^processingShopOrderList/all$', AdminProcessingShopOrderListView.as_view(), name='processingShopOrderList'),
+    url(r'^processingShirazShopOrderList/all$', AdminShirazProcessingShopOrderListView.as_view(), name='processingShirazShopOrderList'),
     url(r'^bulkChangeToProcessingStatus$', BulkChangeStatusToProcessingView.as_view(),
         name='bulkChangeToProcessingStatus'),
     url(r'^bulkChangeStatusToPacked$', BulkChangeStatusToPackedView.as_view(),

@@ -107,6 +107,20 @@ class AdminProcessingShopOrderListView(generics.ListAPIView):
         return ShopOrder.objects.filter(status=ShopOrder.PROCESSING).select_related('shipment_address', 'customer')
 
 
+class AdminShirazProcessingShopOrderListView(generics.ListAPIView):
+    permission_classes = (IsAuthenticated, BasicObjectPermission, IsAdminUser)
+    permission_codename = "get.shop_order"
+
+    serializer_class = AdminShopOrderSimpleSerializer
+    filterset_class = AdminShopOrderFilter
+    ordering_fields = '__all__'
+    pagination_class = LimitOffsetPagination
+
+    def get_queryset(self):
+        return ShopOrder.objects.filter(status=ShopOrder.PROCESSING, shipment_address__city='شیراز'
+                                        ).select_related('shipment_address', 'customer')
+
+
 class BulkChangeStatusToPackedView(APIView):
     permission_classes = (IsAuthenticated, BasicObjectPermission, IsAdminUser)
     permission_codename = "update.shop_order"

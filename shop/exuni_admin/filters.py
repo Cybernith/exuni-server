@@ -129,7 +129,7 @@ class FromIdFilter(filters.NumberFilter):
 class IsShirazFilter(filters.CharFilter):
 
     def filter(self, qs, value):
-        if value == 'shiraz':
+        if value and value == 'shiraz':
             return qs.filter(shipment_address__city='شیراز')
         return qs
 
