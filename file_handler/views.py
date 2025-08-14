@@ -78,7 +78,7 @@ class ExtractPostReportCreateView(APIView):
             return Response({'detail': f'خطا در باز کردن فایل Excel: {str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
 
         report = ExtractedPostReport.objects.create(
-            name=f"گزارش ارسال به پست {file_id}",
+            name=f"گزارش ارسال به پست {uploaded_file.original_name}",
             uploaded_file=uploaded_file,
         )
 
@@ -111,6 +111,7 @@ class ExtractPostReportCreateView(APIView):
                     ExtractedPostReportItem.objects.create(
                         status=ExtractedPostReportItem.ORDER_NOT_AVAILABLE,
                         extracted_report=report,
+                        explanation=order_value,
                         post_tracking_code=str(code_value)
                     )
                     rows_created += 1

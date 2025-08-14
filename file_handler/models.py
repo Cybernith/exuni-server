@@ -69,6 +69,7 @@ class ExtractedPostReportItem(models.Model):
         blank=True,
         null=True,
     )
+    explanation = models.CharField(max_length=255, blank=True, null=True)
     post_tracking_code = models.CharField(max_length=100)
     created_at = models.DateTimeField(auto_now_add=True)
     price = models.IntegerField(default=0)

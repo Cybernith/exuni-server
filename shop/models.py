@@ -454,9 +454,6 @@ class ShopOrder(BaseModel):
 
     @transition(field='status', source='*', target=SHIPPED)
     def ship_order(self):
-        from crm.sms_dispatch import SMSHandler
-        sms_sender = SMSHandler()
-        sms_sender.send_orders_shipped([self.id])
         self.status = self.SHIPPED
         self.save()
 
