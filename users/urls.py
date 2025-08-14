@@ -14,9 +14,6 @@ from users.views.usersView import CurrentUserApiView, UserCreateView, \
     CurrentUserNotificationApiView
 
 router = DefaultRouter()
-router.register('sendNotification', SendNotificationModelView, basename='send-notification')
-router.register('reminderNotification', ReminderNotificationModelView, basename='reminder-notification')
-
 urlpatterns = router.urls + [
     url(r'^create$', UserCreateView.as_view(), name='create-user'),
     url(r'^update/(?P<pk>[0-9]+)$', UserUpdateView.as_view(), name='update-user'),
@@ -38,11 +35,7 @@ urlpatterns = router.urls + [
     url(r'^permissions/list$', PermissionListView.as_view(), name='list-permissions'),
 
     url(r'^currentUser/$', CurrentUserApiView.as_view(), name='current-user'),
-    url(r'^currentUserNotification/$', CurrentUserNotificationApiView.as_view(), name='current-user-notification'),
 
-
-    url(r'^cities$', CityListCreateView.as_view(), name='list-create-city'),
-    url(r'^cities/(?P<pk>[0-9]+)$', CityDetailView.as_view(), name='detail-city'),
 
     url('secretKey', SecretKeyView.as_view(), name='update-secret-key'),
 
