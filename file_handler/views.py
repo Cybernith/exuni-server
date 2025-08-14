@@ -103,7 +103,6 @@ class ExtractPostReportCreateView(APIView):
                 order_num = extract_number_from_string(str(order_value))
                 if order_num is None:
                     notif.append(f'{code_value} ساختار کد سفارش معتبر نیست')
-                    continue
 
                 if not order_num or not ShopOrder.objects.filter(id=order_num).exists():
                     notif.append(f'{order_value} سفارش معتبر نیست')
