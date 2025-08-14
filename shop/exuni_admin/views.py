@@ -104,7 +104,8 @@ class AdminProcessingShopOrderListView(generics.ListAPIView):
     pagination_class = LimitOffsetPagination
 
     def get_queryset(self):
-        return ShopOrder.objects.filter(status=ShopOrder.PROCESSING).select_related('shipment_address', 'customer')
+        return ShopOrder.objects.filter(status=ShopOrder.PROCESSING).exclude(
+            shipment_address__city='شیراز').select_related('shipment_address', 'customer')
 
 
 class AdminShirazProcessingShopOrderListView(generics.ListAPIView):
