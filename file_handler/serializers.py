@@ -27,6 +27,7 @@ class ExtractedPostReportItemSerializer(serializers.ModelSerializer):
             'status',
             'status_display',
             'post_tracking_code',
+            'explanation',
             'created_at'
         ]
         read_only_fields = ['created_at']
