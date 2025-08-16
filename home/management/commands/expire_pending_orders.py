@@ -12,7 +12,7 @@ class Command(BaseCommand):
     help = 'Cancel expired pending orders and restore inventory & cart items.'
 
     def handle(self, *args, **options):
-        datetime_check = datetime.now() - timedelta(hours=2)
+        datetime_check = datetime.now() - timedelta(hours=5)
 
         expired_order_ids = list(
             ShopOrder.objects.filter(
