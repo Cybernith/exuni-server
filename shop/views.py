@@ -482,8 +482,6 @@ class ShopOrderRegistrationView(APIView):
     throttle_classes = [ShopOrderRateThrottle]
 
     def post(self, request):
-        return Response({'message': 'سیستم در حال بروز رسانی است لطفا دقایقی صبر کنید'}, status=status.HTTP_400_BAD_REQUEST)
-
         customer = get_current_user()
         data = request.data
         address_id = data.get('address')
