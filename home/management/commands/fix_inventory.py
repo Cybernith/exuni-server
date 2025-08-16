@@ -36,8 +36,15 @@ class Command(BaseCommand):
                 )
                 print(f'{packing.product.name} >> inventory set to {packing.inventory}', flush=True)
 
+            print('is_exist', ShopOrder.objects.filter(Q(id__gte=4167) & Q(status=ShopOrder.PENDING)).exists(), flush=True)
+            print('is_exist', ShopOrder.objects.filter(Q(id__gte=4167) & Q(status=ShopOrder.PENDING)).exists(), flush=True)
+            print('is_exist', ShopOrder.objects.filter(Q(id__gte=4167) & Q(status=ShopOrder.PENDING)).exists(), flush=True)
+            print('is_exist', ShopOrder.objects.filter(Q(id__gte=4167) & Q(status=ShopOrder.PENDING)).exists(), flush=True)
+            print('is_exist', ShopOrder.objects.filter(Q(id__gte=4167) & Q(status=ShopOrder.PENDING)).exists(), flush=True)
+            print('is_exist', ShopOrder.objects.filter(Q(id__gte=4167) & Q(status=ShopOrder.PENDING)).exists(), flush=True)
+            print('is_exist', ShopOrder.objects.filter(Q(id__gte=4167) & Q(status=ShopOrder.PENDING)).exists(), flush=True)
             orders_must_reduce = ShopOrder.objects.filter(
-                Q(id__gte=4167) & Q(status__in=[ShopOrder.PENDING, ShopOrder.PROCESSING, ShopOrder.PAID])
+                Q(id__gte=4167) & Q(status__in=[ShopOrder.PROCESSING, ShopOrder.PAID])
             ).prefetch_related('items__product')
 
             for order in orders_must_reduce:

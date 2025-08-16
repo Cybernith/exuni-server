@@ -407,8 +407,7 @@ class ShopOrder(BaseModel):
                 inv = inventories[item.product_id]
 
                 if inv.inventory < item.product_quantity:
-                    item.product_quantity = inv.inventory
-                    item.save(update_fields=["product_quantity"])
+                    item.update(product_quantity=inv.inventory)
 
                 if item.product_quantity <= 0:
                     item.delete()
@@ -416,7 +415,7 @@ class ShopOrder(BaseModel):
 
                 previous_quantity = inv.inventory
                 inv.inventory = F("inventory") - item.product_quantity
-                inv.save(update_fields=["inventory"])
+                inv.save()
                 inv.refresh_from_db()
 
                 ProductInventoryHistory.objects.create(
