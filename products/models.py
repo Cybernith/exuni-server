@@ -676,6 +676,7 @@ class ProductGallery(BaseModel):
 class ProductInventory(models.Model):
     product = models.OneToOneField(Product, related_name='current_inventory', on_delete=models.CASCADE)
     inventory = models.IntegerField(default=0)
+    total_inventory = models.IntegerField(default=0)
     last_updated = models.DateTimeField(auto_now=True)
 
     def handle_inventory(self, val, user):
@@ -787,6 +788,8 @@ class ProductPrice(models.Model):
                 changed_at=now,
                 note=note
             )
+            self.product.update(price=new_price)
+
 
     def increase_price(self, val, user=None, note=''):
         with transaction.atomic():
@@ -806,6 +809,8 @@ class ProductPrice(models.Model):
                 changed_at=now,
                 note=note
             )
+            self.product.update(price=new_price)
+
 
     def change_price(self, val, user=None, note=''):
         with transaction.atomic():
@@ -828,6 +833,7 @@ class ProductPrice(models.Model):
                 changed_at=now,
                 note=note
             )
+            self.product.update(price=new_price)
 
 
 class ProductPriceHistory(models.Model):
