@@ -1,9 +1,10 @@
 from django.conf.urls import url
 
 from store_handle.lists.views import NoPackingHandleProductSimpleListView, PackingHandleProductSimpleListView, \
-    WaitForStoreHandleProductSimpleListView, StoreHandleProductSimpleListView
+    WaitForStoreHandleProductSimpleListView, StoreHandleProductSimpleListView, StoreInventoryListView
 from store_handle.views import ProductHandleChangeDetailView, ProductPackingInventoryHandleDetailView, \
-    ProductStoreInventoryHandleCreateAPIView, ProductStoreInventoryUpdateAPIView
+    ProductStoreInventoryHandleCreateAPIView, ProductStoreInventoryUpdateAPIView, InventoryTransferViewSet, \
+    InventoryTransferCreateView
 
 app_name = 'store_handle'
 urlpatterns = [
@@ -24,5 +25,10 @@ urlpatterns = [
         name='productStoreInventoryHandleCreate'),
     url(r'^storeInventoryUpdate/(?P<pk>[0-9]+)$', ProductStoreInventoryUpdateAPIView.as_view(),
         name='storeInventoryUpdate'),
+
+    url(r'^inventoryTransfers$', InventoryTransferViewSet.as_view({'get': 'list'}), name='inventoryTransfers'),
+    url(r'^inventoryTransferCreate$', InventoryTransferCreateView.as_view(), name='inventoryTransferCreate'),
+    url(r'^storeInventoryList$', StoreInventoryListView.as_view(),
+        name='storeInventoryList'),
 
 ]

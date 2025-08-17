@@ -9,10 +9,12 @@ from helpers.functions import get_current_user
 from main.models import Store
 from products.models import Product
 from store_handle.models import ProductHandleChange, ProductPackingInventoryHandle, ProductStoreInventory, \
-    ProductStoreInventoryHandle
+    ProductStoreInventoryHandle, InventoryTransfer
 from store_handle.serializers import ProductHandleChangeSerializer, ProductPackingInventoryHandleSerializer, \
-    ProductStoreInventorySerializer, ProductStoreInventoryHandleSerializer, StoreInventoryUpdateSerializer
+    ProductStoreInventorySerializer, ProductStoreInventoryHandleSerializer, StoreInventoryUpdateSerializer, \
+    InventoryTransferSerializer
 from rest_framework import generics
+from rest_framework import viewsets
 
 
 class ProductHandleChangeDetailView(APIView):
@@ -167,3 +169,14 @@ class ProductStoreInventoryUpdateAPIView(generics.UpdateAPIView):
     queryset = ProductStoreInventoryHandle.objects.all()
     serializer_class = StoreInventoryUpdateSerializer
     lookup_field = 'pk'
+
+
+class InventoryTransferViewSet(viewsets.ModelViewSet):
+    queryset = InventoryTransfer.objects.all().order_by("-date")
+    serializer_class = InventoryTransferSerializer
+
+
+class InventoryTransferCreateView(generics.CreateAPIView):
+    queryset = InventoryTransfer.objects.all()
+    serializer_class = InventoryTransferSerializer
+    permission_classes = [IsAuthenticated, IsAdminUser]
