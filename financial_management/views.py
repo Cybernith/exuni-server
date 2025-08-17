@@ -19,6 +19,7 @@ from financial_management.models import Payment, AuditAction, AuditSeverity, Dis
     Wallet
 from financial_management.serializers import DiscountResultSerializer
 from financial_management.serivces.discount_evaluator import evaluate_discount
+from financial_management.serivces.payment_service import PaymentService
 from financial_management.serivces.wallet_top_up_service import WalletTopUpRequestService, WalletTopUpService
 from financial_management.zarinpal import ZarinpalGateway
 from helpers.functions import get_current_user, date_to_str
@@ -44,104 +45,31 @@ def generate_top_up_wallet_code_with_mobile(mobile_number):
     return prefix + mobile_number + random_chars
 
 
-def generate_pay_from_wallet_code_with_mobile(mobile_number):
-    prefix = "PFW"
-    random_chars_len = 20 - len(prefix) - len(mobile_number)
-    random_chars = ''.join(random.choices(string.ascii_uppercase, k=random_chars_len))
-    return prefix + mobile_number + random_chars
-
-
 class StartZarinpalPaymentApiView(APIView):
     permission_classes = [IsAuthenticated]
     throttle_classes = [PaymentRateThrottle]
 
     def post(self, request, order_id):
+        order = ShopOrder.objects.filter(
+            id=order_id, customer=get_current_user()
+        ).select_related("customer").prefetch_related("items__product__current_inventory").first()
 
-        with transaction.atomic():
-            order = ShopOrder.objects.select_for_update().select_related("customer").prefetch_related(
-                "items__product__current_inventory"
-            ).filter(id=order_id, customer=get_current_user()).first()
+        if not order:
+            return Response({"message": "Order not found"}, status=status.HTTP_404_NOT_FOUND)
 
-            if not order:
-                return Response({'message': 'Order not found'}, status=status.HTTP_404_NOT_FOUND)
-
-            if order.status == ShopOrder.EXPIRED:
-                order.mark_as_pending()
-                order.reduce_items_inventory()
-
-
-            payment = getattr(order, 'bank_payment', None)
-            if payment and payment.status == 'su':
-                return Response({'message': 'this order already have success payment'}, status=status.HTTP_400_BAD_REQUEST)
-            elif payment and payment.status != 'su':
-                payment.delete()
-                order.bank_payment = None
-                order.save()
-
-            if request.data.get('use_wallet', False):
-                transaction_id = generate_pay_from_wallet_code_with_mobile(order.customer.mobile_number)
-                payment = order.pay_with_wallet(transaction_id=transaction_id)
-                if not payment:
-                    FinancialLogger.log(
-                        user=order.customer,
-                        action=AuditAction.PAYMENT_ORDER_FROM_WALLET,
-                        severity=AuditSeverity.INFO,
-                        transaction=Transaction.objects.get(transaction_id=transaction_id),
-                        ip_address=self.kwargs.get("ip"),
-                        user_agent=self.kwargs.get("agent"),
-                        extra_info={
-                            "amount": str(order.final_amount),
-                            "order": str(order.id),
-                        }
-                    )
-
-                    return Response(
-                        {
-                            'payment_url': f'/payment/success?status=success&type=wallet&payment_date={date_to_str(datetime.date.today())}&amount={order.final_amount}&order_id={order.id}'
-                        }
-                    )
-            else:
-                payment = order.pay()
-
-            callback_url = SERVER_URL + reverse('financial_management:zarinpal_callback')
-
-            description = f'پرداخت سفارش {order.id} کاربر {order.customer.mobile_number}'
-            if request.data.get('use_wallet', False):
-                description = f'پرداخت سفارش {order.id} کاربر {order.customer.mobile_number} مبلغ {payment.used_amount_from_wallet} از کیف پول با شناسه {transaction_id} '
-
-            request.data.get('use_wallet', False)
-            gateway = ZarinpalGateway(
-                amount=payment.amount,
-                mobile=payment.shop_order.customer.mobile_number,
-                payment_id=order.id,
-                description=description,
-                callback_url=callback_url
+        try:
+            result = PaymentService.start_payment(
+                order=order,
+                use_wallet=request.data.get("use_wallet", False),
+                ip=self.kwargs.get("ip"),
+                agent=self.kwargs.get("agent"),
             )
+            return Response(result)
 
-            try:
-                result = gateway.request_payment()
-                payment.reference_id = result['authority']
-                payment.save()
-                FinancialLogger.log(
-                    user=payment.user,
-                    action=AuditAction.PAYMENT_REQUEST,
-                    severity=AuditSeverity.INFO,
-                    payment=payment,
-                    ip_address=self.kwargs.get("ip"),
-                    user_agent=self.kwargs.get("agent"),
-                    extra_info={
-                        "amount": str(payment.amount),
-                        "authority": result['authority'],
-                        "order": str(order.id),
-                        "used_from_wallet": str(payment.used_amount_from_wallet),
-                    }
-                )
-
-                return Response({'payment_url': result['payment_url']})
-
-            except Exception as exception:
-                payment.delete()
-                return Response({'message': str(exception)}, status=status.HTTP_400_BAD_REQUEST)
+        except ValueError as ve:
+            return Response({"message": str(ve)}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({"message": f"خطا در پرداخت: {e}"}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class ZarinpalCallbackApiView(APIView):

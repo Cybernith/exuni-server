@@ -226,7 +226,6 @@ class Payment(models.Model):
 
     @transition(field='status', source='*', target=PENDING)
     def mark_as_pending(self, user=None):
-        print(f'{user} pending')
         self.status = self.PENDING
         self.save()
 
