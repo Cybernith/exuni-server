@@ -37,7 +37,9 @@ class Command(BaseCommand):
                 print(f'{packing.product.name} >> inventory set to {packing.inventory}', flush=True)
 
             orders_must_reduce = ShopOrder.objects.filter(
-                Q(id__gte=4167) & Q(status__in=[ShopOrder.PROCESSING, ShopOrder.PAID, ShopOrder.SHIPPED])
+                Q(date_time__gte=ShopOrder.objects.get(id=6691).date_time,
+                  status__in=[ShopOrder.PROCESSING, ShopOrder.PAID, ShopOrder.SHIPPED]) |
+                Q(id__in=[878, 4167])
             ).prefetch_related('items__product')
 
             for order in orders_must_reduce:

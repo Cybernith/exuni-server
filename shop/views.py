@@ -482,6 +482,8 @@ class ShopOrderRegistrationView(APIView):
     throttle_classes = [ShopOrderRateThrottle]
 
     def post(self, request):
+        return Response({'message': 'در حال بروز رسانی دقایقی صبر کنید'}, status=status.HTTP_400_BAD_REQUEST)
+
         customer = get_current_user()
         data = request.data
         address_id = data.get('address')
@@ -510,12 +512,11 @@ class ShopOrderRegistrationView(APIView):
         try:
             with transaction.atomic():
                 product_ids = list(cart_items.values_list('product_id', flat=True))
-
                 inventories = (
                     ProductInventory.objects
-                    .select_for_update()
-                    .filter(product_id__in=product_ids)
-                    .select_related('product')
+                        .filter(product_id__in=product_ids)
+                        .select_related('product')
+                        .select_for_update()
                 )
                 inventory_map = {inv.product_id: inv for inv in inventories}
 
@@ -530,44 +531,66 @@ class ShopOrderRegistrationView(APIView):
                 inventory_shortage_info = []
 
                 for item in cart_items:
-                    inv = inventory_map[item.product.id]
-                    product = inv.product
-                    quantity = item.quantity
+                    product = item.product
+                    inv = inventory_map.get(product.id)
 
-                    if inv.inventory <= 0:
+                    # Skip if inventory not found
+                    if not inv:
                         inventory_shortage_info.append({'name': product.name, 'quantity': 0})
                         continue
 
-                    if inv.inventory < quantity:
-                        inventory_shortage_info.append({'name': product.name, 'quantity': inv.inventory})
-                        quantity = inv.inventory
+                    requested_quantity = item.quantity
+                    available_quantity = inv.inventory
 
-                    if quantity > 0 and product.price > 1000:
-                        order_items.append(ShopOrderItem(
-                            shop_order=shop_order,
-                            product=product,
-                            price=product.price,
-                            product_quantity=quantity,
-                        ))
+                    # Case 1: No inventory available
+                    if available_quantity <= 0:
+                        inventory_shortage_info.append({'name': product.name, 'quantity': 0})
+                        continue
 
-                        prev_quantity = inv.inventory
-                        inv.inventory = F('inventory') - quantity
-                        inv.save()
+                    # Case 2: Partial inventory available
+                    if available_quantity < requested_quantity:
+                        inventory_shortage_info.append({
+                            'name': product.name,
+                            'quantity': available_quantity
+                        })
+                        quantity_to_process = available_quantity
+                    # Case 3: Full inventory available
+                    else:
+                        quantity_to_process = requested_quantity
 
-                        ProductInventoryHistory.objects.create(
-                            inventory=inv,
-                            action=ProductInventoryHistory.DECREASE,
-                            amount=quantity,
-                            previous_quantity=prev_quantity,
-                            new_quantity=prev_quantity - quantity,
-                            changed_by=customer
-                        )
+                    # Create order item with available quantity
+                    order_items.append(ShopOrderItem(
+                        shop_order=shop_order,
+                        product=product,
+                        price=product.price,
+                        product_quantity=quantity_to_process,
+                    ))
 
+                    # Update inventory
+                    prev_quantity = inv.inventory
+                    inv.inventory = F('inventory') - quantity_to_process
+                    inv.save()
+
+                    # Create inventory history record
+                    ProductInventoryHistory.objects.create(
+                        inventory=inv,
+                        action=ProductInventoryHistory.DECREASE,
+                        amount=quantity_to_process,
+                        previous_quantity=prev_quantity,
+                        new_quantity=prev_quantity - quantity_to_process,
+                        changed_by=customer
+                    )
+
+                # Bulk create order items
                 ShopOrderItem.objects.bulk_create(order_items)
 
+                # ALWAYS delete all cart items after processing
                 cart_items.delete()
+
+                # Finalize order calculations
                 shop_order.set_constants()
 
+                # Prepare inventory information message
                 inventory_info = 'ok'
                 if inventory_shortage_info:
                     shortage_text = ''.join(
@@ -576,6 +599,13 @@ class ShopOrderRegistrationView(APIView):
                     )
                     inventory_info = f'موجودی کالاهای {shortage_text} می‌باشد. سبد خرید با توجه به موجودی فعلی ویرایش شد.'
 
+                return Response({
+                    'message': 'ثبت اولیه سفارش با موفقیت انجام شد',
+                    'order_id': shop_order.id,
+                    'inventory_info': inventory_info,
+                    'inventory_shortage_info': inventory_shortage_info,
+                    'exuni_tracking_code': shop_order.exuni_tracking_code
+                }, status=status.HTTP_201_CREATED)
                 return Response({
                     'message': 'ثبت اولیه سفارش با موفقیت انجام شد',
                     'order_id': shop_order.id,

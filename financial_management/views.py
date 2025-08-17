@@ -56,6 +56,8 @@ class StartZarinpalPaymentApiView(APIView):
     throttle_classes = [PaymentRateThrottle]
 
     def post(self, request, order_id):
+        return Response({'message': 'در حال بروز رسانی دقایقی صبر کنید'}, status=status.HTTP_400_BAD_REQUEST)
+
         with transaction.atomic():
             order = ShopOrder.objects.select_for_update().select_related("customer").prefetch_related(
                 "items__product__current_inventory"
