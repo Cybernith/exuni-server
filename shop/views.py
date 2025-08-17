@@ -1,47 +1,37 @@
 import datetime
-
-from urllib.parse import urljoin
-
-import requests
+from django.core.exceptions import ObjectDoesNotExist
 
 from django.db import transaction
-from django.db.models import Q, F
-from django.http import Http404, HttpResponseForbidden
+from django.db.models import Q
+from django.http import Http404
 from django.shortcuts import get_object_or_404
-from django.urls import reverse
-from django.utils.timezone import now
-from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.pagination import LimitOffsetPagination
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 
 from rest_framework.response import Response
-from rest_framework import status, generics, viewsets
+from rest_framework import status, generics
 
 from financial_management.loggers.financial_logger import FinancialLogger
 from financial_management.models import Payment, Transaction, AuditAction, AuditSeverity
 from helpers.auth import BasicObjectPermission
 from helpers.functions import get_current_user
-from products.models import Product, ProductInventoryHistory, ProductInventory
+from products.models import Product, ProductInventory
 from shop.api_serializers import ApiCartRetrieveSerializer, ApiWishListRetrieveSerializer, \
     ApiComparisonRetrieveSerializer, ApiShipmentAddressRetrieveSerializer, ApiCustomerShopOrderSimpleSerializer, \
     CartAddSerializer, ApiOrderListSerializer, ApiOrderStatusHistorySerializer
 from shop.filters import ShopOrderFilter
-from shop.helpers import reduce_inventory
 from shop.models import Cart, WishList, Comparison, ShipmentAddress, LimitedTimeOffer, Rate, Comment, ShopOrder, \
-    ShopOrderItem, ShopOrderStatusHistory
-from shop.serializers import CartCRUDSerializer, CartRetrieveSerializer, WishListRetrieveSerializer, \
+    ShopOrderStatusHistory
+from shop.serializers import CartCRUDSerializer, \
     WishListCRUDSerializer, ComparisonRetrieveSerializer, ComparisonCRUDSerializer, ShipmentAddressCRUDSerializer, \
-    ShipmentAddressRetrieveSerializer, LimitedTimeOfferItemsSerializer, LimitedTimeOfferSerializer, RateSerializer, \
-    RateRetrieveSerializer, PostCommentSerializer, CommentSerializer, ShopOrderStatusHistorySerializer, \
-    SyncAllDataSerializer, CartInputSerializer, WishlistInputSerializer, CompareItemInputSerializer, \
-    ShopOrderSerializer, CustomerShopOrderSimpleSerializer
-from shop.throttles import SyncAllDataThrottle, AddToCardRateThrottle, AddToWishListRateThrottle, \
-    AddToComparisonRateThrottle, ShopOrderRateThrottle, ToggleWishListBtnRateThrottle, ToggleComparisonBtnRateThrottle, \
-    OrderRetrieveThrottle
-from subscription.models import DiscountCode
-from users.models import User
+    ShipmentAddressRetrieveSerializer,  LimitedTimeOfferSerializer, RateSerializer, \
+    RateRetrieveSerializer, PostCommentSerializer, CommentSerializer, \
+    SyncAllDataSerializer, CartInputSerializer, WishlistInputSerializer, CompareItemInputSerializer
+from shop.services.order_app_service import OrderAppService
+from shop.throttles import AddToCardRateThrottle, AddToWishListRateThrottle, \
+    AddToComparisonRateThrottle, ShopOrderRateThrottle, ToggleWishListBtnRateThrottle, ToggleComparisonBtnRateThrottle
 
 
 class CurrentUserCartApiView(APIView):
@@ -482,141 +472,53 @@ class ShopOrderRegistrationView(APIView):
     throttle_classes = [ShopOrderRateThrottle]
 
     def post(self, request):
-
         customer = get_current_user()
         data = request.data
         address_id = data.get('address')
         discount_code_value = data.get('discount_code')
 
-        cart_items = Cart.objects.filter(customer=customer).select_related('product')
-        if not cart_items.exists():
-            return Response({'message': 'سبد خرید شما خالی است'}, status=status.HTTP_400_BAD_REQUEST)
-
         if not address_id:
             return Response({'message': 'آدرس الزامی است'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            address = ShipmentAddress.objects.get(id=address_id, customer=customer)
-        except ShipmentAddress.DoesNotExist:
-            return Response({'message': 'آدرس برای این کاربر معتبر نیست'}, status=status.HTTP_400_BAD_REQUEST)
+            order, shortages = OrderAppService.place_order_without_reserve(
+                customer=customer,
+                address_id=address_id,
+                discount_code_value=discount_code_value
+            )
 
-        discount_code = None
-        if discount_code_value:
-            try:
-                discount_code = DiscountCode.objects.get(code=discount_code_value)
-                discount_code.verify()
-            except DiscountCode.DoesNotExist:
-                return Response({'message': 'کد تخفیف معتبر نمی‌باشد'}, status=status.HTTP_400_BAD_REQUEST)
+            if order is None:
+                return Response({
+                    'message': 'هیچ موجودی برای محصولات سبد خرید وجود ندارد',
+                    'inventory_shortage_info': shortages
+                }, status=status.HTTP_400_BAD_REQUEST)
 
-        try:
-            with transaction.atomic():
-                product_ids = list(cart_items.values_list('product_id', flat=True))
-                inventories = (
-                    ProductInventory.objects
-                        .filter(product_id__in=product_ids)
-                        .select_related('product')
-                        .select_for_update()
-                )
-                inventory_map = {inv.product_id: inv for inv in inventories}
-
-                shop_order = ShopOrder.objects.create(
-                    customer=customer,
-                    date_time=now(),
-                    shipment_address=address,
-                    discount_code=discount_code,
+            inventory_info = 'ok'
+            if shortages:
+                parts = [f'{s["name"]}: پردازش‌شده {s["processed"]} از {s["requested"]}'
+                         for s in shortages]
+                inventory_info = (
+                    'موجودی برخی اقلام کمتر از مقدار درخواستی بود. '
+                    + ' ؛ '.join(parts)
+                    + ' . سبد بر اساس موجودی فعلی ثبت شد.'
                 )
 
-                order_items = []
-                inventory_shortage_info = []
+            return Response({
+                'message': 'ثبت سفارش انجام شد (بدون رزرو)',
+                'order_id': order.id,
+                'inventory_info': inventory_info,
+                'inventory_shortage_info': shortages,
+                'exuni_tracking_code': order.exuni_tracking_code
+            }, status=status.HTTP_201_CREATED)
 
-                for item in cart_items:
-                    product = item.product
-                    inv = inventory_map.get(product.id)
-
-                    # Skip if inventory not found
-                    if not inv:
-                        inventory_shortage_info.append({'name': product.name, 'quantity': 0})
-                        continue
-
-                    requested_quantity = item.quantity
-                    available_quantity = inv.inventory
-
-                    # Case 1: No inventory available
-                    if available_quantity <= 0:
-                        inventory_shortage_info.append({'name': product.name, 'quantity': 0})
-                        continue
-
-                    # Case 2: Partial inventory available
-                    if available_quantity < requested_quantity:
-                        inventory_shortage_info.append({
-                            'name': product.name,
-                            'quantity': available_quantity
-                        })
-                        quantity_to_process = available_quantity
-                    # Case 3: Full inventory available
-                    else:
-                        quantity_to_process = requested_quantity
-
-                    # Create order item with available quantity
-                    order_items.append(ShopOrderItem(
-                        shop_order=shop_order,
-                        product=product,
-                        price=product.price,
-                        product_quantity=quantity_to_process,
-                    ))
-
-                    # Update inventory
-                    prev_quantity = inv.inventory
-                    inv.inventory = F('inventory') - quantity_to_process
-                    inv.save()
-
-                    # Create inventory history record
-                    ProductInventoryHistory.objects.create(
-                        inventory=inv,
-                        action=ProductInventoryHistory.DECREASE,
-                        amount=quantity_to_process,
-                        previous_quantity=prev_quantity,
-                        new_quantity=prev_quantity - quantity_to_process,
-                        changed_by=customer
-                    )
-
-                # Bulk create order items
-                ShopOrderItem.objects.bulk_create(order_items)
-
-                # ALWAYS delete all cart items after processing
-                cart_items.delete()
-
-                # Finalize order calculations
-                shop_order.set_constants()
-
-                # Prepare inventory information message
-                inventory_info = 'ok'
-                if inventory_shortage_info:
-                    shortage_text = ''.join(
-                        f' - {info["name"]} برابر {info["quantity"]}'
-                        for info in inventory_shortage_info
-                    )
-                    inventory_info = f'موجودی کالاهای {shortage_text} می‌باشد. سبد خرید با توجه به موجودی فعلی ویرایش شد.'
-
-                return Response({
-                    'message': 'ثبت اولیه سفارش با موفقیت انجام شد',
-                    'order_id': shop_order.id,
-                    'inventory_info': inventory_info,
-                    'inventory_shortage_info': inventory_shortage_info,
-                    'exuni_tracking_code': shop_order.exuni_tracking_code
-                }, status=status.HTTP_201_CREATED)
-                return Response({
-                    'message': 'ثبت اولیه سفارش با موفقیت انجام شد',
-                    'order_id': shop_order.id,
-                    'inventory_info': inventory_info,
-                    'inventory_shortage_info': inventory_shortage_info,
-                    'exuni_tracking_code': shop_order.exuni_tracking_code
-                }, status=status.HTTP_201_CREATED)
-
-        except ValidationError as validation_error:
-            return Response({'message': str(validation_error)}, status=status.HTTP_400_BAD_REQUEST)
-        except Exception as exception:
-            return Response({'message': f'خطا در ثبت سفارش: {str(exception)}'}, status=status.HTTP_400_BAD_REQUEST)
+        except ObjectDoesNotExist:
+            return Response({'message': 'آدرس یا کد تخفیف معتبر نیست'}, status=status.HTTP_400_BAD_REQUEST)
+        except ValidationError as ve:
+            return Response({'message': str(ve)}, status=status.HTTP_400_BAD_REQUEST)
+        except ValueError as ve:
+            return Response({'message': str(ve)}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({'message': f'خطا در ثبت سفارش: {e}'}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class CustomerOrdersView(APIView):
