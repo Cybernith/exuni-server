@@ -27,7 +27,7 @@ from store_handle.models import ShippingBox
 class Cart(BaseModel):
     customer = models.ForeignKey('users.User', related_name='cart_items', on_delete=models.PROTECT)
     product = models.ForeignKey('products.Product', related_name='products_in_cart',  on_delete=models.PROTECT)
-    quantity = models.IntegerField(default=1, validators=[MinValueValidator(1)])
+    quantity = models.IntegerField(default=1)
 
     class Meta(BaseModel.Meta):
         verbose_name = 'Cart'
