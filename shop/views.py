@@ -745,6 +745,7 @@ class AddToCartAPIView(APIView):
 
         product_id = serializer.validated_data['product_id']
         quantity = serializer.validated_data['quantity']
+        quantity = 1 if quantity == 0 else quantity
 
         product = Product.objects.get(id=product_id)
 
