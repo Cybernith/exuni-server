@@ -755,7 +755,7 @@ class ApiProductDetailSerializers(serializers.ModelSerializer):
 
 class CartAddSerializer(serializers.Serializer):
     product_id = serializers.IntegerField()
-    quantity = serializers.IntegerField(min_value=1, default=1)
+    quantity = serializers.IntegerField(default=1)
 
     def validate_product_id(self, value):
         from products.models import Product
