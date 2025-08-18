@@ -1,8 +1,9 @@
 from django.contrib import admin
 
 from store_handle.models import ProductStoreInventory, ProductStoreInventoryHistory, ProductStoreInventoryHandle, \
-    ProductPackingInventoryHandle, ProductHandleChange, ShippingBox
+    ProductPackingInventoryHandle, ProductHandleChange, ShippingBox, TransferToPackingRequest
 
+admin.site.register(TransferToPackingRequest)
 admin.site.register(ProductStoreInventory)
 admin.site.register(ProductStoreInventoryHistory)
 admin.site.register(ProductStoreInventoryHandle)

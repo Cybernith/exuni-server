@@ -281,6 +281,8 @@ class InventoryTransfer(models.Model):
 
 
 class TransferToPackingRequest(models.Model):
-    from_store = models.ForeignKey(ProductStoreInventory, on_delete=models.PROTECT, related_name="transfers_to_packing")
-    quantity = models.PositiveIntegerField()
+    order = models.ForeignKey('shop.ShopOrder', on_delete=models.PROTECT, related_name="transfers_product_to_packing", blank=True, null=True)
+    from_store = models.ForeignKey(ProductStoreInventory, on_delete=models.PROTECT, related_name="transfers_product_to_packing")
+    quantity = models.PositiveIntegerField(default=0)
+    product = models.ForeignKey('products.Product', related_name='transfers_product_to_packing', on_delete=models.SET_NULL, null=True)
 

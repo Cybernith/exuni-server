@@ -97,7 +97,9 @@ class InventoryAllocatorService:
                     TransferToPackingRequest.objects.create(
                         quantity=(to_process - packing_inventory.inventory),
                         from_store=ProductStoreInventory.objects.filter(
-                            product=product, inventory__gte=to_process - packing_inventory.inventory).first()
+                            product=product, inventory__gte=to_process - packing_inventory.inventory).first(),
+                        order=shop_order,
+                        product=product
                     )
 
                 previous_quantity = packing_inventory.inventory
