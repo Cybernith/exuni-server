@@ -1,27 +1,26 @@
 from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.db import transaction
-from django.db.models import F, Q
+from django.db.models import F
+
+from server.store_configs import PACKING_STORE_ID
 
 
 def reduce_inventory(product_id, val, user=None):
 
     with transaction.atomic():
-        from products.models import ProductInventoryHistory, ProductInventory
+        from store_handle.models import ProductStoreInventory, ProductStoreInventoryHistory
         try:
-            inventory = ProductInventory.objects.select_for_update().get(product_id=product_id)
-
-            if inventory.inventory < val:
-                raise ValidationError(f' موجودی کالا{inventory.product.name}  کافی نیست')
-
+            inventory = ProductStoreInventory.objects.select_for_update().get(
+                product_id=product_id, store_id=PACKING_STORE_ID)
             previous_quantity = inventory.inventory
             inventory.inventory = F('inventory') - val
             inventory.save()
             inventory.refresh_from_db()
 
-            ProductInventoryHistory.objects.create(
+            ProductStoreInventoryHistory.objects.create(
                 inventory=inventory,
-                action=ProductInventoryHistory.DECREASE,
-                amount=val,
+                action=ProductStoreInventoryHistory.DECREASE,
+                quantity=val,
                 previous_quantity=previous_quantity,
                 new_quantity=inventory.inventory,
                 changed_by=user
@@ -31,20 +30,21 @@ def reduce_inventory(product_id, val, user=None):
 
 
 def increase_inventory(product_id, val, user=None):
-    from products.models import ProductInventoryHistory, ProductInventory
+    from store_handle.models import ProductStoreInventory, ProductStoreInventoryHistory
     with transaction.atomic():
         try:
-            inventory = ProductInventory.objects.select_for_update().get(product_id=product_id)
+            inventory = ProductStoreInventory.objects.select_for_update().get(
+                product_id=product_id, store_id=PACKING_STORE_ID)
 
             previous_quantity = inventory.inventory
             inventory.inventory = F('inventory') + val
             inventory.save()
             inventory.refresh_from_db()
 
-            ProductInventoryHistory.objects.create(
+            ProductStoreInventoryHistory.objects.create(
                 inventory=inventory,
-                action=ProductInventoryHistory.INCREASE,
-                amount=val,
+                action=ProductStoreInventoryHistory.INCREASE,
+                quantity=val,
                 previous_quantity=previous_quantity,
                 new_quantity=inventory.inventory,
                 changed_by=user

@@ -5,6 +5,7 @@ from helpers.auth import BasicObjectPermission
 from main.lists.filters import BusinessFilter, StoreFilter, CurrencyFilter, SupplierFilter
 from main.models import Business, Store, Currency, Supplier
 from main.serializers import BusinessSerializer, StoreSerializer, CurrencySerializer, SupplierSerializer
+from server.store_configs import PACKING_STORE_ID
 
 
 class BusinessListView(generics.ListAPIView):
@@ -32,7 +33,7 @@ class StoreListView(generics.ListAPIView):
     pagination_class = LimitOffsetPagination
 
     def get_queryset(self):
-        return Store.objects.exclude(id=1)
+        return Store.objects.exclude(id=PACKING_STORE_ID)
 
 
 class CurrencyListView(generics.ListAPIView):

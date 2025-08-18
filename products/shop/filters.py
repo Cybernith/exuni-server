@@ -280,41 +280,25 @@ class ShopProductSimpleFilter(filters.FilterSet):
             'supplier': ('exact',),
         }
 
+
     def filter_inventory(self, queryset, name, value):
-        # First handle simple products and variation parents
-        simple_products = queryset.filter(
-            Q(product_type=Product.SIMPLE) | Q(product_type=Product.VARIATION)
-        ).annotate(
-            total_inventory=F('current_inventory__inventory')
+        queryset = queryset.annotate(
+            simple_inventory=Coalesce(Sum('store_inventory__inventory'), 0),
+            variations_inventory=Coalesce(Sum('variations__store_inventory__inventory'), 0)
         )
-
-        # Then handle products with variations
-        products_with_variations = queryset.filter(
-            variations__isnull=False
-        ).annotate(
-            total_inventory=Sum('variations__current_inventory__inventory')
-        )
-
-        # Combine both querysets (no union needed)
-        combined_ids = list(simple_products.values_list('id', flat=True)) + \
-                       list(products_with_variations.values_list('id', flat=True))
-
-        # Get the final filtered queryset
-        filtered_queryset = queryset.filter(id__in=combined_ids)
 
         if name == 'min_inventory':
-            return filtered_queryset.filter(
-                Q(product_type__in=[Product.SIMPLE, Product.VARIATION],
-                  current_inventory__inventory__gte=value) |
-                Q(variations__current_inventory__inventory__gte=value)
+            return queryset.filter(
+                Q(product_type__in=[Product.SIMPLE, Product.VARIATION], simple_inventory__gte=value) |
+                Q(product_type=Product.VARIABLE, variations_inventory__gte=value)
             ).distinct()
         elif name == 'max_inventory':
-            return filtered_queryset.filter(
-                Q(product_type__in=[Product.SIMPLE, Product.VARIATION],
-                  current_inventory__inventory__lte=value) |
-                Q(variations__current_inventory__inventory__lte=value)
+            return queryset.filter(
+                Q(product_type__in=[Product.SIMPLE, Product.VARIATION], simple_inventory__lte=value) |
+                Q(product_type=Product.VARIABLE, variations_inventory__lte=value)
             ).distinct()
-        return filtered_queryset
+
+        return queryset
 
 
 class ShopProductWithCommentsFilter(filters.FilterSet):

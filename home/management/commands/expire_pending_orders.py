@@ -4,15 +4,16 @@ from django.db.models import Q, F
 from datetime import datetime, timedelta
 
 from financial_management.models import Payment
+from server.store_configs import PACKING_STORE_ID
 from shop.models import ShopOrder, Cart
-from products.models import ProductInventory, ProductInventoryHistory
+from store_handle.models import ProductStoreInventory, ProductStoreInventoryHistory
 
 
 class Command(BaseCommand):
     help = 'Cancel expired pending orders and restore inventory & cart items.'
 
     def handle(self, *args, **options):
-        datetime_check = datetime.now() - timedelta(hours=5)
+        datetime_check = datetime.now() - timedelta(hours=3)
 
         expired_order_ids = list(
             ShopOrder.objects.filter(
@@ -32,7 +33,7 @@ class Command(BaseCommand):
             order = (
                 ShopOrder.objects
                 .select_related('customer')
-                .prefetch_related('items__product__current_inventory')
+                .prefetch_related('items__product__store_inventory')
                 .select_for_update()
                 .get(id=order_id)
             )
@@ -72,9 +73,9 @@ class Command(BaseCommand):
     @staticmethod
     def _increase_inventory(product_id, val, user=None):
         inventory = (
-            ProductInventory.objects
+            ProductStoreInventory.objects
             .select_for_update()
-            .get(product_id=product_id)
+            .get(product_id=product_id, store_id=PACKING_STORE_ID)
         )
 
         previous_quantity = inventory.inventory
@@ -82,10 +83,10 @@ class Command(BaseCommand):
         inventory.save(update_fields=['inventory'])
         inventory.refresh_from_db()
 
-        ProductInventoryHistory.objects.create(
+        ProductStoreInventoryHistory.objects.create(
             inventory=inventory,
-            action=ProductInventoryHistory.INCREASE,
-            amount=val,
+            action=ProductStoreInventoryHistory.INCREASE,
+            quantity=val,
             previous_quantity=previous_quantity,
             new_quantity=inventory.inventory,
             changed_by=user

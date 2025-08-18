@@ -481,18 +481,22 @@ class Product(BaseModel):
         return self.product_comments.filter(confirmed=True).count()
 
     @property
+    def available_inventory(self) -> int:
+        return self.store_inventory.aggregate(total=Sum("inventory"))["total"] or 0
+
+    @property
     def calculate_current_inventory(self):
+        from store_handle.models import ProductStoreInventory
+
         if self.product_type in [self.SIMPLE, self.VARIATION]:
-            if hasattr(self, 'current_inventory'):
-                return self.current_inventory.inventory
-            raise ValueError(f"برای کالای {self.name} موجودی ثبت نشده")
-        else:
-            if hasattr(self, 'variations'):
-                return sum(variation.current_inventory.inventory
-                    for variation in self.variations.all()
-                        if hasattr(variation, 'current_inventory')
-                    )
-            raise ValueError(f"برای کالای {self.name} و واریانت‌های آن موجودی ثبت نشده")
+            return self.store_inventory.aggregate(total=Sum("inventory"))["total"] or 0
+
+        elif self.product_type == self.VARIABLE:
+            return (
+                    ProductStoreInventory.objects.filter(product__variation_of=self)
+                    .aggregate(total=Sum("inventory"))["total"]
+                    or 0
+            )
 
     @property
     def final_price(self):
@@ -676,6 +680,7 @@ class ProductGallery(BaseModel):
 class ProductInventory(models.Model):
     product = models.OneToOneField(Product, related_name='current_inventory', on_delete=models.CASCADE)
     inventory = models.IntegerField(default=0)
+    minimum_inventory = models.IntegerField(default=0)
     total_inventory = models.IntegerField(default=0)
     last_updated = models.DateTimeField(auto_now=True)
 

@@ -493,20 +493,11 @@ class ShopOrderRegistrationView(APIView):
                     'inventory_shortage_info': shortages
                 }, status=status.HTTP_400_BAD_REQUEST)
 
-            inventory_info = 'ok'
-            if shortages:
-                parts = [f'{s["name"]}: پردازش‌شده {s["processed"]} از {s["requested"]}'
-                         for s in shortages]
-                inventory_info = (
-                    'موجودی برخی اقلام کمتر از مقدار درخواستی بود. '
-                    + ' ؛ '.join(parts)
-                    + ' . سبد بر اساس موجودی فعلی ثبت شد.'
-                )
 
             return Response({
                 'message': 'ثبت سفارش انجام شد (بدون رزرو)',
                 'order_id': order.id,
-                'inventory_info': inventory_info,
+                'inventory_info': order.inventory_info,
                 'inventory_shortage_info': shortages,
                 'exuni_tracking_code': order.exuni_tracking_code
             }, status=status.HTTP_201_CREATED)
@@ -832,7 +823,7 @@ class CancelShopOrderView(APIView):
                 return Response({'message': 'سفارش فقط در وضعیت در انتظار پرداخت قابل لغو است'}, status=status.HTTP_400_BAD_REQUEST)
 
             previous_status = shop_order.status
-            shop_order.cancel_order()  # باید داخلش inventory رو با select_for_update آپدیت کنه
+            shop_order.cancel_order()
 
             ShopOrderStatusHistory.objects.create(
                 shop_order=shop_order,

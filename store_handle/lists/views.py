@@ -5,6 +5,7 @@ from rest_framework.permissions import IsAuthenticated, IsAdminUser
 
 from products.models import Product
 from products.shop.filters import ShopProductSimpleFilter
+from server.store_configs import PACKING_STORE_ID
 from shop.exuni_admin.srializers import AdminProductsListSerializers
 from store_handle.lists.filters import ProductStoreInventorySimpleFilter
 from store_handle.models import ProductStoreInventory
@@ -66,10 +67,12 @@ class StoreInventoryListView(generics.ListAPIView):
     def get_queryset(self):
         return ProductStoreInventory.objects.filter(
             product__product_type__in=[Product.SIMPLE, Product.VARIATION]).annotate(
-            total_inventory=Sum('product__store_inventory__inventory', filter=~Q(product__store_inventory__store_id=1))
+            total_inventory=Sum('product__store_inventory__inventory',
+                                filter=~Q(product__store_inventory__store_id=PACKING_STORE_ID))
         ).annotate(
             total_inventory=Coalesce(
-                Sum('product__store_inventory__inventory', filter=~Q(product__store_inventory__store_id=1)), 0
+                Sum('product__store_inventory__inventory',
+                    filter=~Q(product__store_inventory__store_id=PACKING_STORE_ID)), 0
             ),
             inventory_value=Coalesce('inventory', 0),
             minimum_inventory_value=Coalesce('minimum_inventory', 0),

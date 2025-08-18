@@ -5,7 +5,6 @@ from django.conf import settings
 
 from financial_management.loggers.financial_logger import FinancialLogger
 from financial_management.models import AuditAction, AuditSeverity, Transaction
-from financial_management.serivces.pay_expired_orders_service import PayExpiredOrderService
 
 import random
 import string
@@ -27,11 +26,6 @@ class PaymentService:
     @staticmethod
     @transaction.atomic
     def start_payment(order, use_wallet=False, ip=None, agent=None):
-
-        if order.status == ShopOrder.EXPIRED:
-            order.mark_as_pending()
-            PayExpiredOrderService.reserve_inventory(order, user=order.customer)
-
         payment = getattr(order, "bank_payment", None)
         if payment and payment.status == "su":
             raise ValueError("این سفارش قبلاً پرداخت موفق داشته است.")

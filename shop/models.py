@@ -219,9 +219,9 @@ class ShopOrder(BaseModel):
     discount_amount = DECIMAL(default=0)
 
     total_discount = DECIMAL(default=0)
-
     is_printed = models.BooleanField(default=False)
     print_by = models.ForeignKey('users.User', related_name='prints', on_delete=models.SET_NULL, blank=True, null=True)
+    inventory_info = models.TextField(blank=True, null=True)
 
     packager = models.ForeignKey(
         'users.User',

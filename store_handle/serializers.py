@@ -6,6 +6,7 @@ from helpers.functions import get_current_user
 from main.models import Store
 from products.exuni_admin.serializers import AdminVariationSerializer
 from products.models import Product
+from server.store_configs import PACKING_STORE_ID
 from store_handle.models import ProductHandleChange, ProductPackingInventoryHandle, ProductStoreInventory, \
     ProductStoreInventoryHandle, InventoryTransfer
 
@@ -267,7 +268,7 @@ class ProductStoreInventoryListSerializers(serializers.ModelSerializer):
         ]
 
     def get_is_minimum(self, obj):
-        total_inventory = obj.product.store_inventory.exclude(store_id=1).aggregate(total=Sum('inventory'))['total'] or 0
+        total_inventory = obj.product.store_inventory.exclude(store_id=PACKING_STORE_ID).aggregate(total=Sum('inventory'))['total'] or 0
         if not obj.minimum_inventory or total_inventory < 1:
             return False
         return obj.minimum_inventory > obj.inventory
@@ -276,7 +277,7 @@ class ProductStoreInventoryListSerializers(serializers.ModelSerializer):
         return obj.product.product_type == Product.VARIABLE
 
     def get_in_store(self, obj):
-        store = obj.product.store_inventory.exclude(store_id=1, inventory__lt=1)
+        store = obj.product.store_inventory.exclude(store_id=PACKING_STORE_ID, inventory__lt=1)
         return store.first().store.id if store.exists() else None
 
     def get_product_id(self, obj):

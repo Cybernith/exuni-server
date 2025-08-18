@@ -61,23 +61,20 @@ class ProductStoreInventory(models.Model):
 
     def handle_inventory_in_store(self, val, user=None):
         val = int(val)
-        if not val >= 0:
-            raise ValidationError('increase value most be zero or positive number')
-        else:
-            with transaction.atomic():
-                previous_quantity = self.inventory
-                self.inventory = val
-                self.last_updated = datetime.datetime.now()
-                self.save()
+        with transaction.atomic():
+            previous_quantity = self.inventory
+            self.inventory = val
+            self.last_updated = datetime.datetime.now()
+            self.save()
 
-                ProductStoreInventoryHistory.objects.create(
-                    inventory=self,
-                    action=ProductStoreInventoryHistory.STORE_HANDLE,
-                    quantity=val,
-                    previous_quantity=previous_quantity,
-                    new_quantity=self.inventory,
-                    changed_by=user
-                )
+            ProductStoreInventoryHistory.objects.create(
+                inventory=self,
+                action=ProductStoreInventoryHistory.STORE_HANDLE,
+                quantity=val,
+                previous_quantity=previous_quantity,
+                new_quantity=self.inventory,
+                changed_by=user
+            )
 
     def __str__(self):
         return ' موجودی {} در {} برابر {}'.format(self.product, self.store, self.inventory)

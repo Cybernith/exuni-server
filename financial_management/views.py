@@ -1,8 +1,6 @@
-import datetime
 import time
 from decimal import Decimal
 
-from django.db import transaction
 from django.db.models import Sum
 from django.shortcuts import redirect
 from django.shortcuts import get_object_or_404
@@ -52,7 +50,10 @@ class StartZarinpalPaymentApiView(APIView):
     def post(self, request, order_id):
         order = ShopOrder.objects.filter(
             id=order_id, customer=get_current_user()
-        ).select_related("customer").prefetch_related("items__product__current_inventory").first()
+        ).select_related("customer").first()
+        if order.status == ShopOrder.EXPIRED:
+            return Response({"payment_url": "https://exuni.ir"})
+
 
         if not order:
             return Response({"message": "Order not found"}, status=status.HTTP_404_NOT_FOUND)

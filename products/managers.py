@@ -3,6 +3,8 @@ from django.db.models import OuterRef, Subquery, Value, IntegerField, Sum, F
 from django.db.models.functions import Coalesce
 from django.db.models import Case, When
 
+from store_handle.models import ProductStoreInventory
+
 
 class ProductQuerySet(models.QuerySet):
     def with_inventory_count(self):
@@ -62,10 +64,10 @@ class ProductQuerySet(models.QuerySet):
         )
 
     def shop_products(self):
-        from products.models import ProductInventory, Product
+        from products.models import Product
 
         variations_inventory_sq = (
-            ProductInventory.objects
+            ProductStoreInventory.objects
             .filter(product__variation_of=OuterRef('pk'))
             .values('product__variation_of')
             .annotate(total=Sum('inventory'))
@@ -73,10 +75,11 @@ class ProductQuerySet(models.QuerySet):
         )
 
         own_inventory_sq = (
-            ProductInventory.objects
+            ProductStoreInventory.objects
             .filter(product=OuterRef('pk'))
             .order_by('id')
-            .values('inventory')[:1]
+            .annotate(total=Sum('inventory'))
+            .values('total')
         )
 
         return (

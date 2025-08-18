@@ -4,8 +4,10 @@ from django.db import transaction
 from django.db.models import F
 from django.utils.timezone import now
 
-from products.models import ProductInventory, ProductInventoryHistory
+from products.models import Product
+from server.store_configs import PACKING_STORE_ID
 from shop.models import ShopOrder, ShopOrderItem
+from store_handle.models import ProductStoreInventory, ProductStoreInventoryHistory
 
 
 @dataclass(frozen=True)
@@ -24,7 +26,7 @@ class InventoryAllocatorService:
             address,
             cart_lines: List[CartLine],
             discount_code=None
-    ) -> Tuple[ShopOrder, List[Dict]]:
+    ) -> Tuple[ShopOrder or None, List[Dict]]:
 
         shop_order = ShopOrder.objects.create(
             customer=customer,
@@ -34,18 +36,19 @@ class InventoryAllocatorService:
         )
 
         product_ids = [cart.product_id for cart in cart_lines]
-        inventories = (
-            ProductInventory.objects.filter(product_id__in=product_ids).select_related('product').select_for_update()
+        products = (
+            Product.objects.filter(pk__in=product_ids).prefetch_related("store_inventory")
         )
 
-        inventories_map = {inventory.product_id: inventory for inventory in inventories}
+        product_map = {p.id: p for p in products}
 
-        if all((product_inventory := inventories_map.get(line.product_id)) is None or product_inventory.inventory <= 0
-               for line in cart_lines):
+        if all(
+                (p := product_map.get(line.product_id)) is None or p.available_inventory <= 0
+                for line in cart_lines
+        ):
             return None, [{
-                'message': 'هیچ موجودی برای محصولات سبد خرید وجود ندارد'
+                "message": "هیچ موجودی برای محصولات سبد خرید وجود ندارد"
             }]
-
 
         order_items_to_create: List[ShopOrderItem] = []
         shortages: List[Dict] = []
@@ -54,19 +57,22 @@ class InventoryAllocatorService:
         shortages: List[Dict] = []
 
         for line in cart_lines:
-            inv = inventories_map.get(line.product_id)
-            if not inv:
+            product = product_map.get(line.product_id)
+            if not product:
                 shortages.append({
-                    'product_id': line.product_id, 'requested': line.quantity,
-                    'processed': 0, 'leftover': line.quantity, 'name': f'#{line.product_id}'
+                    "product_id": line.product_id,
+                    "requested": line.quantity,
+                    "processed": 0,
+                    "leftover": line.quantity,
+                    "name": f"#{line.product_id}",
                 })
                 continue
 
-            available = inv.inventory
+            available = product.available_inventory
             if available <= 0:
                 shortages.append({
                     'product_id': line.product_id, 'requested': line.quantity,
-                    'processed': 0, 'leftover': line.quantity, 'name': inv.product.name
+                    'processed': 0, 'leftover': line.quantity, 'name': product.name
                 })
                 continue
 
@@ -76,24 +82,27 @@ class InventoryAllocatorService:
                 order_items_to_create.append(
                     ShopOrderItem(
                         shop_order=shop_order,
-                        product=inv.product,
+                        product=product,
                         price=line.price,
                         product_quantity=to_process
                     )
                 )
-
-                prev_qty = inv.inventory
-                ProductInventory.objects.filter(pk=inv.pk).update(
-                    inventory=F('inventory') - to_process
+                packing_inventory, created = ProductStoreInventory.objects.select_for_update().get_or_create(
+                    product=product,
+                    store_id=PACKING_STORE_ID,
+                    defaults={'inventory': 0}
                 )
-                inv.refresh_from_db(fields=['inventory'])
+                previous_quantity = packing_inventory.inventory
+                packing_inventory.inventory = F('inventory') - to_process
+                packing_inventory.save()
+                packing_inventory.refresh_from_db(fields=['inventory'])
 
-                ProductInventoryHistory.objects.create(
-                    inventory=inv,
-                    action=ProductInventoryHistory.DECREASE,
-                    amount=to_process,
-                    previous_quantity=prev_qty,
-                    new_quantity=prev_qty - to_process,
+                ProductStoreInventoryHistory.objects.create(
+                    inventory=packing_inventory,
+                    action=ProductStoreInventoryHistory.DECREASE,
+                    quantity=to_process,
+                    previous_quantity=previous_quantity,
+                    new_quantity=previous_quantity - to_process,
                     changed_by=customer
                 )
 
@@ -103,12 +112,23 @@ class InventoryAllocatorService:
                     'requested': line.quantity,
                     'processed': to_process,
                     'leftover': line.quantity - to_process,
-                    'name': inv.product.name
+                    'name': product.name
                 })
 
         if order_items_to_create:
             ShopOrderItem.objects.bulk_create(order_items_to_create)
 
+        inventory_info = 'ok'
+        if shortages:
+            parts = [f'{s["name"]}: پردازش‌شده {s["processed"]} از {s["requested"]}'
+                     for s in shortages]
+            inventory_info = (
+                    'موجودی برخی اقلام کمتر از مقدار درخواستی بود. '
+                    + ' ؛ '.join(parts)
+                    + ' . سبد بر اساس موجودی فعلی ثبت شد.'
+            )
+
+        shop_order.update(inventory_info=inventory_info)
         shop_order.set_constants()
 
         return shop_order, shortages
