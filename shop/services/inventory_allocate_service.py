@@ -7,7 +7,7 @@ from django.utils.timezone import now
 from products.models import Product
 from server.store_configs import PACKING_STORE_ID
 from shop.models import ShopOrder, ShopOrderItem
-from store_handle.models import ProductStoreInventory, ProductStoreInventoryHistory
+from store_handle.models import ProductStoreInventory, ProductStoreInventoryHistory, TransferToPackingRequest
 
 
 @dataclass(frozen=True)
@@ -87,11 +87,19 @@ class InventoryAllocatorService:
                         product_quantity=to_process
                     )
                 )
+
                 packing_inventory, created = ProductStoreInventory.objects.select_for_update().get_or_create(
                     product=product,
                     store_id=PACKING_STORE_ID,
                     defaults={'inventory': 0}
                 )
+                if to_process > packing_inventory.inventory:
+                    TransferToPackingRequest.objects.create(
+                        quantity=(to_process - packing_inventory.inventory),
+                        from_store=ProductStoreInventory.objects.filter(
+                            product=product, inventory__gte=to_process - packing_inventory.inventory).first()
+                    )
+
                 previous_quantity = packing_inventory.inventory
                 packing_inventory.inventory = F('inventory') - to_process
                 packing_inventory.save()

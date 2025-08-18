@@ -278,3 +278,9 @@ class InventoryTransfer(models.Model):
 
     def __str__(self):
         return f"{self.quantity} from {self.from_store.store.name} to {self.to_store.store.name}"
+
+
+class TransferToPackingRequest(models.Model):
+    from_store = models.ForeignKey(ProductStoreInventory, on_delete=models.PROTECT, related_name="transfers_to_packing")
+    quantity = models.PositiveIntegerField()
+
