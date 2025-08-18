@@ -763,6 +763,11 @@ class CartAddSerializer(serializers.Serializer):
             raise serializers.ValidationError("محصول مورد نظر یافت نشد.")
         return value
 
+    def validate_quantity(self, value):
+        if value == 0:
+            value = 1
+        return value
+
 
 class ApiOrderItemSerializer(serializers.ModelSerializer):
     product = ApiProductDetailSerializers(read_only=True)
