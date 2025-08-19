@@ -51,15 +51,6 @@ class ProductAdmin(NestedModelAdmin):
     list_filter = ['status', 'product_type', 'brand', 'sixteen_digit_code']
     search_fields = ['id', 'name', 'product_id', 'sixteen_digit_code']
     inlines = [ProductVariationInline]
-    fields = [
-        'id', 'variation_of', 'product_id', 'picture', 'picture_preview', 'name', 'sixteen_digit_code', 'product_type',
-        'regular_price', 'price', 'category', 'currency', 'status',
-        'brand', 'price_title', 'regular_price_title', 'calculate_current_inventory',
-        'profit_type', 'profit_margin', 'discount_type', 'discount_margin', 'base_price', 'packing_handle_done',
-        'postal_weight', 'width',
-        'aisle', 'shelf_number',
-
-    ]
     readonly_fields = ['id', 'picture_preview', 'price_title', 'regular_price_title', 'calculate_current_inventory']
     autocomplete_fields = ['brand']
 
