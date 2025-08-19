@@ -20,6 +20,7 @@ class AdminCategorySerializer(serializers.ModelSerializer):
         model = Category
         fields = ['id', 'name']
 
+
 class VariationImageField(serializers.ImageField):
     def to_internal_value(self, data):
         return super().to_internal_value(data)
@@ -29,6 +30,8 @@ class AdminVariationSerializer(serializers.ModelSerializer):
     image = serializers.SerializerMethodField()
     calculate_current_inventory = serializers.ReadOnlyField()
     offer_percentage = serializers.ReadOnlyField()
+    inventories_in_stores = serializers.SerializerMethodField()
+    packing_inventory = serializers.SerializerMethodField()
 
     class Meta:
         read_only_fields = ('created_at', 'updated_at')
@@ -43,6 +46,37 @@ class AdminVariationSerializer(serializers.ModelSerializer):
             offer_percentage = round(((obj.regular_price - obj.price) / obj.regular_price) * 100)
             return f'{offer_percentage}%'
         return None
+
+    def get_inventories_in_stores(self, obj):
+        store_inventories = ProductStoreInventory.objects.filter(product=obj).exclude(
+            store_id=PACKING_STORE_ID).select_related('store').only('store', 'inventory')
+        inventories_in_stores = []
+        for store_inventory in store_inventories:
+            inventories_in_stores.append(
+                {
+                    'store': store_inventory.store.id,
+                    'name': store_inventory.store.name,
+                    'inventory': store_inventory.inventory
+                }
+            )
+        return inventories_in_stores
+
+    def get_packing_inventory(self, obj):
+        if obj.store_inventory.filter(store_id=PACKING_STORE_ID).exists():
+            store_inventory = obj.store_inventory.filter(store_id=PACKING_STORE_ID).first()
+            return {
+                'store': PACKING_STORE_ID,
+                'name': store_inventory.store.name,
+                'inventory': store_inventory.inventory,
+                'minimum_inventory': store_inventory.minimum_inventory
+            }
+        else:
+            return {
+                'store': 3213,
+                'name': '1232',
+                'inventory': 0,
+                'minimum_inventory': 0
+            }
 
 
 class AdminProductSerializer(serializers.ModelSerializer):
@@ -76,19 +110,18 @@ class AdminProductSerializer(serializers.ModelSerializer):
         if obj.store_inventory.filter(store_id=PACKING_STORE_ID).exists():
             store_inventory = obj.store_inventory.filter(store_id=PACKING_STORE_ID).first()
             return {
-                        'store': PACKING_STORE_ID,
-                        'name': store_inventory.store.name,
-                        'inventory': store_inventory.inventory,
-                        'minimum_inventory': store_inventory.minimum_inventory
-                    }
+                'store': PACKING_STORE_ID,
+                'name': store_inventory.store.name,
+                'inventory': store_inventory.inventory,
+                'minimum_inventory': store_inventory.minimum_inventory
+            }
         else:
             return {
-                        'store': 3213,
-                        'name': '1232',
-                        'inventory': 0,
-                        'minimum_inventory': 0
-                    }
-
+                'store': 3213,
+                'name': '1232',
+                'inventory': 0,
+                'minimum_inventory': 0
+            }
 
 
 class AdminCreateProductSerializer(serializers.ModelSerializer):
@@ -152,12 +185,12 @@ class AdminCreateProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = [
-            'id', 'name', 'sixteen_digit_code', 'explanation',  'summary_explanation',  'how_to_use', 'regular_price',
+            'id', 'name', 'sixteen_digit_code', 'explanation', 'summary_explanation', 'how_to_use', 'regular_price',
             'variations',
             'price', 'currency', 'postal_weight', 'length', 'width', 'height', 'calculate_current_inventory',
             'status', 'category_ids', 'brand', 'product_type', 'image', 'images', 'gallery', 'remove_image',
             'deleted_gallery_images',
-            'product_date', 'expired_date', 'legend_pricing', 'profit_type',  'profit_margin', 'discount_type',
+            'product_date', 'expired_date', 'legend_pricing', 'profit_type', 'profit_margin', 'discount_type',
             'discount_margin', 'base_price', 'aisle', 'shelf_number', 'inventories_in_stores', 'packing_inventory'
         ]
         extra_kwargs = {
@@ -169,11 +202,11 @@ class AdminCreateProductSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         packing_first_inventory = {
-                        'store': PACKING_STORE_ID,
-                        'name': 'پردازش',
-                        'inventory': 0,
-                        'minimum_inventory': 0
-                    }
+            'store': PACKING_STORE_ID,
+            'name': 'پردازش',
+            'inventory': 0,
+            'minimum_inventory': 0
+        }
         legend_pricing = validated_data.pop('legend_pricing', False)
         packing_inventory = validated_data.pop('packing_inventory', packing_first_inventory)
         packing_inventory = json.loads(packing_inventory)
@@ -219,19 +252,17 @@ class AdminCreateProductSerializer(serializers.ModelSerializer):
             product.set_legend_pricing()
 
         if variations_data:
-
             self.handle_variations(product, variations_data[0])
-
 
         return product
 
     def update(self, instance, validated_data):
         packing_first_inventory = {
-                        'store': PACKING_STORE_ID,
-                        'name': 'پردازش',
-                        'inventory': 0,
-                        'minimum_inventory': 0
-                    }
+            'store': PACKING_STORE_ID,
+            'name': 'پردازش',
+            'inventory': 0,
+            'minimum_inventory': 0
+        }
         legend_pricing = validated_data.pop('legend_pricing', False)
         variations_data = validated_data.pop('variations', None)
 
@@ -272,15 +303,12 @@ class AdminCreateProductSerializer(serializers.ModelSerializer):
         image_data = validated_data.pop('image', None)
         images_data = validated_data.pop('images', [])
 
-
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
-
 
         if category_ids:
             categories = Category.objects.filter(id__in=category_ids)
             instance.category.set(categories)
-
 
         if remove_image:
             instance.picture = None
@@ -310,6 +338,12 @@ class AdminCreateProductSerializer(serializers.ModelSerializer):
         return instance
 
     def handle_variations(self, product, variations_data):
+        packing_first_inventory = {
+            'store': PACKING_STORE_ID,
+            'name': 'پردازش',
+            'inventory': 0,
+            'minimum_inventory': 0
+        }
 
         existing_ids = set(product.variations.values_list('id', flat=True))
         received_ids = set()
@@ -318,6 +352,10 @@ class AdminCreateProductSerializer(serializers.ModelSerializer):
             legend = variation_data.pop('legend_pricing', False)
 
             variation_id = variation_data.get('id')
+            packing_inventory = variation_data.pop('packing_inventory', packing_first_inventory)
+            packing_inventory = json.loads(packing_inventory)
+            inventories_in_stores = variation_data.pop('inventories_in_stores', [])
+            inventories_in_stores = json.loads(inventories_in_stores)
 
             if variation_id and variation_id in existing_ids:
                 file_key = variation_data.pop('file_key', None)
@@ -335,17 +373,33 @@ class AdminCreateProductSerializer(serializers.ModelSerializer):
 
                 variation.save()
                 variation.update(currency=product.currency, brand=product.brand)
-                new_inventory = variation_data.pop('new_inventory', 0)
-                current_inventory = variation.current_inventory
-                if new_inventory != current_inventory.inventory:
-                    if new_inventory > current_inventory.inventory:
-                        current_inventory.increase_inventory(
-                            (new_inventory - current_inventory.inventory), user=get_current_user()
-                        )
-                    else:
-                        current_inventory.reduce_inventory(
-                            (current_inventory.inventory - new_inventory), user=get_current_user()
-                        )
+
+                packing_store_inventory, created = ProductStoreInventory.objects.get_or_create(
+                    product=variation, store=Store.objects.get(id=PACKING_STORE_ID)
+                )
+
+                if not created and packing_store_inventory.inventory != packing_inventory['inventory']:
+                    packing_store_inventory.handle_inventory_in_store(packing_inventory['inventory'], get_current_user())
+
+                packing_store_inventory.minimum_inventory = packing_inventory['minimum_inventory']
+                packing_store_inventory.save()
+
+                if len(inventories_in_stores) > 0:
+                    for store_inventory in inventories_in_stores:
+                        if store_inventory['store']:
+                            inv = ProductStoreInventory.objects.filter(
+                                product=variation,
+                                store=Store.objects.get(id=int(store_inventory['store']))
+                            )
+                            if inv.exists():
+                                if inv.first().inventory != store_inventory['inventory']:
+                                    inv.first().handle_inventory_in_store(store_inventory['inventory'] or 0)
+                            else:
+                                ProductStoreInventory.objects.create(
+                                    store=Store.objects.get(id=int(store_inventory['store'])),
+                                    product=variation,
+                                    inventory=store_inventory['inventory'] or 0
+                                )
 
                 serializer = AdminVariationSerializer(
                     variation,
@@ -370,7 +424,6 @@ class AdminCreateProductSerializer(serializers.ModelSerializer):
                 variation_data['variation_of'] = product.id
                 variation_data['product_type'] = 'variation'
                 new_inventory = variation_data.pop('new_inventory', 0)
-                variation_data['first_inventory'] = new_inventory
                 serializer = AdminVariationSerializer(data=variation_data)
                 if serializer.is_valid():
                     serializer.save()
@@ -381,7 +434,7 @@ class AdminCreateProductSerializer(serializers.ModelSerializer):
                         request = self.context.get('request')
                         pic = request.FILES.get(file_key)
                         serializer.instance.picture = pic
-                        #ProductGallery.objects.create(product=serializer.instance.variation_of,
+                        # ProductGallery.objects.create(product=serializer.instance.variation_of,
                         #                              picture=pic)
                     serializer.instance.currency = serializer.instance.variation_of.currency
                     serializer.instance.brand = serializer.instance.variation_of.brand
@@ -389,6 +442,21 @@ class AdminCreateProductSerializer(serializers.ModelSerializer):
                     if legend == 'true':
                         serializer.instance.set_legend_pricing()
 
+                    ProductStoreInventory.objects.create(
+                        product=serializer.instance,
+                        inventory=packing_inventory['inventory'],
+                        minimum_inventory=packing_inventory['minimum_inventory'],
+                        store=Store.objects.get(id=PACKING_STORE_ID)
+                    )
+
+                    if len(inventories_in_stores) > 0:
+                        for store_inventory in inventories_in_stores:
+                            if store_inventory['store']:
+                                ProductStoreInventory.objects.create(
+                                    store=Store.objects.get(id=int(store_inventory['store'])),
+                                    product=serializer.instance,
+                                    inventory=store_inventory['inventory']
+                                )
 
                 else:
                     raise serializers.ValidationError({

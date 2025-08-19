@@ -346,8 +346,8 @@ class Product(BaseModel):
     category = models.ManyToManyField(Category, related_name='products', blank=True, null=True)
     barcode = models.CharField(max_length=150, blank=True, null=True)
 
-    aisle = models.CharField(max_length=10, null=True)
-    shelf_number = models.CharField(max_length=10, null=True)
+    aisle = models.CharField(max_length=10, null=True, blank=True,)
+    shelf_number = models.CharField(max_length=10, null=True, blank=True,)
 
     packing_handle_done = models.BooleanField(default=False)
     store_handle_done = models.BooleanField(default=False)
@@ -595,6 +595,8 @@ class Product(BaseModel):
 
 
     def save(self, *args, **kwargs):
+        if self.price < 1000:
+            self.status = self.PROCESSING
         first_register = not self.id
         super().save(*args, **kwargs)
         if first_register:
