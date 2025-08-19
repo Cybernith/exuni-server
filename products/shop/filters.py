@@ -164,11 +164,11 @@ def search_value_filter(queryset, name, value):
         stock=Case(
             When(
                 product_type=Product.SIMPLE,
-                then=F('current_inventory__inventory')
+                then=F('store_inventory__inventory')
             ),
             When(
                 product_type=Product.VARIABLE,
-                then=Sum('variations__current_inventory__inventory')
+                then=Sum('variations__store_inventory__inventory')
             ),
             default=Value(0),
             output_field=FloatField()

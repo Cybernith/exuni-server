@@ -7,107 +7,77 @@ from store_handle.models import ProductStoreInventory
 
 
 class ProductQuerySet(models.QuerySet):
-    def with_inventory_count(self):
-        from products.models import ProductInventory, Product
-        variations_inventory_subquery = ProductInventory.objects.filter(
-            product__variation_of=OuterRef('pk')
-        ).values('product__variation_of').annotate(
-            total_inventory=Sum('inventory')
-        ).values('total_inventory')
+    def _own_inventory_subquery(self):
+        return (
+            ProductStoreInventory.objects
+            .filter(product=OuterRef("pk"))
+            .values("product")
+            .annotate(total=Sum("inventory"))
+            .values("total")
+        )
+
+    def _variations_inventory_subquery(self):
+        return (
+            ProductStoreInventory.objects
+            .filter(product__variation_of=OuterRef("pk"))
+            .values("product__variation_of")
+            .annotate(total=Sum("inventory"))
+            .values("total")
+        )
+
+    def with_inventory_annotations(self):
+        from products.models import Product
 
         return self.annotate(
             own_inventory=Coalesce(
-                Subquery(
-                    ProductInventory.objects.filter(product=OuterRef('pk')).values('inventory')[:1],
-                ),
+                Subquery(self._own_inventory_subquery()),
                 Value(0),
                 output_field=IntegerField()
             ),
             variations_inventory=Coalesce(
-                Subquery(
-                    variations_inventory_subquery,
-                    output_field=IntegerField()
-                ),
+                Subquery(self._variations_inventory_subquery(), output_field=IntegerField()),
                 Value(0),
                 output_field=IntegerField()
-            )
-        ).annotate(
+            ),
             inventory_count=Case(
-                When(product_type=Product.VARIABLE, then='variations_inventory'),
-                default='own_inventory',
+                When(product_type=Product.VARIABLE, then=F("variations_inventory")),
+                default=F("own_inventory"),
                 output_field=IntegerField()
             )
         )
 
     def order_out_of_stock_inventory_last(self):
-        return self.with_inventory_count().order_by(
+        return self.with_inventory_annotations().order_by(
             Case(
                 When(inventory_count=0, then=1),
                 default=0,
                 output_field=IntegerField()
             ),
-            'inventory_count',
-            'pk'
+            "inventory_count",
+            "pk"
         )
 
     def published(self):
         from products.models import Product
-        return self.filter(
-            status=Product.PUBLISHED,
-        )
+        return self.filter(status=Product.PUBLISHED)
 
     def main_products(self):
         from products.models import Product
-
-        return self.filter(
-            product_type__in=[Product.VARIABLE, Product.SIMPLE]
-        )
+        return self.filter(product_type__in=[Product.VARIABLE, Product.SIMPLE])
 
     def shop_products(self):
         from products.models import Product
 
-        variations_inventory_sq = (
-            ProductStoreInventory.objects
-            .filter(product__variation_of=OuterRef('pk'))
-            .values('product__variation_of')
-            .annotate(total=Sum('inventory'))
-            .values('total')
-        )
-
-        own_inventory_sq = (
-            ProductStoreInventory.objects
-            .filter(product=OuterRef('pk'))
-            .order_by('id')
-            .annotate(total=Sum('inventory'))
-            .values('total')
-        )
-
         return (
-            self.filter(
+            self.with_inventory_annotations()
+            .filter(
                 status=Product.PUBLISHED,
                 product_type__in=[Product.SIMPLE, Product.VARIABLE]
             )
-            .annotate(
-                own_inventory=Coalesce(
-                    Subquery(own_inventory_sq),
-                    Value(0),
-                    output_field=IntegerField()
-                ),
-                variations_inventory=Coalesce(
-                    Subquery(variations_inventory_sq, output_field=IntegerField()),
-                    Value(0),
-                    output_field=IntegerField()
-                ),
-                inventory_count=Case(
-                    When(product_type=Product.VARIABLE, then=F('variations_inventory')),
-                    default=F('own_inventory'),
-                    output_field=IntegerField()
-                )
-            )
             .order_by(
                 Case(When(inventory_count=0, then=1), default=0, output_field=IntegerField()),
-                '-inventory_count',
-                'pk'
+                "-inventory_count",
+                "pk"
             )
         )
 
