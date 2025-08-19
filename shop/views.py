@@ -742,13 +742,8 @@ class AddToCartAPIView(APIView):
 
         product = Product.objects.get(id=product_id)
 
-        inventory = (
-            ProductInventory.objects
-                .select_for_update()
-                .get(product=product)
-        )
 
-        available_stock = inventory.inventory
+        available_stock = product.available_inventory
         if available_stock <= 0:
             raise ValidationError('موجودی محصول کافی نیست')
 
