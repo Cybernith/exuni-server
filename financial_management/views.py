@@ -51,7 +51,7 @@ class StartZarinpalPaymentApiView(APIView):
         order = ShopOrder.objects.filter(
             id=order_id, customer=get_current_user()
         ).select_related("customer").first()
-        if order.status == ShopOrder.EXPIRED:
+        if order.status != ShopOrder.PENDING:
             return Response({"payment_url": "https://exuni.ir"})
 
 
