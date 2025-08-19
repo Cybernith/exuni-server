@@ -2,7 +2,8 @@
 from django.conf.urls import url
 
 from crm.views import ProductViewSummaryAPIView, RecommendedProductsAPIView
-from products.exuni_admin.views import AdminProductApiView, AdminProductDetailView, ProductCreateUpdateAPIView
+from products.exuni_admin.views import AdminProductApiView, AdminProductDetailView, ProductCreateUpdateAPIView, \
+    ProductPriceUpdateAPIView
 from products.lists.views import BrandListView, AvailListView, ProductPropertyListView, ProductGalleryListView, \
     ProductListView, CategoryListView, NoContentProductListView, AffiliateForSaleProductsListView
 from products.shop.views import ShopProductListView, ShopProductDetailView, RelatedProductsApiView, \
@@ -94,5 +95,6 @@ urlpatterns = [
 
     url(r'^shopBrand$', BrandShopListView.as_view(),
         name='brandShop'),
+    url(r'^changeProductPrice/(?P<product_id>[0-9]+)$', ProductPriceUpdateAPIView.as_view(), name='changeProductPrice'),
 
 ]

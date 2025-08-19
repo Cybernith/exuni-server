@@ -288,3 +288,7 @@ class AvailTreeSerializer(serializers.ModelSerializer):
         return serializer.data
 
 
+class ProductPriceUpdateSerializer(serializers.Serializer):
+    regular_price = serializers.IntegerField(required=True)
+    price = serializers.IntegerField(required=True)
+

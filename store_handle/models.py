@@ -5,7 +5,6 @@ from django.db import models, transaction
 
 from main.models import Store
 
-#test
 class ProductStoreInventory(models.Model):
     product = models.ForeignKey('products.Product', related_name='store_inventory', on_delete=models.SET_NULL, null=True)
     store = models.ForeignKey('main.Store', related_name='store_inventory', on_delete=models.SET_NULL, null=True)
