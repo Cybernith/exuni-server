@@ -153,6 +153,10 @@ class ShipmentAddress(BaseModel):
     def full_name(self):
         return f"{self.first_name or ''} {self.last_name or ''}".strip()
 
+    def save(self, *args, **kwargs):
+        if not self.address_title:
+            self.address_title = 'بدون عنوان'
+        super().save(*args, **kwargs)
 
 class ShippingMethod(models.Model):
     name = models.CharField(max_length=100)
