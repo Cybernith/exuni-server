@@ -1,4 +1,5 @@
 from django.http import Http404
+from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -6,8 +7,8 @@ from rest_framework.views import APIView
 import json
 from helpers.auth import BasicObjectPermission
 from products.exuni_admin.serializers import AdminProductSerializer, AdminCreateProductSerializer
-from products.models import Product, ProductGallery
-from products.serializers import ProductSerializer
+from products.models import Product, ProductPrice
+from products.serializers import ProductPriceUpdateSerializer
 
 
 class AdminProductApiView(APIView):
@@ -95,3 +96,26 @@ class ProductCreateUpdateAPIView(APIView):
             updated_product = serializer.save()
             return Response(AdminCreateProductSerializer(updated_product).data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ProductPriceUpdateAPIView(APIView):
+    def post(self, request, product_id):
+        serializer = ProductPriceUpdateSerializer(data=request.data)
+        if serializer.is_valid():
+            regular_price = serializer.validated_data['regular_price']
+            price = serializer.validated_data['price']
+
+            product = get_object_or_404(Product, pk=product_id)
+
+            product.regular_price = regular_price
+            product.save()
+
+            product_price, created = ProductPrice.objects.get_or_create(product=product)
+            product_price.change_price(price, user=request.user, note='API update')
+
+            return Response({
+                "regular_price": product.regular_price,
+                "price": product_price.price
+            }, status=status.HTTP_200_OK)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
