@@ -82,4 +82,4 @@ class StoreInventoryListView(generics.ListAPIView):
                 default=Value(False),
                 output_field=BooleanField()
             )
-        ).order_by('is_minimum')
+        ).filter(is_minimum=True)

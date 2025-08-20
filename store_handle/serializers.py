@@ -243,6 +243,8 @@ class ProductStoreInventoryListSerializers(serializers.ModelSerializer):
     product_id = serializers.SerializerMethodField()
     is_minimum = serializers.SerializerMethodField()
     in_store = serializers.SerializerMethodField()
+    total_inventory = serializers.SerializerMethodField()
+    transfer_quantity = serializers.SerializerMethodField()
 
     class Meta:
         model = ProductStoreInventory
@@ -264,21 +266,47 @@ class ProductStoreInventoryListSerializers(serializers.ModelSerializer):
             'variation_of',
             'minimum_inventory',
             'in_store',
+            'total_inventory',
+            'transfer_quantity',
 
         ]
 
     def get_is_minimum(self, obj):
-        total_inventory = obj.product.store_inventory.exclude(store_id=PACKING_STORE_ID).aggregate(total=Sum('inventory'))['total'] or 0
-        if not obj.minimum_inventory or total_inventory < 1:
+        total_inventory = obj.product.store_inventory.exclude(
+            store_id=PACKING_STORE_ID).aggregate(total=Sum('inventory'))['total'] or 0
+        if total_inventory < 1:
             return False
-        return obj.minimum_inventory > obj.inventory
+        if not obj.minimum_inventory or obj.minimum_inventory == 0:
+            if obj.inventory < 1:
+                return True
+        else:
+            return obj.minimum_inventory > obj.inventory
+
+
+    def get_transfer_quantity(self, obj):
+        total_inventory = obj.product.store_inventory.exclude(
+            store_id=PACKING_STORE_ID).aggregate(total=Sum('inventory'))['total'] or 0
+        if total_inventory:
+            minimum = obj.minimum_inventory or 0
+            inventory = obj.inventory
+            transfer_quantity = minimum - inventory
+            return min(transfer_quantity, total_inventory)
+        else:
+            return obj.minimum_inventory > obj.inventory
+
+    def get_total_inventory(self, obj):
+        return obj.product.store_inventory.exclude(
+            store_id=PACKING_STORE_ID).aggregate(total=Sum('inventory'))['total'] or 0
 
     def get_is_variable(self, obj):
         return obj.product.product_type == Product.VARIABLE
 
     def get_in_store(self, obj):
         store = obj.product.store_inventory.exclude(store_id=PACKING_STORE_ID, inventory__lt=1)
-        return store.first().store.id if store.exists() else None
+        return {
+            'id': store.first().store.id,
+            'name': store.first().store.name,
+        } if store.exists() else None
 
     def get_product_id(self, obj):
         return obj.product.id
@@ -287,7 +315,7 @@ class ProductStoreInventoryListSerializers(serializers.ModelSerializer):
         return obj.product.product_type
 
     def get_name(self, obj):
-        return obj.product.product_type == Product.VARIABLE
+        return obj.product.name
 
     def get_image(self, obj):
         return obj.product.picture.url if obj.product.picture else None
