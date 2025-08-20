@@ -4,6 +4,8 @@ from django.core.exceptions import ValidationError
 from django.db import models, transaction
 
 from main.models import Store
+from server.store_configs import PACKING_STORE_ID
+
 
 class ProductStoreInventory(models.Model):
     product = models.ForeignKey('products.Product', related_name='store_inventory', on_delete=models.SET_NULL, null=True)
@@ -17,6 +19,10 @@ class ProductStoreInventory(models.Model):
     @property
     def shelf_code(self):
         return f"{self.aisle or ''}-{self.shelf_number or ''}"
+
+    @property
+    def store_with_inventory(self):
+        return self.product.store_inventory.exclude(id=PACKING_STORE_ID).filter(inventory__gt=0).first()
 
     def reduce_inventory_in_store(self, val, user=None):
         if not val > 0:

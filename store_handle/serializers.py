@@ -272,8 +272,8 @@ class ProductStoreInventoryListSerializers(serializers.ModelSerializer):
         ]
 
     def get_is_minimum(self, obj):
-        total_inventory = obj.product.store_inventory.exclude(
-            store_id=PACKING_STORE_ID).aggregate(total=Sum('inventory'))['total'] or 0
+        store = obj.product.store_inventory.exclude(store_id=PACKING_STORE_ID)
+        total_inventory = store.first().inventory if store.exists() else 0
         if total_inventory < 1:
             return False
         if not obj.minimum_inventory or obj.minimum_inventory == 0:
@@ -306,6 +306,7 @@ class ProductStoreInventoryListSerializers(serializers.ModelSerializer):
         return {
             'id': store.first().store.id,
             'name': store.first().store.name,
+            'inventory': store.first().inventory,
         } if store.exists() else None
 
     def get_product_id(self, obj):
