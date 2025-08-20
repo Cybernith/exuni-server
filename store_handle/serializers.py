@@ -302,7 +302,7 @@ class ProductStoreInventoryListSerializers(serializers.ModelSerializer):
         return obj.product.product_type == Product.VARIABLE
 
     def get_in_store(self, obj):
-        store = obj.product.store_inventory.exclude(store_id=PACKING_STORE_ID).first()
+        store = obj.product.store_inventory.exclude(store_id=PACKING_STORE_ID)
         return {
             'id': store.first().store.id,
             'name': store.first().store.name,
