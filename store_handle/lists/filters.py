@@ -66,7 +66,6 @@ def inventory_store_filter(queryset, name, value):
         store_id=PACKING_STORE_ID
     ).distinct()
 
-#test
 class ProductStoreInventorySimpleFilter(filters.FilterSet):
     name_search = filters.CharFilter(method=name_search_products)
     id_in = filters.NumberFilter(method=id_in_filter)
