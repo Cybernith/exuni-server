@@ -467,3 +467,46 @@ class AdminCreateProductSerializer(serializers.ModelSerializer):
         to_delete = existing_ids - received_ids
         if to_delete:
             Product.objects.filter(id__in=to_delete).delete()
+
+
+class AdminProductStoreInfoSerializer(serializers.ModelSerializer):
+    variation_of_name = serializers.CharField(source='variation_of.name', read_only=True)
+    image = serializers.SerializerMethodField()
+    minimum_inventory = serializers.SerializerMethodField()
+    min_inventory = serializers.IntegerField(
+        required=False,
+        allow_null=True,
+        write_only=True,
+    )
+
+    class Meta:
+        read_only_fields = ('sixteen_digit_code', 'name')
+        model = Product
+        fields = ['id', 'sixteen_digit_code', 'image', 'variation_of_name', 'name',  'minimum_inventory', 'aisle',
+                  'shelf_number', 'postal_weight', 'length', 'width', 'height', 'expired_date', 'min_inventory']
+
+    def get_image(self, obj):
+        return obj.picture.url if obj.picture else None
+
+    def get_minimum_inventory(self, obj):
+        store = obj.store_inventory.filter(store_id=PACKING_STORE_ID)
+        return store.first().minimum_inventory if store.exists() else None
+
+    def update(self, instance, validated_data):
+        minimum_inventory = validated_data.pop('min_inventory', 0)
+
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+
+        store = ProductStoreInventory.objects.filter(store_id=PACKING_STORE_ID, product=instance)
+        if store.exists() and minimum_inventory > 0:
+            store = store.first()
+            store.minimum_inventory = minimum_inventory
+            store.save()
+        else:
+            ProductStoreInventory.objects.create(
+                store_id=PACKING_STORE_ID, product=instance, minimum_inventory=minimum_inventory
+            )
+
+        instance.save()
+        return instance

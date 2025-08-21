@@ -7,6 +7,7 @@ from django.shortcuts import get_object_or_404
 
 from helpers.functions import get_current_user
 from main.models import Store
+from products.exuni_admin.serializers import AdminProductStoreInfoSerializer
 from products.models import Product
 from store_handle.models import ProductHandleChange, ProductPackingInventoryHandle, ProductStoreInventory, \
     ProductStoreInventoryHandle, InventoryTransfer
@@ -180,3 +181,27 @@ class InventoryTransferCreateView(generics.CreateAPIView):
     queryset = InventoryTransfer.objects.all()
     serializer_class = InventoryTransferSerializer
     permission_classes = [IsAuthenticated, IsAdminUser]
+
+
+class ProductStoreInfoDetailView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def get_object(self, pk):
+        try:
+            return Product.objects.get(pk=pk)
+        except Product.DoesNotExist:
+            raise Http404
+
+    def get(self, request, pk):
+        query = self.get_object(pk)
+        serializers = AdminProductStoreInfoSerializer(query)
+        return Response(serializers.data, status=status.HTTP_200_OK)
+
+    def put(self, request, pk):
+        query = self.get_object(pk)
+        serializer = AdminProductStoreInfoSerializer(query, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+

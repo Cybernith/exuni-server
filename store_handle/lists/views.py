@@ -3,6 +3,7 @@ from rest_framework import generics
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 
+from products.exuni_admin.serializers import AdminProductStoreInfoSerializer
 from products.models import Product
 from products.shop.filters import ShopProductSimpleFilter
 from server.store_configs import PACKING_STORE_ID
@@ -83,3 +84,16 @@ class StoreInventoryListView(generics.ListAPIView):
                 output_field=BooleanField()
             )
         ).filter(is_minimum=True)
+
+
+class StoreNoInfoProductSimpleListView(generics.ListAPIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+    serializer_class = AdminProductStoreInfoSerializer
+    filterset_class = ShopProductSimpleFilter
+    pagination_class = LimitOffsetPagination
+
+    def get_queryset(self):
+        return Product.objects.filter(
+            Q(aisle__in=[None, ""]) | Q(shelf_number__in=[None, "", "0"]) | Q(postal_weight__in=[None, "0"]) |
+            Q(length__in=[None, 0]) | Q(width__in=[None, 0]) | Q(height__in=[None, 0]) | Q(expired_date__in=[None, ""])
+        )
