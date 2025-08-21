@@ -93,7 +93,7 @@ class StoreNoInfoProductSimpleListView(generics.ListAPIView):
     pagination_class = LimitOffsetPagination
 
     def get_queryset(self):
-        return Product.objects.filter(
+        return Product.objects.exclude(product_type=Product.VARIABLE).filter(
             Q(aisle__in=[None, ""]) | Q(shelf_number__in=[None, "", "0"]) | Q(postal_weight__in=[None, "0"]) |
             Q(length__in=[None, 0]) | Q(width__in=[None, 0]) | Q(height__in=[None, 0]) | Q(expired_date__in=[None, ""])
         )
