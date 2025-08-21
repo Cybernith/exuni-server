@@ -1,4 +1,5 @@
 from django.http import Http404
+from rest_framework.generics import UpdateAPIView
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -13,7 +14,7 @@ from store_handle.models import ProductHandleChange, ProductPackingInventoryHand
     ProductStoreInventoryHandle, InventoryTransfer
 from store_handle.serializers import ProductHandleChangeSerializer, ProductPackingInventoryHandleSerializer, \
     ProductStoreInventorySerializer, ProductStoreInventoryHandleSerializer, StoreInventoryUpdateSerializer, \
-    InventoryTransferSerializer
+    InventoryTransferSerializer, InventoryTransferUpdateSerializer
 from rest_framework import generics
 from rest_framework import viewsets
 
@@ -204,4 +205,9 @@ class ProductStoreInfoDetailView(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class InventoryTransferUpdateAPIView(UpdateAPIView):
+    queryset = InventoryTransfer.objects.all()
+    serializer_class = InventoryTransferUpdateSerializer
 

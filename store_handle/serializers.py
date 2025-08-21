@@ -328,3 +328,75 @@ class ProductStoreInventoryListSerializers(serializers.ModelSerializer):
         if hasattr(obj, "product") and obj.product and obj.product.variation_of:
             return AdminVariationSerializer(obj.product.variation_of).data
         return None
+
+
+class InventoryTransferUpdateSerializer(serializers.ModelSerializer):
+    aisle = serializers.CharField(
+        required=False,
+        allow_null=True,
+        write_only=True,
+    )
+    shelf_number = serializers.CharField(
+        required=False,
+        allow_null=True,
+        write_only=True,
+    )
+
+    class Meta:
+        model = InventoryTransfer
+        fields = ["id", "is_done", "aisle", "shelf_number"]
+        read_only_fields = ["id", "is_done"]
+
+    def update(self, instance, validated_data):
+        instance.is_done = True
+        aisle = validated_data.pop('aisle', None)
+        shelf_number = validated_data.pop('shelf_number', None)
+
+        product = instance.to_store.product
+        store = instance.to_store
+
+        if aisle is not None:
+            product.aisle = aisle
+            store.aisle = aisle
+        if shelf_number is not None:
+            product.shelf_number = shelf_number
+            store.shelf_number = shelf_number
+
+        product.save()
+        store.save()
+        instance.save()
+        return instance
+
+
+class InventoryTransferSimpleSerializer(serializers.ModelSerializer):
+    aisle = serializers.CharField(source='to_store.product.aisle', read_only=True)
+    shelf_number = serializers.CharField(source='to_store.product.shelf_number', read_only=True)
+    from_store_name = serializers.CharField(source='from_store.store.name', read_only=True)
+    to_store_name = serializers.CharField(source='to_store.store.name', read_only=True)
+    image = serializers.SerializerMethodField()
+    variation_of_name = serializers.CharField(source='to_store.product.variation_of.name', read_only=True)
+    sixteen_digit_code = serializers.SerializerMethodField()
+    name = serializers.SerializerMethodField()
+    product_type = serializers.SerializerMethodField()
+    product_id = serializers.SerializerMethodField()
+
+    class Meta:
+        model = InventoryTransfer
+        fields = '__all__'
+
+    def get_product_id(self, obj):
+        return obj.to_store.product.id
+
+    def get_product_type(self, obj):
+        return obj.to_store.product.product_type
+
+    def get_name(self, obj):
+        return obj.to_store.product.name
+
+    def get_image(self, obj):
+        return obj.to_store.product.picture.url if obj.to_store.product.picture else None
+
+    def get_sixteen_digit_code(self, obj):
+        return obj.to_store.product.sixteen_digit_code if obj.to_store.product.sixteen_digit_code else None
+
+

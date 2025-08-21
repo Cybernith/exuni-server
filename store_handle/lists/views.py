@@ -8,10 +8,10 @@ from products.models import Product
 from products.shop.filters import ShopProductSimpleFilter
 from server.store_configs import PACKING_STORE_ID
 from shop.exuni_admin.srializers import AdminProductsListSerializers
-from store_handle.lists.filters import ProductStoreInventorySimpleFilter
-from store_handle.models import ProductStoreInventory
+from store_handle.lists.filters import ProductStoreInventorySimpleFilter, TransferSimpleFilter
+from store_handle.models import ProductStoreInventory, InventoryTransfer
 from store_handle.serializers import StoreHandlingProductsListSerializers, HandleDoneProductsListSerializers, \
-    ProductStoreInventoryListSerializers
+    ProductStoreInventoryListSerializers, InventoryTransferSimpleSerializer
 from django.db.models import Case, When, BooleanField, Value, F, Sum, Q
 
 
@@ -97,3 +97,14 @@ class StoreNoInfoProductSimpleListView(generics.ListAPIView):
             Q(aisle__in=[None, ""]) | Q(shelf_number__in=[None, "", "0"]) | Q(postal_weight__in=[None, "0"]) |
             Q(length__in=[None, 0]) | Q(width__in=[None, 0]) | Q(height__in=[None, 0]) | Q(expired_date__in=[None, ""])
         )
+
+
+class StoreTransferListView(generics.ListAPIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    serializer_class = InventoryTransferSimpleSerializer
+    filterset_class = TransferSimpleFilter
+    pagination_class = LimitOffsetPagination
+
+    def get_queryset(self):
+        return InventoryTransfer.objects.filter(is_done=False, to_store__store_id=PACKING_STORE_ID)
