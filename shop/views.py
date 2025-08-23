@@ -520,7 +520,7 @@ class CustomerOrdersView(APIView):
         orders = ShopOrder.objects.filter(
             customer=get_current_user()).exclude(status__in=[ShopOrder.EXPIRED, ShopOrder.EDITED]).select_related(
             'shipment_address'
-        ).prefetch_related('items', 'history', 'bank_payment')
+        ).prefetch_related('items')
         serializers = ApiOrderListSerializer(orders, many=True)
         return Response(serializers.data, status=status.HTTP_200_OK)
 
