@@ -40,7 +40,7 @@ class CurrentUserCartApiView(APIView):
 
     def get(self, request):
         customer = get_current_user()
-        query = Cart.objects.filter(customer=customer)
+        query = Cart.objects.filter(customer=customer).select_related('product', 'customer')
         serializers = ApiCartRetrieveSerializer(query, many=True, context={'request': request})
         return Response(serializers.data, status=status.HTTP_200_OK)
 
