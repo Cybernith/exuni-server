@@ -297,7 +297,7 @@ class ApiProductsListSerializers(serializers.ModelSerializer):
         #                is_applicable = True
         #    if is_applicable:
         #        applicable_discounts.append(discount)
-#
+        #
         #return DiscountSerializer(applicable_discounts, many=True, context=self.context).data
         return []
 
@@ -320,18 +320,21 @@ class ApiProductsListSerializers(serializers.ModelSerializer):
         return None
 
     def get_is_in_user_wish_list(self, obj):
-        user = get_current_user()
-        if user:
-            return obj.products_in_wish_list.filter(customer=user).exists()
-        else:
-            return False
+        #user = get_current_user()
+        #if user:
+        #    return obj.products_in_wish_list.filter(customer=user).exists()
+        #else:
+        #    return False
+        return False
+
 
     def get_is_in_user_comparison(self, obj):
-        user = get_current_user()
-        if user:
-            return obj.products_in_comparison.filter(customer=user).exists()
-        else:
-            return False
+        #user = get_current_user()
+        #if user:
+        #    return obj.products_in_comparison.filter(customer=user).exists()
+        #else:
+        #    return False
+        return False
 
     def get_offer_percentage(self, obj):
         if obj.regular_price and obj.price:

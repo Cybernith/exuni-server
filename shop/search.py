@@ -41,10 +41,14 @@ class GlobalAutoCompleteSearchAPIView(APIView):
         ).exclude(stock__lt=1)
 
         products = products.annotate(
-            category_names=Coalesce(StringAgg('category__name', delimiter=' ', distinct=True), Value('')),
+            category_names=Coalesce(
+                StringAgg('category__name', delimiter=' ', distinct=True),
+                Value('', output_field=CharField())
+            ),
             search_vector=(
                 SearchVector('name', weight='A') +
                 SearchVector('sixteen_digit_code', weight='B') +
+                SearchVector('variations__sixteen_digit_code', weight='B') +
                 SearchVector('brand__name', weight='B') +
                 SearchVector('category_names', weight='B')
             )
@@ -57,17 +61,19 @@ class GlobalAutoCompleteSearchAPIView(APIView):
         ).annotate(
             trigram_name=TrigramSimilarity('name', query),
             trigram_code=TrigramSimilarity('sixteen_digit_code', query),
+            trigram_var_code=TrigramSimilarity('variations__sixteen_digit_code', query),
             trigram_brand=TrigramSimilarity('brand__name', query),
             trigram_category=TrigramSimilarity('category_names', query),
         ).annotate(
             similarity=Greatest(
                 F('trigram_name') * 2,
                 F('trigram_code') * 2,
+                F('trigram_var_code') * 2,
                 F('trigram_brand'),
                 F('trigram_category'),
                 output_field=FloatField()
             ),
-            relevance=F('rank') + Coalesce(F('similarity'), Value(0))
+            relevance=F('rank') + Coalesce(F('similarity'), Value(0.0, output_field=FloatField()))
         ).annotate(
             type=Value('product', output_field=CharField()),
             picture_url=Func(Value(FRONT_MEDIA_URL), F('picture'), function='CONCAT', output_field=CharField())
@@ -81,12 +87,14 @@ class GlobalAutoCompleteSearchAPIView(APIView):
             trigram_qs = products.annotate(
                 trigram_name=TrigramSimilarity('name', query),
                 trigram_code=TrigramSimilarity('sixteen_digit_code', query),
+                trigram_var_code=TrigramSimilarity('variations__sixteen_digit_code', query),
                 trigram_brand=TrigramSimilarity('brand__name', query),
                 trigram_category=TrigramSimilarity('category_names', query),
             ).annotate(
                 similarity=Greatest(
                     F('trigram_name') * 2,
                     F('trigram_code') * 2,
+                    F('trigram_var_code') * 2,
                     F('trigram_brand'),
                     F('trigram_category'),
                     output_field=FloatField()
