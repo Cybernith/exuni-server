@@ -64,7 +64,8 @@ class GlobalAutoCompleteSearchAPIView(APIView):
                 F('trigram_name') * 2,
                 F('trigram_code') * 2,
                 F('trigram_brand'),
-                F('trigram_category')
+                F('trigram_category'),
+                output_field=FloatField()
             ),
             relevance=F('rank') + Coalesce(F('similarity'), Value(0))
         ).annotate(
@@ -87,7 +88,8 @@ class GlobalAutoCompleteSearchAPIView(APIView):
                     F('trigram_name') * 2,
                     F('trigram_code') * 2,
                     F('trigram_brand'),
-                    F('trigram_category')
+                    F('trigram_category'),
+                    output_field=FloatField()
                 )
             ).filter(
                 similarity__gt=0.2
