@@ -220,7 +220,7 @@ class ApiCartItemProductSerializers(serializers.ModelSerializer):
 class ApiProductListVariationSerializers(serializers.ModelSerializer):
     image = serializers.SerializerMethodField()
     calculate_current_inventory = serializers.ReadOnlyField()
-
+    #test
     class Meta:
         model = Product
         fields = [
