@@ -7,7 +7,7 @@ from subscription.models import DiscountCode
 class OrderAppService:
 
     @staticmethod
-    def place_order_without_reserve(customer, address_id, discount_code_value=None):
+    def place_order_with_reserve(customer, address_id, discount_code_value=None):
         address = ShipmentAddress.objects.get(id=address_id, customer=customer)
 
         discount_code = None
@@ -27,7 +27,7 @@ class OrderAppService:
             ) for item in cart_qs
         ]
 
-        shop_order, shortages = InventoryAllocatorService.create_order_and_allocate(
+        shop_order, shortages = InventoryAllocatorService.create_order_with_reserve(
             customer=customer,
             address=address,
             cart_lines=lines,
@@ -35,5 +35,4 @@ class OrderAppService:
         )
 
         cart_qs.delete()
-
         return shop_order, shortages

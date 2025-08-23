@@ -439,10 +439,14 @@ class ShopOrder(BaseModel):
     @transition(field='status', source=PENDING, target=PAID)
     def mark_as_paid(self):
         from crm.sms_dispatch import SMSHandler
-        self.status = self.PAID
-        self.save()
-        sms_sender = SMSHandler()
-        sms_sender.send_order_confirmation(self.id)
+        from shop.services.inventory_reservation_service import InventoryReservationService
+
+        with transaction.atomic():
+            InventoryReservationService.confirm_order(self)
+            self.status = self.PAID
+            self.save()
+            sms_sender = SMSHandler()
+            sms_sender.send_order_confirmation(self.id)
 
     @transition(field='status', source=PAID, target=PROCESSING)
     def process_order(self, user=None):
@@ -467,23 +471,27 @@ class ShopOrder(BaseModel):
 
     @transition(field='status', source='*', target=CANCELLED)
     def cancel_order(self):
-        self.status = self.CANCELLED
-        for item in self.items.all():
-            increase_inventory(item.product.id, item.product_quantity)
-
-        self.save()
+        from shop.services.inventory_reservation_service import InventoryReservationService
+        with transaction.atomic():
+            InventoryReservationService.release_order(self)
+            self.status = self.CANCELLED
+            self.save()
 
     @transition(field='status', source=PENDING, target=EXPIRED)
     def expired_order(self):
-        self.status = self.EXPIRED
-        self.save()
+        from shop.services.inventory_reservation_service import InventoryReservationService
+        with transaction.atomic():
+            InventoryReservationService.release_order(self)
+            self.status = self.EXPIRED
+            self.save()
 
     @transition(field='status', source=PENDING, target=EDITED)
     def edit_order(self):
-        self.status = self.EDITED
-        for item in self.items.all():
-            increase_inventory(item.product.id, item.product_quantity)
-        self.save()
+        from shop.services.inventory_reservation_service import InventoryReservationService
+        with transaction.atomic():
+            InventoryReservationService.release_order(self)
+            self.status = self.EDITED
+            self.save()
 
     def apply_discounts_to_order(self):
         total_price = self.total_price

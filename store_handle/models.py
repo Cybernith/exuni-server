@@ -11,6 +11,7 @@ class ProductStoreInventory(models.Model):
     product = models.ForeignKey('products.Product', related_name='store_inventory', on_delete=models.SET_NULL, null=True)
     store = models.ForeignKey('main.Store', related_name='store_inventory', on_delete=models.SET_NULL, null=True)
     inventory = models.IntegerField(default=0)
+    reserved_inventory = models.IntegerField(default=0)
     minimum_inventory = models.IntegerField(default=0)
     aisle = models.CharField(max_length=10, null=True)
     shelf_number = models.CharField(max_length=10, null=True)

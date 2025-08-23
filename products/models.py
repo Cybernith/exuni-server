@@ -7,6 +7,7 @@ from django.core.exceptions import ValidationError
 
 from django.db import models, transaction
 from django.db.models import IntegerField, F, Sum, Q, Avg
+from django.db.models.functions import Coalesce
 
 from crm.services.inventory_reminder import notify_users_if_in_stock
 from entrance.models import StoreReceiptItem
@@ -482,21 +483,30 @@ class Product(BaseModel):
 
     @property
     def available_inventory(self) -> int:
-        return self.store_inventory.aggregate(total=Sum("inventory"))["total"] or 0
+        agg = self.store_inventory.aggregate(
+            total_inventory=Coalesce(Sum("inventory"), 0),
+            total_reserved=Coalesce(Sum("reserved_inventory"), 0),
+        )
+        return agg['total_inventory'] - agg['total_reserved']
 
-    @property
-    def calculate_current_inventory(self):
+    def calculate_current_inventory(self) -> int:
         from store_handle.models import ProductStoreInventory
 
         if self.product_type in [self.SIMPLE, self.VARIATION]:
-            return self.store_inventory.aggregate(total=Sum("inventory"))["total"] or 0
+            agg = self.store_inventory.aggregate(
+                total_inventory=Coalesce(Sum("inventory"), 0),
+                total_reserved=Coalesce(Sum("reserved_inventory"), 0),
+            )
+            return agg['total_inventory'] - agg['total_reserved']
 
         elif self.product_type == self.VARIABLE:
-            return (
-                    ProductStoreInventory.objects.filter(product__variation_of=self)
-                    .aggregate(total=Sum("inventory"))["total"]
-                    or 0
+            agg = ProductStoreInventory.objects.filter(product__variation_of=self).aggregate(
+                total_inventory=Coalesce(Sum("inventory"), 0),
+                total_reserved=Coalesce(Sum("reserved_inventory"), 0),
             )
+            return agg['total_inventory'] - agg['total_reserved']
+
+        return 0
 
     @property
     def final_price(self):

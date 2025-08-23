@@ -481,7 +481,7 @@ class ShopOrderRegistrationView(APIView):
             return Response({'message': 'آدرس الزامی است'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            order, shortages = OrderAppService.place_order_without_reserve(
+            order, shortages = OrderAppService.place_order_with_reserve(
                 customer=customer,
                 address_id=address_id,
                 discount_code_value=discount_code_value

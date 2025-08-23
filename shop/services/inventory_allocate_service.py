@@ -1,13 +1,12 @@
 from dataclasses import dataclass
 from typing import List, Tuple, Dict
 from django.db import transaction
-from django.db.models import F
+from django.db.models import Sum
+from django.db.models.functions import Coalesce
 from django.utils.timezone import now
 
 from products.models import Product
-from server.store_configs import PACKING_STORE_ID
 from shop.models import ShopOrder, ShopOrderItem
-from store_handle.models import ProductStoreInventory, ProductStoreInventoryHistory, TransferToPackingRequest
 
 
 @dataclass(frozen=True)
@@ -21,7 +20,7 @@ class InventoryAllocatorService:
 
     @staticmethod
     @transaction.atomic
-    def create_order_and_allocate(
+    def create_order_with_reserve(
             customer,
             address,
             cart_lines: List[CartLine],
@@ -68,7 +67,9 @@ class InventoryAllocatorService:
                 })
                 continue
 
-            available = product.available_inventory
+            inventories = list(product.store_inventory.select_for_update())
+            available = sum(inv.inventory - inv.reserved_inventory for inv in inventories)
+
             if available <= 0:
                 shortages.append({
                     'product_id': line.product_id, 'requested': line.quantity,
@@ -86,34 +87,6 @@ class InventoryAllocatorService:
                         price=line.price,
                         product_quantity=to_process
                     )
-                )
-
-                packing_inventory, created = ProductStoreInventory.objects.select_for_update().get_or_create(
-                    product=product,
-                    store_id=PACKING_STORE_ID,
-                    defaults={'inventory': 0}
-                )
-                if to_process > packing_inventory.inventory:
-                    TransferToPackingRequest.objects.create(
-                        quantity=(to_process - packing_inventory.inventory),
-                        from_store=ProductStoreInventory.objects.filter(
-                            product=product, inventory__gte=to_process - packing_inventory.inventory).first(),
-                        order=shop_order,
-                        product=product
-                    )
-
-                previous_quantity = packing_inventory.inventory
-                packing_inventory.inventory = F('inventory') - to_process
-                packing_inventory.save()
-                packing_inventory.refresh_from_db(fields=['inventory'])
-
-                ProductStoreInventoryHistory.objects.create(
-                    inventory=packing_inventory,
-                    action=ProductStoreInventoryHistory.DECREASE,
-                    quantity=to_process,
-                    previous_quantity=previous_quantity,
-                    new_quantity=previous_quantity - to_process,
-                    changed_by=customer
                 )
 
             if to_process < line.quantity:
@@ -140,5 +113,7 @@ class InventoryAllocatorService:
 
         shop_order.update(inventory_info=inventory_info)
         shop_order.set_constants()
+        from shop.services.inventory_reservation_service import InventoryReservationService
+        InventoryReservationService.reserve_order(shop_order)
 
         return shop_order, shortages
