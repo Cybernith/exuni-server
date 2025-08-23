@@ -79,7 +79,7 @@ class StoreInventoryListView(generics.ListAPIView):
             minimum_inventory_value=Coalesce('minimum_inventory', 0),
         ).annotate(
             is_minimum=Case(
-                When(minimum_inventory_value__gt=F('inventory_value'), total_inventory__gt=0, then=Value(True)),
+                When(minimum_inventory_value__gt=F('inventory_value') + Value(6), total_inventory__gt=0, then=Value(True)),
                 default=Value(False),
                 output_field=BooleanField()
             )
