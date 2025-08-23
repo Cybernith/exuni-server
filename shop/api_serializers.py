@@ -322,14 +322,14 @@ class ApiProductsListSerializers(serializers.ModelSerializer):
     def get_is_in_user_wish_list(self, obj):
         user = get_current_user()
         if user:
-            return obj.products_in_wish_list.filter(customer=user).exist()
+            return obj.products_in_wish_list.filter(customer=user).exists()
         else:
             return False
 
     def get_is_in_user_comparison(self, obj):
         user = get_current_user()
         if user:
-            return obj.products_in_comparison.filter(customer=user).exist()
+            return obj.products_in_comparison.filter(customer=user).exists()
         else:
             return False
 
