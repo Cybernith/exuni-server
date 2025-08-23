@@ -472,6 +472,8 @@ class ShopOrderRegistrationView(APIView):
     throttle_classes = [ShopOrderRateThrottle]
 
     def post(self, request):
+        return Response({'message': 'سیستم در حال بروز رسانی است دقایقی دیگر تلاش کنید'}, status=status.HTTP_400_BAD_REQUEST)
+
         customer = get_current_user()
         data = request.data
         address_id = data.get('address')
@@ -798,6 +800,8 @@ class CancelShopOrderView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, pk):
+        return Response({'message': 'سیستم در حال بروز رسانی است دقایقی دیگر تلاش کنید'}, status=status.HTTP_400_BAD_REQUEST)
+
         with transaction.atomic():
             shop_order = (
                 ShopOrder.objects
@@ -860,6 +864,8 @@ class OrderMoveToCartAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def delete(self, request, pk):
+        return Response({'message': 'سیستم در حال بروز رسانی است دقایقی دیگر تلاش کنید'}, status=status.HTTP_400_BAD_REQUEST)
+
         try:
             order = ShopOrder.objects.select_for_update().prefetch_related('items').get(pk=pk, customer=get_current_user())
         except ShopOrder.DoesNotExist:

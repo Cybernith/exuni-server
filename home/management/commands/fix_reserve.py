@@ -24,3 +24,4 @@ class Command(BaseCommand):
                         inv.reserved_inventory = F('reserved_inventory') + item.product_quantity
                         inv.inventory = F('inventory') + item.product_quantity
                         inv.save(update_fields=['reserved_inventory', 'inventory'])
+                print('fixed', flush=True)
