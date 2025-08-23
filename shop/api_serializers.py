@@ -217,6 +217,26 @@ class ApiCartItemProductSerializers(serializers.ModelSerializer):
         return []
 
 
+class ApiProductListVariationSerializers(serializers.ModelSerializer):
+    image = serializers.SerializerMethodField()
+    calculate_current_inventory = serializers.ReadOnlyField()
+
+    class Meta:
+        model = Product
+        fields = [
+            'id',
+            'name',
+            'image',
+            'regular_price',
+            'price',
+            'calculate_current_inventory',
+            'variation_title',
+        ]
+
+    def get_image(self, obj):
+        return obj.picture.url if obj.picture else None
+
+
 class ApiProductsListSerializers(serializers.ModelSerializer):
     image = serializers.SerializerMethodField()
     second_image = serializers.SerializerMethodField()
@@ -229,7 +249,6 @@ class ApiProductsListSerializers(serializers.ModelSerializer):
     price_title = serializers.SerializerMethodField()
     regular_price_title = serializers.SerializerMethodField()
     active_discounts = serializers.SerializerMethodField()
-    inventory_count = serializers.IntegerField(read_only=True)
     variation_of_name = serializers.CharField(source='variation_of.name', read_only=True)
 
     class Meta:
@@ -257,14 +276,13 @@ class ApiProductsListSerializers(serializers.ModelSerializer):
             'price_title',
             'regular_price_title',
             'active_discounts',
-            'inventory_count',
             'sixteen_digit_code',
             'variation_of_name',
         ]
 
     def get_variations(self, obj):
         variations = obj.variations.filter(price__gt=0)
-        return ApiVariationListSerializers(variations, many=True, context=self.context).data
+        return ApiProductListVariationSerializers(variations, many=True, context=self.context).data
 
 
     def get_active_discounts(self, obj):
@@ -320,21 +338,18 @@ class ApiProductsListSerializers(serializers.ModelSerializer):
         return None
 
     def get_is_in_user_wish_list(self, obj):
-        #user = get_current_user()
-        #if user:
-        #    return obj.products_in_wish_list.filter(customer=user).exists()
-        #else:
-        #    return False
-        return False
-
+        user = get_current_user()
+        if user:
+            return obj.products_in_wish_list.filter(customer=user).exists()
+        else:
+            return False
 
     def get_is_in_user_comparison(self, obj):
-        #user = get_current_user()
-        #if user:
-        #    return obj.products_in_comparison.filter(customer=user).exists()
-        #else:
-        #    return False
-        return False
+        user = get_current_user()
+        if user:
+            return obj.products_in_comparison.filter(customer=user).exists()
+        else:
+            return False
 
     def get_offer_percentage(self, obj):
         if obj.regular_price and obj.price:

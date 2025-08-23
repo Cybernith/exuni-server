@@ -137,9 +137,6 @@ def top_selling_filter(queryset, name, value):
 def search_value_filter(queryset, name, value):
     if not value:
         return queryset
-
-    queryset = queryset.exclude(product_type=Product.VARIATION)
-
     query = value.strip()
     if not query:
         return queryset
@@ -147,6 +144,18 @@ def search_value_filter(queryset, name, value):
     tokens = [t for t in query.split() if t]
     if not tokens:
         return queryset
+
+    queryset = queryset.exclude(product_type=Product.VARIATION).filter(status=Product.PUBLISHED)
+
+    contains_filters = Q()
+    for tok in tokens:
+        contains_filters &= (
+            Q(name__icontains=tok) |
+            Q(sixteen_digit_code__icontains=tok) |
+            Q(variations__sixteen_digit_code__icontains=tok) |
+            Q(brand__name__icontains=tok)
+        )
+    queryset = queryset.filter(contains_filters).distinct()
 
     search_query = None
     for tok in tokens:
@@ -159,39 +168,34 @@ def search_value_filter(queryset, name, value):
         search_vector=(
             SearchVector('name', weight='A') +
             SearchVector('sixteen_digit_code', weight='B') +
+            SearchVector('variations__sixteen_digit_code', weight='B') +
             SearchVector('brand__name', weight='B')
         ),
         rank=SearchRank(F('search_vector'), search_query),
         trigram_name=TrigramSimilarity('name', query_value),
         trigram_sixteen_digit_code=TrigramSimilarity('sixteen_digit_code', query_value),
+        trigram_variations_code=TrigramSimilarity('variations__sixteen_digit_code', query_value),
         trigram_brand=TrigramSimilarity('brand__name', query_value),
     ).annotate(
         similarity=Greatest(
             F('trigram_name') * 2,
             F('trigram_sixteen_digit_code') * 2,
+            F('trigram_variations_code') * 2,
             F('trigram_brand'),
+            output_field=FloatField()
         )
     ).annotate(
         stock=Case(
-            When(
-                product_type=Product.SIMPLE,
-                then=Coalesce(F('store_inventory__inventory'), 0)
-            ),
-            When(
-                product_type=Product.VARIABLE,
-                then=Coalesce(Sum('variations__store_inventory__inventory'), 0)
-            ),
+            When(product_type=Product.SIMPLE, then=Coalesce(F('store_inventory__inventory'), 0)),
+            When(product_type=Product.VARIABLE, then=Coalesce(Sum('variations__store_inventory__inventory'), 0)),
             default=Value(0),
             output_field=FloatField()
         )
-    ).filter(
-        search_vector=search_query
     ).annotate(
-        relevance=F('rank') + F('similarity')
+        relevance=F('rank') + Coalesce(F('similarity'), Value(0.0, output_field=FloatField()))
     ).order_by(
         '-relevance', '-similarity', '-rank'
     )
-
     has_stock = product_queryset.exclude(stock__lt=1)
     no_stock = product_queryset.exclude(stock__gte=1)
 
