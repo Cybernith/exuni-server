@@ -140,15 +140,26 @@ def search_value_filter(queryset, name, value):
 
     queryset = queryset.exclude(product_type=Product.VARIATION)
 
-    query = value
+    query = value.strip()
+    if not query:
+        return queryset
+
+    tokens = [t for t in query.split() if t]
+    if not tokens:
+        return queryset
+
+    search_query = None
+    for tok in tokens:
+        q = SearchQuery(tok, search_type='plain')
+        search_query = q if search_query is None else (search_query & q)
+
     query_value = Value(query, output_field=CharField())
-    search_query = SearchQuery(query)
 
     product_queryset = queryset.annotate(
         search_vector=(
-                SearchVector('name', weight='A') +
-                SearchVector('sixteen_digit_code', weight='B') +
-                SearchVector('brand__name', weight='B')
+            SearchVector('name', weight='A') +
+            SearchVector('sixteen_digit_code', weight='B') +
+            SearchVector('brand__name', weight='B')
         ),
         rank=SearchRank(F('search_vector'), search_query),
         trigram_name=TrigramSimilarity('name', query_value),
@@ -164,17 +175,17 @@ def search_value_filter(queryset, name, value):
         stock=Case(
             When(
                 product_type=Product.SIMPLE,
-                then=F('store_inventory__inventory')
+                then=Coalesce(F('store_inventory__inventory'), 0)
             ),
             When(
                 product_type=Product.VARIABLE,
-                then=Sum('variations__store_inventory__inventory')
+                then=Coalesce(Sum('variations__store_inventory__inventory'), 0)
             ),
             default=Value(0),
             output_field=FloatField()
         )
     ).filter(
-        similarity__gt=0.2
+        search_vector=search_query
     ).annotate(
         relevance=F('rank') + F('similarity')
     ).order_by(
