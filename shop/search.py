@@ -106,7 +106,7 @@ class GlobalAutoCompleteSearchAPIView(APIView):
                 picture_url=Func(Value(FRONT_MEDIA_URL), F('picture'), function='CONCAT', output_field=CharField())
             ).values('id', 'name', 'type', 'picture_url', 'similarity').order_by('-similarity')[:(MAX_RESULTS - len(results))]
 
-            results.extend(list(trigram_qs))
+            results.extend(list(trigram_qs.distinct()))
 
         brand_qs = Brand.objects.annotate(similarity=TrigramSimilarity('name', query)).filter(similarity__gt=0.3).annotate(
             type=Value('brand', output_field=CharField()),

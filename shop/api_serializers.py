@@ -239,9 +239,6 @@ class ApiProductListVariationSerializers(serializers.ModelSerializer):
 
 class ApiProductsListSerializers(serializers.ModelSerializer):
     image = serializers.SerializerMethodField()
-    second_image = serializers.SerializerMethodField()
-    is_in_user_wish_list = serializers.SerializerMethodField()
-    is_in_user_comparison = serializers.SerializerMethodField()
     offer_percentage = serializers.SerializerMethodField()
     calculate_current_inventory = serializers.ReadOnlyField()
     variations = serializers.SerializerMethodField()
@@ -249,7 +246,6 @@ class ApiProductsListSerializers(serializers.ModelSerializer):
     price_title = serializers.SerializerMethodField()
     regular_price_title = serializers.SerializerMethodField()
     active_discounts = serializers.SerializerMethodField()
-    variation_of_name = serializers.CharField(source='variation_of.name', read_only=True)
 
     class Meta:
         model = Product
@@ -258,13 +254,9 @@ class ApiProductsListSerializers(serializers.ModelSerializer):
             'product_type',
             'name',
             'image',
-            'picture',
-            'second_image',
             'regular_price',
             'price',
             'offer_percentage',
-            'is_in_user_wish_list',
-            'is_in_user_comparison',
             'calculate_current_inventory',
             'variations',
             'brand',
@@ -277,7 +269,6 @@ class ApiProductsListSerializers(serializers.ModelSerializer):
             'regular_price_title',
             'active_discounts',
             'sixteen_digit_code',
-            'variation_of_name',
         ]
 
     def get_variations(self, obj):
@@ -331,25 +322,22 @@ class ApiProductsListSerializers(serializers.ModelSerializer):
     def get_image(self, obj):
         return obj.picture.url if obj.picture else None
 
-    def get_second_image(self, obj):
-        if ProductGallery.objects.filter(product=obj).exists():
-            first_picture_of_gallery = ProductGallery.objects.filter(product=obj).first()
-            return first_picture_of_gallery.picture.url if first_picture_of_gallery.picture else None
-        return None
-
     def get_is_in_user_wish_list(self, obj):
-        user = get_current_user()
-        if user:
-            return obj.products_in_wish_list.filter(customer=user).exists()
-        else:
-            return False
+        # user = get_current_user()
+        # if user:
+        #     return obj.products_in_wish_list.filter(customer=user).exists()
+        # else:
+        #     return False
+        return False
 
     def get_is_in_user_comparison(self, obj):
-        user = get_current_user()
-        if user:
-            return obj.products_in_comparison.filter(customer=user).exists()
-        else:
-            return False
+        #user = get_current_user()
+        #if user:
+        #    return obj.products_in_comparison.filter(customer=user).exists()
+        #else:
+        #    return False
+        return False
+
 
     def get_offer_percentage(self, obj):
         if obj.regular_price and obj.price:

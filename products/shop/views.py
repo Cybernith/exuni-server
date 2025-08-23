@@ -55,8 +55,7 @@ class ShopProductSimpleListView(generics.ListAPIView):
 
     def get_queryset(self):
         return Product.objects.shop_products().select_related(
-            'brand', 'variation_of').prefetch_related(
-            'variations', 'gallery', 'products_in_comparison', 'products_in_wish_list')
+            'brand').prefetch_related('variations')
 
 
 class ShopProductWithCommentsListView(generics.ListAPIView):
