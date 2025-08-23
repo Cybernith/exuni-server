@@ -1,7 +1,7 @@
 from django.contrib.postgres.aggregates import StringAgg
 from django.contrib.postgres.search import SearchQuery, SearchVector, SearchRank, TrigramSimilarity
 from django.db.models import Value, CharField, F, Func, Case, When, FloatField, Sum
-from django.db.models.functions import Greatest, Coalesce
+from django.db.models.functions import Greatest, Coalesce, Concat
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -29,18 +29,21 @@ class GlobalAutoCompleteSearchAPIView(APIView):
             q = SearchQuery(tok, search_type='plain')
             search_query = q if search_query is None else (search_query & q)
 
-        products = Product.objects.exclude(product_type=Product.VARIATION).filter(status=Product.PUBLISHED)
-
-        products = products.annotate(
+        products = Product.objects.filter(
+            status=Product.PUBLISHED,
+            product_type__in=[Product.SIMPLE, Product.VARIABLE]
+        ).annotate(
+            variation_codes=Coalesce(
+                StringAgg('variations__sixteen_digit_code', delimiter=' ', distinct=True),
+                Value('', output_field=CharField())
+            ),
             stock=Case(
                 When(product_type=Product.SIMPLE, then=Coalesce(F('store_inventory__inventory'), 0)),
                 When(product_type=Product.VARIABLE, then=Coalesce(Sum('variations__store_inventory__inventory'), 0)),
                 default=Value(0),
                 output_field=FloatField()
             )
-        ).exclude(stock__lt=1)
-
-        products = products.annotate(
+        ).filter(stock__gte=1).annotate(
             category_names=Coalesce(
                 StringAgg('category__name', delimiter=' ', distinct=True),
                 Value('', output_field=CharField())
@@ -48,22 +51,19 @@ class GlobalAutoCompleteSearchAPIView(APIView):
             search_vector=(
                 SearchVector('name', weight='A') +
                 SearchVector('sixteen_digit_code', weight='B') +
-                SearchVector('variations__sixteen_digit_code', weight='B') +
+                SearchVector('variation_codes', weight='B') +
                 SearchVector('brand__name', weight='B') +
                 SearchVector('category_names', weight='B')
             )
         )
 
         primary_qs = products.annotate(
-            rank=SearchRank(F('search_vector'), search_query)
-        ).filter(
-            search_vector=search_query
-        ).annotate(
+            rank=SearchRank(F('search_vector'), search_query),
             trigram_name=TrigramSimilarity('name', query),
             trigram_code=TrigramSimilarity('sixteen_digit_code', query),
-            trigram_var_code=TrigramSimilarity('variations__sixteen_digit_code', query),
+            trigram_var_code=TrigramSimilarity('variation_codes', query),
             trigram_brand=TrigramSimilarity('brand__name', query),
-            trigram_category=TrigramSimilarity('category_names', query),
+            trigram_category=TrigramSimilarity('category_names', query)
         ).annotate(
             similarity=Greatest(
                 F('trigram_name') * 2,
@@ -73,23 +73,21 @@ class GlobalAutoCompleteSearchAPIView(APIView):
                 F('trigram_category'),
                 output_field=FloatField()
             ),
-            relevance=F('rank') + Coalesce(F('similarity'), Value(0.0, output_field=FloatField()))
-        ).annotate(
+            relevance=F('rank') + Coalesce(F('similarity'), Value(0.0, output_field=FloatField())),
             type=Value('product', output_field=CharField()),
-            picture_url=Func(Value(FRONT_MEDIA_URL), F('picture'), function='CONCAT', output_field=CharField())
-        ).values('id', 'name', 'type', 'picture_url', 'relevance').order_by('-relevance', '-similarity', '-rank')[:15]
+            picture_url=Concat(Value(FRONT_MEDIA_URL), F('picture'), output_field=CharField())
+        ).filter(search_vector=search_query).order_by('-relevance', '-similarity', '-rank')
 
-        results = list(primary_qs)
+        results = list(primary_qs.values('id', 'name', 'type', 'picture_url', 'relevance')[:15])
+        existing_ids = {r['id'] for r in results}
 
-        MAX_RESULTS = 15
-        if len(results) < MAX_RESULTS:
-            existing_ids = {r['id'] for r in results}
-            trigram_qs = products.annotate(
+        if len(results) < 15:
+            fallback_qs = products.annotate(
                 trigram_name=TrigramSimilarity('name', query),
                 trigram_code=TrigramSimilarity('sixteen_digit_code', query),
-                trigram_var_code=TrigramSimilarity('variations__sixteen_digit_code', query),
+                trigram_var_code=TrigramSimilarity('variation_codes', query),
                 trigram_brand=TrigramSimilarity('brand__name', query),
-                trigram_category=TrigramSimilarity('category_names', query),
+                trigram_category=TrigramSimilarity('category_names', query)
             ).annotate(
                 similarity=Greatest(
                     F('trigram_name') * 2,
@@ -98,29 +96,25 @@ class GlobalAutoCompleteSearchAPIView(APIView):
                     F('trigram_brand'),
                     F('trigram_category'),
                     output_field=FloatField()
-                )
-            ).filter(
-                similarity__gt=0.2
-            ).exclude(id__in=existing_ids).annotate(
+                ),
                 type=Value('product', output_field=CharField()),
-                picture_url=Func(Value(FRONT_MEDIA_URL), F('picture'), function='CONCAT', output_field=CharField())
-            ).values('id', 'name', 'type', 'picture_url', 'similarity').order_by('-similarity')[:(MAX_RESULTS - len(results))]
+                picture_url=Concat(Value(FRONT_MEDIA_URL), F('picture'), output_field=CharField())
+            ).exclude(id__in=existing_ids).filter(similarity__gt=0.2).order_by('-similarity')[:15 - len(results)]
 
-            results.extend(list(trigram_qs.distinct()))
+            results.extend(list(fallback_qs.values('id', 'name', 'type', 'picture_url', 'similarity')))
 
-        brand_qs = Brand.objects.annotate(similarity=TrigramSimilarity('name', query)).filter(similarity__gt=0.3).annotate(
+        brand_qs = Brand.objects.annotate(
+            similarity=TrigramSimilarity('name', query),
             type=Value('brand', output_field=CharField()),
-            picture_url=Func(Value(FRONT_MEDIA_URL), F('logo'), function='CONCAT', output_field=CharField())
-        ).values('id', 'name', 'type', 'picture_url').order_by('-similarity')[:5]
+            picture_url=Concat(Value(FRONT_MEDIA_URL), F('logo'), output_field=CharField())
+        ).filter(similarity__gt=0.3).order_by('-similarity')[:5].values('id', 'name', 'type', 'picture_url')
 
-        category_qs = Category.objects.annotate(similarity=TrigramSimilarity('name', query)).filter(similarity__gt=0.3).annotate(
+        category_qs = Category.objects.annotate(
+            similarity=TrigramSimilarity('name', query),
             type=Value('category', output_field=CharField())
-        ).values('id', 'name', 'type').order_by('-similarity').distinct()[:5]
+        ).filter(similarity__gt=0.3).order_by('-similarity').values('id', 'name', 'type')[:5]
 
-        final_result = []
-        final_result.extend(results)
-        final_result.extend(list(brand_qs))
-        final_result.extend(list(category_qs))
+        final_result = results + list(brand_qs) + list(category_qs)
 
         return Response({'result': final_result}, status=status.HTTP_200_OK)
 
