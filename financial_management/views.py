@@ -76,7 +76,6 @@ class StartZarinpalPaymentApiView(APIView):
 class ZarinpalCallbackApiView(APIView):
 
     def get(self, request):
-        return Response({'message': 'سیستم در حال بروز رسانی است دقایقی دیگر تلاش کنید'}, status=status.HTTP_400_BAD_REQUEST)
         authority = request.query_params.get('Authority')
         callback_status = request.query_params.get('Status')
         payment = get_object_or_404(Payment, reference_id=authority)
