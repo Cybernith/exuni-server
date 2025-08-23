@@ -40,7 +40,7 @@ class CurrentUserCartApiView(APIView):
 
     def get(self, request):
         customer = get_current_user()
-        query = Cart.objects.filter(customer=customer).select_related('product', 'customer')
+        query = Cart.objects.filter(customer=customer).select_related('product', 'customer', 'product__variation_of')
         serializers = ApiCartRetrieveSerializer(query, many=True, context={'request': request})
         return Response(serializers.data, status=status.HTTP_200_OK)
 
@@ -530,7 +530,9 @@ class CustomerOrdersDetailView(APIView):
 
     def get_object(self, pk, customer):
         try:
-            return ShopOrder.objects.get(id=pk, customer=customer)
+            return ShopOrder.objects.select_related(
+                'customer', 'shipment_address').prefetch_related('items', 'history', 'bank_payment').get(
+                id=pk, customer=customer)
         except ShopOrder.DoesNotExist:
             raise Http404
 
