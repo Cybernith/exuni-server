@@ -1,6 +1,8 @@
 from django.core.exceptions import ObjectDoesNotExist
+from django.db import transaction
 from django.db.models import Sum
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
 
 from helpers.functions import get_current_user
 from main.models import Store
@@ -184,7 +186,6 @@ class InventoryTransferSerializer(serializers.ModelSerializer):
         fields = ["id", "product_id", "from_store_id", "to_store_id", "quantity"]
 
     def validate(self, attrs):
-        product_id = attrs["product_id"]
         from_store_id = attrs["from_store_id"]
         to_store_id = attrs["to_store_id"]
         quantity = attrs["quantity"]
@@ -194,42 +195,43 @@ class InventoryTransferSerializer(serializers.ModelSerializer):
         if quantity <= 0:
             raise serializers.ValidationError("تعداد باید بیشتر از صفر باشد.")
 
-        try:
-            from_inventory = ProductStoreInventory.objects.get(product_id=product_id, store_id=from_store_id)
-        except ProductStoreInventory.DoesNotExist:
-            raise serializers.ValidationError("محصول در انبار مبدا یافت نشد.")
+        return attrs
 
-        try:
-            to_inventory, _ = ProductStoreInventory.objects.get_or_create(
+    def create(self, validated_data):
+        product_id = validated_data["product_id"]
+        from_store_id = validated_data["from_store_id"]
+        to_store_id = validated_data["to_store_id"]
+        quantity = validated_data["quantity"]
+        user = self.context["request"].user if self.context.get("request") else None
+
+        with transaction.atomic():
+            try:
+                from_inventory = ProductStoreInventory.objects.select_for_update().get(
+                    product_id=product_id, store_id=from_store_id
+                )
+            except ProductStoreInventory.DoesNotExist:
+                raise serializers.ValidationError("محصول در انبار مبدا یافت نشد.")
+
+            to_inventory, _ = ProductStoreInventory.objects.select_for_update().get_or_create(
                 product_id=product_id,
                 store_id=to_store_id,
                 defaults={"inventory": 0}
             )
-        except ProductStoreInventory.DoesNotExist:
-            raise serializers.ValidationError("محصول در انبار مقصد یافت نشد.")
 
-        if from_inventory.inventory < quantity:
-            raise serializers.ValidationError(f"موجودی کافی در {from_inventory.store.name} وجود ندارد.")
+            if from_inventory.inventory < quantity:
+                raise serializers.ValidationError(
+                    f"موجودی کافی در {from_inventory.store.name} وجود ندارد."
+                )
 
-        attrs["from_inventory"] = from_inventory
-        attrs["to_inventory"] = to_inventory
+            from_inventory.reduce_inventory_in_store(quantity, user=user)
+            to_inventory.increase_inventory_in_store(quantity, user=user)
 
-        return attrs
+            transfer = InventoryTransfer.objects.create(
+                from_store=from_inventory,
+                to_store=to_inventory,
+                quantity=quantity
+            )
 
-    def create(self, validated_data):
-        from_inventory = validated_data.pop("from_inventory")
-        to_inventory = validated_data.pop("to_inventory")
-        quantity = validated_data["quantity"]
-        user = self.context["request"].user if self.context.get("request") else None
-
-        from_inventory.reduce_inventory_in_store(quantity, user=user)
-        to_inventory.increase_inventory_in_store(quantity, user=user)
-
-        transfer = InventoryTransfer.objects.create(
-            from_store=from_inventory,
-            to_store=to_inventory,
-            quantity=quantity
-        )
         return transfer
 
 
@@ -348,23 +350,27 @@ class InventoryTransferUpdateSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "is_done"]
 
     def update(self, instance, validated_data):
-        instance.is_done = True
-        aisle = validated_data.pop('aisle', None)
-        shelf_number = validated_data.pop('shelf_number', None)
+        with transaction.atomic():
+            instance.is_done = True
+            aisle = validated_data.pop('aisle', None)
+            shelf_number = validated_data.pop('shelf_number', None)
 
-        product = instance.to_store.product
-        store = instance.to_store
+            product = instance.to_store.product
+            store = instance.to_store
 
-        if aisle is not None:
-            product.aisle = aisle
-            store.aisle = aisle
-        if shelf_number is not None:
-            product.shelf_number = shelf_number
-            store.shelf_number = shelf_number
+            if aisle is not None:
+                product.aisle = aisle
+                store.aisle = aisle
+            if shelf_number is not None:
+                product.shelf_number = shelf_number
+                store.shelf_number = shelf_number
 
-        product.save()
-        store.save()
-        instance.save()
+            try:
+                product.save()
+                store.save()
+                instance.save()
+            except Exception as ex:
+                raise ValidationError('خطا در ' + str(ex))
         return instance
 
 

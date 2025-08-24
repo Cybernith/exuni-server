@@ -37,7 +37,7 @@ urlpatterns = [
         name='storeNoInfoProductList'),
 
     url(r'^setDoneTransfer/(?P<pk>[0-9]+)$', InventoryTransferUpdateAPIView.as_view(),
-        name='packingInventoryHandle'),
+        name='setDoneTransfer'),
     url(r'^storeTransferList$', StoreTransferListView.as_view(),
         name='storeTransferList'),
 

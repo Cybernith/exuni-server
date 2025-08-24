@@ -28,42 +28,39 @@ class ProductStoreInventory(models.Model):
     def reduce_inventory_in_store(self, val, user=None):
         if not val > 0:
             raise ValidationError('reduce value most be positive number')
+        if self.inventory < val:
+            raise ValidationError(f"موجودی محصول {self.product.name} کافی نیست.")
+        previous_quantity = self.inventory
+        self.inventory -= val
+        self.last_updated = datetime.datetime.now()
+        self.save()
 
-        with transaction.atomic():
-            if self.inventory < val:
-                raise ValidationError(f"موجودی محصول {self.product.name} کافی نیست.")
-            previous_quantity = self.inventory
-            self.inventory -= val
-            self.last_updated = datetime.datetime.now()
-            self.save()
-
-            ProductStoreInventoryHistory.objects.create(
-                inventory=self,
-                action=ProductStoreInventoryHistory.DECREASE,
-                quantity=val,
-                previous_quantity=previous_quantity,
-                new_quantity=self.inventory,
-                changed_by=user
-            )
+        ProductStoreInventoryHistory.objects.create(
+            inventory=self,
+            action=ProductStoreInventoryHistory.DECREASE,
+            quantity=val,
+            previous_quantity=previous_quantity,
+            new_quantity=self.inventory,
+            changed_by=user
+        )
 
     def increase_inventory_in_store(self, val, user=None):
         if not val >= 0:
             raise ValidationError('increase value most be positive number')
         else:
-            with transaction.atomic():
-                previous_quantity = self.inventory
-                self.inventory += val
-                self.last_updated = datetime.datetime.now()
-                self.save()
+            previous_quantity = self.inventory
+            self.inventory += val
+            self.last_updated = datetime.datetime.now()
+            self.save()
 
-                ProductStoreInventoryHistory.objects.create(
-                    inventory=self,
-                    action=ProductStoreInventoryHistory.INCREASE,
-                    quantity=val,
-                    previous_quantity=previous_quantity,
-                    new_quantity=self.inventory,
-                    changed_by=user
-                )
+            ProductStoreInventoryHistory.objects.create(
+                inventory=self,
+                action=ProductStoreInventoryHistory.INCREASE,
+                quantity=val,
+                previous_quantity=previous_quantity,
+                new_quantity=self.inventory,
+                changed_by=user
+            )
 
     def handle_inventory_in_store(self, val, user=None):
         val = int(val)
