@@ -2,6 +2,7 @@ from django.conf.urls import url
 from django.urls import path
 
 from main.lists.views import BusinessListView, StoreListView, CurrencyListView, SupplierListView
+from main.store_keeping.views import StoreKeepingStoreListView, StoreKeepingStoreApiView, StoreKeepingStoreDetailView
 from main.views import BusinessApiView, BusinessDetailView, StoreApiView, StoreDetailView, CurrencyApiView, \
     CurrencyDetailView, SupplierApiView, SupplierDetailView, CurrencyListCreate, CurrencyCRUD, StorekeeperApiView, \
     SupplierAdminsApiView, BusinessOwnersApiView, BusinessLogoUpdateView, BusinessOwnerNationalCardPictureUpdateView, \
@@ -34,5 +35,10 @@ urlpatterns = [
     url(r'^supplier/(?P<pk>[0-9]+)$', SupplierDetailView.as_view(), name='supplierDetailView'),
     url(r'^supplier/all$', SupplierListView.as_view(), name='supplierListView'),
     url(r'^supplierAdmin/all$', SupplierAdminsApiView.as_view(), name='supplierAdminsApiView'),
+
+    # store keeping
+    url(r'^storeKeepingStore$', StoreKeepingStoreListView.as_view(), name='storeKeepingStoreApi'),
+    url(r'^storeKeepingStore/(?P<pk>[0-9]+)$', StoreKeepingStoreApiView.as_view(), name='storeKeepingStoreDetail'),
+    url(r'^storeKeepingStore/all$', StoreKeepingStoreDetailView.as_view(), name='storeKeepingStoreList'),
 
 ]
