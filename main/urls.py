@@ -37,8 +37,8 @@ urlpatterns = [
     url(r'^supplierAdmin/all$', SupplierAdminsApiView.as_view(), name='supplierAdminsApiView'),
 
     # store keeping
-    url(r'^storeKeepingStore$', StoreKeepingStoreListView.as_view(), name='storeKeepingStoreApi'),
-    url(r'^storeKeepingStore/(?P<pk>[0-9]+)$', StoreKeepingStoreApiView.as_view(), name='storeKeepingStoreDetail'),
-    url(r'^storeKeepingStore/all$', StoreKeepingStoreDetailView.as_view(), name='storeKeepingStoreList'),
+    url(r'^storeKeepingStore$', StoreKeepingStoreApiView.as_view(), name='storeKeepingStoreApi'),
+    url(r'^storeKeepingStore/(?P<pk>[0-9]+)$', StoreKeepingStoreDetailView.as_view(), name='storeKeepingStoreDetail'),
+    url(r'^storeKeepingStore/all$', StoreKeepingStoreListView.as_view(), name='storeKeepingStoreList'),
 
 ]
