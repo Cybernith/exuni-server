@@ -347,6 +347,7 @@ class ApiProductsListSerializers(serializers.ModelSerializer):
 
 
 class ApiProductsListSimpleSerializers(serializers.ModelSerializer):
+    #test
     image = serializers.SerializerMethodField()
     offer_percentage = serializers.SerializerMethodField()
     variations = serializers.SerializerMethodField()
