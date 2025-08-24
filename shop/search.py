@@ -77,7 +77,7 @@ class GlobalAutoCompleteSearchAPIView(APIView):
             type=Value('product', output_field=CharField()),
             picture_url=Concat(Value(FRONT_MEDIA_URL), F('picture'), output_field=CharField())
         ).filter(search_vector=search_query).order_by('-relevance', '-similarity', '-rank')
-
+        primary_qs = primary_qs.distinct('id')
         results = list(primary_qs.values('id', 'name', 'type', 'picture_url', 'relevance')[:15])
         existing_ids = {r['id'] for r in results}
 
@@ -100,7 +100,7 @@ class GlobalAutoCompleteSearchAPIView(APIView):
                 type=Value('product', output_field=CharField()),
                 picture_url=Concat(Value(FRONT_MEDIA_URL), F('picture'), output_field=CharField())
             ).exclude(id__in=existing_ids).filter(similarity__gt=0.2).order_by('-similarity')[:15 - len(results)]
-
+            fallback_qs = fallback_qs.distinct('id')
             results.extend(list(fallback_qs.values('id', 'name', 'type', 'picture_url', 'similarity')))
 
         brand_qs = Brand.objects.annotate(

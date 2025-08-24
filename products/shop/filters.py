@@ -199,7 +199,7 @@ def search_value_filter(queryset, name, value):
     combined_list = list(has_stock) + list(no_stock)
     ids_in_order = [obj.pk for obj in combined_list]
 
-    combined_qs = Product.objects.filter(
+    combined_qs = product_queryset.filter(
         pk__in=ids_in_order
     ).annotate(
         custom_order=Case(
