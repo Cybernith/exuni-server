@@ -219,7 +219,7 @@ class ApiCartItemProductSerializers(serializers.ModelSerializer):
 
 class ApiProductListVariationSerializers(serializers.ModelSerializer):
     image = serializers.SerializerMethodField()
-    calculate_current_inventory = serializers.ReadOnlyField()
+    calculate_current_inventory = serializers.IntegerField(source='inventory_count', read_only=True)
     #test
     class Meta:
         model = Product
@@ -354,7 +354,7 @@ class ApiProductsListSimpleSerializers(serializers.ModelSerializer):
     price_title = serializers.SerializerMethodField()
     regular_price_title = serializers.SerializerMethodField()
     active_discounts = serializers.SerializerMethodField()
-    calculate_current_inventory = serializers.SerializerMethodField()
+    calculate_current_inventory = serializers.IntegerField(source='inventory_count', read_only=True)
 
     class Meta:
         model = Product
@@ -384,8 +384,6 @@ class ApiProductsListSimpleSerializers(serializers.ModelSerializer):
         variations = getattr(obj, 'filtered_variations', [])
         return ApiProductListVariationSerializers(variations, many=True, context=self.context).data
 
-    def get_calculate_current_inventory(self, obj):
-        return int(getattr(obj, 'inventory_count', 0) or 0)
 
     def get_active_discounts(self, obj):
         #now = timezone.now()

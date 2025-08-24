@@ -145,8 +145,6 @@ def search_value_filter(queryset, name, value):
     if not tokens:
         return queryset
 
-    queryset = queryset.exclude(product_type=Product.VARIATION).filter(status=Product.PUBLISHED)
-
     contains_filters = Q()
     for tok in tokens:
         contains_filters &= (
@@ -183,19 +181,18 @@ def search_value_filter(queryset, name, value):
             F('trigram_variations_code') * 2,
             F('trigram_brand'),
             output_field=FloatField()
-        )
-    ).annotate(
-        stock=Case(
-            When(product_type=Product.SIMPLE, then=Coalesce(F('store_inventory__inventory'), 0)),
-            When(product_type=Product.VARIABLE, then=Coalesce(Sum('variations__store_inventory__inventory'), 0)),
-            default=Value(0),
+        ),
+        stock=Coalesce(
+            F('inventory_count'),
+            (F('store_inventory__inventory') - F('store_inventory__reserved_inventory')),
+            Value(0),
             output_field=FloatField()
-        )
-    ).annotate(
-        relevance=F('rank') + Coalesce(F('similarity'), Value(0.0, output_field=FloatField()))
+        ),
+        relevance=F('rank') + Coalesce(F('similarity'), Value(0.0), output_field=FloatField())
     ).order_by(
         '-relevance', '-similarity', '-rank'
     )
+
     has_stock = product_queryset.exclude(stock__lt=1)
     no_stock = product_queryset.exclude(stock__gte=1)
 
@@ -211,7 +208,7 @@ def search_value_filter(queryset, name, value):
         )
     ).order_by('custom_order')
 
-    return combined_qs.select_related('brand').prefetch_related('variations')
+    return combined_qs
 
 
 def id_in_filter(queryset, name, value):
@@ -297,21 +294,13 @@ class ShopProductSimpleFilter(filters.FilterSet):
 
 
     def filter_inventory(self, queryset, name, value):
-        queryset = queryset.annotate(
-            simple_inventory=Coalesce(Sum('store_inventory__inventory'), 0),
-            variations_inventory=Coalesce(Sum('variations__store_inventory__inventory'), 0)
-        )
+        if not value:
+            return queryset
 
         if name == 'min_inventory':
-            return queryset.filter(
-                Q(product_type__in=[Product.SIMPLE, Product.VARIATION], simple_inventory__gte=value) |
-                Q(product_type=Product.VARIABLE, variations_inventory__gte=value)
-            ).distinct()
+            return queryset.filter(inventory_count__gte=value)
         elif name == 'max_inventory':
-            return queryset.filter(
-                Q(product_type__in=[Product.SIMPLE, Product.VARIATION], simple_inventory__lte=value) |
-                Q(product_type=Product.VARIABLE, variations_inventory__lte=value)
-            ).distinct()
+            return queryset.filter(inventory_count__lte=value)
 
         return queryset
 

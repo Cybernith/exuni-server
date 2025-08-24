@@ -1,6 +1,8 @@
 from PIL import Image
 from django.core.cache import cache
-from django.db.models import Q, Count, F, Prefetch
+from django.db.models import Q, Count, F, Prefetch, Subquery, Value, IntegerField, Case, When, OuterRef, Sum, \
+    ExpressionWrapper
+from django.db.models.functions import Coalesce
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, status, viewsets
 from rest_framework.exceptions import ValidationError
@@ -24,7 +26,8 @@ from products.trottles import UserProductDetailRateThrottle, AnonProductDetailRa
     RootCategoryThrottle
 from products.utils import ImageFeatureExtractor
 from shop.api_serializers import ApiProductsListSerializers, ApiProductDetailSerializers, ApiBrandListSerializer, \
-    ApiProductsWithCommentsListSerializers, ApiUserCommentProductsSimpleListSerializers
+    ApiProductsWithCommentsListSerializers, ApiUserCommentProductsSimpleListSerializers, \
+    ApiProductsListSimpleSerializers
 from shop.models import Comment, ShopOrder
 from shop.serializers import CommentRepliesSerializer
 from django_filters.rest_framework import DjangoFilterBackend
@@ -48,16 +51,50 @@ class ShopProductListView(generics.ListAPIView):
 
 
 class ShopProductSimpleListView(generics.ListAPIView):
-    serializer_class = ApiProductsListSerializers
+    serializer_class = ApiProductsListSimpleSerializers
     throttle_classes = [UserProductListRateThrottle, AnonProductListRateThrottle]
     filterset_class = ShopProductSimpleFilter
     pagination_class = LimitOffsetPagination
 
     def get_queryset(self):
+        variations_qs = Product.objects.annotate(
+            inventory_count=Coalesce(
+                Sum(F('store_inventory__inventory') - F('store_inventory__reserved_inventory')),
+                0,
+                output_field=IntegerField()
+            )
+        ).filter(price__gt=0).order_by('-inventory_count')
 
-        queryset = Product.objects.shop_products().select_related(
-            'brand').prefetch_related('variations')
-        return queryset
+        qs = Product.objects.filter(
+            status=Product.PUBLISHED,
+            product_type__in=[Product.SIMPLE, Product.VARIABLE]
+        ).annotate(
+            own_inventory=Coalesce(
+                Sum(F('store_inventory__inventory') - F('store_inventory__reserved_inventory')),
+                0
+            ),
+            variations_inventory=Coalesce(
+                Sum(F('variations__store_inventory__inventory') - F('variations__store_inventory__reserved_inventory')),
+                0
+            )
+        ).annotate(
+            inventory_count=Case(
+                When(product_type=Product.VARIABLE, then=F('variations_inventory')),
+                default=F('own_inventory'),
+                output_field=IntegerField()
+            )
+        ).select_related("brand").prefetch_related(
+                Prefetch(
+                    'variations',
+                    queryset=variations_qs,
+                    to_attr='filtered_variations'
+                )).order_by(
+            Case(When(inventory_count=0, then=1), default=0, output_field=IntegerField()),
+            "-inventory_count",
+            "pk"
+        )
+
+        return qs
 
 
 class ShopProductWithCommentsListView(generics.ListAPIView):
