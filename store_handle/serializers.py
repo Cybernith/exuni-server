@@ -4,7 +4,7 @@ from django.db.models import Sum
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
-from helpers.functions import get_current_user
+from helpers.functions import get_current_user, add_separator
 from main.models import Store
 from products.exuni_admin.serializers import AdminVariationSerializer
 from products.models import Product
@@ -366,6 +366,10 @@ class InventoryTransferUpdateSerializer(serializers.ModelSerializer):
                 store.shelf_number = shelf_number
 
             try:
+                if product.price < 1000:
+                    raise ValidationError(
+                        'قیمت کالا {} میباشد  ابتدا قیمت را درست کنید'.format(add_separator(product.price))
+                    )
                 product.save()
                 store.save()
                 instance.save()
