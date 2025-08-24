@@ -1,4 +1,5 @@
-from django.db.models import Q, Count, Avg, FloatField, Sum, When, IntegerField, OuterRef, Subquery, Case, Max, QuerySet
+from django.db.models import Q, Count, Avg, FloatField, Sum, When, IntegerField, OuterRef, Subquery, Case, Max, \
+    QuerySet, Prefetch
 from django.db.models.functions import Coalesce, Cast, Greatest, Length
 
 from helpers.filters import BASE_FIELD_FILTERS
@@ -8,11 +9,11 @@ from django.contrib.postgres.search import SearchQuery, SearchVector, SearchRank
 from django.db.models.functions import RowNumber
 from django.db.models.expressions import Window
 
-
 from django.contrib.postgres.search import TrigramSimilarity
 from django.db.models import Value, CharField, F
 
 from products.models import Product, Brand, Category
+
 
 class ShopProductFilter(filters.FilterSet):
     min_price = django_filters.NumberFilter(field_name='current_price__price', lookup_expr='gte')
@@ -131,7 +132,7 @@ def product_comments_global_search(queryset, name, value):
 
 
 def top_selling_filter(queryset, name, value):
-    return queryset.filter(id__in=[6640, 3443, 6772, 6739, 3237, 2166, 6459,  2386, 1934,3831, 1584,  2482, 1550])
+    return queryset.filter(id__in=[6640, 3443, 6772, 6739, 3237, 2166, 6459, 2386, 1934, 3831, 1584, 2482, 1550])
 
 
 def search_value_filter(queryset, name, value):
@@ -148,10 +149,10 @@ def search_value_filter(queryset, name, value):
     contains_filters = Q()
     for tok in tokens:
         contains_filters &= (
-            Q(name__icontains=tok) |
-            Q(sixteen_digit_code__icontains=tok) |
-            Q(variations__sixteen_digit_code__icontains=tok) |
-            Q(brand__name__icontains=tok)
+                Q(name__icontains=tok) |
+                Q(sixteen_digit_code__icontains=tok) |
+                Q(variations__sixteen_digit_code__icontains=tok) |
+                Q(brand__name__icontains=tok)
         )
     queryset = queryset.filter(contains_filters).distinct()
 
@@ -164,10 +165,10 @@ def search_value_filter(queryset, name, value):
 
     product_queryset = queryset.annotate(
         search_vector=(
-            SearchVector('name', weight='A') +
-            SearchVector('sixteen_digit_code', weight='B') +
-            SearchVector('variations__sixteen_digit_code', weight='B') +
-            SearchVector('brand__name', weight='B')
+                SearchVector('name', weight='A') +
+                SearchVector('sixteen_digit_code', weight='B') +
+                SearchVector('variations__sixteen_digit_code', weight='B') +
+                SearchVector('brand__name', weight='B')
         ),
         rank=SearchRank(F('search_vector'), search_query),
         trigram_name=TrigramSimilarity('name', query_value),
@@ -198,18 +199,44 @@ def search_value_filter(queryset, name, value):
 
     combined_list = list(has_stock) + list(no_stock)
     ids_in_order = [obj.pk for obj in combined_list]
+    variations_qs = Product.objects.annotate(
+        inventory_count=Coalesce(
+            Sum(F('store_inventory__inventory') - F('store_inventory__reserved_inventory')),
+            0,
+            output_field=IntegerField()
+        )
+    ).filter(price__gt=0).order_by('-inventory_count')
 
-    combined_qs = product_queryset.filter(
+    combined_qs = Product.objects.filter(
         pk__in=ids_in_order
     ).annotate(
         custom_order=Case(
             *[When(pk=pk, then=Value(i)) for i, pk in enumerate(ids_in_order)],
             output_field=IntegerField()
+        ),
+        own_inventory=Coalesce(
+            Sum(F('store_inventory__inventory') - F('store_inventory__reserved_inventory')),
+            0
+        ),
+        variations_inventory=Coalesce(
+            Sum(F('variations__store_inventory__inventory') - F('variations__store_inventory__reserved_inventory')),
+            0
+        )
+    ).annotate(
+        inventory_count=Case(
+            When(product_type=Product.VARIABLE, then=F('variations_inventory')),
+            default=F('own_inventory'),
+            output_field=IntegerField()
+        )
+    ).select_related("brand").prefetch_related(
+        Prefetch(
+            'variations',
+            queryset=variations_qs,
+            to_attr='filtered_variations'
         )
     ).order_by('custom_order')
 
     return combined_qs
-
 
 def id_in_filter(queryset, name, value):
     if not value:
@@ -242,7 +269,7 @@ def name_search_products(queryset, name, value):
 
     product_queryset = queryset.annotate(
         search_vector=(
-                SearchVector('name', weight='A')
+            SearchVector('name', weight='A')
         ),
         rank=SearchRank(F('search_vector'), search_query),
         trigram_name=TrigramSimilarity('name', query_value),
@@ -292,7 +319,6 @@ class ShopProductSimpleFilter(filters.FilterSet):
             'supplier': ('exact',),
         }
 
-
     def filter_inventory(self, queryset, name, value):
         if not value:
             return queryset
@@ -318,7 +344,6 @@ class ShopProductWithCommentsFilter(filters.FilterSet):
     top_viewed = filters.BooleanFilter(method=top_viewed_filter)
     top_rated = filters.BooleanFilter(method=top_rated_filter)
 
-
     class Meta:
         model = Product
         fields = {
@@ -329,7 +354,6 @@ class ShopProductWithCommentsFilter(filters.FilterSet):
 
 
 class BrandShopListFilter(filters.FilterSet):
-
     class Meta:
         model = Brand
         fields = {
