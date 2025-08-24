@@ -386,11 +386,7 @@ class ApiProductsListSimpleSerializers(serializers.ModelSerializer):
         return ApiProductListVariationSerializers(variations, many=True, context=self.context).data
 
     def get_calculate_current_inventory(self, obj):
-        if obj.product_type in [obj.SIMPLE, obj.VARIATION]:
-            return obj.total_inventory_simple - obj.total_reserved_simple
-        elif obj.product_type == obj.VARIABLE:
-            return (obj.total_inventory_variable or 0) - (obj.total_reserved_variable or 0)
-        return 0
+        return int(getattr(obj, 'inventory_count', 0) or 0)
 
     def get_active_discounts(self, obj):
         #now = timezone.now()
