@@ -112,6 +112,8 @@ class GlobalAutoCompleteSearchAPIView(APIView):
             type=Value('category', output_field=CharField())
         ).filter(similarity__gt=0.3).order_by('-similarity').values('id', 'name', 'type')[:5]
 
+        unique_results_dict = {item['id']: item for item in results}
+        results = list(unique_results_dict.values())
         final_result = results + list(brand_qs) + list(category_qs)
 
         return Response({'result': final_result}, status=status.HTTP_200_OK)
