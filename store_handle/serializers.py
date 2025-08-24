@@ -366,6 +366,8 @@ class InventoryTransferUpdateSerializer(serializers.ModelSerializer):
                 store.shelf_number = shelf_number
 
             try:
+                if not product.price:
+                    product.price = 0
                 if product.price < 1000:
                     raise ValidationError(
                         'قیمت کالا {} میباشد  ابتدا قیمت را درست کنید'.format(add_separator(product.price))
