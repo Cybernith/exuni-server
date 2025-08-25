@@ -30,6 +30,12 @@ class UploadedFile(models.Model):
         return f"{self.get_file_type_display()} - {self.original_name}"
 
 
+class ExtractedImage(models.Model):
+    uploaded_file = models.ForeignKey(UploadedFile, related_name="images", on_delete=models.CASCADE)
+    image = models.ImageField(upload_to="excel_images/")
+    position = models.CharField(max_length=255, blank=True)
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
 class ExtractedPostReport(models.Model):
     name = models.CharField(max_length=255)
     date = models.DateField(auto_now=True)
@@ -76,3 +82,64 @@ class ExtractedPostReportItem(models.Model):
 
     def __str__(self):
         return f" {self.post_tracking_code}"
+
+
+class ExtractedEntrancePackage(models.Model):
+    name = models.CharField(max_length=255)
+    date = models.DateField(auto_now=True)
+    uploaded_file = models.OneToOneField(
+        UploadedFile,
+        on_delete=models.SET_NULL,
+        related_name='entrance_packages',
+        limit_choices_to={'file_type': UploadedFile.ENTRANCE_PACKAGE},
+        null=True
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.name} - {self.date}"
+
+
+class ExtractedEntrancePackageItem(models.Model):
+    PRICE = 'p'
+    GROUP_ID = 'g'
+    NAME = 'n'
+    BOX_STACKING = 'b'
+    QUANTITY_PER_BOX = 'qpb'
+    TOTAL_QUANTITY = 'tq'
+    BOX_QUANTITY = 'bq'
+    TOTAL_AMOUNT = 'ta'
+    IMAGE = 'img'
+    UNKNOWN = 'u'
+
+    TYPES = (
+        (PRICE, 'قیمت اولیه'),
+        (GROUP_ID, 'کد محصول'),
+        (NAME, 'نام اولیه'),
+        (BOX_STACKING, 'چیدمان جعبه'),
+        (QUANTITY_PER_BOX, 'تعداد در هر جعبه'),
+        (TOTAL_QUANTITY, 'تعداد کل'),
+        (BOX_QUANTITY, 'تعداد جعبه'),
+        (TOTAL_AMOUNT, 'مبلغ کل'),
+        (IMAGE, 'تصویر محصول'),
+        (UNKNOWN, 'نامشخص'),
+    )
+
+    type = models.CharField(choices=TYPES, max_length=5, default=UNKNOWN)
+    packing = models.ForeignKey(
+        ExtractedEntrancePackage,
+        on_delete=models.CASCADE,
+        related_name='items'
+    )
+    image = models.FileField(null=True, blank=True)
+    price = models.FloatField(null=True, blank=True)
+    group_id = models.CharField(max_length=255, null=True, blank=True)
+    name = models.CharField(max_length=255, null=True, blank=True)
+    box_stacking = models.CharField(max_length=255, null=True, blank=True)
+    quantity_per_box = models.PositiveIntegerField(null=True, blank=True)
+    box_quantity = models.PositiveIntegerField(null=True, blank=True)
+    total_quantity = models.PositiveIntegerField(null=True, blank=True)
+    total_amount = models.FloatField(null=True, blank=True)
+

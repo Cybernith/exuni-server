@@ -1,3 +1,6 @@
+import zipfile
+from django.core.files.base import ContentFile
+from django.db import transaction
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, status
 from rest_framework.parsers import MultiPartParser, FormParser
@@ -7,9 +10,11 @@ from rest_framework.views import APIView
 
 from rest_framework.response import Response
 
-
-from file_handler.models import UploadedFile, ExtractedPostReport, ExtractedPostReportItem
-from file_handler.serializers import UploadedFileSerializer, ExtractPostReportCreateSerializer
+from file_handler.helpers import extract_images_from_excel_and_map_rows_debug
+from file_handler.models import UploadedFile, ExtractedPostReport, ExtractedPostReportItem, ExtractedImage, \
+    ExtractedEntrancePackageItem, ExtractedEntrancePackage
+from file_handler.serializers import UploadedFileSerializer, ExtractPostReportCreateSerializer, \
+    ExtractedImageSerializer, ExtractEntrancePackageCreateSerializer
 from file_handler.services import excel_formatter, extract_number_from_string, sanitize_floats
 import pandas as pd
 
@@ -57,6 +62,48 @@ class UploadedFileWithResponseByTypeView(generics.ListCreateAPIView):
         data["rows"] = rows_data
 
         return Response(data, status=status.HTTP_201_CREATED)
+
+
+class UploadedFilePackingWithResponseByTypeView(generics.ListCreateAPIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+    serializer_class = UploadedFileSerializer
+    parser_classes = (MultiPartParser, FormParser)
+
+    def create(self, request, *args, **kwargs):
+        file_obj = request.FILES.get("file")
+        format_type = request.data.get("format_type", "indexed_dict")
+        start_col = int(request.data.get("start_col", 1))
+
+        if not file_obj:
+            return Response({"error": "No file uploaded"}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            rows_data = excel_formatter(file_obj, start_col=start_col, format_type=format_type)
+            rows_data = sanitize_floats(rows_data)
+        except ValueError as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        data = request.data
+        data['file_type'] = UploadedFile.ENTRANCE_PACKAGE
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
+
+        instance = serializer.save()
+
+        if instance.file.name.endswith(".xlsx"):
+            created_images, row_map, errors = extract_images_from_excel_and_map_rows_debug(instance.file.path, instance)
+            response_data = serializer.data
+            for i, row in enumerate(rows_data):
+                img_instance = row_map.get(i + 1)
+                if img_instance:
+                    row[0] = img_instance.image.url
+                else:
+                    row[0] = None
+            response_data["rows"] = rows_data
+
+            return Response(response_data, status=status.HTTP_201_CREATED)
+        return Response({'message': 'not xlsx file'}, status=status.HTTP_400_BAD_REQUEST)
+
 
 
 class ExtractPostReportCreateView(APIView):
@@ -141,4 +188,77 @@ class ExtractPostReportCreateView(APIView):
             'rows_created': rows_created,
             'order_shipped': order_shipped,
             'notifications': notif,
+        }, status=status.HTTP_201_CREATED)
+
+
+class ExtractEntrancePackageCreateView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def post(self, request):
+        serializer = ExtractEntrancePackageCreateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        file_id = serializer.validated_data['file_id']
+        selected_headers = serializer.validated_data['selected_headers']
+
+        uploaded_file = get_object_or_404(UploadedFile, id=file_id)
+
+        try:
+            df = pd.read_excel(uploaded_file.file.path)
+        except Exception as e:
+            return Response(
+                {'detail': f'خطا در باز کردن فایل Excel: {str(e)}'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        package = ExtractedEntrancePackage.objects.create(
+            name=f"بسته ورودی {uploaded_file.original_name}",
+            uploaded_file=uploaded_file
+        )
+
+        rows_created = 0
+        notif = []
+
+        for idx, row in df.iterrows():
+            try:
+                item_data = {}
+
+                for type_key, col_idx in selected_headers.items():
+                    if col_idx is None or (col_idx - 1) >= len(row):
+                        continue
+
+                    value = row.iloc[col_idx - 1]
+                    if pd.isna(value):
+                        continue
+                    if type_key == ExtractedEntrancePackageItem.PRICE:
+                        item_data["price"] = float(value)
+                    elif type_key == ExtractedEntrancePackageItem.GROUP_ID:
+                        item_data["group_id"] = str(value)
+                    elif type_key == ExtractedEntrancePackageItem.NAME:
+                        item_data["name"] = str(value)
+                    elif type_key == ExtractedEntrancePackageItem.BOX_STACKING:
+                        item_data["box_stacking"] = str(value)
+                    elif type_key == ExtractedEntrancePackageItem.QUANTITY_PER_BOX:
+                        item_data["quantity_per_box"] = int(value)
+                    elif type_key == 'bq':
+                        item_data["box_quantity"] = int(value)
+                    elif type_key == ExtractedEntrancePackageItem.TOTAL_QUANTITY:
+                        item_data["total_quantity"] = int(value)
+                    elif type_key == ExtractedEntrancePackageItem.TOTAL_AMOUNT:
+                        item_data["total_amount"] = float(value)
+
+                if item_data:
+                    ExtractedEntrancePackageItem.objects.create(
+                        packing=package,
+                        image=ExtractedImage.objects.get(uploaded_file=uploaded_file, position=idx + 1).image,
+                        **item_data
+                    )
+                    rows_created += 1
+
+            except Exception as e:
+                notif.append(f"سطر {idx}: {str(e)}")
+
+        return Response({
+            "package_id": package.id,
+            "rows_created": rows_created,
+            "notifications": notif,
         }, status=status.HTTP_201_CREATED)

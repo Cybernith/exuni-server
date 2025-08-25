@@ -1,14 +1,21 @@
 from rest_framework import serializers
 
-from file_handler.models import UploadedFile, ExtractedPostReportItem, ExtractedPostReport
-from shop.api_serializers import ApiCustomerShopOrderItemSerializer, ApiCustomerShopOrderSimpleSerializer
+from file_handler.models import UploadedFile, ExtractedPostReportItem, ExtractedPostReport, ExtractedImage
+
+
+class ExtractedImageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ExtractedImage
+        fields = ["id", "image", "position", "uploaded_at"]
 
 
 class UploadedFileSerializer(serializers.ModelSerializer):
+    images = ExtractedImageSerializer(many=True, read_only=True)
+
     class Meta:
         model = UploadedFile
-        fields = ["id", "file", "file_type", "original_name", "size", "uploaded_at"]
-        read_only_fields = ["id", "original_name", "size", "uploaded_at"]
+        fields = ["id", "file", "file_type", "original_name", "size", "uploaded_at", "images"]
+        read_only_fields = ["id", "original_name", "size", "uploaded_at", "images"]
 
 
 class ExtractPostReportCreateSerializer(serializers.Serializer):
@@ -54,3 +61,10 @@ class ExtractedPostReportSerializer(serializers.ModelSerializer):
 
     def get_items_count(self, obj):
         return obj.items.filter(status=ExtractedPostReportItem.ORDER_NOT_AVAILABLE).count()
+
+
+class ExtractEntrancePackageCreateSerializer(serializers.Serializer):
+    file_id = serializers.IntegerField()
+    selected_headers = serializers.DictField()
+
+
