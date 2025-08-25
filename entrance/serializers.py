@@ -1,4 +1,5 @@
-from entrance.models import EntrancePackageItem, EntrancePackage, StoreReceiptItem, StoreReceipt
+from entrance.models import EntrancePackageItem, EntrancePackage, StoreReceiptItem, StoreReceipt, \
+    ChinaEntrancePackageItem, ChinaEntrancePackage
 from helpers.serializers import SModelSerializer
 from rest_framework import serializers
 
@@ -143,3 +144,16 @@ class EntrancePackageFileUploadSerializer(SModelSerializer):
             model = EntrancePackage
             fields = ('id', 'entrance_file')
 
+
+class ChinaEntrancePackageItemSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ChinaEntrancePackageItem
+        fields = "__all__"
+
+
+class ChinaEntrancePackageSerializer(serializers.ModelSerializer):
+    items = ChinaEntrancePackageItemSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = ChinaEntrancePackage
+        fields = "__all__"

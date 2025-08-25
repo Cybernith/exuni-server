@@ -5,7 +5,7 @@ from entrance.views import EntrancePackageCreateView, EntrancePackageDetailView,
     StoreReceiptDetailView, EntrancePackageFileUpdateView, EntrancePackageApiView, EntrancePackageInsertExcelApiView, \
     GetTableOfPackageApiView, PackageDetailView, PackageItemDetailView, UpdatePackageItemsView, RemoveExcelView, \
     StorePackagesView, StoreReceiptApiView, StoreReceiptDetail, CreateReceiptsItemsView, SupplierRemainItems, \
-    SupplierStoreReceiptsView
+    SupplierStoreReceiptsView, CreateChinaEntrancePackageFromExtracted
 
 app_name = 'entrance'
 urlpatterns = [
@@ -30,4 +30,8 @@ urlpatterns = [
     url(r'^receipt/(?P<pk>[0-9]+)$', StoreReceiptDetail.as_view(), name='storeReceiptDetail'),
     url(r'^supplierPackageRemain/(?P<pk>[0-9]+)$', SupplierRemainItems.as_view(), name='supplierRemainItems'),
     url(r'^supplierStoreReceipts/(?P<pk>[0-9]+)$', SupplierStoreReceiptsView.as_view(), name='supplierStoreReceiptsView'),
+
+    url(r'^createChinaEntrancePackageFromExtracted/(?P<pk>[0-9]+)$', CreateChinaEntrancePackageFromExtracted.as_view(),
+        name='CreateChinaEntrancePackageFromExtracted'),
+
 ]

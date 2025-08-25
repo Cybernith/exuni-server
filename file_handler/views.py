@@ -3,6 +3,7 @@ from django.core.files.base import ContentFile
 from django.db import transaction
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, status
+from rest_framework.generics import RetrieveAPIView
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.views import APIView
@@ -14,7 +15,7 @@ from file_handler.helpers import extract_images_from_excel_and_map_rows_debug
 from file_handler.models import UploadedFile, ExtractedPostReport, ExtractedPostReportItem, ExtractedImage, \
     ExtractedEntrancePackageItem, ExtractedEntrancePackage
 from file_handler.serializers import UploadedFileSerializer, ExtractPostReportCreateSerializer, \
-    ExtractedImageSerializer, ExtractEntrancePackageCreateSerializer
+    ExtractedImageSerializer, ExtractEntrancePackageCreateSerializer, ExtractedEntrancePackageDetailSerializer
 from file_handler.services import excel_formatter, extract_number_from_string, sanitize_floats
 import pandas as pd
 
@@ -262,3 +263,8 @@ class ExtractEntrancePackageCreateView(APIView):
             "rows_created": rows_created,
             "notifications": notif,
         }, status=status.HTTP_201_CREATED)
+
+
+class ExtractedEntrancePackageDetailView(RetrieveAPIView):
+    queryset = ExtractedEntrancePackage.objects.all()
+    serializer_class = ExtractedEntrancePackageDetailSerializer

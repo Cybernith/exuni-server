@@ -1,5 +1,7 @@
 from django.db import models
 
+from helpers.models import EXPLANATION
+
 
 def custom_upload_to(instance, filename):
     return 'images/{filename}'.format(filename=filename)
@@ -35,6 +37,7 @@ class ExtractedImage(models.Model):
     image = models.ImageField(upload_to="excel_images/")
     position = models.CharField(max_length=255, blank=True)
     uploaded_at = models.DateTimeField(auto_now_add=True)
+
 
 class ExtractedPostReport(models.Model):
     name = models.CharField(max_length=255)
@@ -85,7 +88,7 @@ class ExtractedPostReportItem(models.Model):
 
 
 class ExtractedEntrancePackage(models.Model):
-    name = models.CharField(max_length=255)
+    name = models.CharField(max_length=255, blank=True, null=True)
     date = models.DateField(auto_now=True)
     uploaded_file = models.OneToOneField(
         UploadedFile,
@@ -97,6 +100,7 @@ class ExtractedEntrancePackage(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    is_done = models.BooleanField(default=False)
 
     def __str__(self):
         return f"{self.name} - {self.date}"
@@ -114,7 +118,7 @@ class ExtractedEntrancePackageItem(models.Model):
     IMAGE = 'img'
     UNKNOWN = 'u'
 
-    TYPES = (
+    INSERT_TYPES = (
         (PRICE, 'قیمت اولیه'),
         (GROUP_ID, 'کد محصول'),
         (NAME, 'نام اولیه'),
@@ -122,12 +126,11 @@ class ExtractedEntrancePackageItem(models.Model):
         (QUANTITY_PER_BOX, 'تعداد در هر جعبه'),
         (TOTAL_QUANTITY, 'تعداد کل'),
         (BOX_QUANTITY, 'تعداد جعبه'),
-        (TOTAL_AMOUNT, 'مبلغ کل'),
+        (TOTAL_AMOUNT, 'مبلغ به تومان'),
         (IMAGE, 'تصویر محصول'),
         (UNKNOWN, 'نامشخص'),
     )
 
-    type = models.CharField(choices=TYPES, max_length=5, default=UNKNOWN)
     packing = models.ForeignKey(
         ExtractedEntrancePackage,
         on_delete=models.CASCADE,

@@ -302,3 +302,46 @@ class StoreReceiptItem(BaseModel):
             return self.number_of_box * self.number_of_products_per_box
         else:
             return self.number_of_products_per_box
+
+
+class ChinaEntrancePackage(models.Model):
+    xlsx_file = models.OneToOneField(
+        'file_handler.ExtractedEntrancePackage',
+        related_name='china_entrance_package',
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True
+    )
+    title = models.CharField(max_length=150, blank=True, null=True)
+    factor_number = models.CharField(max_length=150, blank=True, null=True)
+    registration_date = models.DateField(blank=True, null=True)
+    supplier = models.ForeignKey('main.Supplier', related_name="extracted_entrance_packages",
+                                 on_delete=models.SET_NULL, blank=True, null=True)
+    currency = models.ForeignKey('main.Currency', related_name="extracted_entrance_packages",
+                                 on_delete=models.PROTECT, blank=True, null=True)
+
+    is_received = models.BooleanField(default=False)
+    is_verified = models.BooleanField(default=False)
+    explanation = EXPLANATION()
+    cargo_cost_per_shipping = models.IntegerField(default=0)
+
+    def __str__(self):
+        return f"{self.title} - {self.registration_date}"
+
+
+class ChinaEntrancePackageItem(models.Model):
+    packing = models.ForeignKey(
+        ChinaEntrancePackage,
+        on_delete=models.CASCADE,
+        related_name='items'
+    )
+    image = models.FileField(null=True, blank=True)
+    price = models.FloatField(null=True, blank=True)
+    group_id = models.CharField(max_length=255, null=True, blank=True)
+    name = models.CharField(max_length=255, null=True, blank=True)
+    box_stacking = models.CharField(max_length=255, null=True, blank=True)
+    quantity_per_box = models.PositiveIntegerField(null=True, blank=True)
+    box_quantity = models.PositiveIntegerField(null=True, blank=True)
+    total_quantity = models.PositiveIntegerField(null=True, blank=True)
+    total_amount = models.FloatField(null=True, blank=True)
+
