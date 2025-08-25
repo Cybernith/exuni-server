@@ -3,6 +3,8 @@ from dateutil.relativedelta import relativedelta
 from django.core.exceptions import ValidationError
 
 from django.db import models
+from django.db.models import Sum, F, Value
+from django.db.models.functions import Coalesce
 
 from helpers.models import BaseModel, DECIMAL, EXPLANATION
 from main.models import Supplier, Currency, Store
@@ -328,6 +330,16 @@ class ChinaEntrancePackage(models.Model):
     def __str__(self):
         return f"{self.title} - {self.registration_date}"
 
+    @property
+    def total_base_amount_sum(self):
+        return self.items.aggregate(
+            total=Sum(
+                Coalesce(F('quantity_per_box'), Value(1), output_field=models.FloatField()) *
+                Coalesce(F('box_quantity'), Value(1), output_field=models.FloatField()) *
+                Coalesce(F('price'), Value(0), output_field=models.FloatField())
+            )
+        )['total'] or 0
+
 
 class ChinaEntrancePackageItem(models.Model):
     packing = models.ForeignKey(
@@ -340,8 +352,14 @@ class ChinaEntrancePackageItem(models.Model):
     group_id = models.CharField(max_length=255, null=True, blank=True)
     name = models.CharField(max_length=255, null=True, blank=True)
     box_stacking = models.CharField(max_length=255, null=True, blank=True)
-    quantity_per_box = models.PositiveIntegerField(null=True, blank=True)
-    box_quantity = models.PositiveIntegerField(null=True, blank=True)
+    quantity_per_box = models.PositiveIntegerField(default=1)
+    box_quantity = models.PositiveIntegerField(default=1)
     total_quantity = models.PositiveIntegerField(null=True, blank=True)
     total_amount = models.FloatField(null=True, blank=True)
+
+    @property
+    def base_amount_sum(self):
+        quantity_per_box = self.quantity_per_box if self.quantity_per_box else 1
+        box_quantity = self.box_quantity if self.box_quantity else 1
+        return quantity_per_box * box_quantity * (self.price if self.price else 0)
 

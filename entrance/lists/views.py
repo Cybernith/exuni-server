@@ -1,10 +1,11 @@
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import IsAuthenticated
 
-from entrance.lists.filters import EntrancePackageFilter, StoreReceiptFilter
-from entrance.models import EntrancePackage, StoreReceipt
-from entrance.serializers import EntrancePackageListSerializer, StoreReceiptListSerializer
-from helpers.auth import BasicCRUDPermission
+from entrance.lists.filters import EntrancePackageFilter, StoreReceiptFilter, ChinaEntrancePackageFilter
+from entrance.models import EntrancePackage, StoreReceipt, ChinaEntrancePackage
+from entrance.serializers import EntrancePackageListSerializer, StoreReceiptListSerializer, \
+    ChinaEntrancePackageSerializer
+from helpers.auth import BasicCRUDPermission, BasicObjectPermission
 from rest_framework import generics
 
 
@@ -38,3 +39,16 @@ class StoreReceiptListView(generics.ListAPIView):
 
     def get_queryset(self):
         return StoreReceipt.objects.hasAccess('get').all()
+
+
+class ChinaEntrancePackagePackageListView(generics.ListAPIView):
+    permission_classes = (IsAuthenticated, BasicObjectPermission)
+
+    serializer_class = ChinaEntrancePackageSerializer
+    filterset_class = ChinaEntrancePackageFilter
+    ordering_fields = '__all__'
+    pagination_class = LimitOffsetPagination
+
+    def get_queryset(self):
+        return ChinaEntrancePackage.objects.all().prefetch_related('items')
+

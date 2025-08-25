@@ -1,11 +1,11 @@
 from django.conf.urls import url
 
-from entrance.lists.views import EntrancePackageListView, StoreReceiptListView
+from entrance.lists.views import EntrancePackageListView, StoreReceiptListView, ChinaEntrancePackagePackageListView
 from entrance.views import EntrancePackageCreateView, EntrancePackageDetailView, StoreReceiptCreateView, \
     StoreReceiptDetailView, EntrancePackageFileUpdateView, EntrancePackageApiView, EntrancePackageInsertExcelApiView, \
     GetTableOfPackageApiView, PackageDetailView, PackageItemDetailView, UpdatePackageItemsView, RemoveExcelView, \
     StorePackagesView, StoreReceiptApiView, StoreReceiptDetail, CreateReceiptsItemsView, SupplierRemainItems, \
-    SupplierStoreReceiptsView, CreateChinaEntrancePackageFromExtracted
+    SupplierStoreReceiptsView, CreateChinaEntrancePackageFromExtracted, ChinaEntrancePackageDetailView
 
 app_name = 'entrance'
 urlpatterns = [
@@ -33,5 +33,10 @@ urlpatterns = [
 
     url(r'^createChinaEntrancePackageFromExtracted/(?P<pk>[0-9]+)$', CreateChinaEntrancePackageFromExtracted.as_view(),
         name='CreateChinaEntrancePackageFromExtracted'),
+    url(r'^chinaEntrancePackage/all$', ChinaEntrancePackagePackageListView.as_view(),
+        name='chinaEntrancePackageList'),
+
+    url(r'^chinaEntrancePackage/(?P<pk>[0-9]+)$', ChinaEntrancePackageDetailView.as_view(),
+        name='chinaEntrancePackagePackageDetail'),
 
 ]

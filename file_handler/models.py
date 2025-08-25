@@ -137,12 +137,12 @@ class ExtractedEntrancePackageItem(models.Model):
         related_name='items'
     )
     image = models.FileField(null=True, blank=True)
-    price = models.FloatField(null=True, blank=True)
+    price = models.FloatField(default=0)
     group_id = models.CharField(max_length=255, null=True, blank=True)
     name = models.CharField(max_length=255, null=True, blank=True)
     box_stacking = models.CharField(max_length=255, null=True, blank=True)
-    quantity_per_box = models.PositiveIntegerField(null=True, blank=True)
-    box_quantity = models.PositiveIntegerField(null=True, blank=True)
+    quantity_per_box = models.PositiveIntegerField(default=1)
+    box_quantity = models.PositiveIntegerField(default=1)
     total_quantity = models.PositiveIntegerField(null=True, blank=True)
     total_amount = models.FloatField(null=True, blank=True)
 

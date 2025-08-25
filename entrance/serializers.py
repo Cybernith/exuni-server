@@ -1,3 +1,6 @@
+from django.db.models import Sum, F, Value, FloatField
+from django.db.models.functions import Coalesce
+
 from entrance.models import EntrancePackageItem, EntrancePackage, StoreReceiptItem, StoreReceipt, \
     ChinaEntrancePackageItem, ChinaEntrancePackage
 from helpers.serializers import SModelSerializer
@@ -146,14 +149,46 @@ class EntrancePackageFileUploadSerializer(SModelSerializer):
 
 
 class ChinaEntrancePackageItemSerializer(serializers.ModelSerializer):
+    pic = serializers.SerializerMethodField()
+    total = serializers.SerializerMethodField()
+    base_amount_sum = serializers.ReadOnlyField()
+
     class Meta:
         model = ChinaEntrancePackageItem
         fields = "__all__"
 
+    def get_pic(self, obj):
+        return obj.image.url if obj.image else None
+
+    def get_total(self, obj):
+        if obj.total_quantity:
+            return obj.total_quantity
+        qpb = obj.quantity_per_box if obj.quantity_per_box else 1
+        bq = obj.box_quantity if obj.box_quantity else 1
+        return qpb * bq
+
 
 class ChinaEntrancePackageSerializer(serializers.ModelSerializer):
     items = ChinaEntrancePackageItemSerializer(many=True, read_only=True)
+    items_count = serializers.SerializerMethodField()
+    supplier_name = serializers.CharField(source='supplier.name', read_only=True)
+    xlsx_file_name = serializers.CharField(source='xlsx_file.name', read_only=True)
+    currency_name = serializers.CharField(source='currency.name', read_only=True)
+    base_amount = serializers.SerializerMethodField()
 
     class Meta:
         model = ChinaEntrancePackage
         fields = "__all__"
+
+    def get_items_count(self, obj):
+        return obj.items.count()
+
+    def get_base_amount(self, obj):
+        return obj.items.aggregate(
+            total=Sum(
+                Coalesce(F('quantity_per_box'), Value(1), output_field=FloatField()) *
+                Coalesce(F('box_quantity'), Value(1), output_field=FloatField()) *
+                Coalesce(F('price'), Value(0), output_field=FloatField())
+            )
+        )['total'] or 0
+

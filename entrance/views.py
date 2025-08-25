@@ -1,4 +1,5 @@
 from django.core.exceptions import ValidationError
+from django.db import transaction
 from django.db.models import QuerySet, Q
 from django.http import Http404
 from django.utils.decorators import method_decorator
@@ -6,7 +7,7 @@ from django.views.decorators.csrf import csrf_exempt
 
 from rest_framework import generics
 from rest_framework import status
-from rest_framework.generics import get_object_or_404
+from rest_framework.generics import get_object_or_404, RetrieveAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -588,45 +589,52 @@ class SupplierStoreReceiptsView(APIView):
 class CreateChinaEntrancePackageFromExtracted(APIView):
 
     def post(self, request, pk):
-        try:
-            extracted_package = ExtractedEntrancePackage.objects.get(id=pk)
-        except ExtractedEntrancePackage.DoesNotExist:
-            return Response({"detail": "Extracted package not found."}, status=status.HTTP_404_NOT_FOUND)
+        with transaction.atomic():
+            try:
+                extracted_package = ExtractedEntrancePackage.objects.select_for_update().get(id=pk)
+            except ExtractedEntrancePackage.DoesNotExist:
+                return Response({"detail": "Extracted package not found."}, status=status.HTTP_404_NOT_FOUND)
 
-        data = request.data
+            data = request.data
 
-        china_package = ChinaEntrancePackage.objects.create(
-            xlsx_file=extracted_package,
-            title=data.get("title", extracted_package.name),
-            factor_number=data.get("factor_number"),
-            registration_date=data.get("registration_date", extracted_package.date),
-            supplier_id=data.get("supplier"),
-            currency_id=data.get("currency"),
-            is_verified=True,
-            explanation=data.get("explanation"),
-            cargo_cost_per_shipping=data.get("cargo_cost_per_shipping", 0),
-        )
-
-        extracted_items = extracted_package.items.all()
-        china_items = []
-        for item in extracted_items:
-            china_items.append(
-                ChinaEntrancePackageItem(
-                    packing=china_package,
-                    image=item.image,
-                    price=item.price,
-                    group_id=item.group_id,
-                    name=item.name,
-                    box_stacking=item.box_stacking,
-                    quantity_per_box=item.quantity_per_box,
-                    box_quantity=item.box_quantity,
-                    total_quantity=item.total_quantity,
-                    total_amount=item.total_amount,
-                )
+            china_package = ChinaEntrancePackage.objects.create(
+                xlsx_file=extracted_package,
+                title=data.get("title", extracted_package.name),
+                factor_number=data.get("factor_number", ''),
+                registration_date=data.get("registration_date", extracted_package.date),
+                supplier_id=data.get("supplier", None),
+                currency_id=data.get("currency", None),
+                is_verified=True,
+                explanation=data.get("explanation"),
+                cargo_cost_per_shipping=data.get("cargo_cost_per_shipping", 0),
             )
-        ChinaEntrancePackageItem.objects.bulk_create(china_items)
 
-        serializer = ChinaEntrancePackageSerializer(china_package)
-        extracted_package.update(is_done=True)
+            extracted_package.save()
 
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+            extracted_items = extracted_package.items.all()
+            china_items = []
+            for item in extracted_items:
+                china_items.append(
+                    ChinaEntrancePackageItem(
+                        packing=china_package,
+                        image=item.image,
+                        price=item.price,
+                        group_id=item.group_id,
+                        name=item.name,
+                        box_stacking=item.box_stacking,
+                        quantity_per_box=item.quantity_per_box,
+                        box_quantity=item.box_quantity,
+                        total_quantity=item.total_quantity,
+                        total_amount=item.total_amount,
+                    )
+                )
+            ChinaEntrancePackageItem.objects.bulk_create(china_items)
+            extracted_package.is_done = True
+            extracted_package.save()
+            serializer = ChinaEntrancePackageSerializer(china_package)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+class ChinaEntrancePackageDetailView(RetrieveAPIView):
+    queryset = ChinaEntrancePackage.objects.all()
+    serializer_class = ChinaEntrancePackageSerializer
