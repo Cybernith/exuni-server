@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import Permission
 
-from users.models import User, Role, PhoneVerification, Notification, UserNotification, City
+from users.models import User, Role, PhoneVerification, Notification, UserNotification, City, AdminAccess
 
 UserAdmin.fieldsets += (('Secrets', {'fields': ('secret_key',)}),)
 UserAdmin.fieldsets += (('نوع کاربر', {'fields': ('user_type',)}),)
@@ -30,6 +30,7 @@ class PermissionAdmin(admin.ModelAdmin):
 
 admin.site.register(User, UserAdmin)
 admin.site.register(Role)
+admin.site.register(AdminAccess)
 admin.site.register(Permission, PermissionAdmin)
 admin.site.register(PhoneVerification)
 admin.site.register(Notification)

@@ -1,9 +1,9 @@
 from django.contrib.auth import authenticate
 from django.db.models import QuerySet
-from rest_framework import status, generics
+from rest_framework import status, generics, viewsets, filters
 from rest_framework.exceptions import ValidationError
 from rest_framework.generics import get_object_or_404
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -12,13 +12,13 @@ from helpers.models import manage_files
 from helpers.views.recaptcha import RecaptchaView
 from users.models import User, PhoneVerification
 from users.serializers import UserListSerializer, UserCreateSerializer, UserUpdateSerializer, \
-    UserRetrieveSerializer, CurrentUserNotificationSerializer
+    UserRetrieveSerializer, CurrentUserNotificationSerializer, PackingAdminSerializer
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.authtoken.models import Token
 
 from users.throttles import UserCreateRateThrottle, UserUpdateRateThrottle
 from django.contrib.auth import login
-import re
+from django_filters.rest_framework import DjangoFilterBackend
 
 
 class CurrentUserApiView(APIView):
@@ -231,3 +231,17 @@ class CheckVerificationAndLogin(APIView, RecaptchaView):
             return Response(status=status.HTTP_404_NOT_FOUND)
 
 
+class PackingAdminViewSet(viewsets.ModelViewSet):
+    queryset = User.objects.all().prefetch_related("accesses")
+    serializer_class = PackingAdminSerializer
+    permission_classes = [IsAuthenticated, IsAdminUser]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
+    filterset_fields = ["first_name", "last_name", "username"]
+    search_fields = ["first_name", "last_name", "username"]
+
+    def get_queryset(self):
+        queryset = User.objects.filter(user_type=User.PACKING_ADMIN).prefetch_related("accesses")
+        return queryset
+
+    def perform_destroy(self, instance):
+        instance.delete()

@@ -43,6 +43,28 @@ def custom_upload_to(instance, filename):
     return 'images/{filename}'.format(filename=filename)
 
 
+class AdminAccess(models.Model):
+    PACKING = "pack"
+    PRODUCT_ENTRY = "prent"
+    SKU_EDIT = "skued"
+    PRODUCT_INFO_EDIT = "prined"
+    TRANSFER = "trans"
+
+    CODE_TYPES = (
+        (PACKING, "بسته بندی"),
+        (PRODUCT_ENTRY, "ورود کالا"),
+        (SKU_EDIT, "ویرایش SKU"),
+        (PRODUCT_INFO_EDIT, "ویرایش اطلاعات کالا"),
+        (TRANSFER, "انتقال"),
+    )
+
+    code = models.CharField(max_length=6, choices=CODE_TYPES, default=PACKING, unique=True)
+
+    def __str__(self):
+        return self.get_code_display()
+
+
+
 class User(AbstractUser, BaseModel):
 
     BANSAR = 'BANSAR'
@@ -177,7 +199,7 @@ class User(AbstractUser, BaseModel):
     roles = models.ManyToManyField(Role, related_name='users', blank=True)
     secret_key = models.CharField(max_length=32, null=True, blank=True, default=None)
     _wallet = models.ForeignKey(Wallet, on_delete=models.CASCADE, null=True, blank=True)
-
+    accesses = models.ManyToManyField(AdminAccess, related_name='users', blank=True)
 
     def get_wallet(self):
         if self._wallet:

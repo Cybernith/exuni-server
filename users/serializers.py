@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
-from django.db.models import Q
+from django.utils.crypto import get_random_string
 from rest_framework import serializers
 from rest_framework.authtoken.models import Token
 
@@ -10,8 +10,7 @@ from financial_management.serializers import CurrentUserWalletSerializer
 from helpers.functions import get_current_user
 from helpers.serializers import SModelSerializer
 from main.models import Business
-from subscription.serializers import WalletSerializer
-from users.models import Role, User, City, UserNotification, Notification
+from users.models import Role, User, City, UserNotification, Notification, AdminAccess
 
 
 class RoleSerializer(SModelSerializer):
@@ -203,3 +202,47 @@ class CurrentUserNotificationSerializer(SModelSerializer):
         fields = ('id', 'unread_notifications_count', 'pop_up_notifications')
 
 
+class PackingAdminSerializer(serializers.ModelSerializer):
+    accesses = serializers.PrimaryKeyRelatedField(
+        queryset=AdminAccess.objects.all(),
+        many=True
+    )
+    token = serializers.SerializerMethodField(read_only=True)
+    password = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = User
+        fields = ["id", "first_name", "last_name", "username", "accesses", "token", "password"]
+        read_only_fields = ["token", "password"]
+
+    def get_token(self, obj):
+        token, _ = Token.objects.get_or_create(user=obj)
+        return token.key
+
+    def get_password(self, obj):
+        return getattr(obj, "plain_password", None)
+
+    def create(self, validated_data):
+        accesses = validated_data.pop("accesses", [])
+
+        plain_password = get_random_string(length=12)
+
+        user = User.objects.create(
+            first_name=validated_data.get("first_name", ""),
+            last_name=validated_data.get("last_name", ""),
+            username=validated_data.get("username"),
+            user_type=User.PACKING_ADMIN
+        )
+        user.set_password(plain_password)
+        user.save()
+
+        if accesses:
+            user.accesses.set(accesses)
+
+        self.context["plain_password"] = plain_password
+        return user
+
+    def to_representation(self, instance):
+        ret = super().to_representation(instance)
+        ret["password"] = getattr(instance, "_plain_password", None)
+        return ret

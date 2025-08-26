@@ -11,9 +11,11 @@ from users.views.usersView import CurrentUserApiView, UserCreateView, \
     UserUpdateView, UserListView, ChangePasswordView, SendVerificationCodeView, CheckVerificationCodeView, \
     ChangePasswordByVerificationCodeView, ChangePhoneView, \
     CheckVerificationForRegister, \
-    CurrentUserNotificationApiView
+    CurrentUserNotificationApiView, PackingAdminViewSet
 
 router = DefaultRouter()
+router.register(r"storeAdmin", PackingAdminViewSet, basename="packingAdmin")
+
 urlpatterns = router.urls + [
     url(r'^create$', UserCreateView.as_view(), name='create-user'),
     url(r'^update/(?P<pk>[0-9]+)$', UserUpdateView.as_view(), name='update-user'),
