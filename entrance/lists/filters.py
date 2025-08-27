@@ -1,7 +1,8 @@
 import django_filters
 from django_filters import rest_framework as filters, CharFilter, BooleanFilter
 
-from entrance.models import EntrancePackage, StoreReceipt, ChinaEntrancePackage
+from entrance.models import EntrancePackage, StoreReceipt, ChinaEntrancePackage, ChinaEntrancePackageDeliveryItem, \
+    ChinaEntrancePackageDelivery
 from helpers.filters import BASE_FIELD_FILTERS, filter_created_by_name
 
 
@@ -62,4 +63,24 @@ class ChinaEntrancePackageFilter(filters.FilterSet):
             'factor_number': BASE_FIELD_FILTERS,
             'cargo_cost_per_shipping': BASE_FIELD_FILTERS,
             'explanation': BASE_FIELD_FILTERS,
+        }
+
+
+class InsertedPackageDeliveryItemFilter(filters.FilterSet):
+
+    class Meta:
+        model = ChinaEntrancePackageDeliveryItem
+        fields = {
+            'id': ['exact', 'in'],
+            'sku': BASE_FIELD_FILTERS,
+            'to_store': ['exact', 'in'],
+        }
+
+
+class ChinaEntrancePackageDeliveryFilter(filters.FilterSet):
+
+    class Meta:
+        model = ChinaEntrancePackageDelivery
+        fields = {
+            'id': ['exact', 'in'],
         }

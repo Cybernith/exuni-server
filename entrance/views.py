@@ -13,17 +13,20 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from entrance.models import EntrancePackage, EntrancePackageItem, StoreReceipt, EntrancePackageFileColumn, \
-    StoreReceiptItem, ChinaEntrancePackage, ChinaEntrancePackageItem
+    StoreReceiptItem, ChinaEntrancePackage, ChinaEntrancePackageItem, ChinaEntrancePackageDelivery, \
+    ChinaEntrancePackageDeliveryItem
 from entrance.serializers import EntrancePackageSerializer, EntrancePackageRetrieveSerializer, StoreReceiptSerializer, \
     StoreReceiptItemSerializer, StoreReceiptRetrieveSerializer, EntrancePackageItemSerializer, \
-    EntrancePackageFileUploadSerializer, ChinaEntrancePackageSerializer
+    EntrancePackageFileUploadSerializer, ChinaEntrancePackageSerializer, PendingChinaEntrancePackageSerializer, \
+    ChinaEntrancePackageDeliveryCreateSerializer, ChinaEntrancePackageDeliveryUpdateItemsSerializer, \
+    ChinaEntrancePackageDeliveryItemUpdateSerializer
 from file_handler.models import ExtractedEntrancePackage
 from helpers.auth import BasicCRUDPermission, BasicObjectPermission
 from helpers.models import manage_files
 from helpers.views.MassRelatedCUD import MassRelatedCUD
 from rest_framework.parsers import FileUploadParser, MultiPartParser, FormParser
 
-from main.models import Currency
+from main.models import Currency, Store
 from products.models import Product, ProductInventory
 from server.settings import BASE_DIR
 import pandas as pd
@@ -596,7 +599,7 @@ class CreateChinaEntrancePackageFromExtracted(APIView):
                 return Response({"detail": "Extracted package not found."}, status=status.HTTP_404_NOT_FOUND)
 
             data = request.data
-
+            profit_items = data.get("items", {})
             china_package = ChinaEntrancePackage.objects.create(
                 xlsx_file=extracted_package,
                 title=data.get("title", extracted_package.name),
@@ -614,6 +617,7 @@ class CreateChinaEntrancePackageFromExtracted(APIView):
             extracted_items = extracted_package.items.all()
             china_items = []
             for item in extracted_items:
+                profits = profit_items[str(item.id)]
                 china_items.append(
                     ChinaEntrancePackageItem(
                         packing=china_package,
@@ -626,9 +630,14 @@ class CreateChinaEntrancePackageFromExtracted(APIView):
                         box_quantity=item.box_quantity,
                         total_quantity=item.total_quantity,
                         total_amount=item.total_amount,
+                        profit_type=profits['type'] or ChinaEntrancePackageItem.PERCENT,
+                        profit_margin=profits['amount'] or 0,
                     )
                 )
-            ChinaEntrancePackageItem.objects.bulk_create(china_items)
+            created_items = ChinaEntrancePackageItem.objects.bulk_create(china_items)
+            for created_item in created_items:
+                created_item.set_legend_pricing()
+
             extracted_package.is_done = True
             extracted_package.save()
             serializer = ChinaEntrancePackageSerializer(china_package)
@@ -638,3 +647,37 @@ class CreateChinaEntrancePackageFromExtracted(APIView):
 class ChinaEntrancePackageDetailView(RetrieveAPIView):
     queryset = ChinaEntrancePackage.objects.all()
     serializer_class = ChinaEntrancePackageSerializer
+
+
+class PendingChinaEntrancePackageDetailView(RetrieveAPIView):
+    queryset = ChinaEntrancePackage.objects.all()
+    serializer_class = PendingChinaEntrancePackageSerializer
+
+
+class ChinaEntrancePackageDeliveryCreateView(generics.CreateAPIView):
+    queryset = ChinaEntrancePackageDelivery.objects.all()
+    serializer_class = ChinaEntrancePackageDeliveryCreateSerializer
+
+
+class ChinaEntrancePackageDeliveryItemsUpdateView(APIView):
+    def get(self, request, pk):
+        delivery = get_object_or_404(ChinaEntrancePackageDelivery, pk=pk)
+        serializer = ChinaEntrancePackageDeliveryUpdateItemsSerializer(delivery)
+        return Response(serializer.data)
+
+
+class ChinaEntrancePackageDeliveryItemInsertView(generics.RetrieveUpdateAPIView):
+    queryset = ChinaEntrancePackageDeliveryItem.objects.all()
+    serializer_class = ChinaEntrancePackageDeliveryItemUpdateSerializer
+    lookup_field = 'id'
+
+    def put(self, request, *args, **kwargs):
+        instance = self.get_object()
+        data = request.data
+        to_store = data.pop('to_store', None)
+        serializer = self.get_serializer(instance, data=data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.instance.inserted = True
+        serializer.instance.to_store = Store.objects.filter(id=to_store).first() if Store.objects.filter(id=to_store).exists() else None
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)

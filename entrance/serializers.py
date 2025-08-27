@@ -1,8 +1,10 @@
+import datetime
+
 from django.db.models import Sum, F, Value, FloatField
 from django.db.models.functions import Coalesce
 
 from entrance.models import EntrancePackageItem, EntrancePackage, StoreReceiptItem, StoreReceipt, \
-    ChinaEntrancePackageItem, ChinaEntrancePackage
+    ChinaEntrancePackageItem, ChinaEntrancePackage, ChinaEntrancePackageDeliveryItem, ChinaEntrancePackageDelivery
 from helpers.serializers import SModelSerializer
 from rest_framework import serializers
 
@@ -152,6 +154,10 @@ class ChinaEntrancePackageItemSerializer(serializers.ModelSerializer):
     pic = serializers.SerializerMethodField()
     total = serializers.SerializerMethodField()
     base_amount_sum = serializers.ReadOnlyField()
+    profit_type_name = serializers.CharField(source='get_profit_type_display', read_only=True)
+    profit = serializers.SerializerMethodField()
+    toman = serializers.SerializerMethodField()
+    total_final = serializers.SerializerMethodField()
 
     class Meta:
         model = ChinaEntrancePackageItem
@@ -167,6 +173,38 @@ class ChinaEntrancePackageItemSerializer(serializers.ModelSerializer):
         bq = obj.box_quantity if obj.box_quantity else 1
         return qpb * bq
 
+    def get_total_final(self, obj):
+        if obj.total_quantity:
+            return obj.total_quantity * obj.final_amount
+        qpb = obj.quantity_per_box if obj.quantity_per_box else 1
+        bq = obj.box_quantity if obj.box_quantity else 1
+        return qpb * bq * obj.final_amount
+
+    def get_toman(self, obj):
+        currency_rate = 1
+        if obj.packing.currency:
+            currency_rate = float(obj.packing.currency.exchange_rate_to_toman)
+
+        if not obj.profit_margin:
+            obj.profit_margin = 0
+
+        return obj.price * currency_rate
+
+    def get_profit(self, obj):
+        currency_rate = 1
+        if obj.packing.currency:
+            currency_rate = float(obj.packing.currency.exchange_rate_to_toman)
+
+        if not obj.profit_margin:
+            obj.profit_margin = 0
+
+        base_price_with_rate = obj.price * currency_rate
+        if obj.profit_type == obj.PERCENT:
+            profit_amount = base_price_with_rate / 100 * float(obj.profit_margin)
+        else:
+            profit_amount = float(obj.profit_margin)
+        return profit_amount
+
 
 class ChinaEntrancePackageSerializer(serializers.ModelSerializer):
     items = ChinaEntrancePackageItemSerializer(many=True, read_only=True)
@@ -174,7 +212,9 @@ class ChinaEntrancePackageSerializer(serializers.ModelSerializer):
     supplier_name = serializers.CharField(source='supplier.name', read_only=True)
     xlsx_file_name = serializers.CharField(source='xlsx_file.name', read_only=True)
     currency_name = serializers.CharField(source='currency.name', read_only=True)
+    currency_rate = serializers.CharField(source='currency.exchange_rate_to_toman', read_only=True)
     base_amount = serializers.SerializerMethodField()
+    final_amount = serializers.SerializerMethodField()
 
     class Meta:
         model = ChinaEntrancePackage
@@ -192,3 +232,157 @@ class ChinaEntrancePackageSerializer(serializers.ModelSerializer):
             )
         )['total'] or 0
 
+    def get_final_amount(self, obj):
+        return obj.items.aggregate(
+            total=Sum(
+                Coalesce(F('quantity_per_box'), Value(1), output_field=FloatField()) *
+                Coalesce(F('box_quantity'), Value(1), output_field=FloatField()) *
+                Coalesce(F('final_amount'), Value(0), output_field=FloatField())
+            )
+        )['total'] or 0
+
+
+class PendingChinaEntrancePackageItemSerializer(serializers.ModelSerializer):
+    pic = serializers.SerializerMethodField()
+    delivered_boxes = serializers.ReadOnlyField()
+    pending_boxes = serializers.ReadOnlyField()
+
+    total_items = serializers.ReadOnlyField()
+    delivered_items = serializers.ReadOnlyField()
+    pending_items = serializers.ReadOnlyField()
+
+    class Meta:
+        model = ChinaEntrancePackageItem
+        fields = [
+            "id", "group_id", "name", "price", "pic",
+            "box_quantity", "quantity_per_box",
+            "delivered_boxes", "pending_boxes", "box_stacking",
+            "total_items", "delivered_items", "pending_items",
+        ]
+
+    def get_pic(self, obj):
+        return obj.image.url if obj.image else None
+
+
+class PendingChinaEntrancePackageSerializer(serializers.ModelSerializer):
+    total_boxes = serializers.IntegerField(read_only=True)
+    delivered_boxes = serializers.IntegerField(read_only=True)
+    pending_boxes = serializers.IntegerField(read_only=True)
+
+    total_items = serializers.IntegerField(read_only=True)
+    delivered_items = serializers.IntegerField(read_only=True)
+    pending_items = serializers.IntegerField(read_only=True)
+
+    pending_rows = serializers.SerializerMethodField()
+    items = PendingChinaEntrancePackageItemSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = ChinaEntrancePackage
+        fields = [
+            "id", "title", "factor_number", "registration_date",
+            "is_received", "is_verified", "explanation",
+            "total_boxes", "delivered_boxes", "pending_boxes",
+            "total_items", "delivered_items", "pending_items",
+            "items", 'pending_rows'
+        ]
+
+    def get_pending_rows(self, obj):
+        pending_items_qs = obj.items.all()
+        pending_items_qs = [item for item in pending_items_qs if item.pending_items > 0]
+        return PendingChinaEntrancePackageItemSerializer(pending_items_qs, many=True, context=self.context).data
+
+
+class ChinaEntrancePackageDeliveryItemCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ChinaEntrancePackageDeliveryItem
+        fields = ["package_item", "boxes_delivered", "quantity_per_box"]
+
+
+class ChinaEntrancePackageDeliveryCreateSerializer(serializers.ModelSerializer):
+    items = ChinaEntrancePackageDeliveryItemCreateSerializer(many=True)
+
+    class Meta:
+        model = ChinaEntrancePackageDelivery
+        fields = ["package", "delivery_date", "driver_name", "driver_mobile_number",
+                  "document_number", "total_boxes", "items", 'id']
+        read_only_fields = ('delivery_date', )
+
+    def create(self, validated_data):
+        items_data = validated_data.pop("items")
+        delivery = ChinaEntrancePackageDelivery.objects.create(delivery_date=datetime.date.today(), **validated_data)
+        for item_data in items_data:
+            ChinaEntrancePackageDeliveryItem.objects.create(delivery=delivery, **item_data)
+        return delivery
+
+
+class ChinaEntrancePackageDeliveryItemUpdateSerializer(serializers.ModelSerializer):
+    crashed_quantity = serializers.IntegerField(write_only=True, required=False)
+    postal_weight = serializers.FloatField(write_only=True, required=True)
+    length = serializers.FloatField(write_only=True, required=True)
+    width = serializers.FloatField(write_only=True, required=True)
+    height = serializers.FloatField(write_only=True, required=True)
+    expired_date = serializers.CharField(write_only=True, required=True)
+    sku = serializers.CharField(write_only=True, required=True)
+    aisle = serializers.CharField(write_only=True, required=True)
+    shelf_number = serializers.CharField(write_only=True, required=True)
+    min_inventory = serializers.FloatField(write_only=True, required=True)
+    to_store = serializers.IntegerField(write_only=True, required=True)
+
+    package_item = serializers.PrimaryKeyRelatedField(read_only=True)
+    boxes_delivered = serializers.IntegerField(read_only=True)
+    quantity_per_box = serializers.IntegerField(read_only=True)
+    pic = serializers.SerializerMethodField()
+    group_id = serializers.SerializerMethodField()
+    name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ChinaEntrancePackageDeliveryItem
+        fields = [
+            "id",
+            # write-only
+            "sku",
+            "crashed_quantity",
+            "postal_weight",
+            "length",
+            "width",
+            "height",
+            "expired_date",
+            "aisle",
+            "shelf_number",
+            "min_inventory",
+            "to_store",
+            # read-only
+            "package_item",
+            "boxes_delivered",
+            "quantity_per_box",
+            "pic",
+            "group_id",
+            "name",
+        ]
+
+    def get_pic(self, obj):
+        return obj.package_item.image.url if obj.package_item.image else None
+
+    def get_name(self, obj):
+        return obj.package_item.name or None
+
+    def get_group_id(self, obj):
+        return obj.package_item.group_id or None
+
+
+class ChinaEntrancePackageDeliveryUpdateItemsSerializer(serializers.ModelSerializer):
+    items = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ChinaEntrancePackageDelivery
+        fields = "__all__"
+
+    def get_items(self, obj):
+        data = obj.items.filter(inserted=False)
+        return ChinaEntrancePackageDeliveryItemUpdateSerializer(data, many=True, context=self.context).data
+
+
+class InsertedPackageDeliveryItemSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ChinaEntrancePackageDeliveryItem
+        fields = "__all__"

@@ -340,8 +340,55 @@ class ChinaEntrancePackage(models.Model):
             )
         )['total'] or 0
 
+    @property
+    def total_boxes(self):
+        return self.items.aggregate(total=Sum('box_quantity'))['total'] or 0
+
+    @property
+    def delivered_boxes(self):
+        return ChinaEntrancePackageDeliveryItem.objects.filter(
+            package_item__packing=self
+        ).aggregate(total=Sum('boxes_delivered'))['total'] or 0
+
+    @property
+    def pending_boxes(self):
+        return self.total_boxes - self.delivered_boxes
+
+    @property
+    def total_items(self):
+        return self.items.aggregate(
+            total=Sum(
+                Coalesce(F('quantity_per_box'), Value(1)) *
+                Coalesce(F('box_quantity'), Value(1))
+            )
+        )['total'] or 0
+
+    @property
+    def delivered_items(self):
+        return ChinaEntrancePackageDeliveryItem.objects.filter(
+            package_item__packing=self
+        ).aggregate(
+            total=Sum(
+                Coalesce(F('boxes_delivered'), Value(0)) *
+                Coalesce(F('quantity_per_box'), Value(1))
+            )
+        )['total'] or 0
+
+    @property
+    def pending_items(self):
+        return self.total_items - self.delivered_items
+
 
 class ChinaEntrancePackageItem(models.Model):
+
+    PERCENT = 'percent'
+    AMOUNT = 'amount'
+
+    PROFIT_TYPES = (
+        (PERCENT, ' درصدی'),
+        (AMOUNT, ' مبلغی'),
+    )
+
     packing = models.ForeignKey(
         ChinaEntrancePackage,
         on_delete=models.CASCADE,
@@ -356,6 +403,38 @@ class ChinaEntrancePackageItem(models.Model):
     box_quantity = models.PositiveIntegerField(default=1)
     total_quantity = models.PositiveIntegerField(null=True, blank=True)
     total_amount = models.FloatField(null=True, blank=True)
+    profit_type = models.CharField(choices=PROFIT_TYPES, default=PERCENT, max_length=10)
+    profit_margin = models.IntegerField(null=True, blank=True)
+    final_amount = models.IntegerField(null=True, blank=True)
+
+    @staticmethod
+    def round_up_to_hundred(value) -> int:
+        import math
+        return int(math.ceil(value / 100.0)) * 100
+
+    def set_legend_pricing(self):
+        if not self.price:
+            raise ValidationError('قیمت پایه موجود نیست')
+
+        currency_rate = 1
+        if self.packing.currency:
+            currency_rate = float(self.packing.currency.exchange_rate_to_toman)
+
+        if not self.profit_margin:
+            self.profit_margin = 0
+
+        base_price_with_rate = self.price * currency_rate
+        if self.profit_type == self.PERCENT:
+            profit_amount = base_price_with_rate / 100 * float(self.profit_margin)
+        else:
+            profit_amount = float(self.profit_margin)
+
+        price_with_profit = profit_amount + base_price_with_rate
+
+        self.final_amount = self.round_up_to_hundred(price_with_profit)
+        self.save()
+
+        return price_with_profit
 
     @property
     def base_amount_sum(self):
@@ -363,3 +442,115 @@ class ChinaEntrancePackageItem(models.Model):
         box_quantity = self.box_quantity if self.box_quantity else 1
         return quantity_per_box * box_quantity * (self.price if self.price else 0)
 
+    @property
+    def total_boxes(self):
+        return self.box_quantity or 0
+
+    @property
+    def delivered_boxes(self):
+        return self.delivery_items.aggregate(
+            total=Sum('boxes_delivered')
+        )['total'] or 0
+
+    @property
+    def pending_boxes(self):
+        return self.total_boxes - self.delivered_boxes
+
+
+    @property
+    def total_items(self):
+        return (self.quantity_per_box or 1) * (self.box_quantity or 1)
+
+    @property
+    def delivered_items(self):
+        return self.delivery_items.aggregate(
+            total=Sum(
+                Coalesce(F('boxes_delivered'), Value(0)) *
+                Coalesce(F('quantity_per_box'), Value(1))
+            )
+        )['total'] or 0
+
+    @property
+    def pending_items(self):
+        return self.total_items - self.delivered_items
+
+
+class ChinaEntrancePackageDelivery(models.Model):
+    package = models.ForeignKey(
+        'ChinaEntrancePackage',
+        related_name='deliveries',
+        on_delete=models.CASCADE
+    )
+    delivery_date = models.DateField()
+    driver_name = models.CharField(max_length=150, blank=True, null=True)
+    driver_mobile_number = models.CharField(max_length=20, blank=True, null=True)
+    document_number = models.CharField(
+        max_length=150, blank=True, null=True,
+        help_text="شماره رسید یا مدرک تحویل (اختیاری)"
+    )
+    total_boxes = models.PositiveIntegerField(default=0)
+    is_confirmed = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"تحویل {self.id} - {self.package.title} ({self.delivery_date})"
+
+    @property
+    def total_delivered_quantity(self):
+        return self.items.aggregate(
+            total=Sum(
+                F('boxes_delivered') *
+                Coalesce(F('quantity_per_box'), Value(1), output_field=models.IntegerField())
+            )
+        )['total'] or 0
+
+
+class ChinaEntrancePackageDeliveryItem(models.Model):
+    delivery = models.ForeignKey(
+        'ChinaEntrancePackageDelivery',
+        related_name='items',
+        on_delete=models.CASCADE
+    )
+    package_item = models.ForeignKey(
+        'ChinaEntrancePackageItem',
+        related_name='delivery_items',
+        on_delete=models.CASCADE
+    )
+    boxes_delivered = models.PositiveIntegerField(default=1)
+    quantity_per_box = models.PositiveIntegerField(default=1)
+
+    sku = models.CharField(max_length=50, blank=True, null=True)
+    crashed_quantity = models.PositiveIntegerField(default=0)
+    postal_weight = models.FloatField(blank=True, null=True)
+    length = models.FloatField(blank=True, null=True)
+    width = models.FloatField(blank=True, null=True)
+    height = models.FloatField(blank=True, null=True)
+    expired_date = models.CharField(max_length=255, blank=True, null=True)
+    aisle = models.CharField(max_length=10, null=True, blank=True)
+    shelf_number = models.CharField(max_length=10, null=True, blank=True)
+    min_inventory = models.IntegerField(default=0)
+
+    product = models.ForeignKey('products.Product', related_name='delivers',
+                                null=True, blank=True, on_delete=models.SET_NULL)
+    inserted = models.BooleanField(default=False)
+    verified = models.BooleanField(default=False)
+    to_store = models.ForeignKey('main.Store', related_name='delivery_items', on_delete=models.SET_NULL, null=True)
+
+
+    @property
+    def total_quantity(self):
+        return self.boxes_delivered * self.quantity_per_box
+
+    def __str__(self):
+        return f"{self.package_item.group_id or self.package_item.name} - {self.boxes_delivered} کارتن"
+
+    def save(self, *args, **kwargs):
+        if self.verified and self.id:
+            raise ValidationError('پس از تایید مدیر قابل ویرایش نیست')
+
+        if self.sku:
+            from products.models import Product
+            same_product = Product.objects.filter(sixteen_digit_code=self.sku)
+            if same_product.exists():
+                self.product = same_product.first()
+
+        super().save(*args, **kwargs)

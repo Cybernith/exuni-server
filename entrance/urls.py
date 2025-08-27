@@ -1,11 +1,15 @@
 from django.conf.urls import url
 
-from entrance.lists.views import EntrancePackageListView, StoreReceiptListView, ChinaEntrancePackagePackageListView
+from entrance.lists.views import EntrancePackageListView, StoreReceiptListView, ChinaEntrancePackagePackageListView, \
+    PendingChinaEntrancePackagePackageListView, InsertedPackageDeliveryItemListView, \
+    ChinaEntrancePackageDeliveryListView
 from entrance.views import EntrancePackageCreateView, EntrancePackageDetailView, StoreReceiptCreateView, \
     StoreReceiptDetailView, EntrancePackageFileUpdateView, EntrancePackageApiView, EntrancePackageInsertExcelApiView, \
     GetTableOfPackageApiView, PackageDetailView, PackageItemDetailView, UpdatePackageItemsView, RemoveExcelView, \
     StorePackagesView, StoreReceiptApiView, StoreReceiptDetail, CreateReceiptsItemsView, SupplierRemainItems, \
-    SupplierStoreReceiptsView, CreateChinaEntrancePackageFromExtracted, ChinaEntrancePackageDetailView
+    SupplierStoreReceiptsView, CreateChinaEntrancePackageFromExtracted, ChinaEntrancePackageDetailView, \
+    PendingChinaEntrancePackageDetailView, ChinaEntrancePackageDeliveryCreateView, \
+    ChinaEntrancePackageDeliveryItemsUpdateView, ChinaEntrancePackageDeliveryItemInsertView
 
 app_name = 'entrance'
 urlpatterns = [
@@ -36,7 +40,31 @@ urlpatterns = [
     url(r'^chinaEntrancePackage/all$', ChinaEntrancePackagePackageListView.as_view(),
         name='chinaEntrancePackageList'),
 
+    url(r'^deliveries/create$', ChinaEntrancePackageDeliveryCreateView.as_view(),
+        name='chinaEntrancePackageDeliveryCreate'),
+
+
     url(r'^chinaEntrancePackage/(?P<pk>[0-9]+)$', ChinaEntrancePackageDetailView.as_view(),
         name='chinaEntrancePackagePackageDetail'),
+
+    url(r'^pendingChinaEntrancePackage/all$', PendingChinaEntrancePackagePackageListView.as_view(),
+        name='pendingChinaEntrancePackageList'),
+    url(r'^pendingChinaEntrancePackage/(?P<pk>[0-9]+)$', PendingChinaEntrancePackageDetailView.as_view(),
+        name='pendingChinaEntrancePackage'),
+
+    url(r'^deliveries/create$', ChinaEntrancePackageDeliveryCreateView.as_view(),
+        name='chinaEntrancePackageDeliveryCreate'),
+
+    url(r'^deliveries/insert/(?P<pk>[0-9]+)$', ChinaEntrancePackageDeliveryItemsUpdateView.as_view(),
+        name='deliveriesInsert'),
+
+    url(r'^deliveriesItem/insert/(?P<id>[0-9]+)$', ChinaEntrancePackageDeliveryItemInsertView.as_view(),
+        name='deliveriesItemInsert'),
+
+    url(r'^insertedPackageDeliveryItem/all$', InsertedPackageDeliveryItemListView.as_view(),
+        name='insertedPackageDeliveryItem'),
+
+    url(r'^chinaEntrancePackageDelivery/all$', ChinaEntrancePackageDeliveryListView.as_view(),
+        name='chinaEntrancePackageDelivery'),
 
 ]

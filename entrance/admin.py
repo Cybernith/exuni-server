@@ -1,7 +1,8 @@
 from django.contrib import admin
 
 from entrance.models import EntrancePackage, EntrancePackageItem, StoreReceipt, StoreReceiptItem, \
-    EntrancePackageFileColumn, ChinaEntrancePackage, ChinaEntrancePackageItem
+    EntrancePackageFileColumn, ChinaEntrancePackage, ChinaEntrancePackageItem, ChinaEntrancePackageDelivery, \
+    ChinaEntrancePackageDeliveryItem
 
 admin.site.register(EntrancePackage)
 admin.site.register(EntrancePackageItem)
@@ -10,3 +11,5 @@ admin.site.register(StoreReceipt)
 admin.site.register(StoreReceiptItem)
 admin.site.register(ChinaEntrancePackage)
 admin.site.register(ChinaEntrancePackageItem)
+admin.site.register(ChinaEntrancePackageDelivery)
+admin.site.register(ChinaEntrancePackageDeliveryItem)
