@@ -119,17 +119,7 @@ class ShipmentAddress(BaseModel):
     address = models.CharField(max_length=255)
     house_number = models.CharField(max_length=255, blank=True, null=True)
     house_unit = models.CharField(max_length=255, blank=True, null=True)
-    zip_code = models.CharField(
-        max_length=10,
-        validators=[
-            RegexValidator(
-                regex=r'^\d{10}$',
-                message='کد پستی باید دقیقاً ۱۰ رقم باشد.',
-                code='invalid_zip_code'
-            )
-        ]
-        , blank=True, null=True
-    )
+    zip_code = models.CharField(max_length=55, blank=True, null=True)
     is_default = models.BooleanField(default=False)
 
     class Meta(BaseModel.Meta):
