@@ -1,3 +1,4 @@
+from django.db import transaction
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 from rest_framework import status
@@ -6,8 +7,8 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 import json
 from helpers.auth import BasicObjectPermission
-from products.exuni_admin.serializers import AdminProductSerializer, AdminCreateProductSerializer
-from products.models import Product, ProductPrice
+from products.exuni_admin.serializers import AdminProductSerializer, AdminCreateProductSerializer, ProductOfferSerializer
+from products.models import Product, ProductPrice, Brand, Category
 from products.serializers import ProductPriceUpdateSerializer
 
 
@@ -119,3 +120,46 @@ class ProductPriceUpdateAPIView(APIView):
             }, status=status.HTTP_200_OK)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ApplyOfferAPIView(APIView):
+    def post(self, request):
+        serializer = ProductOfferSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        brand_in = serializer.validated_data['brand_in']
+        cat_in = serializer.validated_data['cat_in']
+        offer_percent = serializer.validated_data['offer_percent']
+
+        if not cat_in and not brand_in:
+            return Response({"error": "brand or category needed"}, status=status.HTTP_404_NOT_FOUND)
+
+        products = Product.objects.all()
+        if brand_in:
+            try:
+                brand = Brand.objects.get(id=brand_in)
+                products = products.filter(brand=brand)
+            except Brand.DoesNotExist:
+                return Response({"error": "Brand not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        if cat_in:
+            try:
+                category = Category.objects.get(id=cat_in)
+                products = products.filter(category=category)
+            except Category.DoesNotExist:
+                return Response({"error": "Category not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        if not products.exists():
+            return Response({"message": "No products found for this brand"}, status=status.HTTP_200_OK)
+
+        with transaction.atomic():
+            for product in products:
+                if product.regular_price is not None:
+                    discounted_price = product.regular_price * (1 - offer_percent / 100)
+
+                    product_price, created = ProductPrice.objects.get_or_create(product=product)
+                    product_price.change_price(
+                        val=int(discounted_price),
+                        note=f"Applied {offer_percent}% offer"
+                    )
+                    product.update(discount_type=Product.PERCENT, discount_margin=offer_percent, price=discounted_price)
+        return Response({"message": f"Offer of {offer_percent}% applied to {products.count()} products."})

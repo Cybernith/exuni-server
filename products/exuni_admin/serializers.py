@@ -510,3 +510,9 @@ class AdminProductStoreInfoSerializer(serializers.ModelSerializer):
 
         instance.save()
         return instance
+
+
+class ProductOfferSerializer(serializers.Serializer):
+    brand_in = serializers.IntegerField(required=False, allow_null=True)
+    cat_in = serializers.IntegerField(required=False, allow_null=True)
+    offer_percent = serializers.FloatField(min_value=0, max_value=100)
