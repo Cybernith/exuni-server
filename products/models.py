@@ -603,10 +603,10 @@ class Product(BaseModel):
         else:
             return self.name
 
-
     def save(self, *args, **kwargs):
-        if self.price < 1000:
-            self.status = self.PROCESSING
+        if self.price and self.status == self.PUBLISHED and self.product_type != self.VARIABLE:
+            if self.price < 1000:
+                self.status = self.PROCESSING
         first_register = not self.id
         super().save(*args, **kwargs)
         if first_register:
