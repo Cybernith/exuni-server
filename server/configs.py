@@ -9,6 +9,7 @@ Databases = {
         'HOST': 'dokku-postgres-exuni-db',
         'PORT': '5432',
         'ATOMIC_REQUESTS': True,
+        'CONN_MAX_AGE': 60,
         'TEST': {
             'MIRROR': 'default',
         },
