@@ -354,7 +354,7 @@ class ShopProductRateSerializer(serializers.ModelSerializer):
         rate_object, created = Rate.objects.update_or_create(
             customer=user,
             product=product,
-            level=level,
+            defaults={"level": level}
         )
         return rate_object
 

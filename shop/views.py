@@ -1,7 +1,7 @@
 import datetime
 from django.core.exceptions import ObjectDoesNotExist
 
-from django.db import transaction
+from django.db import transaction, IntegrityError
 from django.db.models import Q
 from django.http import Http404
 from django.shortcuts import get_object_or_404
@@ -673,24 +673,30 @@ class ToggleWishListBTNView(APIView):
 
     def post(self, request):
         data = request.data
-        product = get_object_or_404(
-            Product,
-            pk=data.get('product_id')
-        )
-        if WishList.objects.filter(
-            customer=request.user,
-            product=product
-        ).exists():
-            WishList.objects.get(Q(customer=request.user) & Q(product=product)).delete()
-            return Response({'message': 'product deleted from wish list'}, status=status.HTTP_201_CREATED)
+        product = get_object_or_404(Product, pk=data.get('product_id'))
 
-        else:
-            WishList.objects.create(
-                customer=request.user,
-                product=product
+        try:
+            with transaction.atomic():
+                wishlist, created = WishList.objects.get_or_create(
+                    customer=request.user,
+                    product=product
+                )
+                if not created:
+                    wishlist.delete()
+                    return Response(
+                        {'message': 'product deleted from wish list'},
+                        status=status.HTTP_201_CREATED
+                    )
+                else:
+                    return Response(
+                        {'message': 'product added to wish list'},
+                        status=status.HTTP_201_CREATED
+                    )
+        except IntegrityError:
+            return Response(
+                {'message': 'Conflict, please try again'},
+                status=status.HTTP_409_CONFLICT
             )
-            return Response({'message': 'product added to wish list'}, status=status.HTTP_201_CREATED)
-
 
 class ToggleComparisonListBTNView(APIView):
     permission_classes = [IsAuthenticated]

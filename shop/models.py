@@ -757,11 +757,6 @@ class Rate(BaseModel):
             ('deleteOwn.rate', 'حذف امتیاز های خود'),
         )
 
-    def save(self, *args, **kwargs):
-        if not self.id and Rate.objects.filter(Q(customer=self.customer) & Q(product=self.product)).exists():
-            raise ValidationError('Customer satisfaction rate already exist for this product')
-        super().save(*args, **kwargs)
-
 
 class LimitedTimeOffer(BaseModel):
     PERCENTAGE_OFFER = 'p'
