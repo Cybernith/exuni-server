@@ -29,12 +29,6 @@ RUN pip install --default-timeout=100 -r requirements.txt
 RUN pip install -r torob_requirements.txt
 
 
-# Expose port for dokku/nginx
-EXPOSE 5000
-
-# Default command (dokku will override with Procfile if exists)
-CMD ["gunicorn", "server.wsgi:application", "--bind", "0.0.0.0:5000", "--workers=3", "--timeout=60", "--keep-alive=60"]
-
 
 # Copy project
 COPY . .
