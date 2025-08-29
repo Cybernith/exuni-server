@@ -3,7 +3,7 @@ from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import Permission
 
 from users.models import User, Role, PhoneVerification, Notification, UserNotification, City, AdminAccess
-
+#test
 UserAdmin.fieldsets += (('Secrets', {'fields': ('secret_key',)}),)
 UserAdmin.fieldsets += (('نوع کاربر', {'fields': ('user_type',)}),)
 UserAdmin.fieldsets += (('اطلاعات کاربر', {'fields': (
