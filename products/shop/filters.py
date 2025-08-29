@@ -113,7 +113,7 @@ def brand_in_filter(queryset, name, value):
 
 
 def top_viewed_filter(queryset, name, value):
-    return queryset.filter(currency_id=7)
+    return queryset.filter(Q(currency_id=17) | Q(variation_of__currency_id=17))
 
 
 def top_rated_filter(queryset, name, value):
